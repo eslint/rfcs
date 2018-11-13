@@ -6,7 +6,7 @@
 
 ## Summary
 
-<!-- One paragraph explanation of the feature. -->
+<!-- One-paragraph explanation of the feature. -->
 
 ## Motivation
 
@@ -19,7 +19,7 @@ outcome? -->
    This is the bulk of the RFC.
 
    Explain the design with enough detail that someone familiar with ESLint
-   to be able to implement it by reading this document. Please get into specifics
+   can implement it by reading this document. Please get into specifics
    of your approach, corner cases, and examples of how the change will be
    used. Be sure to define any new terms in this section.
 -->
@@ -67,7 +67,7 @@ outcome? -->
     This section is optional, but is suggested for a first draft.
 
     What parts of this proposal are you unclear about? What do you
-    to know before you can finalize this RFC?
+    need to know before you can finalize this RFC?
 
     List the questions that you'd like reviewers to focus on. When
     you've received the answers and updated the design to reflect them, 

@@ -1,9 +1,9 @@
 # ESLint RFCs
 
-Many changes, including bug fixes and documentation improvements can be
+Many changes, including bug fixes and documentation, improvements can be
 implemented and reviewed via the normal GitHub pull request workflow.
 
-Some changes though are "substantial", and we ask that these be put
+However, some changes are "substantial", and we ask that these be put
 through a bit of a design process and produce a consensus among the ESLint Technical Steering Committee (TSC).
 
 The "RFC" (request for comments) process is intended to provide a
@@ -50,9 +50,9 @@ To submit a new RFC, follow these steps:
 
 Once an RFC is merged into this repo, then the authors may implement it and submit a pull request to the appropriate ESLint repo without opening an issue. Note that the implementation still needs to be reviewed separate from the RFC, so you should expect more feedback and iteration. 
 
-If the RFC authors choose not implement the RFC, then the RFC may be implemented by anyone. There is no guarantee that RFCs not implemented by their author will be implemented by the ESLint team.
+If the RFC authors choose not to implement the RFC, then the RFC may be implemented by anyone. There is no guarantee that RFCs not implemented by their author will be implemented by the ESLint team.
 
-Changes to the design during implementation should be reflected by updating the related RFC. The goal is to have RFCs to look back on to understand the motivation and design of shipping ESLint features.
+Changes to the design during implementation should be reflected by updating the related RFC. The goal is to have RFCs to look back on to understand the motivation and design of shipped ESLint features.
 
 ## Implementing an RFC
 
