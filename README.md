@@ -1,6 +1,6 @@
 # ESLint RFCs
 
-Many changes, including bug fixes and documentation, improvements can be
+Many changes, including bug fixes and documentation improvements, can be
 implemented and reviewed via the normal GitHub pull request workflow.
 
 However, some changes are "substantial", and we ask that these be put
