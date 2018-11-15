@@ -60,4 +60,7 @@ The author of an RFC is not obligated to implement it. Of course, the
 RFC author (like any other developer) is welcome to post an
 implementation for review after the RFC has been accepted.
 
+When a pull request has implemented an RFC, the RFC should be updated with a link
+to the PR implementing it.
+
 **Thanks to the [Ember RFC process](https://github.com/emberjs/rfcs) for the inspiration for ESLint's RFC process.**
