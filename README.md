@@ -16,10 +16,10 @@ changes to any part of the ESLint project or its documentation. What constitutes
 "substantial" change is evolving based on community norms, but may
 include the following.
 
-    - A new ESLint command line option.
-    - A new feature of ESLint core.
-    - A refactoring of existing ESLint core functionality.
-    - Any breaking change.
+* A new ESLint command line option.
+* A new feature of ESLint core.
+* A refactoring of existing ESLint core functionality.
+* Any breaking change.
 
 In addition to these, the TSC may request an RFC for any other change that it deems "substantial" based on the size or scope of the request.
 
@@ -37,9 +37,9 @@ level of API design detail required for an RFC. A good first step is to contact 
 To submit a new RFC, follow these steps:
 
 1. [Fork](https://github.com/eslint/rfcs/fork) the RFC repo.
-1. Copy the appropriate template file from the `templates` directory into the `designs` directory.
-1. Rename the file to begin with the current year and include a meaningful description, such as `2018-typescript-support.md`.
-1. If you want to include images in your RFC, place them in the `images` directory and prefix the filename with the same filename as the Markdown file (so `2018-typescript-support-figure-1.png`, for example).
+1. Create a directory inside of the `designs` directory. The directory name should begin with the year and include a meaningful description, such as `designs/2018-typescript-support`.
+1. Copy the appropriate template file from the `templates` directory into the appropriate `designs` subdirectory (such as `designs/2018-typescript-support/README.md`). Be sure to name your file `README.md` so it is easily viewable in the GitHub interface.
+1. If you want to include images in your RFC, place them in the same directory as the `README.md`.
 1. Fill in the RFC. Please fill in every section in the template with as much detail as possible.
 1. Submit a pull request to this repo with all of your files.
 1. You will receive feedback both from the ESLint community and from the ESLint team. You should be prepared to update your RFC based on this feedback. The goal is to build consensus on the best way to implement the suggested change.
