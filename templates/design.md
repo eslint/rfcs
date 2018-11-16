@@ -92,3 +92,12 @@ outcome? -->
     the people reviewing this RFC. Include those questions and answers
     in this section.
 -->
+
+## Related Discussions
+
+<!--
+    This section is optional but suggested.
+
+    If there is an issue, pull request, or other URL that provides useful
+    context for this proposal, please include those links here.
+-->
