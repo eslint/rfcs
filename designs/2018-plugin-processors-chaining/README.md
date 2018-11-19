@@ -1,13 +1,12 @@
+- Start Date: 2018/11/10
+- RFC PR: #1
+- Authors: Toru Nagashima
+
 # Making Plugin's Processor API chainable
 
 ## Summary
 
-We have [Processor API in plugins](https://eslint.org/docs/developer-guide/working-with-plugins#processors-in-plugins).
-Every processor is mapped to a file extension by one-to-one and we cannot combinate multiple processors per a file extension.
-
-This proposal makes the processors being possible to combinate by that those preprocess can return the pair of code and filename.
-
-If the returned filename requires another processor, ESLint applies the processor recursively.
+This proposal makes the processors being possible to combinate by that those preprocess can return the pair of code and filename. If the returned filename requires another processor, ESLint applies the processor recursively.
 
 ```ts
 interface Processor {
@@ -24,10 +23,12 @@ interface Plugin {
 }
 ```
 
-
 ## Motivation
 
-There are some file types that can contain multiple code blocks in various types such as Markdown and HTML. For example:
+We have [Processor API in plugins](https://eslint.org/docs/developer-guide/working-with-plugins#processors-in-plugins).
+Every processor is mapped to a file extension by one-to-one and we cannot combinate multiple processors per a file extension.
+
+But there are some file types that can contain multiple code blocks in various types such as Markdown and HTML. For example:
 
     ```js
     console.log("hello")
@@ -50,12 +51,20 @@ There are some file types that can contain multiple code blocks in various types
     }
     ```
 
-If some of the blocks require another processor (in this case `vue` block requires the processor of `eslint-plugin-vue`), we cannot work it easily.
+If some of the blocks require another processor (in this case `vue` block requires the processor of `eslint-plugin-vue`), we cannot make it work easily.
 
 This proposal lets us work it by allowing chaining multiple processors.
 
-
 ## Detailed Design
+
+<!--
+   This is the bulk of the RFC.
+
+   Explain the design with enough detail that someone familiar with ESLint
+   can implement it by reading this document. Please get into specifics
+   of your approach, corner cases, and examples of how the change will be
+   used. Be sure to define any new terms in this section.
+-->
 
 ```ts
 type VirtualFile = { filePath: string; code: string }
@@ -68,7 +77,7 @@ interface Processor {
 }
 ```
 
-- This proposal changes the return type of `Processor#preprocess` to containing the filename of each block. And if the returned filename requires another processor, ESLint applies the processor recursively.
+- This proposal changes the return type of `Processor#preprocess` to containing the filename of each block. And if the returned filename requires another processor, ESLint applies the processor recursively except when the extension is the same as the original file.
 
 - This proposal adds the 3nd parameter into `preprocess`/`postprocess` to give `config.settings` object (note: this `config.settings` is the shared object that all rules can access) because plugins may need additional settings to determine the kind of code blocks it should return. I imaged:
 
@@ -170,30 +179,60 @@ class Linter {
 }
 ```
 
-
-## How to Document
+## Documentation
 
 It updates the following two sections:
 
 - https://eslint.org/docs/developer-guide/nodejs-api#linterverify
-- https://eslint.org/docs/developer-guide/working-with-plugins#processors-in-plugins section.
-
+- https://eslint.org/docs/developer-guide/working-with-plugins#processors-in-plugins
 
 ## Drawbacks
 
-- Plugin authors have to come up with a way to name arbitrary chunks of code that they extract from a given file.
-
+- The matter this feature is solving may be rare.
+- This feature can increase the maintenance cost of plugins for the configuration that returns other blocks than JavaScript.
 
 ## Backwards Compatibility Analysis
 
-I believe that the compatibility problem is nothing.
-
+- To delete `message.fix` from the lint results that a certain plugin which doesn't support autofix returned. But I think no problem because those `message.fix` is broken. And this will solve another problem on editor integrations (https://github.com/Microsoft/vscode-eslint/issues/185#issuecomment-267570350).
 
 ## Alternatives
 
-- [`processor` option in `.eslintrc`](https://github.com/eslint/eslint/issues/11035#issuecomment-435079819)
+### 1. [`processor` option in `.eslintrc`](https://github.com/eslint/eslint/issues/11035#issuecomment-435079819)
 
+Specifying an arbitrary processor in `.eslintrc` will solve the problem. But the solution is on the end-user layer, they have to implement a processor, and a combinatorial explosion can be in a processor because the processor is mapped to a file extension by one-to-one. On the other hand, the recursive applying of processors solves the problem on the plugin layer, and end-users have less configuration.
 
+<!--
 ## Open Questions
 
+    This section is optional, but is suggested for a first draft.
+
+    What parts of this proposal are you unclear about? What do you
+    need to know before you can finalize this RFC?
+
+    List the questions that you'd like reviewers to focus on. When
+    you've received the answers and updated the design to reflect them, 
+    you can remove this section.
+-->
+
+<!--
 ## Help Needed
+
+    This section is optional.
+
+    Are you able to implement this RFC on your own? If not, what kind
+    of help would you need from the team?
+-->
+
+<!--
+## Frequently Asked Questions
+
+    This section is optional but suggested.
+
+    Try to anticipate points of clarification that might be needed by
+    the people reviewing this RFC. Include those questions and answers
+    in this section.
+-->
+
+## Related Discussions
+
+- https://github.com/eslint/eslint/issues/11035
