@@ -193,7 +193,7 @@ It updates the following two sections:
 
 ## Backwards Compatibility Analysis
 
-- To delete `message.fix` from the lint results that a certain plugin which doesn't support autofix returned. But I think no problem because those `message.fix` is broken. And this will solve another problem on editor integrations (https://github.com/Microsoft/vscode-eslint/issues/185#issuecomment-267570350).
+- To delete `message.fix` from the lint results of a certain plugin which doesn't support autofix can have impact. But I think no problem because those `message.fix` are broken. And this will solve another problem on editor integrations (https://github.com/Microsoft/vscode-eslint/issues/185#issuecomment-267570350).
 
 ## Alternatives
 
