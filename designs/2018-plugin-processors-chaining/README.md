@@ -201,6 +201,64 @@ It updates the following two sections:
 
 Specifying an arbitrary processor in `.eslintrc` will solve the problem. But the solution is on the end-user layer, they have to implement a processor, and a combinatorial explosion can be in a processor because the processor is mapped to a file extension by one-to-one. On the other hand, the recursive applying of processors solves the problem on the plugin layer, and end-users have less configuration.
 
+## Prior art
+
+### Webpack and [vue-loader](https://vue-loader.vuejs.org/)
+
+I'm not familiar with `vue-loader`, but I hear that `vue-loader` uses similar mechanism.
+
+It extracts `<script>` block in `foo.vue` file as `foo.vue.js` in preprocess. So Webpack applies the other rules which have `test: /\.js$/`-like configure to the extracted block. Similarly, it extracts `<style>` as `foo.vue.css`, `<template lang="pug">` as `foo.vue.pug`, `<style lang="scss">` as `foo.vue.scss`, `<script lang="ts">` as `foo.vue.ts`, etc...
+
+This means that the users can address `*.vue` files and other files with the same configuration and it lets us simplify configuration.
+
+```js
+// webpack.config.js
+const path = require('path')
+const VueLoaderPlugin = require('vue-loader/lib/plugin')
+
+module.exports = {
+  mode: 'development',
+  module: {
+    rules: [
+      {
+        test: /\.vue$/,
+        loader: 'vue-loader'
+      },
+      // this will apply to both plain `.js` files
+      // AND `<script>` blocks in `.vue` files
+      {
+        test: /\.js$/,
+        loader: 'babel-loader'
+      },
+      // this will apply to both plain `.css` files
+      // AND `<style>` blocks in `.vue` files
+      {
+        test: /\.css$/,
+        use: [
+          'style-loader',
+          'css-loader',
+          'postcss-loader'
+        ]
+      },
+      // this will apply to both plain `.scss` files
+      // AND `<style lang="scss">` blocks in `.vue` files
+      {
+        test: /\.scss$/,
+        use: [
+          'style-loader',
+          'css-loader',
+          'sass-loader'
+        ]
+      }
+    ]
+  },
+  plugins: [
+    // make sure to include the plugin for the magic
+    new VueLoaderPlugin()
+  ]
+}
+```
+
 <!--
 ## Open Questions
 
