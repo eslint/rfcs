@@ -27,9 +27,8 @@ The goals of this proposal are:
 Design Summary:
 
 1. Require plugins to export named processors instead of/in addition to using file extensions.
-1. Add a `processors` option to configuration.
+1. Add a `processor` option to configuration.
 1. Use `overrides` in configuration to target the files to use processors.
-1. Apply multiple processors to target files using configuration.
 1. Allow processors to specify a filename for code blocks.
 
 Definitions:
@@ -56,9 +55,9 @@ module.exports = {
 
 This plugin now exports a named `markdown` processor that can be referenced directly from configuration. Existing plugins would need to be changed, but can be done in a backwards-compatible way (see Backwards Compatibility section below).
 
-### Add a `processors` Configuration Option
+### Add a `processor` Configuration Option
 
-In order to use a named processor, end-users would specify a `processors` option in their configuration. The option must be an array and must contain at least one string identifier. The string identifier must correspond to a named processor from a plugin and have the form *pluginName/processorName*, which would reference the `processorName` processor in the `eslint-plugin-pluginName` plugin. For example: 
+In order to use a named processor, end-users would specify a `processor` option in their configuration. The option must be a string identifier, and the string identifier must correspond to a named processor from a plugin and have the form *pluginName/processorName*, which would reference the `processorName` processor in the `eslint-plugin-pluginName` plugin. For example: 
 
 ```js
 module.exports = {
@@ -66,13 +65,13 @@ module.exports = {
     parserOptions: {
         ecmaVersion: 2018
     },
-    processors: ["markdown/markdown"]
+    processor: "markdown/markdown"
 };
 ```
 
 This configuration file will apply the named processor `markdown` from the `eslint-plugin-markdown` plugin to all files.
 
-The `processors` option would be interpreted inside of `CLIEngine` to determine which processors to apply to files before linting should begin.
+The `processor` option would be interpreted inside of `CLIEngine` to determine which processors to apply to files before linting should begin.
 
 ### Apply Processors Using `overrides`
 
@@ -87,7 +86,7 @@ module.exports = {
     overrides: [
         {
             files: ["*.md"],
-            processors: ["markdown/markdown"]
+            processor: "markdown/markdown"
         }
     ]
 };
@@ -95,55 +94,9 @@ module.exports = {
 
 In this configuration, the named processor `markdown` from the `eslint-plugin-markdown` plugin is applied only to files with the extension `*.md`. This mimics the behavior of the extension-named processor that `eslint-plugin-markdown` currently exports.
 
-The `CLIEngine` method `getConfigForFile()` would automatically get the correct value for `processors` when the configuration is calculated.
+The `CLIEngine` method `getConfigForFile()` would automatically get the correct value for `processor` when the configuration is calculated.
 
 **Note:** End-users would still need to provide `--ext .md` on the command line for ESLint to automatically lint files ending with `.md`. No part of this proposal changes the behavior of `--ext`.
-
-### Apply Multiple Processors
-
-In special cases, end-users may want to apply multiple processors to files. This can be accomplished by listing multiple named processors using the `processors` configuration option. For example:
-
-```js
-module.exports = {
-    plugins: ["markdown", "vue"],
-    parserOptions: {
-        ecmaVersion: 2018
-    },
-    overrides: [
-        {
-            files: ["*.md"],
-            processors: ["markdown/markdown", "vue/vue"]
-        }
-    ]
-};
-```
-
-This configuration applies two named processors to all files matching `*.md`. First, the `markdown` named processor from `eslint-plugin-markdown` is applied. The result of that preprocessing is then passed to the `vue` named processor from `eslint-plugin-vue`. The result of that preprocessing is then passed to ESLint for linting. When ESLint has completed linting, the reverse sequence occurs: the linting results are first passed to the `vue` named processor from `eslint-plugin-vue`, and once that postprocessing is complete, the result is then passed to the `markdown` named processor from  `eslint-plugin-markdown`.
-
-End-users can also mix and match processors, such as in this example:
-
-```js
-module.exports = {
-    plugins: ["markdown", "vue", "html"],
-    parserOptions: {
-        ecmaVersion: 2018
-    },
-    overrides: [
-        {
-            files: ["*.md"],
-            processors: ["markdown/markdown", "vue/vue"]
-        },
-        {
-            files: ["*.htm", "*.html"],
-            processors: ["html/html", "vue/vue"]
-        }
-    ]
-};
-```
-
-This configuration uses the same `vue` named processor from `eslint-plugin-vue` for both HTML and Markdown files, but only after an appropriate named processor is used to extract the Vue code.
-
-**Note:** It would be update to the Vue processor to understand the difference between different types of code it may be passed.
 
 ### Virtual Filenames for Code Blocks
 
@@ -158,25 +111,25 @@ For example:
 module.exports = {
     preprocess(text, filename) {
         
-        const {vueText, jsText } = doSomething(text, filename);
+        const { jsText1, jsText2 } = doSomething(text, filename);
         
         return [
             {
-                filePath: filename + ".vue",
-                text: vueText
+                filePath: filename + "1.js",
+                text: jsText1
             },
             {
-                filePath: filename + ".js",
-                text: jsText
+                filePath: filename + "2.js",
+                text: jsText2
             }
         ]
     }
 };
 ```
 
-This processor returns two code blocks: one that contains Vue code and is given a virtual filename ending with `.vue` and one that contains regular JavaScript code and is given a virtual filename ending with `.js`.
+This processor returns two code blocks containing JavaScript code. Each code block is given a virtual filename ending with `.js`.
 
-When a `preprocess()` method returns an object with a `filePath` property, `CLIEngine` will call `getConfigForFile()` on the `filePath` property to determine the correct configuration for the code block.
+When a `preprocess()` method returns an object with a `filePath` property, `CLIEngine` will call `getConfigForFile()` on the `filePath` property to determine the correct configuration for the code block, which includes whether another processor should be run on the code block (matched by file extension).
 
 When a `preprocess()` method returns only a string, `CLIEngine` will interpret that as a JavaScript file and call `getConfigForFile()` using the parent file's filename to determine the correction configuration for the code block.
 
@@ -185,6 +138,8 @@ When a `preprocess()` method returns only a string, `CLIEngine` will interpret t
 Currently, application of processors happens inside of the `Linter#verify()` and `Linter#verifyAndFix()` methods. In order to implement this proposal, application of processors must happen outside of `Linter` because configuration calculation happens outside of `Linter`.
 
 The application of processors must move into `CLIEngine#executeOnText()` and `CLIEngine#executeOnFiles()` to work alongside with the current configuration calculation. That also means `CLIEngine` becomes responsible for recombining and postprocessing results from multiple `Linter#verify()` calls.
+
+With these changes, the existing `Linter` functionality will remain in place so the browser API will not break. The ESLint CLI, however, will not use the functionality inside of `Linter`. (See Backwards Compatibility Analysis for more information.)
 
 ## Documentation
 
@@ -235,7 +190,7 @@ module.exports = {
         // this entry is added internally for backwards compatibility
         {
             files: ["*.md"],
-            processors: ["markdown/markdown"]
+            processor: "markdown/.md"
         },
 
         // any already-existing overrides would go here
@@ -243,7 +198,7 @@ module.exports = {
 };
 ```
 
-Making this extra `overrides` entry internally would eliminate a special case when determining which processors to use for which files.
+Making this extra `overrides` entry internally would eliminate a special case when determining which processor to use for which files.
 
 At a future point in time, we can determine whether or not continue with this backwards-compatible behavior.
 
@@ -255,13 +210,13 @@ Additionally, the `preprocess` and `postprocess` options to `Linter#verify()` an
 
 The key differences between #1 and this proposal are:
 
-1. #1 uses the existing `settings` configuration key to pass information about which processor(s) to use. This proposal uses a new `processors` configuration key to determine which processor(s) to use and the optional use of `overrides` to better define with processor(s) to use for which file types. We don't currently require anyone to use `settings` for any core feature in ESLint, so I'd rather not start doing that.
-1. #1 relies on extension-named processors to work. This proposal requires the creation of named processors and the use of the `processors` configuration key to work.
+1. #1 uses the existing `settings` configuration key to pass information about which processor(s) to use. This proposal uses a new `processor` configuration key to determine which processor(s) to use and the optional use of `overrides` to better define with processor(s) to use for which file types. We don't currently require anyone to use `settings` for any core feature in ESLint, so I'd rather not start doing that.
+1. #1 relies on extension-named processors to work. This proposal requires the creation of named processors and the use of the `processor` configuration key to work.
 1. #1 does not allow different configuration options based on virtual filenames for code blocks.
 
 The similarities between #1 and this proposal are:
 
-1. Code blocks must be given virtual filenames in order to determine which processors to use.
+1. Code blocks must be given virtual filenames in order to determine which processor to use.
 1. Multiple processes may be chained together in order to process code blocks multiple times.
 1. Application of processors must happen outside of `Linter#verify()` and `Linter#verifyAndFix()`.
 
