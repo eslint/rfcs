@@ -36,7 +36,7 @@ Definitions:
 * **Extension-named processor** is the original processor design, where a processor is named only by the file extension to which the process should apply.
 * **Named processor** is introduced in this design, where a processor is given a name just like you would name a rule. The processor is not tied to a specific file extension by default. A named processor name cannot begin with a `.` in order to avoid collisions with extension-named processors.
 * **Parent file** is a file that is being processed to extract code blocks using processors.
-* **Code block** is a snippet of code contained within a parent file. Any parent file may have contain multiple code blocks.
+* **Code block** is a snippet of code contained within a parent file. Any parent file may contain multiple code blocks.
 
 ### Processor Plugin Changes
 
@@ -102,7 +102,7 @@ The `CLIEngine` method `getConfigForFile()` would automatically get the correct 
 
 The `preprocess()` method inside of a processor can now return an array containing either strings (the current behavior) or an object with two properties:
 
-* `filePath` - (string) a virtual file path to map the code block to
+* `filename` - (string) a virtual file filename to map the code block to (cannot contain `\` or `/` characters)
 * `text` - (string) the source code text
 
 For example:
@@ -115,11 +115,11 @@ module.exports = {
         
         return [
             {
-                filePath: filename + "1.js",
+                filename: "1.js",
                 text: jsText1
             },
             {
-                filePath: filename + "2.js",
+                filename: "2.js",
                 text: jsText2
             }
         ]
@@ -129,9 +129,22 @@ module.exports = {
 
 This processor returns two code blocks containing JavaScript code. Each code block is given a virtual filename ending with `.js`.
 
-When a `preprocess()` method returns an object with a `filePath` property, `CLIEngine` will call `getConfigForFile()` on the `filePath` property to determine the correct configuration for the code block, which includes whether another processor should be run on the code block (matched by file extension).
+When a `preprocess()` method returns an object with a `filename` property, `CLIEngine` will call `getConfigForFile()` on the `filename` property to determine the correct configuration for the code block, which includes whether another processor should be run on the code block (matched by file extension).
 
-When a `preprocess()` method returns only a string, `CLIEngine` will interpret that as a JavaScript file and call `getConfigForFile()` using the parent file's filename to determine the correction configuration for the code block.
+When a `preprocess()` method returns only a string, `CLIEngine` will interpret that as a JavaScript file and call `getConfigForFile()` using the parent file's filename to determine the correction configuration for the code block using this algorithm:
+
+```js
+const codeBlocks = processor.preprocess(text, filename).map(item => {
+    if (typeof item === "string") {
+        return {
+            filename,
+            text: item
+        };
+    } else {
+        return item;
+    }
+});
+```
 
 ## Changes to `CLIEngine` and `Linter`
 
@@ -161,7 +174,7 @@ Both of these drawbacks create a barrier to adoption and require changes by the 
 
 ## Backwards Compatibility Analysis
 
-This proposal is 100% backwards compatible until we remove the old way of defining processors. Both named and extension-based processors can be define in the same plugin, such as:
+This proposal is 100% backwards compatible until we remove the old way of defining processors. Both named and extension-based processors can be defined in the same plugin, such as:
 
 ```js
 const processor = {
