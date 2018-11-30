@@ -131,17 +131,26 @@ This processor returns two code blocks containing JavaScript code. Each code blo
 
 When a `preprocess()` method returns an object with a `filename` property, `CLIEngine` will call `getConfigForFile()` on the `filename` property to determine the correct configuration for the code block, which includes whether another processor should be run on the code block (matched by file extension).
 
-When a `preprocess()` method returns only a string, `CLIEngine` will interpret that as a JavaScript file and call `getConfigForFile()` using the parent file's filename appended with `".js"` (in case the parent filename does not end with `".js"`) to determine the correction configuration for the code block using this algorithm:
+When a `preprocess()` method returns only a string, `CLIEngine` will interpret that as a JavaScript file and call `getConfigForFile()` using the parent file's filename appended with the code block index and `".js"` (in case the parent filename does not end with `".js"`) to determine the correction configuration for the code block.
+
+The filename passed into other processors and the linter is a combination of the parent filename, the code block index, and the filename returned from `preprocess()` in the following format:
+
+> parentFilename + path.sep + index + filenameFromPreprocess
+
+The algorithm for constructing this filename is as follows:
 
 ```js
-const codeBlocks = processor.preprocess(text, filename).map(item => {
+const codeBlocks = processor.preprocess(text, parentFilename).map((item, index) => {
     if (typeof item === "string") {
         return {
-            filename: filename + ".js",
+            filename: parentFilename + path.sep + index + ".js",
             text: item
         };
     } else {
-        return item;
+        return {
+            filename: parentFilename + path.sep + index + item.filename,
+            text: item.text
+        };
     }
 });
 ```
