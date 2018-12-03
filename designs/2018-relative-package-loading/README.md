@@ -107,6 +107,23 @@ Using the config tree given above (reproduced below for convenience):
 * With this proposal, there is no longer any behavioral distinction between a "local" and a "global" installation of ESLint. Since packages are no longer loaded from the location of the ESLint package, ESLint generally behaves the same way regardless of where it's installed. (As a minor caveat, ESLint still resolves references to core rules by using the rules that are bundled with it, so if a user has different *versions* of ESLint installed globally and locally, the behavior might still vary depending on which version of ESLint is run.)
 * For configs loaded via `extends` with a relative path, via `.eslintrc.*` files in nested folders, the location of the "base" config file is used to load plugins and shareable configs. This is a minor detail to address the unusual case where a relative `extends` clause crosses a `node_modules` boundary, which would otherwise allow the same plugin name to resolve to two different plugins without any shareable config reference that could be used to disambiguate them.
 
+### Implementation notes
+
+#### Resolving modules
+
+The task of resolving modules from a particular location will likely be accomplished using Node's `Module._findPath` API, similar to how it's [already used in the codebase](https://github.com/eslint/eslint/blob/62fd2b93448966331db3eb2dfbe4e1273eb032b2/lib/util/module-resolver.js).
+
+Node's module caching is not expected to pose an issue, because module caching never causes a different version of a package to get loaded. Its only effect is that if the *same* package is loaded from two different sources, both sources might load the same JavaScript object.
+
+* If two shareable configs depend on different versions of a particular plugin, then two separate versions of the plugin package will be loaded, even though they share a package name.
+* If two shareable configs depend on the same version of a particular plugin, then load the plugin from the two locations may or may not create the same JavaScript object, depending on how the package manager flattens packages. This should not cause a problem in either case, because ESLint doesn't mutate the plugin objects that it loads.
+
+#### Effect on existing codebase
+
+The bulk of the implementation will likely involve rewriting large portions of [`lib/config/config-file.js`](https://github.com/eslint/eslint/blob/62fd2b93448966331db3eb2dfbe4e1273eb032b2/lib/config/config-file.js) to ensure that it builds a tree of configs as described above, rather than repeatedly merging everything into a single config.
+
+The implementation is not expected to affect config caching logic; configs can be cached from the filesystem in the same manner that they are today. The implementaiton should only change what happens with a config after it's loaded from the filesystem, regardless of whether the filesystem access was cached.
+
 ## Documentation
 
 This proposal has a few backwards-incompatible aspects, so it would appear in a migration guide for the major version where it's introduced. It would also entail updating plugin documentation to suggest adding shareable configs as dependencies, and removing documentation about the difference between local and global ESLint installations.
