@@ -233,7 +233,7 @@ This proposal maintains compatibility for most shareable configs, and most local
 
 ## Alternatives
 
-### Raise a fatal error for duplciate plugin names
+### Raise a fatal error for duplicate plugin names
 
 One alternative solution would be to avoid the complexity of hierarchical rule name resolution by simply raising a fatal error if two plugins have the same name. That solution is much simpler than this one, and avoids the duplicate report problem. Notably, implementing that solution first would also allow hierarchical rule name resolution to be added on later if necessary, without breaking compatibility.
 
