@@ -216,16 +216,37 @@ This proposal maintains compatibility for most shareable configs, and most local
 
 ## Alternatives
 
-* One alternative solution would be to avoid the complexity of hierarchical rule name resolution by simply raising a fatal error if two plugins have the same name. That solution is much simpler than this one, and avoids the duplicate report problem. However, with that solution the user has little recourse if two shareable configs both depend on the same plugin, resulting in a "dependency hell" scenario where many pairs of shareable configs would be incompatible with each other due to different dependency versions.
-* [eslint/eslint#3458 (comment)](https://github.com/eslint/eslint/issues/3458#issuecomment-257161846) proposed solving the duplicate-name problem by using plugins that depend on other plugins and reexport the rules of their dependencies, without any changes to ESLint core. It suggested two possible ways of re-exporting the rules: either a plugin could export them directly with the same name, or it could give the names a common prefix. This was proposed to address the issue that end users are exposed to their configs' dependencies.
+### Raise a fatal error for duplciate plugin names
 
-    Unfortunately, this solution has a few downsides that prevented it from being widely adopted:
+One alternative solution would be to avoid the complexity of hierarchical rule name resolution by simply raising a fatal error if two plugins have the same name. That solution is much simpler than this one, and avoids the duplicate report problem. Notably, implementing that solution first would also allow hierarchical rule name resolution to be added on later if necessary, without breaking compatibility.
 
-    * It would require everyone using shareable configs to switch to using plugins, which was regarded by some config authors as an unacceptably large breaking change.
-    * It could create confusion about where a rule came from (and where bugs should be reported), because a rule might have been passed through many different plugins before reaching the user.
-    * It still caused issues if two loaded plugins exported rules with the same name, resulting in either (a) a naming conflict where one rule would be unconfigurable, or (b) scoped rule names where the end user would end up exposed to their config's dependencies anyway.
-    * This solution would not fix the issue that ESLint depends on package managers' implementation details (at least partly because that issue was not known at the time that the solution was proposed).
-* A final alternative would be to do nothing. This would avoid all compatibility impact, but also leave ESLint unable to be used in certain package management setups, and users would likely continue to be confused about why their plugins sometimes aren't found.
+However, with that solution the user has little recourse if two shareable configs both depend on the same plugin, resulting in a "dependency hell" scenario where many pairs of shareable configs would be incompatible with each other due to different dependency versions.
+
+### Use plugins that pull rules from other plugins, instead of shareable configs
+
+[eslint/eslint#3458 (comment)](https://github.com/eslint/eslint/issues/3458#issuecomment-257161846) proposed solving the duplicate-name problem by using plugins that depend on other plugins and reexport the rules of their dependencies, without any changes to ESLint core. It suggested two possible ways of re-exporting the rules: either a plugin could export them directly with the same name, or it could give the names a common prefix. This was proposed to address the issue that end users are exposed to their configs' dependencies.
+
+Unfortunately, this solution has a few downsides that prevented it from being widely adopted:
+
+* It would require everyone using shareable configs to switch to using plugins, which was regarded by some config authors as an unacceptably large breaking change.
+* It could create confusion about where a rule came from (and where bugs should be reported), because a rule might have been passed through many different plugins before reaching the user.
+* It still caused issues if two loaded plugins exported rules with the same name, resulting in either (a) a naming conflict where one rule would be unconfigurable, or (b) scoped rule names where the end user would end up exposed to their config's dependencies anyway.
+* This solution would not fix the issue that ESLint depends on package managers' implementation details (at least partly because that issue was not known at the time that the solution was proposed).
+
+### Recommend that shareable configs install their peer dependencies with a postinstall script
+
+Another possible course of action would be to encourage shareable configs to install their peer dependencies with a `postinstall` script. This would avoid adding complexity to ESLint core, while preventing users from needing to manually install peer dependencies.
+
+Unfortunately, this would cause a few issues:
+
+* If two shareable configs depended on different versions of the same plugin, their postinstall scripts would conflict with each other, resulting in one of the shareable configs having an incompatible peerDependency. This would require end users to manually remove a shareable config, and end users might end up confused about why they can't use two shareable configs together.
+* With this solution, ESLint would continue to depend on implementation details of package managers, so it would still break under some valid setups (e.g. in `lerna` monorepos).
+
+This solution has similar effects to the solution of raising an fatal error for duplicate plugin names. Both avoid the complexity of hierarchical rule name resolution, but they offer no good user recourse if conflicting plugin versions are used. Since the "disallow duplicate plugin names" solution also fixes the bug where ESLint fails with some package management setups, it seems like a better fallback solution than recommending a postinstall script, if hierarchial rule name resolution is determined to add too much complexity.
+
+### Do nothing
+
+A final alternative would be to do nothing. This would avoid all compatibility impact, but also leave ESLint unable to be used in certain package management setups, and users would likely continue to be confused about why their plugins sometimes aren't found.
 
 ## Open Questions
 
