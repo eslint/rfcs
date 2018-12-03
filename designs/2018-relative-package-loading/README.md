@@ -114,15 +114,17 @@ Importantly, **it is *not* necessary for users to understand the details of hier
 
 To see why this is the case, consider three common usage scenarios:
 
-* A user sees a report from a rule, and decides to disable that rule.
+### A user sees a report from a rule, and decides to disable that rule.
 
 Since ESLint includes necessary config scopes in rule IDs, a report from a rule will already identify the name needed for the end user to configure that rule. For example, if a `react/no-typos` rule reports an error, and there are multiple versions of `eslint-plugin-react` loaded, the error might be displayed to the user as coming from `airbnb::react/no-typos`. Then the user can simply copy-paste that name into their config and disable it with something like `{ rules: { "airbnb::react/no-typos": "off" } }`, even if they don't fully understand where `airbnb::` came from. (If there is only one version of `eslint-plugin-react` loaded, the rule ID will simply be `react/no-typos`, and the user will be able to configure the rule as `react/no-typos` in the same manner as today.)
 
-* A user wants to enable a rule from a plugin
+### A user wants to enable a rule from a plugin
 
 In this case, the user can simply install the plugin themselves as a devDependency and configure its rules normally (e.g. with `{ plugins: ["react"], rules: { "react/no-typos": "error" }`), which will work regardless of what other configs the user is using.
 
-* A user extends a shareable config (`eslint-config-foo`), and later on they want to extend another shareable config (`eslint-config-bar`) which uses the same plugin (`eslint-plugin-react`)
+### A user wants to configure two shareable configs using the same plugin
+
+Suppose a user extends a shareable config (`eslint-config-foo`), and later on they want to extend another shareable config (`eslint-config-bar`) which uses the same plugin (`eslint-plugin-react`).
 
 In this case, the user might already have a config disabling some plugin rules, e.g. `{ rules: { "react/no-typos": "off" }, "extends": ["foo"] }`. If they add `bar` to the `extends` list, then ESLint will report an error looking something like this:
 
@@ -205,7 +207,7 @@ Hierarchial rule name resolution would increase the complexity of how configs ar
 
 ## Backwards Compatibility Analysis
 
-This proposal maintains compatibility for most shareable configs, and most local installation setups from end users. There are a few backwards-compatible parts:
+This proposal maintains compatibility for most shareable configs, and most local installation setups from end users. There are a few backwards-incompatible parts:
 
 * Most "global installation" setups that use plugins will need to be modified. Previously, a user need to install plugins globally when ESLint was installed globally. With this proposal implemented, a user should install plugins as a dependency of the codebase that contains their config file.
 * Configs can no longer rely on plugin names being globally unique. For example, if two configs independently configure a plugin with the same name, their configurations would previously override each other; with this proposal implemented, the configs will create two independent configurations. Along similar lines, shareable configs can no longer reconfigure their siblings' plugins, as described in the "Drawbacks" section.
