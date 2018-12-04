@@ -6,7 +6,7 @@
 
 ## Summary
 
-This feature would update ESLint to plugins and shareable configs relative to the location of the config files where they're referenced, rather than relative to the location of the running ESLint instance. As a result, configs would be able to specify plugins as their own dependencies, and ESLint users would see fewer confusing errors about missing plugins.
+This feature would update ESLint to load plugins and shareable configs relative to the location of the config files where they're referenced, rather than relative to the location of the running ESLint instance. As a result, configs would be able to specify plugins as their own dependencies, and ESLint users would see fewer confusing errors about missing plugins.
 
 ## Motivation
 
