@@ -59,6 +59,8 @@ When describing how rule name resolution works in this proposal, it's useful to 
 
 In this example, the end user's config extends `eslint-config-foo` and `eslint-config-bar`. `eslint-config-bar` extends `eslint-config-baz`. `eslint-config-foo` and `eslint-config-baz` both depend on versions of `eslint-plugin-react` (perhaps different versions, although this doesn't matter as far as resolution is concerned). `eslint-config-baz` also depends on `eslint-plugin-import`.
 
+In detail, a config is said to depend on a given shareable config if it's listed in the `extends` section. A config is said to depend on a given plugin if either (a) it's listed in the `plugins` section, or (b) one of the plugin's configs is listed in the `extends` section.
+
 #### Details of hierarchical rule name resolution
 
 * Each reference to a plugin rule in a config consists of three parts: a *config scope* (i.e. a list of configs), a plugin name, and a rule name.
@@ -229,7 +231,6 @@ This proposal maintains compatibility for most shareable configs, and most local
 
 * Most "global installation" setups that use plugins will need to be modified. Previously, a user need to install plugins globally when ESLint was installed globally. With this proposal implemented, a user should install plugins as a dependency of the codebase that contains their config file.
 * Configs can no longer rely on plugin names being globally unique. For example, if two configs independently configure a plugin with the same name, their configurations would previously override each other; with this proposal implemented, the configs will create two independent configurations. Along similar lines, shareable configs can no longer reconfigure their siblings' plugins, as described in the "Drawbacks" section.
-* Previously, a config could use something like `extends: ['plugin:foo/bar']` without explicitly declaring a dependency on the `eslint-plugin-foo` plugin. With this change, such a config would be required to also add `plugins: ['foo']` for ESLint to load `eslint-plugin-foo`.
 
 ## Alternatives
 
