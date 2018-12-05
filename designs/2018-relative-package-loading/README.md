@@ -97,6 +97,9 @@ Using the config tree given above (reproduced below for convenience):
 
 * If the end user's config references the rule `react/no-typos`, the config scope is empty. Since the root node of the tree has multiple descendants called `eslint-plugin-react`, the rule reference is ambiguous.
 * If the end user's config references the rule `bar::react/no-typos`, the config scope is non-empty, so the resolution strategy then tries to resolve the rule `react/no-typos` from the `eslint-config-bar` node in the tree. Since there is only one descendent of that node called `eslint-plugin-react`, the rule would successfully resolve to the `no-typos` rule of that plugin.
+* (Not shown in the config tree above): If `eslint-plugin-react` has a shareable config called `recommended`:
+    * If the user includes `extends: "plugin:foo::react/recommended"`, then they will extend the `recommended` config from the version of `eslint-plugin-react` used in `eslint-config-foo`. (This is similar to the existing pattern of `extends: "plugin:react/recommended"`, except that the name of the plugin is now `foo::react`, similar to how it's used in other places.)
+    * If the `recommended` shareable config in `eslint-plugin-react` itself depends on another plugin called `baz` with a rule `qux`, then a user could configure this rule using `baz/qux`, `foo::baz/qux`, or `foo::plugin:react/recommended::baz/qux`. (As before, the latter would only be necessary there are two configs named `baz` both accessible from `eslint-config-foo`.)
 
 ### Notable properties of this design
 
