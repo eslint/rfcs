@@ -133,7 +133,7 @@ The implementation is not expected to affect config caching logic; configs can b
 
 This proposal has a few backwards-incompatible aspects, so it would appear in a migration guide for the major version where it's introduced. It would also entail updating plugin documentation to suggest adding shareable configs as dependencies, and removing documentation about the difference between local and global ESLint installations.
 
-Importantly, **it is *not* necessary for users to understand the details of hierarchial name resolution**. This should decrease cognitive load for users, and reduce the amount of documentation they need to read in order to create a config.
+Importantly, **it is *not* necessary for users to understand the details of how hierarchial names are resolved** in order to create a config. This should decrease cognitive load for users, and reduce the amount of documentation they need to read in order to create a config.
 
 To see why this is the case, consider three common usage scenarios:
 
