@@ -243,6 +243,16 @@ One alternative solution would be to avoid the complexity of hierarchical rule n
 
 However, with that solution the user has little recourse if two shareable configs both depend on the same plugin, resulting in a "dependency hell" scenario where many pairs of shareable configs would be incompatible with each other due to different dependency versions.
 
+### Resolve all plugins and shareable configs from the user's project root
+
+Instead of loading plugins and shareable configs relative to the ESLint package location (the current behavior), ESLint could resolve plugins and shareable configs from the end user's project root. Shareable configs would continue to declare plugins as `peerDependencies`, and users would still be required to manually install them.
+
+This solution would have the advantage being logically sound with regard to package-loading (the user would be adding plugins/configs as `devDependencies`, and the packages would correctly be loaded relative to the user's project rather than from somewhere else). As a result, this solution would fix [eslint/eslint#10125](https://github.com/eslint/eslint/issues/10125). This solution would also eliminate the behavior switch between local and global installations, since the location of the ESLint package would no longer be relevant to how plugins get loaded.
+
+This solution does not address the goal of allowing shareable config authors to manage their plugins; end users would still be required to install the plugins that their shareable configs need. As a result, with this solution there would still be a significant burden on shareable configs aiming to add new plugins. Plugin names would still need to be unique, which could inhibit the design of other plugin-loading enhancements (e.g. loading plugins by path). However, this solution would provide a way to fix [eslint/eslint#10125](https://github.com/eslint/eslint/issues/10125) without introducing the complexity of handling plugin name conflicts, and it would likely be compatible with future solutions to the problem of delegating plugin management to a third party.
+
+(Something similar to this solution was implemented in [`b46c893`](https://github.com/eslint/eslint/commit/b46c893e67cceafccd20ab2eef9048d22c82b067). However, that implementation only applied to shareable configs rather than plugins, which is insufficient for package-loading soundness. Additionally, that implementation had a bug that made it ineffective in almost all cases.)
+
 ### Use plugins that pull rules from other plugins, instead of shareable configs
 
 [eslint/eslint#3458 (comment)](https://github.com/eslint/eslint/issues/3458#issuecomment-257161846) proposed solving the duplicate-name problem by using plugins that depend on other plugins and reexport the rules of their dependencies, without any changes to ESLint core. It suggested two possible ways of re-exporting the rules: either a plugin could export them directly with the same name, or it could give the names a common prefix. This was proposed to address the issue that end users are exposed to their configs' dependencies.
