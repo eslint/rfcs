@@ -214,7 +214,7 @@ As a sidenote, this example demonstrates the presence of the `plugins` field in 
 
 ### Home-directory configs which depend on shareable configs will usually stop working
 
-With this change, config files in a home directory will attempt to load their shareable configs from the home directory, usually resulting in an error. (Previously, these home-directory configs would implicitly depend on having certain plugins available from whatever version of ESLint was being used to load them.) Given this constraint, we might consider simply dropping support for home-directory configs, as has been discussed separately from this proposal in the past.
+With this change, config files in a home directory will attempt to load their shareable configs from the home directory, usually resulting in an error. (Previously, these home-directory configs would implicitly depend on having certain plugins available from whatever version of ESLint was being used to load them.)
 
 ### Users are exposed to some details about the structure of their shareable configs
 
