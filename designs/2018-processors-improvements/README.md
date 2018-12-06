@@ -159,11 +159,37 @@ const codeBlocks = processor.preprocess(text, parentFilename).map((item, index) 
 
 ## Changes to `CLIEngine` and `Linter`
 
-Currently, application of processors happens inside of the `Linter#verify()` and `Linter#verifyAndFix()` methods. In order to implement this proposal, application of processors must happen outside of `Linter` because configuration calculation happens outside of `Linter`.
+1. Currently, application of processors happens inside of the `Linter#verify()` and `Linter#verifyAndFix()` methods. In order to implement this proposal, application of processors must happen outside of `Linter` because configuration calculation happens outside of `Linter`.
+2. The application of processors must move into `CLIEngine#executeOnText()` and `CLIEngine#executeOnFiles()` to work alongside with the current configuration calculation. That also means `CLIEngine` becomes responsible for recombining and postprocessing results from multiple `Linter#verify()` calls.
+3. A new option called `disableFixes` will be added to the third argument of `Linter#verify()`. When `disableFixes` is set to `true`, `Linter#verify()` will not produce fix information for autofixable rules. This is necessary to turn off autofixing in case one of the processors does not support autofixing.
 
-The application of processors must move into `CLIEngine#executeOnText()` and `CLIEngine#executeOnFiles()` to work alongside with the current configuration calculation. That also means `CLIEngine` becomes responsible for recombining and postprocessing results from multiple `Linter#verify()` calls.
+A high-level overview of these changes is:
 
-With these changes, the existing `Linter` functionality will remain in place so the browser API will not break. The ESLint CLI, however, will not use the functionality inside of `Linter`. (See Backwards Compatibility Analysis for more information.)
+```js
+// inside of cli-engine.js
+function verify(filename, code) {
+
+    //....(resolve config)....
+
+    return postprocess(
+        preprocess(code, filename).map(item => {
+            if (typeof item === "string") {
+                return linter.verify(code, config, {
+                    ...options,
+                    filePath: filename,
+                    disableFixes: !supportsAutofix
+                })
+            }
+
+            // Recursive call.
+            return verify(item.filename, item.code)
+        }),
+        filename,
+    )
+}
+```
+
+With these changes, the existing `Linter` options of `preprocess` and `postprocess` will remain in place so the browser API will not break. The ESLint CLI, however, will not use these options. (See Backwards Compatibility Analysis for more information.)
 
 ## Documentation
 
