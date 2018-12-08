@@ -6,7 +6,7 @@
 
 ## Summary
 
-ESLint currently is entirely synchronous. The underlying code, `CLIEngine` currently doesn't support any async functions. As such, large codebases pay a toll since it requires users to wait for each file ( time O(n) ) to be processed by ESLint. There's a large gain to be made if ESLint can offer parallelized tasks so that users can more quickly statically analyze their code.
+ESLint currently is entirely synchronous. The underlying code, `CLIEngine` currently doesn't support any async functions. As such, large codebases pay a toll since it requires users to wait for each file ( time O(n) ) to be processed by ESLint. There's a large gain to be made if ESLint can offer parallelized tasks so that users can more quickly statically analyze their code. This change would also bubble up to the `cli` level for users who don't access the API directly.
 
 ## Motivation
 
@@ -16,7 +16,7 @@ On code bases in larger companies (in my case, Intuit) ESLint can take a very lo
 
 Based on discussion in the original [PR](https://github.com/eslint/eslint/issues/10606#issue-341171187)there are some main points.
 
-1. The features that are intended to be async/parallel need to be behind a flag on the CLI, and opt in when using the API (maybe through an async command or optoin when using CLIEngine).
+1. The features that are intended to be async/parallel need to be behind a flag on the CLI, and opt in when using the API (maybe through an async command or option when using CLIEngine).
 2. There are two options here: `promise` based and `thread` based. Some users suggested looking at [esprint](https://github.com/pinterest/esprint) for inspiration. Some of the concerns were that `promises` would not be faster per say depending on the implementation. As a first iteration, the API should suppor `async` calls backed by `Promise`s. This will allow the main thread to continue operating while ESLint is doing its thing.
 3. The experience should not break existing users.
 
