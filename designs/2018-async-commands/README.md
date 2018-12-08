@@ -28,6 +28,29 @@ I believe the initial implementation needs to stem from the core of ESLint. Many
 
 https://github.com/eslint/eslint/blob/master/lib/cli-engine.js#L428
 
+Currently the constructor checks if an ignored file exists synchronously. We can swap this logic for:
+
+```javascript
+import fs from 'fs';
+import util from 'util';
+
+const promiseStat = util.promisify(fs.stat);
+
+...
+
+        if (options.ignore && options.ignorePath) {
+            promiseStat(options.ignorePath).then((stats) => {
+                if (!stats.isFile()) {
+                    throw new Error(`${options.ignorePath} is not a file`);
+                }
+            })
+            .catch((e) => {
+                e.message = `Error: Could not load file ${options.ignorePath}\nError: ${e.message}`;
+                throw e;
+            });
+        }
+```
+
 #### processFile
 
 The processFile call is used to process a known file by ESLint. The core function this file wraps is [fs.readFileSync](https://github.com/eslint/eslint/blob/master/lib/cli-engine.js#L238). 
@@ -93,6 +116,25 @@ Calls `processFile`: https://github.com/eslint/eslint/blob/master/lib/cli-engine
 #### outputFixes
 
 https://github.com/eslint/eslint/blob/master/lib/cli-engine.js#L541
+
+This method calls `fs.writeFileSync`. We can swap that with `promisify` + `fs.writeFile`. That will give us a promise while the file is written. If we fail to write the file, we can keep a running log and exit while out putting a failure log with those files that caused trouble (need more help to understand what mechanisms exist for this currently, if any).
+
+```javascript
+import fs from 'fs';
+import util from 'util';
+
+const promiseWriteFile = util.promisify(fs.writeFile);
+
+...
+
+    static async outputFixes(report) {
+        report.results.filter(result => Object.prototype.hasOwnProperty.call(result, "output")).forEach(result => {
+           await  promiseWriteFile(result.filePath, result.output).catch((e) => {
+               // Take care of logging failure
+           });
+        });
+    }
+```
 
 ## Documentation
 
