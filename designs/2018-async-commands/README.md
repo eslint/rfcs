@@ -17,7 +17,7 @@ On code bases in larger companies (in my case, Intuit) ESLint can take a very lo
 Based on discussion in the original [PR](https://github.com/eslint/eslint/issues/10606#issue-341171187)there are some main points.
 
 1. The features that are intended to be async/parallel need to be behind a flag on the CLI, and opt in when using the API (maybe through an async command or optoin when using CLIEngine).
-2. There are two options here: `promise` based and `thread` based. Some users suggested looking at [esprint](https://github.com/pinterest/esprint) for inspiration. Some of the concerns were that `promises` would not be faster per say depending on the implementation. On the flipside, it has been noted that `threads`/workers can be expensive on platforms like Windows. Ideally, the implementation would use a balance of both. For example, `jest` has async methods that use threads under the hood.
+2. There are two options here: `promise` based and `thread` based. Some users suggested looking at [esprint](https://github.com/pinterest/esprint) for inspiration. Some of the concerns were that `promises` would not be faster per say depending on the implementation. As a first iteration, the API should suppor `async` calls backed by `Promise`s. This will allow the main thread to continue operating while ESLint is doing its thing.
 3. The experience should not break existing users.
 
 ### CLIEngine
@@ -53,7 +53,7 @@ return promiseReadfile(path.resolve(filename), "utf8").then((text) => {
 });
 ```
 
-Since we _know_ the file exists, we don't have to have an exception check here (though it is good practice to do so). If we do have an exception, we should handle it accordingly. It may be worth noting the file that was not processed and logging it out to a file so as not to stop the entire linting process. Output can then be shown to say "x/total scanned, y unscanned. See log for details".
+Since we _know_ the file exists, we don't have to have an exception check here (though it is good practice to do so). If we do have an exception, we should keep a tally of those files that caused issues and create a log file like `yarn` does. Since the processes are async, we can keep the exceptions in a map of `Errors` and time stamp each one. This way, we can get the output accordingly. It may be worth noting the file that was not processed and logging it out to a file so as not to stop the entire linting process. Output can then be shown to say "x/total scanned, y unscanned. See log for details".
 
 `executeOnFiles` would have to handle that (assuming nothing else changes). `executeOnFiles` [calls processFile](https://github.com/eslint/eslint/blob/master/lib/cli-engine.js#L612).
 
@@ -96,7 +96,7 @@ https://github.com/eslint/eslint/blob/master/lib/cli-engine.js#L541
 
 ## Documentation
 
-1. There should be JSDoc code for sure. In code documentation is always the best.
+1. There should be JSDoc code for sure. In code documentation is always the best. In particular, the NodeJS API and the CLI Documentation would need to reflect this change.
 2. I do believe this should warrant a blog announcement to say "hey we are moving in this direction, and would like feedback and help with it". Many companies would contribute and help once the initial implementation is there.
 
 ## Drawbacks
@@ -127,7 +127,7 @@ I tried making a PR that would change the functions I cared about, but the gener
     Are you able to implement this RFC on your own? If not, what kind
     of help would you need from the team?
 -->
-I would like help from the core team with this effort as I do work full time and even this has been a few months of work in my free time outside of work.
+I would like help from the core team with this effort when it comes to implementing (assuming this RFC is accepted) as I do work full time and even this has been a few months of work in my free time outside of work.
 
 ## Frequently Asked Questions
 
