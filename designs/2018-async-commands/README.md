@@ -22,7 +22,7 @@ Based on discussion in the original [PR](https://github.com/eslint/eslint/issues
 
 ### CLIEngine
 
-I believe the initial implementation needs to stem from the core of ESLint. Many of the core methods rely on `sync` based Node APIs. We can swap these out for `async` based ones that are wrapped in `promisify` to get the promise based async calls we want. However, this will have a bubble up a effect to anything relying on these core APIs since they would return  a `Promise`.
+I believe the initial implementation needs to stem from the core of ESLint. Many of the core methods rely on `sync` based Node APIs. We can swap these out for `async` based ones that are wrapped in `promisify` to get the promise based async calls we want. However, this will have a bubble up a effect to anything relying on these core APIs since they would return  a `Promise`. None of this should touch the rule API, and should remain relegated to the processing of files under the hood.
 
 #### constructor
 
