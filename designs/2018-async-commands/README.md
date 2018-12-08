@@ -22,7 +22,9 @@ Based on discussion in the original [PR](https://github.com/eslint/eslint/issues
 
 ### CLIEngine
 
-I believe the initial implementation needs to stem from the core of ESLint. Many of the core methods rely on `sync` based Node APIs. We can swap these out for `async` based ones that are wrapped in `promisify` to get the promise based async calls we want. However, this will have a bubble up a effect to anything relying on these core APIs since they would return  a `Promise`. None of this should touch the rule API, and should remain relegated to the processing of files under the hood.
+I believe the initial implementation needs to stem from the core of ESLint. Many of the core methods rely on `sync` based Node APIs. We can swap these out for `async` based ones that are wrapped in `promisify` to get the promise based async calls we want. However, this will have a bubble up a effect to anything relying on these core APIs since they would return  a `Promise`. None of this should touch the rule API, and should remain relegated to the processing of files under the hood. To be clear, the methods listed here would not be removed or modified. They would have `async` counter parts. This allows us to build out the functionality without impacting current async users. It also gives us the opportunity to refactor the `CLI` and other parts of the code that rely on the sync code to support both cases.
+
+In addition, all of these changes will require their own tests.
 
 #### constructor
 
@@ -111,7 +113,13 @@ let fileStats =  await promisedLstat(resolvedCacheFile).then((stat) =>  stat). c
 
 https://github.com/eslint/eslint/blob/master/lib/cli-engine.js#L577
 
-Calls `processFile`: https://github.com/eslint/eslint/blob/master/lib/cli-engine.js#L612
+Calls `processFile`: https://github.com/eslint/eslint/blob/master/lib/cli-engine.js#L612. Since this will be `async`, we can use `async/await` here.
+
+In addition, this method is called in two other places throughout the code base.
+https://github.com/eslint/eslint/blob/7ad86dea02feceb7631943a7e1423cc8a113fcfe/lib/cli.js#L197
+https://github.com/eslint/eslint/blob/6009239042cb651bc7ca6b8c81bbe44c40327430/lib/util/source-code-utils.js#L33
+
+These would need to be updated to have async options supported.
 
 #### outputFixes
 
