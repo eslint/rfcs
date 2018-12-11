@@ -1,5 +1,5 @@
 - Start Date: 2018-11-20
-- RFC PR: (leave this empty, to be filled in later)
+- RFC PR: https://github.com/eslint/rfcs/pull/6
 - Authors: Nicholas C. Zakas (@nzakas)
 
 # Programmatic Style Editors
@@ -199,8 +199,8 @@ module.exports = {
         description: "A style editor just for ES5"
     },
     edits: [
-        require("./edits/prettier"),
-        require("./edits/recast")
+        require("./edits/recast"),
+        require("./edits/prettier")
     ]
 }
 ```
@@ -230,7 +230,7 @@ This style editor first applies the edits from the Airbnb style editor and then 
 
 ### Order of Operations
 
-When ESLint is called with the `--fix` or `--fix-dry-run` flag, the style editor is applied to the source code before it is linted. The complete order of operations is as follows:
+When ESLint is called with the `--fix` or `--fix-dry-run` flag, the style editor is applied to the source code after lint fixes are applied and before one final lint without fixes. The complete order of operations is as follows:
 
 1. Preprocess source code using configured processors (if any)
 1. Lint source code
