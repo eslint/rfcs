@@ -1,5 +1,5 @@
 - Start Date: 2018-11-20
-- RFC PR: (leave this empty, to be filled in later)
+- RFC PR: https://github.com/eslint/rfcs/pull/3
 - Authors: Nicholas C. Zakas (@nzakas), Toru Nagashima (@mysticatea)
 
 # Processors Improvements
@@ -155,7 +155,10 @@ const codeBlocks = processor.preprocess(text, parentFilename).map((item, index) 
 });
 ```
 
-**Note:** Any virtual filename that does not have an extension already specified by `--ext` will be ignored and will not be linted or autofixed.
+**Notes:**
+
+* Any virtual filename that does not have an extension already specified by `--ext` will be ignored and will not be linted or autofixed.
+* When a code block filename has the same extension as the parent filename, then no further processors will be applied to avoid an infinite loop.
 
 ## Changes to `CLIEngine` and `Linter`
 
@@ -173,7 +176,11 @@ function verify(filename, code) {
 
     return postprocess(
         preprocess(code, filename).map(item => {
-            if (typeof item === "string") {
+
+            // avoid infinite loop
+            if ((typeof item === "string") ||
+                (path.extname(filename) === path.extname(item.filename))
+            ) {
                 return linter.verify(code, config, {
                     ...options,
                     filePath: filename,
@@ -181,8 +188,9 @@ function verify(filename, code) {
                 })
             }
 
-            // Recursive call.
+            // Recursive call
             return verify(item.filename, item.code)
+
         }),
         filename,
     )
