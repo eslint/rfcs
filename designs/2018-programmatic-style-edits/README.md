@@ -10,7 +10,7 @@ A way to extend the capabilities of ESLint's `--fix` command to enable applying 
 
 ## Motivation
 
-The way ESLint has traditionally helped developers enforce style guides is through the implementation of individual rules. Each rule then needs to be manually configured by someone and the ESLint team ends up maintaining the rule. Because people enjoy using shareable configs, and because ESLint lacks a way for shareable configs to include plugins, developers frequently ask for new style rules and new options to existing style rules be implemented in the core. This has lead to an explosion of stylistic rules that are getting more difficult to maintain and get to work seamlessly with one another (i.e., ensuring rules don't conflict with one another or overlap).
+The way ESLint has traditionally helped developers enforce style guides is through the implementation of individual rules. Each rule then needs to be manually configured by someone and the ESLint team ends up maintaining the rule. Because people enjoy using shareable configs, developers frequently ask for new style rules and new options to existing style rules be implemented in the core. This has lead to an explosion of stylistic rules that are getting more difficult to maintain and get to work seamlessly with one another (i.e., ensuring rules don't conflict with one another or overlap).
 
 Tools like [Prettier](https://prettier.io/) have taken a different approach, where there is a small set of configuration options available. Instead of warning on each small style disparity, it simply formats everything according to the configuration options. This opinionated approach is simpler to maintain but has the downside of being too strict for some developers who prefer more fine-grained control.
 
@@ -28,7 +28,7 @@ All of this is to say that the current way that ESLint deals with style guides, 
 
 At a high-level, this design entails:
 
-1. Enable plugins to create style editors
+1. Enable plugins to export style editors
 1. Allow third-party tools to be incorporated into style editors
 1. Automatically apply style editors with using `--fix`
 1. Allow turning on/off style editors using `--fix-type`
@@ -67,6 +67,23 @@ module.exports = {
 ```
 
 The `style` property can be used at the top level of the configuration to apply to all files or in an `overrides` object to apply to a subset of files.
+
+Options for style editors can be specified using a `styleOptions` key, as in this example:
+
+```js
+module.exports = {
+    plugins: ["mystyles"],
+    parserOptions: {
+        ecmaVersion: 5
+    },
+    style: "mystyles/es5",
+    styleOptions: {
+        indent: "tabs"
+    }
+}
+```
+
+The `styleOptions` property is just an opaque object to ESLint, without any predefined properties. Style editors can define their options and ESLint will pass the `styleOptions` object directly into the style editor through `context.options`.
 
 ### Style Editor Format
 
@@ -113,7 +130,7 @@ The `context` object has the following properties:
 
 * `sourceText` - the source code that will eventually be linted
 * `filename` - the name of the file being fixed
-* `settings` - the `settings` object specified in configuration
+* `options`- the `styleOptions` object from configuration
 * `parserPath` - the path to the parser ESLint will use to parse this file
 * `parserOptions` - the `parserOptions` object specified in configuration
 
@@ -224,7 +241,7 @@ When ESLint is called with the `--fix` or `--fix-dry-run` flag, the style editor
 
 Because autofixing might change the AST, and therefore introduce style inconsistencies, multipass autofixing must happen before the style editor is applied. And because style editors could potentially introduce linting errors, one additional lint operation must take place before the source code results are reported. This last lint operation does not do any autofixing and only ensures that the final source code is given the correct linting messages.
 
-Style editors are not applied when the `--fix` and `--fix-dry-run` flags are not used.
+**Important:** Style editors are not applied when the `--fix` and `--fix-dry-run` flags are not used.
 
 ### Error Reporting
 
@@ -259,9 +276,9 @@ $ eslint --fix --fix-type problem *.js
 I envision the implementation as follows:
 
 1. Update `CLIEngine` and `cli` to accept `style` as a valid option for `--fix-type`.
-1. Create a `StyleEditor` class to represent individual style editors.
+1. Create a `Style` class to represent individual style editors.
 1. When plugins are loaded, look for style editors in addition to rules and processors.
-1. Style editors would be loaded from `CLIEngine` and applied inside of `Linter#verifyAndFix()`.
+1. Style editors would be loaded and applied from `CLIEngine`.
 1. Add a `Linter#defineStyle()` method to store style editors inside of `Linter`.
 
 ## Documentation
@@ -278,6 +295,7 @@ This feature would need a new documentation section to explain how to create sty
 * It will take some time for the community to create style editors and therefore adoption might be slow.
 * Applying style guides does add some complexity to the linting process that doesn't already exist.
 * Adding two additional steps to the autofixing process will slow down the process as a whole by some unknown amount.
+* Style editors do not allow for programmatic detection of whether or not the style has been applied.
 
 ## Backwards Compatibility Analysis
 
@@ -299,10 +317,6 @@ Prior art includes:
 
 ## Open Questions
 
-### Should we allow multiple style editors to be specified?
-
-Instead of specifying a string, should we allow an array? My initial reaction is that this isn't necessary due to style editor composition, but I'm unsure.
-
 ### Does it make sense to bundle style editors with the fix commands?
 
 My initial thought was yes, that end-users would expect the `--fix` and `--fix-dry-run` command to make all possible changes to the source code that ESLint knows about. As such, it would make sense to include it as an option with `--fix-type` as well. 
@@ -314,6 +328,10 @@ The alternative would be to add something like a `--style` flag that would have 
 For the purpose of composition, it seems like style edits might benefit from having an `id` property so that other style editors can programmatically search for just the edits they want. I'm not sure if that's necessary, however, and perhaps that's too much of an API contract.
 
 ## Frequently Asked Questions
+
+### Can I specify more than one style editor?
+
+No. The intent is that `style` is always specified as a single string value, similar to how `parser` works. Style editor composition allows developers to mix and match parts of style editors to come up with the result that they want, so specifying multiple style editors should not be necessary.
 
 ### What other type of style edits could possibly exist?
 
@@ -328,7 +346,7 @@ I wouldn't want to spend the time designing these features until after style edi
 
 My hope is that once style editors are implemented, it will allow us to deprecate stylistic rules and get us out of the constant need to add options to cater to everyone's preferences about how their code should look. Instead, developers will use style editors and make the tweaks themselves, leaving us completely out of the loop.
 
-Eventually, I'd like to see all stylistic changes done inside of style editors such that no one uses stylistic rules anymore.
+Eventually, I'd like to see all stylistic changes done inside of style editors such that no one uses stylistic rules anymore. (Admittedly, this is a long-term vision and would not happen immediately upon implementation of this proposal.)
 
 ### Who will write the style edits?
 
@@ -342,12 +360,3 @@ An alternative design could have style editors implement an `edit()` method inst
 
 1. With individual style edits, ESLint can determine the best way to apply one style after another. For instance, with a `text` style edit, ESLint knows that it's not necessary to parse the code before passing it into the style edit. Similarly, if there are two `text` style edits in a row, ESLint knows that the result of the first style edit doesn't need to be parsed yet and can be passed directly into the second `text` style edit. This flexibility of knowing what types of style edits need to be applied is important for performance optimiziation.
 2. With a method, other style editors would have no choice but to apply all of another style editor before apply their own changes. With an array, it's possible for one style editor to pick and choose which edits from another style editor to include. 
-
-## Related Discussions
-
-<!--
-    This section is optional but suggested.
-
-    If there is an issue, pull request, or other URL that provides useful
-    context for this proposal, please include those links here.
--->
