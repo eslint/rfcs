@@ -135,7 +135,7 @@ When a `preprocess()` method returns an object with a `filename` property, a new
 
 `CLIEngine` will call `getConfigForFile()` on this filename to determine the correct configuration for the code block, which includes whether another processor should be run on the code block (matched by file extension).
 
-When a `preprocess()` method returns only a string, `CLIEngine` will interpret that as a JavaScript file and call `getConfigForFile()` using the parent file's filename to determine the correction configuration for the code block.
+When a `preprocess()` method returns only a string, `CLIEngine` will interpret that as a JavaScript file and call `getConfigForFile()` using the parent file's filename to determine the correct configuration for the code block.
 
 The algorithm for constructing each block's filename is as follows:
 
