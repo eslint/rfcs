@@ -20,129 +20,29 @@ Based on discussion in the original [PR](https://github.com/eslint/eslint/issues
 2. There are two options here: `promise` based and `thread` based. Some users suggested looking at [esprint](https://github.com/pinterest/esprint) for inspiration. Some of the concerns were that `promises` would not be faster per say depending on the implementation. As a first iteration, the API should suppor `async` calls backed by `Promise`s. This will allow the main thread to continue operating while ESLint is doing its thing.
 3. The experience should not break existing users.
 
-### CLIEngine
+Based on looking at other libraries, like JSCodeShift, the general flow should look like.
 
-I believe the initial implementation needs to stem from the core of ESLint. Many of the core methods rely on `sync` based Node APIs. We can swap these out for `async` based ones that are wrapped in `promisify` to get the promise based async calls we want. However, this will have a bubble up a effect to anything relying on these core APIs since they would return  a `Promise`. None of this should touch the rule API, and should remain relegated to the processing of files under the hood. To be clear, the methods listed here would not be removed or modified. They would have `async` counter parts. This allows us to build out the functionality without impacting current async users. It also gives us the opportunity to refactor the `CLI` and other parts of the code that rely on the sync code to support both cases.
+1) Get all the files to be processed (via a [promise](https://github.com/facebook/jscodeshift/blob/master/src/Runner.js#L216))
+2) [Determine the threshold of processes](https://github.com/facebook/jscodeshift/blob/master/src/Runner.js#L224) we can have running at once. This is done by looking at the CPU count on the given system, and taking `Math.min` of the files relative to the CPU (which means in most cases this will come out to be 4 assuming a quad core processor). If someone passes `runInBand`, it is single threaded by default.
+3) [Determine how many files can go to each process](https://github.com/facebook/jscodeshift/blob/master/src/Runner.js#L225). Take some arbitrary `CHUNK_SIZE` (50 in this case) and apply it relative to how efficiently you can split the number of files across the processes provided. If we have 200 files for example and 4 processors, the math works out to ((200/4)/50) = 1. NOTE: `CHUNK_SIZE` will have to be determined through testing for ESLint to see what is most performant.
+4) Send the batched files off to a worker that has a predefined set of functions (in the case of ESLint, this would be the bit you specified). Based on the [messages the workers send](https://github.com/facebook/jscodeshift/blob/master/src/Runner.js#L270-L285) act accordingly. In the case of ESLint, this gets to the point we mentioned earlier about keeping track of failures. `jscodeshift` [reports issues to the console](https://github.com/facebook/jscodeshift/blob/master/src/Runner.js#L66). One thing we need to determine is whether or not a failure to lint, or even write/fix, is grounds for ending the process. I'd prefer if ESLint failed gracefully and just said "unable to lint/fix files:" and provided output.
+5) Once the workers are done, [provide output to the user](https://github.com/facebook/jscodeshift/blob/master/src/Runner.js#L292).
 
-In addition, all of these changes will require their own tests.
+The flow in turn would look like:
 
-#### constructor
-
-https://github.com/eslint/eslint/blob/master/lib/cli-engine.js#L428
-
-Currently the constructor checks if an ignored file exists synchronously. We can swap this logic for:
-
-```javascript
-import fs from 'fs';
-import util from 'util';
-
-const promiseStat = util.promisify(fs.stat);
-
-...
-
-        if (options.ignore && options.ignorePath) {
-            promiseStat(options.ignorePath).then((stats) => {
-                if (!stats.isFile()) {
-                    throw new Error(`${options.ignorePath} is not a file`);
-                }
-            })
-            .catch((e) => {
-                e.message = `Error: Could not load file ${options.ignorePath}\nError: ${e.message}`;
-                throw e;
-            });
-        }
-```
-
-#### processFile
-
-The processFile call is used to process a known file by ESLint. The core function this file wraps is [fs.readFileSync](https://github.com/eslint/eslint/blob/master/lib/cli-engine.js#L238). 
-
-Node API allows us to swap 
-
-```javascript
-const text = fs.readFileSync(path.resolve(filename), "utf8");
-```
-
-for
-
-```javascript
-import fs from 'fs';
-import util from 'util';
-
-const promiseReadFile = util.promisify(fs.readFile);
-
-...
-
-return promiseReadfile(path.resolve(filename), "utf8").then((text) => {
-    ...
-});
-```
-
-Since we _know_ the file exists, we don't have to have an exception check here (though it is good practice to do so). If we do have an exception, we should keep a tally of those files that caused issues and create a log file like `yarn` does. Since the processes are async, we can keep the exceptions in a map of `Errors` and time stamp each one. This way, we can get the output accordingly. It may be worth noting the file that was not processed and logging it out to a file so as not to stop the entire linting process. Output can then be shown to say "x/total scanned, y unscanned. See log for details".
-
-`executeOnFiles` would have to handle that (assuming nothing else changes). `executeOnFiles` [calls processFile](https://github.com/eslint/eslint/blob/master/lib/cli-engine.js#L612).
-
-#### getCachedFile
-
-This method calls [fs.lstatSync](https://github.com/eslint/eslint/blob/master/lib/cli-engine.js#L362) under the hood to find the cache file. This can be replaced with the normal `lstat` call and `promisifed` like above.
-
-```javascript
-let fileStats;
-
-try {
-    fileStats = fs.lstatSync(resolvedCacheFile);
-} catch (ex) {
-    fileStats = null;
-}
-```
-
-becomes
-
-```javascript
-import fs from 'fs';
-import util from 'util';
-
-const promisedLstat = util.promisify(fs.lstat);
-
-...
-
-let fileStats =  await promisedLstat(resolvedCacheFile).then((stat) =>  stat). catch ((ex) =>  null);
-```
-
-#### executeOnFiles
-
-https://github.com/eslint/eslint/blob/master/lib/cli-engine.js#L577
-
-Calls `processFile`: https://github.com/eslint/eslint/blob/master/lib/cli-engine.js#L612. Since this will be `async`, we can use `async/await` here.
-
-In addition, this method is called in two other places throughout the code base.
-https://github.com/eslint/eslint/blob/7ad86dea02feceb7631943a7e1423cc8a113fcfe/lib/cli.js#L197
-https://github.com/eslint/eslint/blob/6009239042cb651bc7ca6b8c81bbe44c40327430/lib/util/source-code-utils.js#L33
-
-These would need to be updated to have async options supported.
-
-#### outputFixes
-
-https://github.com/eslint/eslint/blob/master/lib/cli-engine.js#L541
-
-This method calls `fs.writeFileSync`. We can swap that with `promisify` + `fs.writeFile`. That will give us a promise while the file is written. If we fail to write the file, we can keep a running log and exit while out putting a failure log with those files that caused trouble (need more help to understand what mechanisms exist for this currently, if any).
-
-```javascript
-import fs from 'fs';
-import util from 'util';
-
-const promiseWriteFile = util.promisify(fs.writeFile);
-
-...
-
-    static async outputFixes(report) {
-        report.results.filter(result => Object.prototype.hasOwnProperty.call(result, "output")).forEach(result => {
-           await  promiseWriteFile(result.filePath, result.output).catch((e) => {
-               // Take care of logging failure
-           });
-        });
-    }
-```
+- Determine list of files to lint
+- _Determine processors available_
+- _Determine batch size_
+- _Send each batch to a worker_
+- For each  _batch sent to a worker_:
+  - Check the cache to see if the file has changed
+  - Determine the correct configuration for the file
+  - Lint the file
+  - Optionally apply fixes to the file
+  - Optionally write fixes to the disk
+  - _Send a message back to the parent process_
+- Gather messages
+- Output lint results to console
 
 ## Documentation
 
@@ -177,6 +77,7 @@ I tried making a PR that would change the functions I cared about, but the gener
     Are you able to implement this RFC on your own? If not, what kind
     of help would you need from the team?
 -->
+
 I would like help from the core team with this effort when it comes to implementing (assuming this RFC is accepted) as I do work full time and even this has been a few months of work in my free time outside of work.
 
 ## Frequently Asked Questions
