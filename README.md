@@ -63,4 +63,14 @@ implementation for review after the RFC has been accepted.
 When a pull request has implemented an RFC, the RFC should be updated with a link
 to the PR implementing it.
 
+## Merging an RFC
+
+An RFC may be merged by a TSC member provided that:
+
+1. Every TSC member who wishes to comment on the RFC has done so.
+1. All outstanding concerns and comments have been addressed.
+1. Consensus has been reached on merging the RFC (no TSC member dissents to merging). This may be done on the RFC pull request by TSC members marking the pull request as approved.
+
+If an RFC fails to reach approval on the pull request then the RFC can be discussed during a TSC meeting to determine whether or not to merge.
+
 **Thanks to the [Ember RFC process](https://github.com/emberjs/rfcs) for the inspiration for ESLint's RFC process.**
