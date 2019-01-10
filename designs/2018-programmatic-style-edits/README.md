@@ -10,16 +10,55 @@ A way to extend the capabilities of ESLint's `--fix` command to enable applying 
 
 ## Motivation
 
-The way ESLint has traditionally helped developers enforce style guides is through the implementation of individual rules. Each rule then needs to be manually configured by someone and the ESLint team ends up maintaining the rule. Because people enjoy using shareable configs, developers frequently ask for new style rules and new options to existing style rules be implemented in the core. This has lead to an explosion of stylistic rules that are getting more difficult to maintain and get to work seamlessly with one another (i.e., ensuring rules don't conflict with one another or overlap).
+The way ESLint has traditionally helped developers enforce style guides is through the implementation of individual rules. Each rule then needs to be manually configured by someone and the ESLint team ends up maintaining the rule. Because people enjoy using shareable configs, developers frequently ask for new style rules and new options to existing style rules be implemented in the core. This has lead to an explosion of stylistic rules that are getting more difficult to maintain and get to work seamlessly with one another (i.e., ensuring rules don't conflict with one another or overlap). The goal of this proposal is to make managing styles in ESLint easier and more customizable for end-users while removing a lot of the maintenance overhead from the core ESLint team.
 
-Tools like [Prettier](https://prettier.io/) have taken a different approach, where there is a small set of configuration options available. Instead of warning on each small style disparity, it simply formats everything according to the configuration options. This opinionated approach is simpler to maintain but has the downside of being too strict for some developers who prefer more fine-grained control.
+### Definitions
 
-Prettier has also shown that there is a desire to not fill up end-user screens with multiple error messages advising developers to add a space here or remove a space there; they'd much rather just have one command to fix the style of their source code.
+* **Style guide** - a written description of how code should be written.
+* **Style enforcer** - any programmatic way to enforce code style. This includes ESLint shareable configs and tools like [Prettier](https://prettier.io/).
+
+### How ESLint Style Enforcers Work Today
+
+Creating a style enforcer in ESLint today generally means the following:
+
+1. Reviewing each of the stylistic ESLint rules and determine the correct settings for each. This process tends to be the same whether end-users create a new style enforcer or are working off of an existing style enforcer that isn't completely to their liking.
+2. Create a shareable config that encapsulates all of the desired ESLint rule settings.
+2. Use `extends` in your project to inherit from that shareable config.
+3. Run ESLint with the style enforcer configuration to see if there are any stylistic warnings, or run ESLint with `--fix` to automatically fix stylistic issues.
+
+In short, the process for style enforcers is the same as for any other type of rule in ESLint (this is, of course, by design). When end-users are content to use an already-existing style enforcer, there is very little burden on the ESLint team as the owners of the individual style enforcers can handle change requests.
+
+The problem is when end-users want to customize a style enforcer to fit their specific needs. There are three basic scenarios that play out every time an end-user wants to customize 
+
+* **They want a change that is already supported by a core rule.** In this case, end-users can use the documentation to determine the the correct rules and rule options to use to get their desired result. This is the case ESLint was optimized for.
+* **They want a change that fits with an existing core rule by no option exists.** In this case, end-users make a request to the ESLint team to enhance an existing rule with new options. The ESLint team then must spend time evaluating the proposal, ensuring consistency of option names across core rules, ensuring no overlap with existing rules, and whether there is someone interested enough to implement the change. 
+* **They want a change that doesn't fit with an existing core rule.** In this case, there are actually two possible outcomes:
+    1. The end-user requests a new core rule be added to ESLint. Once again, this brings with it the burden of evaluating, researching, and potentially implementing a new rule.
+    1. The end-user decides to create a custom rule. Some end-users are happy to do this and distribute their own plugins, however, ESLint limitations such as the inability to easily distribute plugins with shareable configs (https://github.com/eslint/eslint/issues/3458) means that many end-users prefer proposing their own style rules to be included with ESLint. (There is also a bit of halo effect around core rules, where end-users feel that getting their own rules into the ESLint core means they are "blessed" and therefore more valid than custom rules distributed in plugins.)
+
+So in at least half of the possible style enforcer customization paths, the ESLint team will end up being involved in some way. The bottom line is that *the ESLint team bears an outsized cost of end-user style enforcer customization*.
+
+### Advancements since ESLint was Created
+
+Admittedly, the current design of ESLint is working as it was designed to. ESLint's original thesis was that there should be no difference between stylistic rules and rules that flag potential errors because they are both inspecting source code for specific patterns. In that time, there were two notable trends in the JavaScript tooling space.
+
+First, JSHint decided to [remove their style rules](https://jshint.com/blog/jshint-3-plans/) in their 3.0 release. This opened the door for style-only tools such as [JSCS](https://jscs.info), which worked in the same rule-based approach that ESLint does today. This opened the door for a different kind of style enforcer.
+
+Second, tools like [JSBeautify](https://www.npmjs.com/package/js-beautify) and later, Prettier, were introduced that were not rule-based and simply fixed style issues without producing individual warnings for style disrepancies. Prettier has also shown that there is a desire to not fill up end-user screens with multiple error messages advising developers to add a space here or remove a space there; they'd much rather just have one command to fix the style of their source code.
+
+### Downsides of Prettier
+
+Prettier is an opinionated tool with a limited set of options. This approach is simpler to maintain but has the downside of being too strict for some developers who prefer more fine-grained control.
 
 Additionally, a growing number of developers use ESLint together with Prettier to get both the error-checking capability of ESLint with the source code formatting of Prettier. While there are some approaches to making these two tools work together, any quick search of Twitter will find new developers tend to struggle to get these two tools to work together.
 
-All of this is to say that the current way that ESLint deals with style guides, including its interaction with Prettier, leaves a lot of room for improvement. To that end, this programmatic style editor feature is intended to:
+All of this is to say that the current way that ESLint deals with style enforcers, including its interaction with Prettier, leaves a lot of room for improvement.
 
+### Goals
+
+The goals of this programmatic style editor feature are:
+
+1. Allow style enforcers that do not rely on rules.
 1. Allow arbitrary modification of source code within the context of autofixing.
 1. Enable the use of third-party tools to do this modification easily.
 1. Reduce developers' dependence on ESLint core rules for style guide enforcement and therefore reduce the maintenance burden on the ESLint team.
