@@ -1,5 +1,5 @@
 - Start Date: 2018-12-27
-- RFC PR: (leave this empty, to be filled in later)
+- RFC PR: https://github.com/eslint/rfcs/pull/7
 - Authors: Teddy Katz ([@not-an-aardvark](https://github.com/not-an-aardvark))
 
 # Simplify the resolution of third-party plugins/configs/parsers
