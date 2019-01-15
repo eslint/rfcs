@@ -75,7 +75,7 @@ We would also need to update the `generator-eslint` boilerplate for plugins to a
 
 ## Open Questions
 
-* This proposal uses the CWD as the "package root" from which plugins are loaded. Are there other folders that would serve this purpose better (e.g. in cases where the `--config` flag is used to load a config from a separate project)?
+* This proposal uses the CWD as the "project root" from which plugins are loaded. Are there other folders that would serve this purpose better (e.g. in cases where the `--config` flag is used to load a config from a separate project)?
 
 ## Related Discussions
 
