@@ -46,7 +46,7 @@ To submit a new RFC, follow these steps:
 
 ## The RFC Approval Process
 
-When an RFC is submitted, it goes throw the following process:
+When an RFC is submitted, it goes through the following process:
 
 1. **Initial commenting period (21 days)** - the community and ESLint team are invited to provide feedback on the proposal. During this period, you should expect to update your RFC based on the feedback provided. Very few RFCs are ready for approval without edits, so this period is important for fine-tuning ideas and build consensus. (A PR in the initial commenting period has the **Initial Commenting** label applied.) The initial commenting period may be extended with a TSC vote if the RFC has been unable to reach consensus but the team believes it worthwhile to continue developing the RFC. The TSC may also decide to abandon an RFC that has failed to reach consensus after 21 days.
 1. **Final commenting period (7 days)** - when all feedback has been addressed, the pull request enters the final commenting period where ESLint TSC members provide their final feedback and either approve of the pull request or state their disagreement. (A PR in the final commenting period has the **Final Commenting** label applied.) ESLint TSC members are notified through GitHub when an RFC has passed into the final commenting period.
