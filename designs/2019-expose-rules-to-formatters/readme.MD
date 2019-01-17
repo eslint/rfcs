@@ -15,7 +15,7 @@ Currently, formatters only see the ID of each rule for which a violation was ide
 ## Detailed Design
 
 Design Summary
-1. In cli.js::printResults, obtain the rules map from the Engine object.
+1. In `cli.js::printResults`, obtain the rules map from the `Engine` object.
 2. Pass the rules map as a new, second parameter to the formatter's exported interface function.
 3. Update the in-box formatters by adding the new `rules` parameter to their exported interface function definitions.
 
