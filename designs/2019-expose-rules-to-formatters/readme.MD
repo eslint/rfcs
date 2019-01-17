@@ -57,10 +57,12 @@ The [Working with Custom Formatters](https://eslint.org/docs/developer-guide/wor
 * Code samples will need the new `rules` parameter added wherever the exported interface function is shown.
 * The `rules` parameter should be called out and described, and should include a link to the [Working with Rules](https://eslint.org/docs/developer-guide/working-with-rules) article. The primary goal here is to familiarize the formatter author with the structure of the Rule object.
 * It should be noted that metadata properties such as description, category, and help URL are not required and may not be defined, and that custom formatter code should take this into account.
-* The [Detailed formatter](https://eslint.org/docs/developer-guide/working-with-custom-formatters#detailed-formatter) example should make use of the rules data. One idea would be to suffix the existing output with a list of rules that were violated, using a helper function something like this:
+* We should show the use of rule data in one of the examples by either modifying an existing one (maybe the [Detailed formatter](https://eslint.org/docs/developer-guide/working-with-custom-formatters#detailed-formatter) example) or adding a new one. One idea would be to suffix the results output with a list of rules that were violated, using a helper function something like this:
 
 ```js
-var rulesViolated = ""; // This is a dictionary that contains the violated rules
+var rulesViolated = ""; // This is a dictionary that contains the violated rules.
+                        // Your code would populate this object as you loop through the results.
+                        // Example: rulesViolated["my-rule"] = theRule;
 function printRules() {
     var lines = "*** RULES:\n";
     rulesViolated.forEach(function (rule) {
@@ -79,6 +81,7 @@ function printRules() {
     return lines;
 }
 ```
+*The explanation of the rulesViolated object needs work.*
 
 ## Drawbacks
 
