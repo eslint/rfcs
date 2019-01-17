@@ -82,6 +82,7 @@ function printRules() {
 }
 ```
 *The explanation of the rulesViolated object needs work.*
+*Maybe an isolated example?*
 
 ## Drawbacks
 
