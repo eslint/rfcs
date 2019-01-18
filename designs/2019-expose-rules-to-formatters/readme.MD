@@ -17,44 +17,38 @@ Currently, formatters only see the ID of each rule for which a violation was ide
 Design Summary
 1. In `cli.js::printResults`, obtain the rules map from the `Engine` object.
 2. Pass the rules map as a new, second parameter to the formatter's exported interface function.
-3. Update the in-box formatters by adding the new `rules` parameter to their exported interface function definitions.
 
 ### Command Line Interface (cli.js) Changes
-The implementation of this feature is exceedingly simple, consisting of a straightfoward one-line change. The code location that invokes the formatter's exported interface function already has access to the API it should use to obtain the list of rules, and the output of that function is a Map (dictionary) which is the type we want to pass to the formatter. This dataset includes all executed rules.
+The implementation of this feature is very simple and straightfoward. The code location that invokes the formatter's exported interface function already has access to the API it should use to obtain the list of rules, and the output of that function is a Map (dictionary) which is the type we want to pass to the formatter. This dataset includes all executed rules. The call to `Engine.getRules` must be made in the try block because `enginge` may be null during unit testing.
 
 ```js
 function printResults(engine, results, format, outputFile) {
     let formatter;
+    let rules;
 
     try {
         formatter = engine.getFormatter(format);
+        rules = engine.getRules();
     } catch (e) {
         log.error(e.message);
         return false;
     }
 
-    const output = formatter(results, engine.getRules());
+    const output = formatter(results, rules);
     ...
 }
 ```
 
 ### Formatter Changes
-Though existing formatters, both in-box and custom, will continue to function without modification, we should add the new `rules` parameter to the in-box formatters' exported interface functions. The in-box formatters are canonical examples and represent the best practices for implementation of a formatter. This code also acts as a real-world API sample.
 
-```js
-module.exports = function(results, rules) {
-    ...
-}
-```
-
-No other changes are required. Future versions of the formatters can make use of the rules data as appropriate.
+No changes to the existing in-box formatters are necessary. Future versions can make use of the rules data by adding the new parameter to the exported interface function definition. This parameter cannot be added unless it is used, as this will trip the JavaScript validation rule 'no-unused-vars.'
 
 ## Documentation
 
 Since custom formatter authors may want to take advantage of the newly-available rules data, a formal announcement may be justified (I don't have sufficient context in this regard so I will defer this determination.)
 
 The [Working with Custom Formatters](https://eslint.org/docs/developer-guide/working-with-custom-formatters) article will have to be updated:
-* Code samples will need the new `rules` parameter added wherever the exported interface function is shown.
+* Code samples will need the new `rules` parameter added wherever the exported interface function is shown, *but only when it is used*.
 * The `rules` parameter should be called out and described, and should include a link to the [Working with Rules](https://eslint.org/docs/developer-guide/working-with-rules) article. The primary goal here is to familiarize the formatter author with the structure of the Rule object.
 * It should be noted that metadata properties such as description, category, and help URL are not required and may not be defined, and that custom formatter code should take this into account.
 * We should show the use of rule data in one of the examples by either modifying an existing one (maybe the [Detailed formatter](https://eslint.org/docs/developer-guide/working-with-custom-formatters#detailed-formatter) example) or adding a new one. One idea would be to suffix the results output with a list of rules that were violated, using a helper function something like this:
