@@ -53,8 +53,10 @@ exports.config = {
     files: "*.js",
     ignore: "*.test.js",
     globals: {},
+    settings: {},
     processor: object,
     parser: object,
+    parserOptions: {},
     ruledefs: {},
     rules: {}
 };
@@ -69,6 +71,7 @@ The following keys are new to the `.eslint.js` format:
 The following keys are specified the same as in `.eslintrc` files:
 
 * `globals`
+* `settings`
 * `rules`
 * `parserOptions`
 
