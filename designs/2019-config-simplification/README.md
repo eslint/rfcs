@@ -328,7 +328,7 @@ This code example merges `personalConfig` into `myConfig` using the same functio
 
 #### The `RuleLoader` Class
 
-The purpose of the `RuleLoader` class is aid in loading rules to replace `--rulesdir` functionality and has this form:
+The purpose of the `RuleLoader` class is to aid in loading rules to replace `--rulesdir` functionality and has this form:
 
 ```js
 class RuleLoader {
