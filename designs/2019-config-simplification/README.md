@@ -138,7 +138,7 @@ In `.eslint.js`, you would need to pass the references directly, such as:
 ```js
 exports.config = {
     parser: require("babel-eslint"),
-    processor: require("eslint-plugin-markdown).processors.markdown
+    processor: require("eslint-plugin-markdown").processors.markdown
 };
 ```
 
