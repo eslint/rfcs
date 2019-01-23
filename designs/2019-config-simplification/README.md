@@ -146,7 +146,7 @@ In both cases, users now must pass a direct object reference. This has the benef
 
 #### Applying an Environment
 
-Unlike with `.eslintrc` files, there is no `env` key in `.eslint.js`. Users can mimmick the behavior of `env` by assigning directly to the `globals` key:
+Unlike with `.eslintrc` files, there is no `env` key in `.eslint.js`. Users can mimic the behavior of `env` by assigning directly to the `globals` key:
 
 ```js
 const globals = require("globals");
