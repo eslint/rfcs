@@ -34,19 +34,19 @@ This RFC proposes a fresh start for configuration in ESLint that takes into acco
 
 Design Summary:
 
-1. Introduce a new `.eslint.js` configuration file format
-1. Searching for `.eslint.js` starts from the current working directory and continues up
-1. All `.eslint.js` files are treated as if they have `root: true`
+1. Introduce a new `.eslint.config.js` configuration file format
+1. Searching for `.eslint.config.js` starts from the current working directory and continues up
+1. All `.eslint.config.js` files are treated as if they have `root: true`
 1. There is no automatic merging of config files
-1. The `.eslint.js` configuration is not serializable and objects such as functions and plugins may be added directly into configuration
+1. The `.eslint.config.js` configuration is not serializable and objects such as functions and plugins may be added directly into configuration
 1. Remove the concept of environments (`env`)
 1. Remove `.eslintignore` and `--ignore-file` (no longer necessary)
 1. Remove `--rulesdir`
 1. Create a `@eslint/config` package to help users merge configs
 
-### The `.eslint.js` File
+### The `.eslint.config.js` File
 
-The `.eslint.js` file is a JavaScript file (there is no JSON or YAML equivalent) that exports a `config` object: 
+The `.eslint.config.js` file is a JavaScript file (there is no JSON or YAML equivalent) that exports a `config` object: 
 
 ```js
 exports.config = {
@@ -62,9 +62,9 @@ exports.config = {
 };
 ```
 
-The following keys are new to the `.eslint.js` format:
+The following keys are new to the `.eslint.config.js` format:
 
-* `files` - **Required.** Determines the global pattern that this configuration applies to and also is used as the default pattern to search for when ESLint is executed on the command line.
+* `files` - **Required.** Determines the glob file patterns that this configuration applies to.
 * `ignore` - Determines the files that should not be linted using ESLint. This can be used in place of the `.eslintignore` file. The files specified by this glob pattern are subtracted from the files specified in `files`.
 * `ruledefs` - Contains definitions for rules grouped by a specific name. This replaces the `plugins` key in `.eslintrc` files and the `--rulesdir` option.
 
@@ -77,12 +77,12 @@ The following keys are specified the same as in `.eslintrc` files:
 
 The following keys are specified differently than in `.eslintrc` files:
 
-* `parser` - an object in `.eslint.js` files (a string in `.eslintrc`)
-* `processor` - an object in `.eslint.js` files (a string in `.eslintrc`)
+* `parser` - an object in `.eslint.config.js` files (a string in `.eslintrc`)
+* `processor` - an object in `.eslint.config.js` files (a string in `.eslintrc`)
 
-Each of these keys used to require one or more strings specifying module(s) to load in `.eslintrc`. In `.eslint.js`, these are all objects, requiring users to manually specify the objects to use.
+Each of these keys used to require one or more strings specifying module(s) to load in `.eslintrc`. In `.eslint.config.js`, these are all objects, requiring users to manually specify the objects to use.
 
-The following keys are invalid in `.eslint.js`:
+The following keys are invalid in `.eslint.config.js`:
 
 * `env` - responsibility of the user
 * `extends` - responsibility of the user
@@ -94,7 +94,7 @@ Each of these keys represent different ways of augmenting how configuration is c
 
 #### Referencing Plugin Rules
 
-The `plugins` key in `.eslintrc` was an array of strings indicating the plugins to load, allowing you to specify processors, rules, etc., by referencing the name of the plugin. It's no longer necessary to indicate the plugins to load because that is done directly in the `.eslint.js` file. For example, consider this `.eslintrc` file:
+The `plugins` key in `.eslintrc` was an array of strings indicating the plugins to load, allowing you to specify processors, rules, etc., by referencing the name of the plugin. It's no longer necessary to indicate the plugins to load because that is done directly in the `.eslint.config.js` file. For example, consider this `.eslintrc` file:
 
 ```yaml
 plugins:
@@ -106,7 +106,7 @@ rules:
 
 This file tells ESLint to load `eslint-plugin-react` and then configure a rule from that plugin. The `react/` is automatically preprended to the rule by ESLint for easy reference.
 
-In `.eslint.js`, the same configuration is achieved using a `ruledefs` key:
+In `.eslint.config.js`, the same configuration is achieved using a `ruledefs` key:
 
 ```js
 const reactPlugin = require("eslint-plugin-react");
@@ -133,7 +133,7 @@ parser: "babel-eslint"
 processor: "markdown/markdown"
 ```
 
-In `.eslint.js`, you would need to pass the references directly, such as:
+In `.eslint.config.js`, you would need to pass the references directly, such as:
 
 ```js
 exports.config = {
@@ -142,11 +142,11 @@ exports.config = {
 };
 ```
 
-In both cases, users now must pass a direct object reference. This has the benefit of using the builtin Node.js module resolution system or allowing users to specify their own. There is never of question of where the modules will be resolved from.
+In both cases, users now must pass a direct object reference. This has the benefit of using the builtin Node.js module resolution system or allowing users to specify their own. There is never a question of where the modules will be resolved from.
 
 #### Applying an Environment
 
-Unlike with `.eslintrc` files, there is no `env` key in `.eslint.js`. Users can mimic the behavior of `env` by assigning directly to the `globals` key:
+Unlike with `.eslintrc` files, there is no `env` key in `.eslint.config.js`. Users can mimic the behavior of `env` by assigning directly to the `globals` key:
 
 ```js
 const globals = require("globals");
@@ -179,7 +179,7 @@ This config extends `eslint-config-standard` by first importing and then making 
 
 #### Overriding Configuration Based on File Patterns
 
-Whereas `.eslintrc` had an `overrides` key that made a hierarchical structure, the `.eslint.js` file does not have any such hierarchy. Instead, users can return an array of configs that should be used. For example, consider this `.eslintrc` config:
+Whereas `.eslintrc` had an `overrides` key that made a hierarchical structure, the `.eslint.config.js` file does not have any such hierarchy. Instead, users can return an array of configs that should be used. For example, consider this `.eslintrc` config:
 
 ```yaml
 plugins: ["react"]
@@ -193,7 +193,7 @@ overrides:
       processor: "markdown/markdown"
 ```
 
-This can be written in `.eslint.js` as an array of two configs:
+This can be written in `.eslint.config.js` as an array of two configs:
 
 ```js
 exports.config = [
@@ -218,14 +218,14 @@ When ESLint uses this config, it will check each `files` pattern to determine wh
 
 #### Replacing `.eslintignore`
 
-Because there is only one `.eslint.js` file to consider, ESLint doesn't have to first search directories to determine its location. That allows `.eslint.js` to specify files to ignore directly instead of relying on `.eslintignore`. For backwards compatibility, users could create a config like this:
+Because there is only one `.eslint.config.js` file to consider, ESLint doesn't have to first search directories to determine its location. That allows `.eslint.config.js` to specify files to ignore directly instead of relying on `.eslintignore`. For backwards compatibility, users could create a config like this:
 
 ```js
 const fs = require("fs");
 
 exports.config = {
     files: "*.js",
-    ignore: fs.readFileSync(".eslintignore").replace(/\n/g, ";")
+    ignore: fs.readFileSync(".eslintignore", "utf8").replace(/\n/g, ";")
 };
 ```
 
@@ -238,7 +238,7 @@ Because some of the operations ESLint currently do are quite complicated, this d
 
 The `@eslint/config` package is intended to add back functionality that would be removed from ESLint with this design.
 
-**Note:** It is not required to use this package with `.eslint.js`; this is an optional tool that users may choose to use for convenience.
+**Note:** It is not required to use this package with `.eslint.config.js`; this is an optional tool that users may choose to use for convenience.
 
 #### `Config` Class
 
@@ -257,7 +257,7 @@ class Config {
     static isConfig(object) {}
 
     // create a new config based on another config
-    static create(baseConfig, overrideConfig) {}
+    static create(baseConfig, ...overrideConfigs) {}
 
     // merge info from other configs into a base config
     static assign(receiverConfig, ...supplierConfigs) {}
@@ -326,6 +326,27 @@ exports.config = myConfig;
 
 This code example merges `personalConfig` into `myConfig` using the same functionality that ESLint currently uses to merge configs.
 
+##### Extending Builtin Configs
+
+The `Config` class has two static properties representing ESLint's builtin configs:
+
+* `Config.recommended` - represents the `eslint:recommended` config.
+* `Config.all` - represents the `eslint:all` config.
+
+You can then create a config based on these special configs like this:
+
+```js
+const { Config } = require("@eslint/config");
+
+const myConfig = Config.create(Config.recommended, {
+    rules: {
+        semi: ["warn", "always"]
+    }
+});
+
+exports.config = myConfig;
+```
+
 #### The `RuleLoader` Class
 
 The purpose of the `RuleLoader` class is to aid in loading rules to replace `--rulesdir` functionality and has this form:
@@ -382,7 +403,6 @@ The `context` object has the following members:
 * `core` - information about the ESLint core that is using the config
     * `version` - the version of ESLint being used
     * `hasRule(ruleId)` - determine if the given rule is in the core
-    * `getConfig(configId)` - returns one of the predefined ESLint configs 
 * `cwd` - the current working directory for ESLint (might be different than `process.cwd()`, see https://github.com/eslint/eslint/issues/11218)
 
 This information allows users to make logical decisions about how the config should be constructed.
@@ -402,7 +422,7 @@ exports.config = (context) => {
         rules: {
             "custom/my-rule": "error"
         }
-    };
+    });
 
     if (context.hasRule("some-new-rule")) {
         myConfig.rules["some-new-rule"] = ["error"];
@@ -413,51 +433,29 @@ exports.config = (context) => {
 };
 ```
 
-#### Extending `eslint:recommended`
-
-Advanced configs must be used to extend builtin configs such as `eslint:recommended` and `eslint:all`:
-
-```js
-const { Config } = require("@eslint/config");
-
-exports.config = (context) => {
-
-    const recommendedConfig = context.core.getConfig("eslint:recommended");
-
-    return Config.create(recommendedConfig, {
-        ruledefs: {
-            custom: ruleLoader.loadFromDirectory("./custom-rules")
-        },
-        rules: {
-            "custom/my-rule": "error"
-        }
-    });
-};
-```
-
 ### Configuration Location Resolution
 
-When ESLint is executed, the following steps are taken to find the `.eslint.js` file to use:
+When ESLint is executed, the following steps are taken to find the `.eslint.config.js` file to use:
 
 1. If the `-c` flag is used then the specified configuration file is used. There is no further search performed.
 1. Otherwise:
-    a. Look for `.eslint.js` in the current working directory. If founnd, stop searching and use that file.
-    b. If not found, search up the directory hierarchy looking for `.eslint.js`.
-    c. If a `.eslint.js` file is found at any point, stop searching and use that file.
-    d. If `/` is reached without finding `.eslint.js`, then stop searching and output a "no configuration found" error.
+    a. Look for `.eslint.config.js` in the current working directory. If founnd, stop searching and use that file.
+    b. If not found, search up the directory hierarchy looking for `.eslint.config.js`.
+    c. If a `.eslint.config.js` file is found at any point, stop searching and use that file.
+    d. If `/` is reached without finding `.eslint.config.js`, then stop searching and output a "no configuration found" error.
 
-This approach will allow running ESLint from within a subdirectory of a project and get the same result as when ESLint is run from the project's root directory (the one where `.eslint.js` is found).
+This approach will allow running ESLint from within a subdirectory of a project and get the same result as when ESLint is run from the project's root directory (the one where `.eslint.config.js` is found).
 
 Some of the key differences from the way ESLint's configuration resolution works today are:
 
-1. There is no automatic search for `.eslint.js` in the user's home directory. Users wanting this functionality can either pass a home directory file using `-c` or manually read in that file from their `.eslint.js` file.
-1. Once a `.eslint.js` file is found, there is no more searching for any further config files.
+1. There is no automatic search for `.eslint.config.js` in the user's home directory. Users wanting this functionality can either pass a home directory file using `-c` or manually read in that file from their `.eslint.config.js` file.
+1. Once a `.eslint.config.js` file is found, there is no more searching for any further config files.
 1. There is no automatic merging of config files using either `extends` or `overrides`.
 1. When `-c` is passed on the command line, there is no search performed.
 
 ### File Pattern Resolution
 
-Because there are file patterns included in `.eslint.js`, this requires a change to how ESLint decides which files to lint. The process for determining which files to lint is:
+Because there are file patterns included in `.eslint.config.js`, this requires a change to how ESLint decides which files to lint. The process for determining which files to lint is:
 
 1. When a filename is passed directly (such as `eslint foo.js`):
     1. ESLint checks to see if there is a config where the `files` pattern matches the file that was passed in. If no config is found, then the file is ignored (with an appropriate warning).
@@ -485,7 +483,7 @@ At a minimum, these pages will have to be updated (and rewritten):
 As with any significant change, there are some significant drawbacks:
 
 1. We'd need to do a phased rollout (see Backwards Compatibility Analysis) to minimize impact on users. That means maintaining two configuration systems for a while, increasing maintenance overhead and complexity of the application.
-1. Getting everyone to convert to `.eslint.js` format would be a significant stress on the community that could cause some resentment.
+1. Getting everyone to convert to `.eslint.config.js` format would be a significant stress on the community that could cause some resentment.
 1. We can no longer enforce naming conventions for plugins and shareable configs. This may make it more difficult for users to find compatible npm packages.
 1. Creating configuration files will be more complicated.
 1. The `--print-config` option becomes less useful because we can't output objects in a meaningful way.
@@ -497,21 +495,21 @@ The intent of this proposal is to replace the current `.eslintrc` format, but ca
 
 In the first phase, I envision this:
 
-1. `.eslint.js` can be implemented alongside `.eslintrc`.
-1. If `.eslint.js` is found, then:
+1. `.eslint.config.js` can be implemented alongside `.eslintrc`.
+1. If `.eslint.config.js` is found, then:
     1. All `.eslintrc` files are ignored.
     1. `.eslintignore` is ignored.
     1. `--ignore-file` is ignored.
     1. `--rulesdir` is ignored.
     1. `--env` is ignored.
     1. `eslint-env` config comments are ignored.
-1. If `.eslint.js` is not found, then fall back to the current behavior.
+1. If `.eslint.config.js` is not found, then fall back to the current behavior.
 
-This keeps the current behavior for the majority of users while allowing some users to test out the new functionality. Also, `-c` could not be used with `.eslint.js` in this phase.
+This keeps the current behavior for the majority of users while allowing some users to test out the new functionality. Also, `-c` could not be used with `.eslint.config.js` in this phase.
 
-In the second phase (and in a major release), ESLint will emit deprecation warnings whenever the original functionality is used but will still honor them so long as `.eslint.js` is not found.
+In the second phase (and in a major release), ESLint will emit deprecation warnings whenever the original functionality is used but will still honor them so long as `.eslint.config.js` is not found.
 
-In the third phase (and in another major release), the original functionality is removed.
+In the third phase (and in another major release), `.eslint.config.js` becomes the official way to configure ESLint. If no `.eslint.config.js` file is found, ESLint will still search for a `.eslintrc` file, and if found, print an error message information the user that the configuration file format has changed.
 
 So while this is intended to be a breaking change, it will be introduced over the course of three major releases in order to give users ample time to transition.
 
@@ -526,9 +524,17 @@ While there are no alternatives that cover all of the functionality in this RFC,
 ## Open Questions
 
 1. Should `ignore` allow line breaks so it can emulate `.eslintignore`?
-1. Is `ruledefs` a create enough key name?
-1. Do we need a command line flag to opt-in to `.eslint.js` instead of trying to do it alongside the existing configuration system?
+1. Is `ruledefs` a clear enough key name?
+1. Do we need a command line flag to opt-in to `.eslint.config.js` instead of trying to do it alongside the existing configuration system?
 1. Does the file pattern system actually remove the need for `--ext`?
+
+## Frequently Asked Questions
+
+### Can a config be an async function?
+
+No. Right now it won't be possible to implement a config with an async function because the rest of ESLint is fully synchronous. Once we look at how to make ESLint more asynchronous, we can revisit and allow configs to be created with async functions.
+
+
 
 ## Related Discussions
 
