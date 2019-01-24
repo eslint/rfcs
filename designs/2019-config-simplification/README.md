@@ -18,6 +18,8 @@ Although `.eslintrc` has proven to be a very robust format, it is also limited a
 1. [specifying ignore patterns in the config](https://github.com/eslint/eslint/issues/10891)
 1. [specifying `--ext` information in the config](https://github.com/eslint/eslint/issues/11223)
 1. [using `extends` in `overrides`](https://github.com/eslint/eslint/issues/8813) 
+1. [Customize merging of config options](https://github.com/eslint/eslint/issues/9192)
+
 
 The only reason that these requests are difficult to implement in ESLint is because of how complex the `.eslintrc` configuration format is. Any changes made to any part of `.eslintrc` processing end up affecting millions of ESLint installations, so we have ended up stuck. The complicated parts of `.eslintrc` include:
 
@@ -52,6 +54,7 @@ The `.eslint.config.js` file is a JavaScript file (there is no JSON or YAML equi
 exports.config = {
     files: "*.js",
     ignore: "*.test.js",
+    extends: [],
     globals: {},
     settings: {},
     processor: object,
@@ -77,6 +80,7 @@ The following keys are specified the same as in `.eslintrc` files:
 
 The following keys are specified differently than in `.eslintrc` files:
 
+* `extends` - an object or array in `.eslint.config.js` files (a string or string array in `.eslintrc`)
 * `parser` - an object in `.eslint.config.js` files (a string in `.eslintrc`)
 * `processor` - an object in `.eslint.config.js` files (a string in `.eslintrc`)
 
@@ -85,7 +89,6 @@ Each of these keys used to require one or more strings specifying module(s) to l
 The following keys are invalid in `.eslint.config.js`:
 
 * `env` - responsibility of the user
-* `extends` - responsibility of the user
 * `overrides` - responsibility of the user
 * `plugins` - replaced by `ruledefs`
 * `root` - always considered `true`
@@ -165,17 +168,49 @@ This effectively duplicates the use of `env: { browser: true }` in ESLint.
 
 #### Extending Another Config
 
-With the removal of `extends`, it's now up to the users to inherit from other configs. That can easily be done in the following manner:
+Extending another config works the same as in `.eslintrc` except users pass entire config objects rather than the name of a config. That can easily be done in the following manner:
 
 ```js
-const standardConfig = require("eslint-config-standard");
-
-standardConfig.rules.semi = ["error", "always"];
-
-exports.config = standardConfig;
+exports.config = {
+    extends: require("eslint-config-standard"),
+    rules: {
+        semi: ["error", "always"]
+    }
+};
 ```
 
-This config extends `eslint-config-standard` by first importing and then making modifications before exporting the modified config.
+This config extends `eslint-config-standard` by assigning it to `extends`. You can also use an array for `extends` to extend from multiple configs:
+
+```js
+exports.config = {
+    extends: [
+        require("eslint-config-standard"),
+        require("@me/eslint-config")
+    ],
+    rules: {
+        semi: ["error", "always"]
+    }
+};
+```
+
+#### Extending From `eslint:recommended` and `eslint:all`
+
+Both `eslint:recommended` and `eslint:all` can be represented as strings in the `extends` key. For example:
+
+```js
+exports.config = {
+    extends: [
+        "eslint:recommended",
+        require("eslint-config-standard"),
+        require("@me/eslint-config")
+    ],
+    rules: {
+        semi: ["error", "always"]
+    }
+};
+```
+
+This config first extends `eslint:recommended` and then continues on to extend other configs.
 
 #### Overriding Configuration Based on File Patterns
 
@@ -326,27 +361,6 @@ exports.config = myConfig;
 
 This code example merges `personalConfig` into `myConfig` using the same functionality that ESLint currently uses to merge configs.
 
-##### Extending Builtin Configs
-
-The `Config` class has two static properties representing ESLint's builtin configs:
-
-* `Config.recommended` - represents the `eslint:recommended` config.
-* `Config.all` - represents the `eslint:all` config.
-
-You can then create a config based on these special configs like this:
-
-```js
-const { Config } = require("@eslint/config");
-
-const myConfig = Config.create(Config.recommended, {
-    rules: {
-        semi: ["warn", "always"]
-    }
-});
-
-exports.config = myConfig;
-```
-
 #### The `RuleLoader` Class
 
 The purpose of the `RuleLoader` class is to aid in loading rules to replace `--rulesdir` functionality and has this form:
@@ -458,7 +472,7 @@ Some of the key differences from the way ESLint's configuration resolution works
 Because there are file patterns included in `.eslint.config.js`, this requires a change to how ESLint decides which files to lint. The process for determining which files to lint is:
 
 1. When a filename is passed directly (such as `eslint foo.js`):
-    1. ESLint checks to see if there is a config where the `files` pattern matches the file that was passed in. If no config is found, then the file is ignored (with an appropriate warning).
+    1. ESLint checks to see if there is a config where the `files` pattern matches the file that was passed in. The pattern is evaluated by prepending the directory in which `.eslint.config.js` was found to each pattern. If no config is found, then the file is ignored (with an appropriate warning).
     1. If a matching config is found, then the `ignore` pattern is tested against the filename. If it's a match, then the file is ignored. Otherwise, the file is linted.
 1. When a glob pattern is passed directly (such as `eslint src/*.js`):
     1. ESLint expands the glob pattern to get a list of files.
@@ -502,6 +516,7 @@ In the first phase, I envision this:
     1. `--ignore-file` is ignored.
     1. `--rulesdir` is ignored.
     1. `--env` is ignored.
+    1. `--ext` is ignored.
     1. `eslint-env` config comments are ignored.
 1. If `.eslint.config.js` is not found, then fall back to the current behavior.
 
@@ -534,7 +549,9 @@ While there are no alternatives that cover all of the functionality in this RFC,
 
 No. Right now it won't be possible to implement a config with an async function because the rest of ESLint is fully synchronous. Once we look at how to make ESLint more asynchronous, we can revisit and allow configs to be created with async functions.
 
+### Why use `exports.config` instead of `module.exports`?
 
+Using an exported key gives us more flexibility for the future if we decide that config files should be able to output more than one thing. For example, I've been thinking of a `--config-key` option that would allow users to specify which exported key should be used as their config. Users could then export multiple different keys (`config1`, `config2`, etc.) and easily switch between configs on the command line. That option is not part of this proposal because it isn't solving an existing problem and I'd rather focus on existing problems first (this proposal is already big enough).
 
 ## Related Discussions
 
@@ -543,6 +560,7 @@ No. Right now it won't be possible to implement a config with an async function 
 * https://github.com/eslint/eslint/issues/3458
 * https://github.com/eslint/eslint/issues/6732
 * https://github.com/eslint/eslint/issues/8813
+* https://github.com/eslint/eslint/issues/9192
 * https://github.com/eslint/eslint/issues/9897
 * https://github.com/eslint/eslint/issues/10125
 * https://github.com/eslint/eslint/issues/10643
