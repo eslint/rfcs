@@ -52,8 +52,8 @@ The `.eslint.config.js` file is a JavaScript file (there is no JSON or YAML equi
 
 ```js
 exports.config = {
-    files: "*.js",
-    ignore: "*.test.js",
+    files: ["*.js"],
+    ignore: ["*.test.js"],
     extends: [],
     globals: {},
     settings: {},
@@ -68,7 +68,7 @@ exports.config = {
 The following keys are new to the `.eslint.config.js` format:
 
 * `files` - **Required.** Determines the glob file patterns that this configuration applies to.
-* `ignore` - Determines the files that should not be linted using ESLint. This can be used in place of the `.eslintignore` file. The files specified by this glob pattern are subtracted from the files specified in `files`.
+* `ignore` - Determines the files that should not be linted using ESLint. This can be used in place of the `.eslintignore` file. The files specified by this array of glob patterns are subtracted from the files specified in `files`.
 * `ruledefs` - Contains definitions for rules grouped by a specific name. This replaces the `plugins` key in `.eslintrc` files and the `--rulesdir` option.
 
 The following keys are specified the same as in `.eslintrc` files:
@@ -115,6 +115,7 @@ In `.eslint.config.js`, the same configuration is achieved using a `ruledefs` ke
 const reactPlugin = require("eslint-plugin-react");
 
 exports.config = {
+    files: ["*.js"],
     ruledefs: {
         react: reactPlugin.rules
     },
@@ -140,6 +141,7 @@ In `.eslint.config.js`, you would need to pass the references directly, such as:
 
 ```js
 exports.config = {
+    files: ["*.js"],
     parser: require("babel-eslint"),
     processor: require("eslint-plugin-markdown").processors.markdown
 };
@@ -155,6 +157,7 @@ Unlike with `.eslintrc` files, there is no `env` key in `.eslint.config.js`. Use
 const globals = require("globals");
 
 exports.config = {
+    files: ["*.js"],
     globals: {
         MyGlobal: true,
         ...globals.browser
@@ -172,6 +175,7 @@ Extending another config works the same as in `.eslintrc` except users pass enti
 
 ```js
 exports.config = {
+    files: ["*.js"],
     extends: require("eslint-config-standard"),
     rules: {
         semi: ["error", "always"]
@@ -183,6 +187,7 @@ This config extends `eslint-config-standard` by assigning it to `extends`. You c
 
 ```js
 exports.config = {
+    files: ["*.js"],
     extends: [
         require("eslint-config-standard"),
         require("@me/eslint-config")
@@ -199,6 +204,7 @@ Both `eslint:recommended` and `eslint:all` can be represented as strings in the 
 
 ```js
 exports.config = {
+    files: ["*.js"],
     extends: [
         "eslint:recommended",
         require("eslint-config-standard"),
@@ -259,8 +265,8 @@ Because there is only one `.eslint.config.js` file to consider, ESLint doesn't h
 const fs = require("fs");
 
 exports.config = {
-    files: "*.js",
-    ignore: fs.readFileSync(".eslintignore", "utf8").replace(/\n/g, ";")
+    files: ["*.js"],
+    ignore: fs.readFileSync(".eslintignore", "utf8").split("\n")
 };
 ```
 
@@ -305,7 +311,7 @@ A new instance of `Config` is created like this:
 const { Config } = require("@eslint/config");
 
 const config = new Config({
-    files: "*.js",
+    files: ["*.js"],
     ruledefs: {
         react: require("eslint-plugin-react").rules,
     },
@@ -404,6 +410,7 @@ exports.config = (context) => {
     // do something
 
     return {
+        files: ["*.js"],
         rules: {
             "semi": ["error", "always"]
         }
@@ -430,6 +437,7 @@ const { Config } = require("@eslint/config");
 
 exports.config = (context) => {
     const myConfig = new Config({
+        files: ["*.js"],
         ruledefs: {
             custom: ruleLoader.loadFromDirectory("./custom-rules")
         },
