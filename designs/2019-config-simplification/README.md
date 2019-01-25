@@ -270,6 +270,34 @@ exports.config = {
 };
 ```
 
+### Replacing `--ext`
+
+The `--ext` flag is currently used to pass in one or more file extensions that ESLint should search for when a directory without a glob pattern is passed on the command line, such as:
+
+```bash
+eslint src/ --ext .js,.jsx
+```
+
+This curently searches all subdirectories of `src/` for files with extensions matching `.js` or `.jsx`.
+
+This proposal removes `--ext` by allowing the same information to be passed in a config. For example, the following config achieves the same result:
+
+```js
+const fs = require("fs");
+
+exports.config = {
+    files: ["*.js", "*.jsx"],
+};
+```
+
+ESLint could then be run with this command:
+
+```bash
+eslint src/
+```
+
+When evaluating the `files` array in the config, ESLint will end up searching for `src/**/*.js` and `src/**/*.jsx`. (More information about file resolution is included later this proposal.)
+
 ### The `@eslint/config` Package
 
 Because some of the operations ESLint currently do are quite complicated, this design includes a utility package called `@eslint/config` that users can use for common tasks. This package contains the following utilities:
@@ -293,12 +321,6 @@ class Config {
 
     // convenience method for easily setting rule severity
     setRuleSeverity(ruleId, severity) {}
-
-    // determine if an object is a Config
-    static isConfig(object) {}
-
-    // create a new config based on another config
-    static create(baseConfig, ...overrideConfigs) {}
 
     // merge info from other configs into a base config
     static assign(receiverConfig, ...supplierConfigs) {}
@@ -330,31 +352,15 @@ config.setRuleSeverity("semi", "warn");
 
 In this way, users don't need to modify an array to change a rule's severity, which is a major downside of this design when using a vanilla object structure as a config.
 
-The static methods on `Config` make it easy to create and modify configs. For example, suppose you want to create a config based on `eslint-config-standard` but would prefer `semi` be a warning instead of an error, you can do so using `Config.create()`:
-
-```js
-const standardConfig = require("eslint-config-standard");
-const { Config } = require("@eslint/config");
-
-const myConfig = Config.create(standardConfig, {
-    rules: {
-        semi: "warn"
-    }
-});
-
-exports.config = myConfig;
-```
-
-Here, the `Config.create()` method creates a new `Config` object based on `standardConfig` and then merges in the overrides from the second argument. The overrides config just changed the severity of `semi` to be `"warn"` but does not affect the other `semi` options. (This implements the current config merging functionality in ESLint.)
-
-Similarly, the `Config.assign()` method lets users modify their config by merging in changes from other configs, such as:
+The `Config.assign()` method lets users modify their config by merging in changes from other configs, such as:
 
 ```js
 const standardConfig = require("eslint-config-standard");
 const personalConfig = require("@personal/eslint-config");
 const { Config } = require("@eslint/config");
 
-const myConfig = Config.create(standardConfig, {
+const myConfig = {
+    extends: standardConfig,
     rules: {
         semi: "warn"
     }
@@ -486,7 +492,7 @@ Because there are file patterns included in `eslint.config.js`, this requires a 
     1. ESLint expands the glob pattern to get a list of files.
     1. Each file is checked individually as in step 1.
 1. When a directory is passed directly (such as `eslint src`):
-    1. The directory is converted into a glob pattern (such as `src` becomes `src/**`).
+    1. The directory is converted into a glob pattern by appending the contents of the `files` array (such as `src` becomes `src/**/*.js`).
     1. The glob pattern is checked as in step 2.
 
 ### Rename `--use-eslintrc` to `--use-config-file`
@@ -554,7 +560,7 @@ While there are no alternatives that cover all of the functionality in this RFC,
 1. Is `ruledefs` a clear enough key name?
 1. Do we need a command line flag to opt-in to `eslint.config.js` instead of trying to do it alongside the existing configuration system?
 1. Does the file pattern system actually remove the need for `--ext`?
-1. How should `files` and `ignore` be merged when a shareable config has then? Should they be overwritten or merged?
+1. How should `files` and `ignore` be merged when a shareable config has them? Should they be overwritten or merged?
 
 ## Frequently Asked Questions
 
