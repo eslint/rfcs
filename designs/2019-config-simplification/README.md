@@ -576,6 +576,54 @@ Using an exported key gives us more flexibility for the future if we decide that
 
 The `eslintConfig` and `eslintIgnore` keys in `package.json` will not be honored when `eslint.config.js` is found. Users could still pull that information into their `eslint.config.js` file manually if they want to.
 
+### Do shareable configs still export an object on `module.exports`?
+
+That is completely up to the shareable config. For simplicity sake, I think we still want to encourage people to do so. However, there is no longer and formal contract between ESLint and shareable configs, so developers could potentially export configs from any npm package using any exported key. They would just need to inform users about how to extend their config properly.
+
+### Is there a way to allow plugins to specify the namespace of their rules?
+
+Maybe, but even if we could do that, the namespaces aren't guaranteed to be unique.
+
+The reason we could enforce naming of both plugin packages and rule namespaces is because ESLint controlled how the plugins were loaded: users passed ESLint a string and then ESLint could both inspect the string to pull out details it needed (the plugin name without the `eslint-plugin-` prefix) and then modify the rule names to be prepended with the plugin name.
+
+In this design, the user is responsible for loading npm packages. Because we are only ever passed an object, we no longer have access to the plugin name.
+
+An earlier iteration of this design had plugins specified like this:
+
+```js
+exports.config = {
+    plugins: [
+        require("eslint-plugin-react"),
+        require("eslint-plugin-mardkown")
+    ]
+};
+```
+
+This didn't work because ESLint didn't know how to name the plugin rules (we weren't getting the plugin name, just the object). So the next iteration went to this:
+
+```js
+exports.config = {
+    plugins: {
+        react: require("eslint-plugin-react"),
+        markdown: require("eslint-plugin-mardkown")
+    }
+};
+```
+
+This iteration gave the plugin rules names, but then I realized the only things that need names in plugins with this design are rules. Users can get processors, parsers, etc., directly without ESLint being involved in picking them out of plugins. So I renamed `plugins` to `ruledefs` to make this explicit:
+
+```js
+exports.config = {
+    ruledefs: {
+        react: require("eslint-plugin-react").rules,
+        markdown: require("eslint-plugin-mardkown").rules
+    }
+};
+```
+
+This is the iteration I first submitted.
+
+
 ## Related Discussions
 
 * https://github.com/eslint/rfcs/pull/7
