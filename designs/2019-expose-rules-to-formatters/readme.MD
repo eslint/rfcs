@@ -10,7 +10,7 @@ This proposal describes a design enhancement that provides formatters with detai
 
 ## Motivation
 
-Currently, formatters only see the ID of each rule for which a violation was identified, plus an instance-specific description, as properties on each result object. Formatters are not able to access usefule rule metadata, such as category, description, and help URL. Formatters are also not aware of the full set of rules that were run, information that may be useful in some cases.
+Currently, formatters only see the ID of each rule for which a violation was identified, plus an instance-specific description, as properties on each result object. Formatters are not able to access useful rule metadata, such as category, description, and help URL. Formatters are also not aware of the full set of rules that were run, information that may be useful in some cases.
 
 ## Detailed Design
 
