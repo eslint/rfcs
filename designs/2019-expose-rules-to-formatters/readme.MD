@@ -21,7 +21,7 @@ Design Summary
 We should use a container object as the parameter, with the rules map as a property, in order to accommodate potential future expansions of the data we pass to formatters. This suggestion was previously made in the discussion of issue [#9841](https://github.com/eslint/eslint/issues/9841).
 
 ### Command Line Interface (cli.js) Changes
-The implementation of this feature is very simple and straightfoward. The code location that invokes the formatter's exported interface function already has access to the API it should use to obtain the list of rules, and the output of that function is a Map (dictionary) which is the type we want to pass to the formatter. This dataset includes all executed rules. The call to `Engine.getRules` must be made in the try block because `enginge` may be null during unit testing.
+The implementation of this feature is very simple and straightfoward. The code location that invokes the formatter's exported interface function already has access to the API it should use to obtain the list of rules, and the output of that function is a Map (dictionary) which is the type we want to pass to the formatter. This dataset includes all executed rules. The call to `Engine.getRules` must be made in the try block because `engine` may be null during unit testing.
 
 ```js
 function printResults(engine, results, format, outputFile) {
