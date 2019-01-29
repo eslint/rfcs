@@ -41,12 +41,18 @@ To submit a new RFC, follow these steps:
 1. Copy the appropriate template file from the `templates` directory into the appropriate `designs` subdirectory (such as `designs/2018-typescript-support/README.md`). Be sure to name your file `README.md` so it is easily viewable in the GitHub interface.
 1. If you want to include images in your RFC, place them in the same directory as the `README.md`.
 1. Fill in the RFC. Please fill in every section in the template with as much detail as possible.
-1. Submit a pull request to this repo with all of your files.
-1. You will receive feedback both from the ESLint community and from the ESLint team. You should be prepared to update your RFC based on this feedback. The goal is to build consensus on the best way to implement the suggested change.
-1. When all feedback has been incorporated, the ESLint TSC will determine whether or not to accept the RFC.
+1. Submit a pull request to this repo with all of your files. This begins the approval process (detailed below).
 1. RFCs that are accepted will be merged directly into this repo; RFCs that are not accepted will have their pull requests closed without merging.
 
-## The RFC life-cycle
+## The RFC Approval Process
+
+When an RFC is submitted, it goes through the following process:
+
+1. **Initial commenting period (21 days minimum)** - the community and ESLint team are invited to provide feedback on the proposal. During this period, you should expect to update your RFC based on the feedback provided. Very few RFCs are ready for approval without edits, so this period is important for fine-tuning ideas and building consensus. (A PR in the initial commenting period has the **Initial Commenting** label applied.) The initial commenting period must last at least 21 days to allow the team and community enough time to comment. The TSC may decide to reject the RFC without promoting it to the final commenting period.
+1. **Final commenting period (7 days)** - when all feedback has been addressed, the pull request author requests a final commenting period where ESLint TSC members provide their final feedback and either approve of the pull request or state their disagreement. (A PR in the final commenting period has the **Final Commenting** label applied.) ESLint TSC members are notified through GitHub when an RFC has passed into the final commenting period.
+1. **Approval and Merge** - if consensus has been reached on approving the RFC, the pull request will be merged. If consensus is not reached on the pull request then the RFC will be discussed at the next TSC meeting to determine whether or not to move forward.
+
+## The RFC Lifecycle
 
 Once an RFC is merged into this repo, then the authors may implement it and submit a pull request to the appropriate ESLint repo without opening an issue. Note that the implementation still needs to be reviewed separate from the RFC, so you should expect more feedback and iteration. 
 
