@@ -51,14 +51,13 @@ Since custom formatter authors may want to take advantage of the newly-available
 
 The [Working with Custom Formatters](https://eslint.org/docs/developer-guide/working-with-custom-formatters) article will have to be updated:
 * Code samples will need the new `data` parameter added wherever the exported interface function is shown, *but only when it is used*.
-* The `data` parameter should be called out and described, and should include a link to the [Working with Rules](https://eslint.org/docs/developer-guide/working-with-rules) article. The primary goal here is to familiarize the formatter author with the structure of the `data` parameter and Rule object.
-* It should be noted that metadata properties such as description, category, and help URL are not required and may not be defined, and that custom formatter code should take this into account.
+* The `data` parameter should be called out and described, and should include a link to the [Working with Rules](https://eslint.org/docs/developer-guide/working-with-rules) article. The primary goal here is to familiarize formatter author with the structure of the `data` parameter and Rule object.
+* It should be noted that Rule metadata properties such as description, category, and help URL are not required and may not be defined, and that custom formatter code should take this into account.
 * We should show the use of rule data in one of the examples by either modifying an existing one (maybe the [Detailed formatter](https://eslint.org/docs/developer-guide/working-with-custom-formatters#detailed-formatter) example) or adding a new one. One idea would be to suffix the results output with a list of rules that were violated, using a helper function something like this:
 
 ```js
-var rulesViolated = ""; // This is a dictionary that contains the violated rules.
-                        // Your code would populate this object as you loop through the results.
-                        // Example: rulesViolated["my-rule"] = theRule;
+var rulesViolated = {};
+...
 function printRules() {
     var lines = "*** RULES:\n";
     rulesViolated.forEach(function (rule) {
@@ -77,8 +76,6 @@ function printRules() {
     return lines;
 }
 ```
-*The explanation of the rulesViolated object needs work.*
-*Maybe an isolated example?*
 
 ## Drawbacks
 
@@ -86,7 +83,7 @@ This is a fairly innocuous change in that it is additive, non-breaking, and does
 
 ## Backwards Compatibility Analysis
 
-Since this change is manifested as a new parameter to the formatter's exported interface function, existing formatter code will not be affected. Existing formatters will continue to function even without adding the new parameter to their exported function. I have confirmed this assertion via manual testing.
+Since this change is manifested as a new parameter to the formatter's exported interface function, existing formatter code will not be affected and will continue to function even without adding the new parameter to their exported function. I have confirmed this assertion via manual testing.
 
 ## Alternatives
 
@@ -97,7 +94,7 @@ Since this change is manifested as a new parameter to the formatter's exported i
     projects have already implemented a similar feature.
 -->
 * Including the rule metadata in the result object. This approach results in redundant data being returned, and includes external metadata properties that are not directly relevant. (As an analogy, it's like ...)
-* Pass the rules map itself as a parameter to the formatter's exported interface function. This approach makes it messier to add additional data in the future, since new properties would be necessary.
+* Pass the rules map itself as a parameter to the formatter's exported interface function. This approach makes it messier to add additional data in the future, since new parameters would be necessary.
 
 ## Open Questions
 
