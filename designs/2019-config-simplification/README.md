@@ -45,7 +45,7 @@ Design Summary:
 1. Remove the concept of environments (`env`)
 1. Remove `.eslintignore` and `--ignore-file` (no longer necessary)
 1. Remove `--rulesdir`
-1. Create a `@eslint/config` package to help users merge configs
+1. Create a `@eslint/config` package to help users manager configs
 
 ### The `eslint.config.js` File
 
@@ -358,76 +358,11 @@ When evaluating the `files` array in the config, ESLint will end up searching fo
 
 Because some of the operations ESLint currently do are quite complicated, this design includes a utility package called `@eslint/config` that users can use for common tasks. This package contains the following utilities:
 
-1. `Config` - a class that both wraps a configuration object to provide helper methods for manipulating configs and a container for static methods to work with configs.
 1. `RuleLoader` - a class that aids in loading rules from a directory.
 
 The `@eslint/config` package is intended to add back functionality that would be removed from ESLint with this design.
 
 **Note:** It is not required to use this package with `eslint.config.js`; this is an optional tool that users may choose to use for convenience.
-
-#### `Config` Class
-
-The `Config` class has this form:
-
-```js
-class Config {
-
-    // pass in any object literal to wrap in Config
-    constructor(object) {}
-
-    // convenience method for easily setting rule severity
-    setRuleSeverity(ruleId, severity) {}
-
-    // merge info from other configs into a base config
-    static assign(receiverConfig, ...supplierConfigs) {}
-}
-```
-
-A new instance of `Config` is created like this:
-
-```js
-const { Config } = require("@eslint/config");
-
-const config = new Config({
-    files: ["*.js"],
-    ruledefs: {
-        react: require("eslint-plugin-react").rules,
-    },
-    rules: {
-        "react/jsx-uses-react": "error",
-        semi: ["error", "always"]
-    }
-});
-```
-
-After that point, you can easily change the severity of a rule like this:
-
-```js
-config.setRuleSeverity("semi", "warn");
-```
-
-In this way, users don't need to modify an array to change a rule's severity, which is a major downside of this design when using a vanilla object structure as a config.
-
-The `Config.assign()` method lets users modify their config by merging in changes from other configs, such as:
-
-```js
-const standardConfig = require("eslint-config-standard");
-const personalConfig = require("@personal/eslint-config");
-const { Config } = require("@eslint/config");
-
-const myConfig = {
-    extends: standardConfig,
-    rules: {
-        semi: "warn"
-    }
-});
-
-Config.assign(myConfig, personalConfig);
-
-exports.config = myConfig;
-```
-
-This code example merges `personalConfig` into `myConfig` using the same functionality that ESLint currently uses to merge configs.
 
 #### The `RuleLoader` Class
 
@@ -447,17 +382,17 @@ class RuleLoader {
 In order to recreate the functionality of `--rulesdir`, a user would need to create a new entry in `ruledefs` and then specify the rules from a directory, such as:
 
 ```js
-const { Config, RuleLoader } = require("@eslint/config");
+const { RuleLoader } = require("@eslint/config");
 const ruleLoader = new RuleLoader();
 
-exports.config = new Config({
+exports.config = {
     ruledefs: {
         custom: ruleLoader.loadFromDirectory("./custom-rules")
     },
     rules: {
         "custom/my-rule": "error"
     }
-});
+};
 ```
 
 The `RuleLoader#loadFromDirectory()` method returns an object where the keys are the rule IDs (based on the filenames found in the directory) and the values are the rule objects. Unlike today, rules loaded from a local directory must have a namespace just like plugin rules (`custom` in this example).
@@ -495,10 +430,8 @@ This information allows users to make logical decisions about how the config sho
 One of the problems with shareable configs today is when a new rule is added to the ESLint core, shareable configs using that rule are not valid for older versions of ESLint (because ESLint validates that configured rules are present). With advanced configs, a shareable config could detect if a new rule is present before deciding to include it, for example:
 
 ```js
-const { Config } = require("@eslint/config");
-
 exports.config = (context) => {
-    const myConfig = new Config({
+    const myConfig = {
         files: ["*.js"],
         ruledefs: {
             custom: ruleLoader.loadFromDirectory("./custom-rules")
@@ -506,14 +439,13 @@ exports.config = (context) => {
         rules: {
             "custom/my-rule": "error"
         }
-    });
+    };
 
     if (context.hasRule("some-new-rule")) {
         myConfig.rules["some-new-rule"] = ["error"];
     }
 
     return myConfig;
-
 };
 ```
 
