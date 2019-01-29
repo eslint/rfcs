@@ -16,7 +16,9 @@ Currently, formatters only see the ID of each rule for which a violation was ide
 
 Design Summary
 1. In `cli.js::printResults`, obtain the rules map from the `Engine` object.
-2. Pass the rules map as a new, second parameter to the formatter's exported interface function.
+2. Pass the rules map as property in a new, second parameter object to the formatter's exported interface function.
+
+We should use a container object as the parameter, with the rules map as a property, in order to accommodate potential future expansions of the data we pass to formatters. This suggestion was previously made in the discussion of issue #9841.
 
 ### Command Line Interface (cli.js) Changes
 The implementation of this feature is very simple and straightfoward. The code location that invokes the formatter's exported interface function already has access to the API it should use to obtain the list of rules, and the output of that function is a Map (dictionary) which is the type we want to pass to the formatter. This dataset includes all executed rules. The call to `Engine.getRules` must be made in the try block because `enginge` may be null during unit testing.
@@ -34,7 +36,7 @@ function printResults(engine, results, format, outputFile) {
         return false;
     }
 
-    const output = formatter(results, rules);
+    const output = formatter(results, { rules: rules });
     ...
 }
 ```
@@ -48,8 +50,8 @@ No changes to the existing in-box formatters are necessary. Future versions can 
 Since custom formatter authors may want to take advantage of the newly-available rules data, a formal announcement may be justified (I don't have sufficient context in this regard so I will defer this determination.)
 
 The [Working with Custom Formatters](https://eslint.org/docs/developer-guide/working-with-custom-formatters) article will have to be updated:
-* Code samples will need the new `rules` parameter added wherever the exported interface function is shown, *but only when it is used*.
-* The `rules` parameter should be called out and described, and should include a link to the [Working with Rules](https://eslint.org/docs/developer-guide/working-with-rules) article. The primary goal here is to familiarize the formatter author with the structure of the Rule object.
+* Code samples will need the new `data` parameter added wherever the exported interface function is shown, *but only when it is used*.
+* The `data` parameter should be called out and described, and should include a link to the [Working with Rules](https://eslint.org/docs/developer-guide/working-with-rules) article. The primary goal here is to familiarize the formatter author with the structure of the `data` parameter and Rule object.
 * It should be noted that metadata properties such as description, category, and help URL are not required and may not be defined, and that custom formatter code should take this into account.
 * We should show the use of rule data in one of the examples by either modifying an existing one (maybe the [Detailed formatter](https://eslint.org/docs/developer-guide/working-with-custom-formatters#detailed-formatter) example) or adding a new one. One idea would be to suffix the results output with a list of rules that were violated, using a helper function something like this:
 
@@ -94,6 +96,8 @@ Since this change is manifested as a new parameter to the formatter's exported i
     This section should also include prior art, such as whether similar
     projects have already implemented a similar feature.
 -->
+* Including the rule metadata in the result object. This approach results in redundant data being returned, and includes external metadata properties that are not directly relevant. (As an analogy, it's like ...)
+* Pass the rules map itself as a parameter to the formatter's exported interface function. This approach makes it messier to add additional data in the future, since new properties would be necessary.
 
 ## Open Questions
 
@@ -107,7 +111,8 @@ Since this change is manifested as a new parameter to the formatter's exported i
     you've received the answers and updated the design to reflect them, 
     you can remove this section.
 -->
-* Is it possible for a formatter to be called even though no rules have been run? IOW, could the caller suppress the inbox rules without providing any custom rules?
+* Is it possible for a formatter to be invoked even though no rules have been run? IOW, could the caller suppress the inbox rules without providing any custom rules? The rules collection would be empty in this case, which formatters could potentially mishandle.
+* Is there any opportunity for malicious manipulation of the rule data? I think not, since the analysis has completed by the time the formatter is invoked.
 
 ## Help Needed
 
