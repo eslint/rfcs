@@ -1,6 +1,7 @@
 - Start Date: 2019-01-20
-- RFC PR: TBD
+- RFC PR: https://github.com/eslint/rfcs/pull/9
 - Authors: Nicholas C. Zakas (@nzakas)
+- Contributors: Teddy Katz (@not-an-ardvaark), Toru Nagashima (@mysticatea)
 
 # Config File Simplification
 
@@ -53,7 +54,7 @@ The `eslint.config.js` file is a JavaScript file (there is no JSON or YAML equiv
 ```js
 exports.config = {
     files: ["*.js"],
-    ignore: ["*.test.js"],
+    ignores: ["*.test.js"],
     extends: [],
     globals: {},
     settings: {},
@@ -68,7 +69,7 @@ exports.config = {
 The following keys are new to the `eslint.config.js` format:
 
 * `files` - **Required.** Determines the glob file patterns that this configuration applies to.
-* `ignore` - Determines the files that should not be linted using ESLint. This can be used in place of the `.eslintignore` file. The files specified by this array of glob patterns are subtracted from the files specified in `files`.
+* `ignores` - Determines the files that should not be linted using ESLint. This can be used in place of the `.eslintignore` file. The files specified by this array of glob patterns are subtracted from the files specified in `files`.
 * `ruledefs` - Contains definitions for rules grouped by a specific name. This replaces the `plugins` key in `.eslintrc` files and the `--rulesdir` option.
 
 The following keys are specified the same as in `.eslintrc` files:
@@ -167,7 +168,7 @@ exports.config = {
 
 This effectively duplicates the use of `env: { browser: true }` in ESLint.
 
-**Note:** This would allow us to stop environments in ESLint. We could just tell people to use `globals` in their config and allow them to specify which version of `globals` they want to use.
+**Note:** This would allow us to stop shipping environments in ESLint. We could just tell people to use `globals` in their config and allow them to specify which version of `globals` they want to use.
 
 #### Extending Another Config
 
@@ -255,7 +256,62 @@ exports.config = [
 ];
 ```
 
-When ESLint uses this config, it will check each `files` pattern to determine which config applies. In this way, returning an array acts exactly the same as the array in `overrides`, with the exception that no configuration options are inherited.
+When ESLint uses this config, it will check each `files` pattern to determine which configs apply. Any config with a `files` pattern matching the file to lint will be extracted and used (if multiple configs match, then those configs are merged to determine the final config to use). In this way, returning an array acts exactly the same as the array in `overrides`.
+
+If a config in the config array does not contain `files` or `ignores`, then that config applies to all files. For example:
+
+```js
+exports.config = [
+    {
+        globals: {
+            Foo: true
+        }
+    },
+    {
+        files: "*.js",
+        ruledefs: {
+            react: require("eslint-plugin-react").rules,
+        },
+        rules: {
+            "react/jsx-uses-react": "error",
+            semi: "error"
+        }
+    },
+    {
+        files: "*.md",
+        processor: require("eslint-plugin-markdown").processors.markdown
+    }
+];
+```
+
+In this example, the first config in the array defines a global variable of `Foo`. That global variable is merged into the other two configs in the array automatically because there is no `files` or `ignores` specifying when it should be used.
+
+Each item in a config array can be a config array. For example, this is a valid config array:
+
+```js
+exports.config = [
+    [
+        require("eslint-config-vue"),
+        require("eslint-config-import")
+    ]
+    {
+        files: "*.js",
+        ruledefs: {
+            react: require("eslint-plugin-react").rules,
+        },
+        rules: {
+            "react/jsx-uses-react": "error",
+            semi: "error"
+        }
+    },
+    {
+        files: "*.md",
+        processor: require("eslint-plugin-markdown").processors.markdown
+    }
+];
+```
+
+A config array is always flattened before being evaluating, so either though this example is a two-dimensional config array, it will be evaluated as if it were a one-dimensional config array.
 
 #### Replacing `.eslintignore`
 
@@ -266,7 +322,7 @@ const fs = require("fs");
 
 exports.config = {
     files: ["*.js"],
-    ignore: fs.readFileSync(".eslintignore", "utf8").split("\n")
+    ignores: fs.readFileSync(".eslintignore", "utf8").split("\n")
 };
 ```
 
@@ -486,8 +542,8 @@ Some of the key differences from the way ESLint's configuration resolution works
 Because there are file patterns included in `eslint.config.js`, this requires a change to how ESLint decides which files to lint. The process for determining which files to lint is:
 
 1. When a filename is passed directly (such as `eslint foo.js`):
-    1. ESLint checks to see if there is a config where the `files` pattern matches the file that was passed in. The pattern is evaluated by prepending the directory in which `eslint.config.js` was found to each pattern. The first config with a `files` pattern that matches wins. If no config is found, then the file is ignored (with an appropriate warning).
-    1. If a matching config is found, then the `ignore` pattern is tested against the filename. If it's a match, then the file is ignored. Otherwise, the file is linted.
+    1. ESLint checks to see if there is one or more configs where the `files` pattern matches the file that was passed in. The pattern is evaluated by prepending the directory in which `eslint.config.js` was found to each pattern. All configs with a matching `files` pattern are merged (with the last matching config taking precedence over others). If no config is found, then the file is ignored with an appropriate warning.
+    1. If a matching config is found, then the `ignores` pattern is tested against the filename. If it's a match, then the file is ignored. Otherwise, the file is linted.
 1. When a glob pattern is passed directly (such as `eslint src/*.js`):
     1. ESLint expands the glob pattern to get a list of files.
     1. Each file is checked individually as in step 1.
@@ -560,7 +616,7 @@ While there are no alternatives that cover all of the functionality in this RFC,
 1. Is `ruledefs` a clear enough key name?
 1. Do we need a command line flag to opt-in to `eslint.config.js` instead of trying to do it alongside the existing configuration system?
 1. Does the file pattern system actually remove the need for `--ext`?
-1. How should `files` and `ignore` be merged when a shareable config has them? Should they be overwritten or merged?
+1. How should `files` and `ignores` be merged when a shareable config has them? Should they be overwritten or merged?
 
 ## Frequently Asked Questions
 
