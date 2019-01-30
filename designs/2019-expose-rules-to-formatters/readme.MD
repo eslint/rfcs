@@ -16,20 +16,7 @@ Currently, formatters only see the ID of each rule for which a violation was ide
 
 Design Summary
 1. In `cli.js::printResults`, obtain the rules map from the `Engine` object.
-2. Add a second argument to the formatter's exported interface function. The value should be an object with a `ruleMetadata` property that is a map with the rule name as the key and the `rule.meta` object as the value.
-
-```js
-const output = formatter(
-    results,
-    {
-        ruleMetadata: {
-            "accessor-pairs": rules.get("accessor-pairs").meta,
-            "array-bracket-newline": rules.get("array-bracket-newline").meta,
-            // ...
-        }
-    }
-);
-```
+2. Add a second argument to the formatter's exported interface function. The value should be an object with a `ruleMetadata` property that is a map with the rule name as the key and the `rule.meta` object as the value. See the "Command Line Interface (cli.js) Changes" section below for implementation.
 
 We should use a container object as the argument, with a ruleId/rule.meta map as a property, in order to accommodate potential future expansions of the data we pass to formatters. This suggestion was previously made in the discussion of issue [#9841](https://github.com/eslint/eslint/issues/9841).
 
@@ -53,7 +40,7 @@ function printResults(engine, results, format, outputFile) {
     rules.forEach(function(rule, ruleId) {
         rulesMetadata[ruleId] = rule.meta;
     });
-    const output = formatter(results, { ruleMetdata: rulesMetadata });
+    const output = formatter(results, { ruleMetadata: rulesMetadata });
     ...
 }
 ```
