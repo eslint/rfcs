@@ -485,7 +485,7 @@ Because there are file patterns included in `eslint.config.js`, this requires a 
 
 ### Rename `--use-eslintrc` to `--use-config-file`
 
-Because the config filename has changed, it makes sense to change the `--use-eslintrc` flag to a more generic name, `--use-config-file`. In the short term, to avoid a breaking change, these two names can be aliased to each other.
+Because the config filename has changed, it makes sense to change the command line `--no-eslintrc` flag to a more generic name, `--no-config-file` and change `CLIEngine`'s `useEslintrc` option to `useConfigFile`. In the short term, to avoid a breaking change, these pairs of names can be aliased to each other.
 
 ## Documentation
 
