@@ -483,7 +483,7 @@ Because there are file patterns included in `eslint.config.js`, this requires a 
     1. The directory is converted into a glob pattern by appending the contents of the `files` array (such as `src` becomes `src/**/*.js`).
     1. The glob pattern is checked as in step 2.
 
-### Rename `--use-eslintrc` to `--use-config-file`
+### Rename `--no-eslintrc` to `--no-config-file` and `useEslintrc` to `useConfigFile`
 
 Because the config filename has changed, it makes sense to change the command line `--no-eslintrc` flag to a more generic name, `--no-config-file` and change `CLIEngine`'s `useEslintrc` option to `useConfigFile`. In the short term, to avoid a breaking change, these pairs of names can be aliased to each other.
 
