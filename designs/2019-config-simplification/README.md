@@ -474,7 +474,7 @@ Some of the key differences from the way ESLint's configuration resolution works
 Because there are file patterns included in `eslint.config.js`, this requires a change to how ESLint decides which files to lint. The process for determining which files to lint is:
 
 1. When a filename is passed directly (such as `eslint foo.js`):
-    1. ESLint checks to see if there is one or more configs where the `files` pattern matches the file that was passed in. The pattern is evaluated by prepending the directory in which `eslint.config.js` was found to each pattern. All configs with a matching `files` pattern are merged (with the last matching config taking precedence over others). If no config is found, then the file is ignored with an appropriate warning.
+    1. ESLint checks to see if there is one or more configs where the `files` pattern matches the file that was passed in and does not match the `ignores` pattern. The pattern is evaluated by prepending the directory in which `eslint.config.js` was found to each pattern in `files`. All configs that match `files` and not `ignores` are merged (with the last matching config taking precedence over others). If no config is found, then the file is ignored with an appropriate warning.
     1. If a matching config is found, then the `ignores` pattern is tested against the filename. If it's a match, then the file is ignored. Otherwise, the file is linted.
 1. When a glob pattern is passed directly (such as `eslint src/*.js`):
     1. ESLint expands the glob pattern to get a list of files.
