@@ -16,7 +16,7 @@ Currently, formatters only see the ID of each rule for which a violation was ide
 
 Design Summary
 1. In `cli.js::printResults`, obtain the rules map from the `Engine` object.
-2. Add a second argument to the formatter's exported interface function. The value should be an object with a `ruleMetadata` property that is a map with the rule name as the key and the `rule.meta` object as the value. See the "Command Line Interface (cli.js) Changes" section below for implementation.
+2. Add a second argument to the formatter's exported interface function. The value should be an object with a `rulesMetadata` property that is a map with the rule name as the key and the `rule.meta` object as the value. See the "Command Line Interface (cli.js) Changes" section below for implementation.
 
 We should use a container object as the argument, with a ruleId/rule.meta map as a property, in order to accommodate potential future expansions of the data we pass to formatters. This suggestion was previously made in the discussion of issue [#9841](https://github.com/eslint/eslint/issues/9841).
 
@@ -40,7 +40,7 @@ function printResults(engine, results, format, outputFile) {
     rules.forEach(function(rule, ruleId) {
         rulesMetadata[ruleId] = rule.meta;
     });
-    const output = formatter(results, { ruleMetadata: rulesMetadata });
+    const output = formatter(results, { rulesMetadata: rulesMetadata });
     ...
 }
 ```
@@ -56,10 +56,10 @@ Currently the `html` formatter creates incorrect links rooted at the eslint.org 
 The `json` formatter also requires attention. It simply stringifies the `results` object, and would therefore provide incomplete data by ignoring the new `data` argument. To avoid a breaking change to the existing `json` formatter, we should a new built-in formatter, perhaps named `json-with-metadata`, which returns a stringified object containing both objects:
 
 ```js
-module.exports = function(results, ruleMetadata) {
+module.exports = function(results, rulesMetadata) {
     return JSON.stringify({
         results: results,
-        ruleMetadata: ruleMetadata
+        rulesMetadata: rulesMetadata
     });
 };
 ```
@@ -70,7 +70,7 @@ Since custom formatter authors may want to take advantage of the newly-available
 
 The [Working with Custom Formatters](https://eslint.org/docs/developer-guide/working-with-custom-formatters) article will have to be updated:
 * Code samples will need the new `data` argument added wherever the exported interface function is shown, *but only when it is used*.
-* The `data` argument should be called out and described, and should include a link to the [Working with Rules](https://eslint.org/docs/developer-guide/working-with-rules) article. The primary goal here is to familiarize formatter author with the structure of the `data` argument and ruleMetadata object.
+* The `data` argument should be called out and described, and should include a link to the [Working with Rules](https://eslint.org/docs/developer-guide/working-with-rules) article. The primary goal here is to familiarize formatter author with the structure of the `data` argument and rulesMetadata property.
 * It should be noted that rule metadata properties such as description, category, and help URL are not required and may not be defined, and that custom formatter code should take this into account.
 * We should show the use of rule metadata in one of the examples by either modifying an existing one (maybe the [Detailed formatter](https://eslint.org/docs/developer-guide/working-with-custom-formatters#detailed-formatter) example) or adding a new one. One idea would be to suffix the results output with a list of rules that were violated, using a helper function something like this:
 
