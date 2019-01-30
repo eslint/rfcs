@@ -480,7 +480,7 @@ Because there are file patterns included in `eslint.config.js`, this requires a 
     1. ESLint expands the glob pattern to get a list of files.
     1. Each file is checked individually as in step 1.
 1. When a directory is passed directly (such as `eslint src`):
-    1. The directory is converted into a glob pattern by appending the contents of the `files` array (such as `src` becomes `src/**/*.js`).
+    1. The directory is converted into a glob pattern by appending `**/*` to the directory (such as `src` becomes `src/**/*`).
     1. The glob pattern is checked as in step 2.
 
 ### Rename `--no-eslintrc` to `--no-config-file` and `useEslintrc` to `useConfigFile`
