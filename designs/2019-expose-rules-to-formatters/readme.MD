@@ -56,10 +56,10 @@ Currently the `html` formatter creates incorrect links rooted at the eslint.org 
 The `json` formatter also requires attention. It simply stringifies the `results` object, and would therefore provide incomplete data by ignoring the new `data` argument. To avoid a breaking change to the existing `json` formatter, we should a new built-in formatter, perhaps named `json-with-metadata`, which returns a stringified object containing both objects:
 
 ```js
-module.exports = function(results, data) {
+module.exports = function(results, ruleMetadata) {
     return JSON.stringify({
         results: results,
-        data: data
+        ruleMetadata: ruleMetadata
     });
 };
 ```
