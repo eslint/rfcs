@@ -226,7 +226,7 @@ Whereas `.eslintrc` had an `overrides` key that made a hierarchical structure, t
 ```yaml
 plugins: ["react"]
 rules:
-   react/jsx-uses-react: error
+    react/jsx-uses-react: error
     semi: error
 
 overrides:
