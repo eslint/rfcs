@@ -318,7 +318,7 @@ exports.config = [
 
 When ESLint uses this config, it will check each `files` pattern to determine which configs apply. Any config with a `files` pattern matching the file to lint will be extracted and used (if multiple configs match, then those configs are merged to determine the final config to use). In this way, returning an array acts exactly the same as the array in `overrides`.
 
-If a config in the config array does not contain `files` or `ignores`, then that config applies to all files. For example:
+When using a config array, only one config object must have a `files` key (config arrays where no objects contain `files` will result in an error). If a config in the config array does not contain `files` or `ignores`, then that config applies to all files. For example:
 
 ```js
 exports.config = [
