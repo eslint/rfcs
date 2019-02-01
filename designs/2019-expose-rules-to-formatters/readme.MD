@@ -71,6 +71,7 @@ Since custom formatter authors may want to take advantage of the newly-available
 The [Working with Custom Formatters](https://eslint.org/docs/developer-guide/working-with-custom-formatters) article will have to be updated:
 * Code samples will need the new `data` argument added wherever the exported interface function is shown, *but only when it is used*.
 * The `data` argument should be called out and described, and should include a link to the [Working with Rules](https://eslint.org/docs/developer-guide/working-with-rules) article. The primary goal here is to familiarize formatter author with the structure of the `data` argument and rulesMeta property.
+* It should be noted that the rulesMeta dictionary will be empty in cases where no rules have been run.
 * It should be noted that rule metadata properties such as description, category, and help URL are not required and may not be defined, and that custom formatter code should take this into account.
 * We should show the use of rule metadata in one of the examples by either modifying an existing one (maybe the [Detailed formatter](https://eslint.org/docs/developer-guide/working-with-custom-formatters#detailed-formatter) example) or adding a new one. One idea would be to suffix the results output with a list of rules that were violated, using a helper function something like this:
 
@@ -117,21 +118,6 @@ A formatter that assigns a function reference to the exported interface function
 -->
 * Including the rule metadata in the result object. This approach results in redundant data being returned, and includes external metadata properties that are not directly relevant.
 * Pass the rules map itself as a argument to the formatter's exported interface function. This approach makes it messier to add additional data in the future, since new arguments would be necessary.
-
-## Open Questions
-
-<!--
-    This section is optional, but is suggested for a first draft.
-
-    What parts of this proposal are you unclear about? What do you
-    need to know before you can finalize this RFC?
-
-    List the questions that you'd like reviewers to focus on. When
-    you've received the answers and updated the design to reflect them, 
-    you can remove this section.
--->
-* Is it possible for a formatter to be invoked even though no rules have been run? IOW, could the caller suppress the inbox rules without providing any custom rules? The rules collection would be empty in this case, which formatters could potentially mishandle.
-* Is there any opportunity for malicious manipulation of the rule data? I think not, since the analysis has completed by the time the formatter is invoked.
 
 ## Help Needed
 
