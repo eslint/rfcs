@@ -1,5 +1,5 @@
 - Start Date: 2019-01-16
-- RFC PR: (leave this empty, to be filled in later)
+- RFC PR: https://github.com/eslint/rfcs/pull/10
 - Authors: Chris Meyer (@EasyRhinoMSFT)
 
 # Providing Rule Metadata to Formatters
