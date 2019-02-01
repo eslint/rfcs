@@ -548,6 +548,8 @@ Because there are file patterns included in `eslint.config.js`, this requires a 
     1. The relative directory pattern is resolved to a full directory name.
     1. The glob pattern is checked as in step 3.
 
+**Note:** ESLint will continue to ignore `node_modules` by default.
+
 ### Rename `--no-eslintrc` to `--no-config-file` and `useEslintrc` to `useConfigFile`
 
 Because the config filename has changed, it makes sense to change the command line `--no-eslintrc` flag to a more generic name, `--no-config-file` and change `CLIEngine`'s `useEslintrc` option to `useConfigFile`. In the short term, to avoid a breaking change, these pairs of names can be aliased to each other.
