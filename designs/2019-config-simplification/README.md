@@ -311,7 +311,7 @@ exports.config = [
 ];
 ```
 
-A config array is always flattened before being evaluating, so even though this example is a two-dimensional config array, it will be evaluated as if it were a one-dimensional config array.
+A config array is always flattened before being evaluated, so even though this example is a two-dimensional config array, it will be evaluated as if it were a one-dimensional config array.
 
 #### Replacing `.eslintignore`
 
