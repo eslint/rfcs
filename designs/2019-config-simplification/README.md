@@ -485,6 +485,8 @@ The `context` object has the following members:
 
 This information allows users to make logical decisions about how the config should be constructed.
 
+A configuration function may return an object or an array of objects. An error is thrown if any other type of value is returned.
+
 #### Checking for Rule Existence
 
 One of the problems with shareable configs today is when a new rule is added to the ESLint core, shareable configs using that rule are not valid for older versions of ESLint (because ESLint validates that configured rules are present). With advanced configs, a shareable config could detect if a new rule is present before deciding to include it, for example:
