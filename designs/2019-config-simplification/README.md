@@ -542,6 +542,9 @@ Because there are file patterns included in `eslint.config.js`, this requires a 
 1. When a directory is passed directly (such as `eslint src`):
     1. The directory is converted into a glob pattern by appending `**/*` to the directory (such as `src` becomes `src/**/*`).
     1. The glob pattern is checked as in step 2.
+1. When a relative directory is passed directly (such as `eslint .`):
+    1. The relative directory pattern is resolved to a full directory name.
+    1. The glob pattern is checked as in step 3.
 
 ### Rename `--no-eslintrc` to `--no-config-file` and `useEslintrc` to `useConfigFile`
 
