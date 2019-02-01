@@ -128,6 +128,66 @@ exports.config = {
 
 Here, it is the `ruledefs` that assigns the name `react` to the rules from `eslint-plugin-react`. The reference to `react/` in a rule will always look up that value in the `ruledefs` key.
 
+**Note:** If the config `extends` another config that already has a `ruledefs` namespace defined, then an error is thrown. In this case, if a config already has a `react` namespace, then attempting to combine with another config that has a `react` namespace will throw an error. This is to ensure the meaning of `namespace/rule` remains consistent.
+
+#### Suggested Plugin Improvements
+
+Rules imported from a plugin must be assigned a namespace using `ruledefs`, which puts the responsibility for that namespace on the config file user. Plugins can define their own namespace for rules in two ways.
+
+First, a plugin can export a recommended configuration to place in the `extends` key. For example, a plugin called `eslint-plugin-example`, might define a config that looks like this:
+
+```js
+exports.configs = {
+    recommended: {
+        ruledefs: {
+            example: {
+                rule1: require("./rules/rule1")
+            }
+        }
+    }
+};
+```
+
+Then, inside of a user config, the plugin's recommended config can be loaded:
+
+```js
+exports.config = {
+    extends: [
+        require("eslint-plugin-example").configs.recommended
+    ],
+    rules: {
+        "example/rule1": "error"
+    }
+};
+```
+
+The user config in this example now inherits the `ruledefs` from the plugin's recommended config, automatically adding in the rules with their preferred namespace. (Note that the user config can't have another `ruledefs` namespace called `example` without an error being thrown.)
+
+The second way for plugins to specify their preferred namespace is to export a `ruledefs` key directly that users can include their own config. This is what it would look like in the plugin:
+
+```js
+exports.ruledefs = {
+    example: {
+        rule1: require("./rules/rule1")
+    }
+};
+```
+
+Then, inside of a user config, the plugin's `ruledefs` can be included directly`:
+
+```js
+exports.config = {
+    ruledefs: {
+        ...require("eslint-plugin-example").ruledefs
+    },
+    rules: {
+        "example/rule1": "error"
+    }
+};
+```
+
+This example imports the `ruledefs` from a plugin directly into the same section in the user config.
+
 #### Referencing Parsers and Processors
 
 In `.eslintrc`, the `parser` and `processor` keys required strings to be specified, such as:
