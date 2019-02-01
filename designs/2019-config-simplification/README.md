@@ -45,7 +45,7 @@ Design Summary:
 1. Remove the concept of environments (`env`)
 1. Remove `.eslintignore` and `--ignore-file` (no longer necessary)
 1. Remove `--rulesdir`
-1. Create a `@eslint/config` package to help users manager configs
+1. Create a `@eslint/config` package to help users manage configs
 
 ### The `eslint.config.js` File
 
