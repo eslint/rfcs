@@ -318,7 +318,7 @@ exports.config = [
 
 When ESLint uses this config, it will check each `files` pattern to determine which configs apply. Any config with a `files` pattern matching the file to lint will be extracted and used (if multiple configs match, then those configs are merged to determine the final config to use). In this way, returning an array acts exactly the same as the array in `overrides`.
 
-When using a config array, only one config object must have a `files` key (config arrays where no objects contain `files` will result in an error). If a config in the config array does not contain `files` or `ignores`, then that config applies to all files. For example:
+When using a config array, only one config object must have a `files` key (config arrays where no objects contain `files` will result in an error). If a config in the config array does not contain `files` or `ignores`, then that config is merged into every config with a `files` pattern. For example:
 
 ```js
 exports.config = [
@@ -344,7 +344,7 @@ exports.config = [
 ];
 ```
 
-In this example, the first config in the array defines a global variable of `Foo`. That global variable is merged into the other two configs in the array automatically because there is no `files` or `ignores` specifying when it should be used.
+In this example, the first config in the array defines a global variable of `Foo`. That global variable is merged into the other two configs in the array automatically because there is no `files` or `ignores` specifying when it should be used. The first config matches zero files on its own and would be invalid if it was the only config in the config array.
 
 Each item in a config array can be a config array. For example, this is a valid config array:
 
