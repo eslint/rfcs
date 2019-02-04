@@ -45,6 +45,7 @@ Design Summary:
 1. Remove the concept of environments (`env`)
 1. Remove `.eslintignore` and `--ignore-file` (no longer necessary)
 1. Remove `--rulesdir`
+1. Remove `--ext`
 
 ### The `eslint.config.js` File
 
@@ -52,9 +53,9 @@ The `eslint.config.js` file is a JavaScript file (there is no JSON or YAML equiv
 
 ```js
 exports.config = {
+    name: "name",
     files: ["*.js"],
     ignores: ["*.test.js"],
-    extends: [],
     globals: {},
     settings: {},
     processor: object,
@@ -67,10 +68,10 @@ exports.config = {
 
 The following keys are new to the `eslint.config.js` format:
 
+* `name` - Specifies the name of the config object. This is helpful for printing out debugging information and, while not required, is recommended for that reason.
 * `files` - **Required.** Determines the glob file patterns that this configuration applies to.
 * `ignores` - Determines the files that should not be linted using ESLint. This can be used in place of the `.eslintignore` file. The files specified by this array of glob patterns are subtracted from the files specified in `files`.
 * `ruledefs` - Contains definitions for rules grouped by a specific name. This replaces the `plugins` key in `.eslintrc` files and the `--rulesdir` option.
-* `name` - Specifies the name of the config object. This is helpful for printing out debugging information and, while not required, is recommended for that reason.
 
 The following keys are specified the same as in `.eslintrc` files:
 
@@ -81,7 +82,6 @@ The following keys are specified the same as in `.eslintrc` files:
 
 The following keys are specified differently than in `.eslintrc` files:
 
-* `extends` - an object or array in `eslint.config.js` files (a string or string array in `.eslintrc`)
 * `parser` - an object in `eslint.config.js` files (a string in `.eslintrc`)
 * `processor` - an object in `eslint.config.js` files (a string in `.eslintrc`)
 
@@ -89,12 +89,109 @@ Each of these keys used to require one or more strings specifying module(s) to l
 
 The following keys are invalid in `eslint.config.js`:
 
+* `extends` - replaced by config arrays
 * `env` - responsibility of the user
 * `overrides` - responsibility of the user
 * `plugins` - replaced by `ruledefs`
 * `root` - always considered `true`
 
 Each of these keys represent different ways of augmenting how configuration is calculated and all of that responsibility now falls on the user.
+
+#### Extending Another Config
+
+Extending another config is accomplished by returning an array as the value of `exports.config`. Configs that come later in the array are merged with configs that come earlier in the array. For example:
+
+```js
+exports.config = [
+    require("eslint-config-standard"),
+    {
+        files: ["*.js"],
+        rules: {
+            semi: ["error", "always"]
+        }
+    }
+];
+```
+
+This config extends `eslint-config-standard` because that package is included first in the array. You can add multiple configs into the array to extend from multiple configs, such as:
+
+```js
+exports.config = [
+    require("eslint-config-standard"),
+    require("@me/eslint-config"),
+    {
+        files: ["*.js"],
+        rules: {
+            semi: ["error", "always"]
+        }
+    }
+];
+```
+
+Each item in a config array can be a config array. For example, this is a valid config array and equivalent to the previous example:
+
+```js
+exports.config = [
+    [
+        require("eslint-config-standard"),
+        require("@me/eslint-config")
+    ],
+    {
+        files: ["*.js"],
+        rules: {
+            semi: ["error", "always"]
+        }
+    }
+];
+```
+
+A config array is always flattened before being evaluated, so even though this example is a two-dimensional config array, it will be evaluated as if it were a one-dimensional config array.
+
+When using a config array, only one config object must have a `files` key (config arrays where no objects contain `files` will result in an error). If a config in the config array does not contain `files` or `ignores`, then that config is merged into every config with a `files` pattern. For example:
+
+```js
+exports.config = [
+    {
+        globals: {
+            Foo: true
+        }
+    },
+    {
+        files: ["*.js"],
+        rules: {
+            semi: ["error", "always"]
+        }
+    },
+    {
+        files: ["*.mjs"],
+        rules: {
+            semi: ["error", "never"]
+        }
+    }
+];
+```
+
+In this example, the first config in the array defines a global variable of `Foo`. That global variable is merged into the other two configs in the array automatically because there is no `files` or `ignores` specifying when it should be used. The first config matches zero files on its own and would be invalid if it was the only config in the config array.
+
+#### Extending From `eslint:recommended` and `eslint:all`
+
+Both `eslint:recommended` and `eslint:all` can be represented as strings in a config array. For example:
+
+```js
+exports.config = [
+    "eslint:recommended",
+    require("eslint-config-standard"),
+    require("@me/eslint-config"),
+    {
+        files: ["*.js"],
+        rules: {
+            semi: ["error", "always"]
+        }
+    }
+];
+```
+
+This config first extends `eslint:recommended` and then continues on to extend other configs.
 
 #### Referencing Plugin Rules
 
@@ -128,13 +225,13 @@ exports.config = {
 
 Here, it is the `ruledefs` that assigns the name `react` to the rules from `eslint-plugin-react`. The reference to `react/` in a rule will always look up that value in the `ruledefs` key.
 
-**Note:** If the config `extends` another config that already has a `ruledefs` namespace defined, then an error is thrown. In this case, if a config already has a `react` namespace, then attempting to combine with another config that has a `react` namespace will throw an error. This is to ensure the meaning of `namespace/rule` remains consistent.
+**Note:** If a config is merged with another config that already has a `ruledefs` namespace defined, then an error is thrown. In this case, if a config already has a `react` namespace, then attempting to combine with another config that has a `react` namespace will throw an error. This is to ensure the meaning of `namespace/rule` remains consistent.
 
-#### Suggested Plugin Improvements
+#### Plugins Specifying Their Own Namespaces
 
 Rules imported from a plugin must be assigned a namespace using `ruledefs`, which puts the responsibility for that namespace on the config file user. Plugins can define their own namespace for rules in two ways.
 
-First, a plugin can export a recommended configuration to place in the `extends` key. For example, a plugin called `eslint-plugin-example`, might define a config that looks like this:
+First, a plugin can export a recommended configuration to place in a config array. For example, a plugin called `eslint-plugin-example`, might define a config that looks like this:
 
 ```js
 exports.configs = {
@@ -151,14 +248,14 @@ exports.configs = {
 Then, inside of a user config, the plugin's recommended config can be loaded:
 
 ```js
-exports.config = {
-    extends: [
-        require("eslint-plugin-example").configs.recommended
-    ],
-    rules: {
-        "example/rule1": "error"
+exports.config = [
+    require("eslint-plugin-example").configs.recommended,
+    {
+        rules: {
+            "example/rule1": "error"
+        }
     }
-};
+];
 ```
 
 The user config in this example now inherits the `ruledefs` from the plugin's recommended config, automatically adding in the rules with their preferred namespace. (Note that the user config can't have another `ruledefs` namespace called `example` without an error being thrown.)
@@ -230,54 +327,6 @@ This effectively duplicates the use of `env: { browser: true }` in ESLint.
 
 **Note:** This would allow us to stop shipping environments in ESLint. We could just tell people to use `globals` in their config and allow them to specify which version of `globals` they want to use.
 
-#### Extending Another Config
-
-Extending another config works the same as in `.eslintrc` except users pass entire config objects rather than the name of a config. That can easily be done in the following manner:
-
-```js
-exports.config = {
-    files: ["*.js"],
-    extends: require("eslint-config-standard"),
-    rules: {
-        semi: ["error", "always"]
-    }
-};
-```
-
-This config extends `eslint-config-standard` by assigning it to `extends`. You can also use an array for `extends` to extend from multiple configs:
-
-```js
-exports.config = {
-    files: ["*.js"],
-    extends: [
-        require("eslint-config-standard"),
-        require("@me/eslint-config")
-    ],
-    rules: {
-        semi: ["error", "always"]
-    }
-};
-```
-
-#### Extending From `eslint:recommended` and `eslint:all`
-
-Both `eslint:recommended` and `eslint:all` can be represented as strings in the `extends` key. For example:
-
-```js
-exports.config = {
-    files: ["*.js"],
-    extends: [
-        "eslint:recommended",
-        require("eslint-config-standard"),
-        require("@me/eslint-config")
-    ],
-    rules: {
-        semi: ["error", "always"]
-    }
-};
-```
-
-This config first extends `eslint:recommended` and then continues on to extend other configs.
 
 #### Overriding Configuration Based on File Patterns
 
@@ -317,61 +366,6 @@ exports.config = [
 ```
 
 When ESLint uses this config, it will check each `files` pattern to determine which configs apply. Any config with a `files` pattern matching the file to lint will be extracted and used (if multiple configs match, then those configs are merged to determine the final config to use). In this way, returning an array acts exactly the same as the array in `overrides`.
-
-When using a config array, only one config object must have a `files` key (config arrays where no objects contain `files` will result in an error). If a config in the config array does not contain `files` or `ignores`, then that config is merged into every config with a `files` pattern. For example:
-
-```js
-exports.config = [
-    {
-        globals: {
-            Foo: true
-        }
-    },
-    {
-        files: "*.js",
-        ruledefs: {
-            react: require("eslint-plugin-react").rules,
-        },
-        rules: {
-            "react/jsx-uses-react": "error",
-            semi: "error"
-        }
-    },
-    {
-        files: "*.md",
-        processor: require("eslint-plugin-markdown").processors.markdown
-    }
-];
-```
-
-In this example, the first config in the array defines a global variable of `Foo`. That global variable is merged into the other two configs in the array automatically because there is no `files` or `ignores` specifying when it should be used. The first config matches zero files on its own and would be invalid if it was the only config in the config array.
-
-Each item in a config array can be a config array. For example, this is a valid config array:
-
-```js
-exports.config = [
-    [
-        require("eslint-config-vue"),
-        require("eslint-config-import")
-    ]
-    {
-        files: "*.js",
-        ruledefs: {
-            react: require("eslint-plugin-react").rules,
-        },
-        rules: {
-            "react/jsx-uses-react": "error",
-            semi: "error"
-        }
-    },
-    {
-        files: "*.md",
-        processor: require("eslint-plugin-markdown").processors.markdown
-    }
-];
-```
-
-A config array is always flattened before being evaluated, so even though this example is a two-dimensional config array, it will be evaluated as if it were a one-dimensional config array.
 
 #### Replacing `.eslintignore`
 
@@ -611,9 +605,17 @@ The `eslintConfig` and `eslintIgnore` keys in `package.json` will not be honored
 
 That is completely up to the shareable config. For simplicity sake, I think we still want to encourage people to do so. However, there is no longer and formal contract between ESLint and shareable configs, so developers could potentially export configs from any npm package using any exported key. They would just need to inform users about how to extend their config properly.
 
-### Is there a way to allow plugins to specify the namespace of their rules?
+### Why are "eslint:recommended" and "eslint:all" strings instead of objects?
 
-Maybe, but even if we could do that, the namespaces aren't guaranteed to be unique.
+In order to use objects for these two configs, we'd need to somehow pass those objects to the config file. That would mean either exposing something on the ESLint package itself (i.e., `require("eslint").configs.recommended`) or publishing a separate package to do the same (i.e., `require("@eslint/configs).recommended). 
+
+In the first case, you'd end up with a situation where the config needs to specify a particular version of ESLint as its dependency, and that could mean a config could force an ESLint upgrade unnecessarily (especially when shareable configs depend on `"eslint:recommended"`).
+
+In the second case, we'd be stuck trying to keep the core ESLint configs in sync with another package, which is maintenance overhead.
+
+By using strings as placeholders, we allow the core to fill in the values for those configs without adding more restrictions onto the config files.
+
+### Why is `ruledefs` the way to load plugin rules instead of `plugins`?
 
 The reason we could enforce naming of both plugin packages and rule namespaces is because ESLint controlled how the plugins were loaded: users passed ESLint a string and then ESLint could both inspect the string to pull out details it needed (the plugin name without the `eslint-plugin-` prefix) and then modify the rule names to be prepended with the plugin name.
 
