@@ -45,7 +45,6 @@ Design Summary:
 1. Remove the concept of environments (`env`)
 1. Remove `.eslintignore` and `--ignore-file` (no longer necessary)
 1. Remove `--rulesdir`
-1. Create a `@eslint/config` package to help users manage configs
 
 ### The `eslint.config.js` File
 
@@ -414,40 +413,16 @@ eslint src/
 
 When evaluating the `files` array in the config, ESLint will end up searching for `src/**/*.js` and `src/**/*.jsx`. (More information about file resolution is included later this proposal.)
 
-### The `@eslint/config` Package
+### Replacing `--rulesdir`
 
-Because some of the operations ESLint currently do are quite complicated, this design includes a utility package called `@eslint/config` that users can use for common tasks. This package contains the following utilities:
-
-1. `RuleLoader` - a class that aids in loading rules from a directory.
-
-The `@eslint/config` package is intended to add back functionality that would be removed from ESLint with this design.
-
-**Note:** It is not required to use this package with `eslint.config.js`; this is an optional tool that users may choose to use for convenience.
-
-#### The `RuleLoader` Class
-
-The purpose of the `RuleLoader` class is to aid in loading rules to replace `--rulesdir` functionality and has this form:
+In order to recreate the functionality of `--rulesdir`, a user would need to create a new entry in `ruledefs` and then specify the rules from a directory. This can be accomplished using the [`requireindex`](https://npmjs.com/package/requireindex) npm package:
 
 ```js
-class RuleLoader {
-
-    // create a new instance
-    constructor() {}
-
-    // mimic `--rulesdir` loading
-    loadRulesFromDirectory(directory) {}
-}
-```
-
-In order to recreate the functionality of `--rulesdir`, a user would need to create a new entry in `ruledefs` and then specify the rules from a directory, such as:
-
-```js
-const { RuleLoader } = require("@eslint/config");
-const ruleLoader = new RuleLoader();
+const requireIndex = require("requireindex");
 
 exports.config = {
     ruledefs: {
-        custom: ruleLoader.loadFromDirectory("./custom-rules")
+        custom: requireIndex("./custom-rules")
     },
     rules: {
         "custom/my-rule": "error"
@@ -455,7 +430,7 @@ exports.config = {
 };
 ```
 
-The `RuleLoader#loadFromDirectory()` method returns an object where the keys are the rule IDs (based on the filenames found in the directory) and the values are the rule objects. Unlike today, rules loaded from a local directory must have a namespace just like plugin rules (`custom` in this example).
+The `requireIndex()` method returns an object where the keys are the rule IDs (based on the filenames found in the directory) and the values are the rule objects. Unlike today, rules loaded from a local directory must have a namespace just like plugin rules (`custom` in this example).
 
 ### Advanced Configs
 
