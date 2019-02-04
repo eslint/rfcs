@@ -193,6 +193,20 @@ exports.config = [
 
 This config first extends `eslint:recommended` and then continues on to extend other configs.
 
+#### Setting the Name of Shareable Configs
+
+For shareable configs, specifying a `name` property for each config they export helps ESLint to output more useful error messages if there is a problem. The `name` property is a string that will be used to identify configs to help users resolve problems. For example, if you are creating `eslint-config-example`, then you can specify a `name` property to reflect that:
+
+```js
+module.exports = {
+    name: "eslint-config-example",
+
+    // other info here
+};
+```
+
+It's recommended that the shareable config provide a unique name for each config that is exported.
+
 #### Referencing Plugin Rules
 
 The `plugins` key in `.eslintrc` was an array of strings indicating the plugins to load, allowing you to specify processors, rules, etc., by referencing the name of the plugin. It's no longer necessary to indicate the plugins to load because that is done directly in the `eslint.config.js` file. For example, consider this `.eslintrc` file:
