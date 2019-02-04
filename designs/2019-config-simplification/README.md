@@ -207,6 +207,54 @@ module.exports = {
 
 It's recommended that the shareable config provide a unique name for each config that is exported.
 
+#### Disambiguating Shareable Configs With Common Dependencies
+
+Today, shareable configs that depend on plugin rules must specify the plugin as a peer dependency and then either provide a script to install those dependencies or ask the user to install them manually.
+
+With this design, shareable configs can specify plugins as direct dependencies that will be automatically installed with the shareable config, improving the user experience of complex shareable configs. This means its possible for multiple shareable configs to depend on the same plugin and, in theory, depend on different versions of the same plugin. In general, npm will handle this directly, installing the correct plugin version at the correct level for each shareable config to `require()`. For example, suppose there are two shareable configs, `eslint-config-a` and `eslint-config-b` that both rely on the `eslint-plugin-example` plugin, but the former relies on 1.0.0 and the latter relies on 2.0.0. npm will install those plugins like this:
+
+```
+your-project
+├── eslint.config.js
+└── node_modules
+  ├── eslint
+  ├── eslint-config-a
+  | └── eslint-plugin-example@1.0.0
+  └── eslint-config-b
+    └── eslint-plugin-example@2.0.0
+```
+
+The problem comes when the shareable configs try to use the default namespace of `eslint-plugin-example` for its rules, such as:
+
+```js
+module.exports = {
+    ruledefs: {
+        ...require("eslint-plugin-example").ruledefs
+    }
+};
+```
+
+If both shareable configs do this, and the user tries to use both shareable configs, an error will be thrown because the `ruledefs` namespace "example" can only be assigned once.
+
+To work around this problem, shareable configs that rely on plugins should also export a separate config that assigns a unique namespace to all plugin rules. To continue with the example in this section, that might be under `eslint-config-example/compat` and would look like this:
+
+```js
+const originalRuleDefs = require("eslint-plugin-example").ruledefs;
+const compatRuleDefs = {};
+
+for (const key in originalRuleDefs) {
+    compatRuleDefs["config-a::" + key] = originalRuleDefs;
+}
+
+module.exports = {
+    ruledefs: {
+        ...compatRuleDefs
+    }
+};
+```
+
+Here, the shareable config is exporting the same rules from the plugins as before, but using the namespace `config-a::example` instead of the default `example` that `eslint-plugin-example` defines. In this way, shareable config authors can provide an option for users who may be extending multiple configs that depend on the same plugin.
+
 #### Referencing Plugin Rules
 
 The `plugins` key in `.eslintrc` was an array of strings indicating the plugins to load, allowing you to specify processors, rules, etc., by referencing the name of the plugin. It's no longer necessary to indicate the plugins to load because that is done directly in the `eslint.config.js` file. For example, consider this `.eslintrc` file:
@@ -340,7 +388,6 @@ exports.config = {
 This effectively duplicates the use of `env: { browser: true }` in ESLint.
 
 **Note:** This would allow us to stop shipping environments in ESLint. We could just tell people to use `globals` in their config and allow them to specify which version of `globals` they want to use.
-
 
 #### Overriding Configuration Based on File Patterns
 
@@ -628,6 +675,10 @@ In the first case, you'd end up with a situation where the config needs to speci
 In the second case, we'd be stuck trying to keep the core ESLint configs in sync with another package, which is maintenance overhead.
 
 By using strings as placeholders, we allow the core to fill in the values for those configs without adding more restrictions onto the config files.
+
+### Should shareable configs also use `exports.config`?
+
+It's really up to the shareable configs. With this design, there is no required format for shareable configs, so we can no longer enforce any such conventions. For simplicity, I think that most shareable configs will use `module.exports`, but it's really up to the shareable config author.
 
 ### Why is `ruledefs` the way to load plugin rules instead of `plugins`?
 
