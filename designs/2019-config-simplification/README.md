@@ -241,13 +241,17 @@ If both shareable configs do this, and the user tries to use both shareable conf
 To work around this problem, shareable configs that rely on plugins should also export a separate config that assigns a unique namespace to all plugin rules. To continue with the example in this section, that might be under `eslint-config-example/compat` and would look like this:
 
 ```js
-const originalRuleDefs = require("eslint-plugin-example").ruledefs;
+// pull in ruldefs from the regular config
+const originalRuleDefs = require("./index").ruledefs;
+
+// namespace each original ruledef
 const compatRuleDefs = {};
 
 for (const key in originalRuleDefs) {
-    compatRuleDefs["config-a::" + key] = originalRuleDefs;
+    compatRuleDefs["config-a::" + key] = originalRuleDefs[key];
 }
 
+// include in a config
 module.exports = {
     ruledefs: {
         ...compatRuleDefs
@@ -256,6 +260,31 @@ module.exports = {
 ```
 
 Here, the shareable config is exporting the same rules from the plugins as before, but using the namespace `config-a::example` instead of the default `example` that `eslint-plugin-example` defines. In this way, shareable config authors can provide an option for users who may be extending multiple configs that depend on the same plugin.
+
+If a shareable config does not provide a compat version, then the end user still can create one on their own by manually creating a new config from the shareable config. For example:
+
+```js
+// get the config you want to extend
+const configToExtend = require("eslint-plugin-example");
+
+// create a new copy
+const compatConfig = Object.create(configToExtend);
+compatConfig.ruledefs = {};
+
+// namespace each original
+for (const key in configToExtend.ruledefs) {
+    compatConfig.ruledefs["compat::" + key] = configToExtend.ruledefs[key];
+}
+
+// include in config
+exports.config = [
+    compatConfig,
+    {
+        // overrides here
+    }
+];
+```
+
 
 #### Referencing Plugin Rules
 
