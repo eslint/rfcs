@@ -519,7 +519,7 @@ exports.config = {
 
 The `requireIndex()` method returns an object where the keys are the rule IDs (based on the filenames found in the directory) and the values are the rule objects. Unlike today, rules loaded from a local directory must have a namespace just like plugin rules (`custom` in this example).
 
-### Advanced Configs
+### Function Configs
 
 Some users may need information from ESLint to determine the correct configuration to use. To allow for that, `exports.config` may also be a function that returns an object, such as:
 
@@ -572,6 +572,21 @@ exports.config = (context) => {
     return myConfig;
 };
 ```
+
+#### Including Function Configs in an Array
+
+A function config can be used anywhere a config object or a config array is valid. That means you can insert a function config as a config array member:
+
+```js
+exports.config = [
+    (context) => someObject,
+    require("eslint-config-myconfig")
+];
+```
+
+Each function config in an array will be executed with a `context` object when ESLint evaluates the configuration file. This also means that shareable configs can export a function instead of an object or array.
+
+**Note:** If a function config inside of a config array happens to return an array, then those config array items are flattened as with any array-in-array situation.
 
 ### Configuration Location Resolution
 
