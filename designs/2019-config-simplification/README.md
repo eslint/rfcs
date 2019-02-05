@@ -219,9 +219,11 @@ your-project
 └── node_modules
   ├── eslint
   ├── eslint-config-a
-  | └── eslint-plugin-example@1.0.0
+  | └── node_modules
+  |   └── eslint-plugin-example@1.0.0
   └── eslint-config-b
-    └── eslint-plugin-example@2.0.0
+    └── node_modules
+      └── eslint-plugin-example@2.0.0
 ```
 
 The problem comes when the shareable configs try to use the default namespace of `eslint-plugin-example` for its rules, such as:
