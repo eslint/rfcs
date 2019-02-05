@@ -287,7 +287,7 @@ exports.config = {
 
 Here, it is the `ruledefs` that assigns the name `react` to the rules from `eslint-plugin-react`. The reference to `react/` in a rule will always look up that value in the `ruledefs` key.
 
-**Note:** If a config is merged with another config that already has a `ruledefs` namespace defined, then an error is thrown. In this case, if a config already has a `react` namespace, then attempting to combine with another config that has a `react` namespace will throw an error. This is to ensure the meaning of `namespace/rule` remains consistent.
+**Note:** If a config is merged with another config that already has the same `ruledefs` namespace defined, then an error is thrown. In this case, if a config already has a `react` namespace, then attempting to combine with another config that has a `react` namespace will throw an error. This is to ensure the meaning of `namespace/rule` remains consistent.
 
 #### Plugins Specifying Their Own Namespaces
 
