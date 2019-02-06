@@ -711,7 +711,7 @@ The `eslintConfig` and `eslintIgnore` keys in `package.json` will not be honored
 
 ### Do shareable configs still export an object on `module.exports`?
 
-That is completely up to the shareable config. For simplicity sake, I think we still want to encourage people to do so. However, there is no longer and formal contract between ESLint and shareable configs, so developers could potentially export configs from any npm package using any exported key. They would just need to inform users about how to extend their config properly.
+That is completely up to the shareable config. For simplicity sake, I think we still want to encourage people to do so. However, there is no longer a formal contract between ESLint and shareable configs, so developers could potentially export configs from any npm package using any exported key. They would just need to inform users about how to extend their config properly.
 
 ### Why are "eslint:recommended" and "eslint:all" strings instead of objects?
 
