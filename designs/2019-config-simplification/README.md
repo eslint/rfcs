@@ -631,6 +631,40 @@ Because there are file patterns included in `eslint.config.js`, this requires a 
 
 Because the config filename has changed, it makes sense to change the command line `--no-eslintrc` flag to a more generic name, `--no-config-file` and change `CLIEngine`'s `useEslintrc` option to `useConfigFile`. In the short term, to avoid a breaking change, these pairs of names can be aliased to each other.
 
+### Implementation Details
+
+The implementation of this feature requires the following changes:
+
+1. Create a new `ConfigArray` class to manage configs.
+1. Create a `--no-config-file` CLI option and alias it to `--no-eslintrc` for backwards compatibility.
+1. Create a `useConfigFile` option for `CLIEngine`. Alias `useESLintRC` to this option for backwards compatibility.
+1. In `CLIEngine#executeOnFiles()`:
+    1. Check for existence of `eslint.config.js`, and if found, opt-in to new behavior.
+    1. Create a `ConfigArray` to hold the configuration information and to determine which files to lint (in conjuction with already-existing `globUtils`)
+    1. Rename the private functions `processText()` and `processFiles()` to `legacyProcessText()` and `legacyProcessFiles()`; create new versions with the new functionality named `processText()` and `processFiles()`. Use the appropriate functions based on whether or not the user has opted-in.
+    1. Update `Linter#verify()` to check for objects on keys that now support objects instead of strings (like `parser`).
+1. At a later point, we will be able to remove a lot of the existing configuration utilities.
+
+#### The `ConfigArray` Class
+
+The `ConfigArray` class is the primary new class for handling the configuration change defined in this proposal.
+
+```js
+class ConfigArray extends Array {
+
+    // create a normalized ConfigArray from an iterable
+    static normalize(iterable, context) {}
+
+    // normalize the current ConfigArray
+    normalize(context) {}
+
+    // get a single config for the given filename
+    getConfigFor(filename, configFileDir) {}
+}
+```
+
+In this class, "normalize" means that all functions are called and replaced with their results, the array has been flattened, and configs without `files` keys have been merged into configs that do have `files` keys for easier calculation.
+
 ## Documentation
 
 This will require extensive documentation changes and an introductory blog post.
