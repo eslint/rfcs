@@ -706,6 +706,8 @@ In the first phase, I envision this:
 
 This keeps the current behavior for the majority of users while allowing some users to test out the new functionality. Also, `-c` could not be used with `eslint.config.js` in this phase.
 
+For every option that is provided and ignored, ESLint will emit a warning. (For example, if `.eslintignore` is found and not used then a warning will be output.)
+
 In the second phase (and in a major release), ESLint will emit deprecation warnings whenever the original functionality is used but will still honor them so long as `eslint.config.js` is not found.
 
 In the third phase (and in another major release), `eslint.config.js` becomes the official way to configure ESLint. If no `eslint.config.js` file is found, ESLint will still search for a `.eslintrc` file, and if found, print an error message information the user that the configuration file format has changed.
