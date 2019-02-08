@@ -701,7 +701,6 @@ In the first phase, I envision this:
     1. `--rulesdir` is ignored.
     1. `--env` is ignored.
     1. `--ext` is ignored.
-    1. `--use-eslintrc` is ignored.
     1. `eslint-env` config comments are ignored.
 1. If `eslint.config.js` is not found, then fall back to the current behavior.
 
