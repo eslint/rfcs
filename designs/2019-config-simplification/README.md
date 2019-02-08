@@ -655,7 +655,7 @@ As with any significant change, there are some significant drawbacks:
 
 ## Backwards Compatibility Analysis
 
-The intent of this proposal is to replace the current `.eslintrc` format, but can be implemented incrementally so as to cause as little disturbance to ESLint users as possible
+The intent of this proposal is to replace the current `.eslintrc` format, but can be implemented incrementally so as to cause as little disturbance to ESLint users as possible.
 
 In the first phase, I envision this:
 
