@@ -724,10 +724,7 @@ While there are no alternatives that cover all of the functionality in this RFC,
 
 ## Open Questions
 
-1. Is `ruledefs` a clear enough key name?
 1. Do we need a command line flag to opt-in to `eslint.config.js` instead of trying to do it alongside the existing configuration system?
-1. Does the file pattern system actually remove the need for `--ext`?
-1. How should `files` and `ignores` be merged when a shareable config has them? Should they be overwritten or merged?
 1. Should `eslint` run without any directories, globs, or filenames, fall back to using the globs in the config to find files to run?
 
 ## Frequently Asked Questions
