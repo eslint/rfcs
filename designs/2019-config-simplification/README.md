@@ -238,7 +238,7 @@ module.exports = {
 
 If both shareable configs do this, and the user tries to use both shareable configs, an error will be thrown when the configs are merged because the `ruledefs` namespace "example" can only be assigned once.
 
-To work around this problem, shareable configs that rely on plugins should also export a separate config that assigns a unique namespace to all plugin rules. To continue with the example in this section, that might be under `eslint-config-example/compat` and would look like this:
+To work around this problem, shareable configs that rely on plugins may also export a separate config that assigns a unique namespace to all plugin rules. To continue with the example in this section, that might be under `eslint-config-example/compat` and would look like this:
 
 ```js
 // pull in ruldefs from the regular config
