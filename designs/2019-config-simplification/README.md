@@ -637,7 +637,7 @@ The implementation of this feature requires the following changes:
 
 1. Create a new `ConfigArray` class to manage configs.
 1. Create a `--no-config-file` CLI option and alias it to `--no-eslintrc` for backwards compatibility.
-1. Create a `useConfigFile` option for `CLIEngine`. Alias `useESLintRC` to this option for backwards compatibility.
+1. Create a `useConfigFile` option for `CLIEngine`. Alias `useEslintrc` to this option for backwards compatibility.
 1. In `CLIEngine#executeOnFiles()`:
     1. Check for existence of `eslint.config.js`, and if found, opt-in to new behavior.
     1. Create a `ConfigArray` to hold the configuration information and to determine which files to lint (in conjuction with already-existing `globUtils`)
