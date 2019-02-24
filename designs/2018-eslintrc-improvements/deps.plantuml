@@ -1,0 +1,37 @@
+@startuml
+object CLIEngine
+object Linter
+object Rules
+object Rule
+object Environments
+object Environment
+object Plugins
+object Plugin
+object Parsers
+object Parser
+object Config
+object ConfigCache
+object ConfigFile
+
+CLIEngine *--> Linter : "use"
+CLIEngine *--> Config : "load with hierarchy"
+Linter *--> Parsers : "register & use"
+Linter *--> Rules : "register & use"
+Linter *--> Environments : "use"
+Parsers *--> Parser : "has"
+Rules *--> Rule : "has"
+Environments *--> Environment : "has"
+Plugins --> Environments : "register"
+Plugins --> Linter : "use"
+Plugins ..> Rules : "register"
+Plugins *--> Plugin : "has"
+Config --> Linter : "use"
+Config *--> ConfigCache : "use"
+Config *--> Plugins : "load"
+Config ..> Environments : "use"
+Config ..> ConfigFile : "load"
+ConfigFile ..> ConfigCache : "register"
+ConfigFile ..> Plugins : "load"
+ConfigFile ..> Rules : "use"
+ConfigFile ..> Environments : "use"
+@enduml

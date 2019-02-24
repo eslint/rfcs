@@ -1,0 +1,19 @@
+@startuml
+object CLIEngine
+object Linter
+object Rule
+object Environment
+object Plugin
+object Parser
+object ConfigArray
+object FileEnumerator
+
+CLIEngine *--> Linter : "use"
+CLIEngine *--> FileEnumerator : "use"
+Linter ..> ConfigArray : "use"
+FileEnumerator ..> ConfigArray : "load"
+ConfigArray *--> Parser : "load & has"
+ConfigArray *--> Plugin : "load & has"
+Plugin *--> Rule : "has"
+Plugin *--> Environment : "has"
+@enduml
