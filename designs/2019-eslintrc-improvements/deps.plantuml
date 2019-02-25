@@ -7,7 +7,6 @@ rectangle "depending on fs" {
 object Linter
 object ConfigCache
 object ConfigData
-object Parsers
 object Environments
 object Rules
 object Parser
@@ -26,11 +25,10 @@ Plugins --> Environments : "register"
 Plugins --> Linter
 Plugins ..> Rules : "register"
 Plugins *--> Plugin : "load"
-Linter *--> Parsers : "load & use"
+Linter *--> Parser : "load"
 Linter *--> Rules : "use"
 Linter *--> Environments : "use"
 Linter ..> ConfigData : "use"
-Parsers *--> Parser
 Environments --> Environment
 Rules --> Rule
 Plugin *--> Rule
