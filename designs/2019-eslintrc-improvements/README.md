@@ -13,7 +13,7 @@ This RFC fixes two bugs I found while I make a PoC (I guess we don't want to mak
 - A fatal error by unused dependencies (E.g. [eslint/eslint#11396]).
 - A surprised behavior of `overrides` (see [details](#️-fix-a-surprised-behavior-of-overrides)).
 
-To make sure if this refactoring is effective to make easier to enhance, the PoC of this RFC has added enhancements. I don't think we require those enhancements in this RFC.
+To make sure if this refactoring is effective to make easier to enhance, the PoC of this RFC has added enhancements. I don't think this RFC requires those enhancements, but we can add.
 
 - ESLint checks the files which are matched by `overrides[].files` property automatically (see [details](#3-it-changes-the-processing-order-to-config-then-files-from-files-then-config)).
 - `overrides` supports `extends` and nested `overrides` (the logic is just recursive) ([eslint/eslint#8813]).
