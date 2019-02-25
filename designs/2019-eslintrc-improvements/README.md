@@ -261,9 +261,17 @@ rules:
 After this proposal, the setting in your `.eslintrc` priors to the setting in shareable configs always.
 This is a breaking change, but I think reasonable.
 
-### ⚠️ Plugin conflict throws errors now.
+### ⚠️ It looks plugins up from the location where the config file is.
 
-If two different files imports one same plugin, it throws error. Because of https://gist.github.com/not-an-aardvark/169bede8072c31a500e018ed7d6a8915
+This means we get the consistent way to load dependencies on `extends`, `parser`, and `plugins`.
+
+Currently, ESLint looks shareable configs and parsers relatively from the location where the config file is. But ESLint looks plugins from the project root. This is forcing inconvenient to shareable config maintainers ([eslint/eslint#3458], [eslint/eslint#10643]).
+
+This proposal makes those behaviors consistent.
+
+Each element of `ConfigArray` has the loaded plugins. When ESLint merges those by `ConfigArray#extractConfig(filePath)`, if one same plugin loaded from different config files (except self-loading), it throws a confliction error because of https://gist.github.com/not-an-aardvark/169bede8072c31a500e018ed7d6a8915.
+
+This behavior is described on [#14] as well. This change has huge impact, probably we should discuss on [#14] individually.
 
 People can resolve this problem with `.eslintrc.js` and to install needed plugins:
 
@@ -304,6 +312,7 @@ Then two shareable configs which depend on a same plugin can work together with 
 
 ## Related Discussions
 
+- [#14]
 - [#9]
 - [#7]
 - [#5]
@@ -319,6 +328,7 @@ Then two shareable configs which depend on a same plugin can work together with 
 
 Especially, this proposal is inspired by the discussion on [#9].
 
+[#14]: https://github.com/eslint/rfcs/pull/14
 [#9]: https://github.com/eslint/rfcs/pull/9
 [#7]: https://github.com/eslint/rfcs/pull/7
 [#5]: https://github.com/eslint/rfcs/pull/5
