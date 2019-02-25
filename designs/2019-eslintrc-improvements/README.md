@@ -8,6 +8,20 @@
 
 This proposal improves the internal logic of configuration files to maintain our codebase easier and add enhancements easier. This is a change of architecture and large refactoring.
 
+This RFC fixes two bugs I found while I make a PoC (I guess we don't want to make surprised behaviors on purpose).
+
+- A fatal error by unused dependencies (E.g. [eslint/eslint#11396]).
+- A surprised behavior of `overrides` (see [details](#️-fix-a-surprised-behavior-of-overrides)).
+
+To make sure if this refactoring is effective to make easier to enhance, the PoC of this RFC has added enhancements. I don't think we require those enhancements in this RFC.
+
+- ESLint checks the files which are matched by `overrides[].files` property automatically (see [details](#3-it-changes-the-processing-order-to-config-then-files-from-files-then-config)).
+- `overrides` supports `extends` and nested `overrides` (the logic is just recursive) ([eslint/eslint#8813]).
+
+And, sorry, this RFC contains the change of the plugin resolution logic because I had misunderstood it has been accepted in [#7].
+
+- ESLint looks plugins up from the location where the config file is. This is a similar thing to [#14].
+
 ## Motivation
 
 - The codebase about configuration files is complicated.
