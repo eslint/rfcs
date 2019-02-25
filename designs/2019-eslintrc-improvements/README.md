@@ -41,7 +41,7 @@ If it cannot load a configuration of `extends` property, it throws an error imme
 
 If a loaded configuration of `extends` property has `extends` property or `overrides` property, it flattens those recursively.
 
-If a configuration of `overrides` property has `extends` property or `overrides` property, it flattens those recursively. The `files` property and `excludedFiles` property of the configuration are applied to every flattended item. If a flattened item has own `files` property and `excludedFiles` property, it composes those by logical AND.
+If a configuration of `overrides` property has `extends` property or `overrides` property, it flattens those recursively. The `files` property and `excludedFiles` property of the configuration are applied to every flattened item. If a flattened item has own `files` property and `excludedFiles` property, it composes those by logical AND.
 
 About duplicated setting item, a posterior element in the array priors to an anterior element in the array.
 
