@@ -27,16 +27,17 @@ outcome? -->
 ## Documentation
 
 <!--
-    How will this RFC be documented? Does it need a formal announcement
-    on the ESLint blog to explain the motivation?
+    How will this RFC be documented?
+
+    Do users need to understand all of the details and corner cases in this RFC to take advantage of it, or is there a simpler mental model that users can work with? If there are corner cases where the simpler mental model fails, how will ESLint instruct users to fix the problem (e.g. through error messages) when those cases occur?
 -->
 
 ## Drawbacks
 
 <!--
     Why should we *not* do this? Consider why adding this into ESLint
-    might not benefit the project or the community. Attempt to think 
-    about any opposing viewpoints that reviewers might bring up. 
+    might not benefit the project or the community. Attempt to think
+    about any opposing viewpoints that reviewers might bring up.
 
     Any change has potential downsides, including increased maintenance
     burden, incompatibility with other tools, breaking existing user
@@ -70,7 +71,7 @@ outcome? -->
     need to know before you can finalize this RFC?
 
     List the questions that you'd like reviewers to focus on. When
-    you've received the answers and updated the design to reflect them, 
+    you've received the answers and updated the design to reflect them,
     you can remove this section.
 -->
 
