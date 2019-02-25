@@ -1,19 +1,25 @@
 @startuml
-object CLIEngine
+rectangle "depending on fs" {
+  object CLIEngine
+  object FileEnumerator
+  object ConfigArrayFactory
+}
 object Linter
+object ConfigArray
+object Parser
+object Plugin
 object Rule
 object Environment
-object Plugin
-object Parser
-object ConfigArray
-object FileEnumerator
 
-CLIEngine *--> Linter : "use"
-CLIEngine *--> FileEnumerator : "use"
-Linter ..> ConfigArray : "use"
-FileEnumerator ..> ConfigArray : "load"
-ConfigArray *--> Parser : "load & has"
-ConfigArray *--> Plugin : "load & has"
-Plugin *--> Rule : "has"
-Plugin *--> Environment : "has"
+CLIEngine *--> Linter
+CLIEngine *--> FileEnumerator
+Linter ..> ConfigArray
+FileEnumerator *--> ConfigArrayFactory
+ConfigArrayFactory ..> ConfigArray : "load"
+ConfigArrayFactory ..> Parser : "load"
+ConfigArrayFactory ..> Plugin : "load"
+ConfigArray o--> Parser
+ConfigArray o--> Plugin
+Plugin *--> Rule
+Plugin *--> Environment
 @enduml
