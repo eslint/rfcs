@@ -120,7 +120,7 @@ The codebase can get simple by the removal of the registration. Instead, the int
 
 ![](deps2.svg)
 
-Surprisingly, now the return value of `CofnigArray.loadFile(filePath)` has all needed information to check files. Previously, we also needed information that was registered somewhere.
+Surprisingly, now the return value of `ConfigArrayFactory.loadFile(filePath)` has all needed information to check files. Previously, we also needed information that was registered somewhere.
 
 <details><summary>Example:</summary>
 
@@ -228,7 +228,7 @@ But I guess there are some breaking changes.
 ### ✅ CLIEngine#addPlugin
 
 It can work fine as is.
-`CLIEngine` has a `Map<string, Plugin>` for the added plugin, and it gives `FileEnumerator` (then `ConfigArray.load*` methods) the map, and the loading logic uses the map to load plugins.
+`CLIEngine` has a `Map<string, Plugin>` for the added plugin, and it gives `FileEnumerator` (then `ConfigArrayFactory.load*` methods) the map, and the loading logic uses the map to load plugins.
 
 ### ✅ Linter
 
