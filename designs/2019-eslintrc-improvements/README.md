@@ -357,6 +357,7 @@ For <a href="https://github.com/eslint/eslint/issues/9505">eslint/eslint#9505</a
 - [#9]
 - [#7]
 - [#5]
+- [#3]
 - [eslint/eslint#3458]
 - [eslint/eslint#6732]
 - [eslint/eslint#8813]
