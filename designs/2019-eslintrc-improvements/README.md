@@ -126,13 +126,13 @@ is flattend to:
 
 The loading logic of configuration files is complicated because it has complicated relationships between the config, plugins, parsers, and environments.
 
-![](deps.svg)
+![Current relationship graph](diagrams/current-deps.svg)
 
 The main reason is registration. The loading logic has side-effects that register loaded plugins to the plugin manager, and plugins have side-effects that register rules and environments to other managers.
 
 The codebase can get simple by the removal of the registration. Instead, the internal structure of configuration owns loaded plugins and parsers.
 
-![](deps2.svg)
+![New relationship graph](diagrams/new-deps.svg)
 
 Surprisingly, now the return value of `ConfigArrayFactory.loadFile(filePath)` has all needed information to check files. Previously, we also needed information that was registered somewhere.
 

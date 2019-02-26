@@ -1,0 +1,66 @@
+@startuml current-deps
+rectangle "depending on fs" {
+  object CLIEngine
+  object Config
+  object Plugins
+  object GlobUtils
+}
+object Linter
+object ConfigCache
+object Environments
+object Rules
+object "config object" as ConfigData
+object "parser object" as Parser
+object "plugin object" as Plugin
+object "env object" as Environment
+object "rule object" as Rule
+
+CLIEngine *-->"1" Linter
+CLIEngine *-->"1" Config
+CLIEngine *-->"1" GlobUtils
+Config -->"1" Linter
+Config *-->"1" ConfigCache : "register"
+Config *-->"1" Plugins : "use"
+Config ..> ConfigData : "load"
+Config ..> Environments : "use"
+Plugins -->"1" Environments : "register"
+Plugins -->"1" Linter
+Plugins ..> Rules : "register"
+Plugins *-->"0..*" Plugin : "load"
+Linter *-->"*" Parser : "load"
+Linter *-->"1" Rules
+Linter *-->"1" Environments
+Linter ..> ConfigData : "use"
+Environments -->"0..*" Environment
+Rules -->"0..*" Rule
+Plugin *-->"0..*" Rule
+Plugin *-->"0..*" Environment
+@enduml
+
+@startuml new-deps
+rectangle "depending on fs" {
+  object CLIEngine
+  object FileEnumerator
+  object ConfigArrayFactory
+}
+object Linter
+object ConfigArray
+object ConfigArrayElement
+object "parser object" as Parser
+object "plugin object" as Plugin
+object "env object" as Environment
+object "rule object" as Rule
+
+CLIEngine *-->"1" Linter
+CLIEngine *-->"1" FileEnumerator
+Linter ..> ConfigArray
+FileEnumerator *-->"1" ConfigArrayFactory
+ConfigArrayFactory ..> ConfigArray : "load"
+ConfigArrayFactory ..> Parser : "load"
+ConfigArrayFactory ..> Plugin : "load"
+ConfigArray *-->"0..*" ConfigArrayElement
+ConfigArrayElement o-->"0..1" Parser
+ConfigArrayElement o-->"0..*" Plugin
+Plugin *-->"0..*" Rule
+Plugin *-->"0..*" Environment
+@enduml
