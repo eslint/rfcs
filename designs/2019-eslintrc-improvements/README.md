@@ -209,10 +209,14 @@ Even if unused dependencies have some errors, ESLint doesn't throw it. (fixes <a
 
 <a id="linter-change"></a>If `Linter#verify` received a `ConfigArray` object, it requires `options.filename` as well. The `Linter` object calls `ConfigArray#extractConfig(filePath)` method and set needed parser, rules, and environments up.
 
-> Now we can implement [#3] in `Linter#verify` method because the `ConfigArray` object has the complete information to handle virtual files. So we get two pros.
->
-> - We don't need to access to the file system for each virtual file.
-> - We don't need to clone the logic of `Linter#verifyAndFix` method.
+<table><td>
+📝 <b>Note</b>:<br>
+<p>Now we can implement <a href="/eslint/rfcs/pull/3">#3</a> in <code>Linter#verify</code> method because the <code>ConfigArray</code> object has the complete information to handle virtual files. So we get two pros.
+<ul>
+<li>We don't need to access to the file system for each virtual file.
+<li>We don't need to clone the logic of <code>Linter#verifyAndFix</code> method.
+</ul>
+</td></table>
 
 ### 3. It changes the processing order to "config-then-files" from "files-then-config".
 
