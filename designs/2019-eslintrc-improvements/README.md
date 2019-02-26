@@ -10,17 +10,17 @@ This proposal improves the internal logic of configuration files to maintain our
 
 This RFC fixes two bugs I found while I make a PoC (I guess we don't want to make surprised behaviors on purpose).
 
-- A fatal error by unused dependencies (E.g. [eslint/eslint#11396]).
-- A surprised behavior of `overrides` (see [details](#️-fix-a-surprised-behavior-of-overrides)).
+- ([link](#fix-error-in-unused-deps)) A fatal error by unused dependencies (fixes [eslint/eslint#11396]).
+- ([link](#fix-overrides-order)) A surprised behavior of `overrides` (see [details](#️-fix-a-surprised-behavior-of-overrides)).
 
 To make sure if this refactoring is effective to make easier to enhance, the PoC of this RFC has added enhancements. I don't think this RFC requires those enhancements, but we can add.
 
-- ESLint checks the files which are matched by `overrides[].files` property automatically (see [details](#3-it-changes-the-processing-order-to-config-then-files-from-files-then-config)).
-- `overrides` supports `extends` and nested `overrides` (the logic is just recursive) ([eslint/eslint#8813]).
+- ([link](#ext-functionality)) ESLint checks the files which are matched by a `overrides[].files` automatically even if the file is not `*.js` (fixes [eslint/eslint#11223]).
+- ([link](#overrides-extends)) `overrides` supports `extends` and nested `overrides` (the logic is just recursive) (fixes [eslint/eslint#8813]).
 
 And, sorry, this RFC contains the change of the plugin resolution logic because I had misunderstood it has been accepted in [#7].
 
-- ESLint looks plugins up from the location where the config file is. This is a similar thing to [#14].
+- ([link](#️-it-looks-plugins-up-from-the-location-where-the-config-file-is)) ESLint looks plugins up from the location where the config file is. This is a similar thing to [#14].
 
 ## Motivation
 
@@ -37,12 +37,6 @@ Proof of Concept (implementation): https://github.com/eslint/eslint/tree/proof-o
 1. It changes the processing order to "config-then-files" from "files-then-config".
 1. It restructures the files about CLIEngine and lookup.
 
-And some side-effects are:
-
-- `overrides` supports `extends` and nested `overrides`.
-- A surprised behavior about `overrides` is fixed.
-- Unused parser settings no longer throw ([eslint/eslint#11396]).
-
 ### 1. It simplifies the internal structure of configuration files by an array.
 
 When it reads configuration files, it flattens the `extends` property and `overrides` property of the configuration. This is the following order:
@@ -55,7 +49,17 @@ If it cannot load a configuration of `extends` property, it throws an error imme
 
 If a loaded configuration of `extends` property has `extends` property or `overrides` property, it flattens those recursively.
 
+> <a id="fix-overrides-order"></a>This causes a user-facing change:
+>
+> 1. The configuration of `overrides` in shareable configs no longer overwrites user settings in `.eslintrc` files. (see [details](#️-fix-a-surprised-behavior-of-overrides))
+
 If a configuration of `overrides` property has `extends` property or `overrides` property, it flattens those recursively. The `files` property and `excludedFiles` property of the configuration are applied to every flattened item. If a flattened item has own `files` property and `excludedFiles` property, it composes those by logical AND.
+
+> <a id="overrides-extends"></a>This causes a user-facing change:
+>
+> 1. The configuration of `overrides` gets supporting `extends` proeprty and `overrides` property. (fixes [eslint/eslint#8813])
+>
+> But this is not a requirement of this RFC.
 
 For duplicated settings, a later element in the array has precedence over an earlier element in the array.
 
@@ -120,7 +124,7 @@ is flattend to:
 ]
 ```
 
-</details>
+</details><br>
 
 ### 2. The config object owns loaded plugins and parsers rather than registers those to somewhere.
 
@@ -138,7 +142,7 @@ Surprisingly, now the return value of `ConfigArrayFactory.loadFile(filePath)` ha
 
 <details><summary>Example:</summary>
 
-Note this is an internal structure. This proposal doesn't change config file's format.
+> Note this is an internal structure. This proposal doesn't change config file's format.
 
 ```jsonc
 {
@@ -164,17 +168,18 @@ Note this is an internal structure. This proposal doesn't change config file's f
 },
 ```
 
-</details>
+</details><br>
 
 If arbitrary errors happen while loading a plugin or a parser, the config array stores the error information rather than throws it. Because the plugin or the parser might not be used finally.
-
 When `ConfigArray#extractConfig(filePath)` method extracted configuration for a file, if the final configuration contains the error, it throws the error. Here, "extract" means merge the elements in the config array as filtering it by `files` property and `excludedFiles` property.
 
-> Note: once we implemented [#3], one file can be parsed as multiple virtual files. We can implement [#3] without file access because `ConfigArray` has complete information.
+> <a id="fix-error-in-unused-deps"></a>This causes a user-facing change:
+>
+> 1. Even if unused dependencies have some errors, ESLint doesn't throw it (fixes [eslint/eslint#11396]).
 
 <details><summary>Example (error):</summary>
 
-Note this is an internal structure. This proposal doesn't change config file's format.
+> Note this is an internal structure. This proposal doesn't change config file's format.
 
 ```jsonc
 {
@@ -199,7 +204,7 @@ Note this is an internal structure. This proposal doesn't change config file's f
 },
 ```
 
-</details>
+</details><br>
 
 ### 3. It changes the processing order to "config-then-files" from "files-then-config".
 
@@ -214,9 +219,17 @@ This proposal changes that ordering.
         - If a file is a regular file and matched the current criteria, yields the pair of the file and the current configuration.
         - If a file is a directory, enters into the directory (go step 1).
 
-Therefore, the file enumerator reuses configuration instances naturally without a special cache logic.
+> As a side effect, the file enumerator reuses configuration instances naturally without a special cache logic.
 
-We can change target files by settings of configuration files. In this proposal, if any of `overrides` matches a file, the file enumerator yields the file additionally. For example, if `overrides[].files` includes `"*.ts"`, the file enumerator yields `*.ts` files additionally.
+As the result, we can change target files by settings of configuration files.
+
+In this proposal, if any of `overrides` matches a file, the file enumerator yields the file additionally. For example, if `overrides[].files` includes `"*.ts"`, the file enumerator yields `*.ts` files additionally.
+
+> <a id="ext-functionality"></a>This is a user-facing change:
+>
+> 1. ESLint checks the files which are matched by a `overrides[].files` automatically even if the file is not `*.js` (fixes [eslint/eslint#11223]).
+>
+> But this is not a requirement of this RFC.
 
 ### 4. It restructures the files about CLIEngine and lookup.
 
@@ -229,6 +242,8 @@ We should be able to understand the lookup logic only the files in [lib/lookup](
 ## Documentation
 
 There are no changes because this is refactoring.
+
+If we decided to go with some enhancements the PoC includes, we should update https://eslint.org/docs/user-guide/configuring.
 
 ## Drawbacks
 
