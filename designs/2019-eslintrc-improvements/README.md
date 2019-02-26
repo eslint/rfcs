@@ -50,14 +50,14 @@ If it cannot load a configuration of `extends` property, it throws an error imme
 If a loaded configuration of `extends` property has `extends` property or `overrides` property, it flattens those recursively.
 
 <table><td>
-<p><a id="fix-overrides-order">ℹ️</a> <b>User-facing change</b>:<br>
+<a id="fix-overrides-order">ℹ️</a> <b>User-facing change</b>:<br>
 The configuration of <code>overrides</code> in shareable configs no longer overwrites user settings in <code>.eslintrc</code> files. (see <a href="#️-fix-a-surprised-behavior-of-overrides">details</a>)
 </td></table>
 
 If a configuration of `overrides` property has `extends` property or `overrides` property, it flattens those recursively. The `files` property and `excludedFiles` property of the configuration are applied to every flattened item. If a flattened item has own `files` property and `excludedFiles` property, it composes those by logical AND.
 
 <table><td>
-<p><a id="overrides-extends">ℹ️</a> <b>User-facing change</b>  (non-requirement):<br>
+<a id="overrides-extends">ℹ️</a> <b>User-facing change</b>  (non-requirement):<br>
 The configuration of <code>overrides</code> gets supporting <code>extends</code> proeprty and <code>overrides</code> property. (fixes <a href="/eslint/eslint/issues/8813">eslint/eslint#8813</a>)
 </td></table>
 
@@ -174,7 +174,7 @@ If arbitrary errors happen while loading a plugin or a parser, the config array 
 When `ConfigArray#extractConfig(filePath)` method extracted configuration for a file, if the final configuration contains the error, it throws the error. Here, "extract" means merge the elements in the config array as filtering it by `files` property and `excludedFiles` property.
 
 <table><td>
-<p><a id="fix-error-in-unused-deps">ℹ️</a> <b>User-facing change</b>:<br>
+<a id="fix-error-in-unused-deps">ℹ️</a> <b>User-facing change</b>:<br>
 Even if unused dependencies have some errors, ESLint doesn't throw it. (fixes <a href="/eslint/eslint/issues/11396">eslint/eslint#11396</a>)
 </td></table>
 
@@ -227,7 +227,7 @@ As the result, we can change target files by settings of configuration files.
 In this proposal, if any of `overrides` matches a file, the file enumerator yields the file additionally. For example, if `overrides[].files` includes `"*.ts"`, the file enumerator yields `*.ts` files additionally.
 
 <table><td>
-<p><a id="ext-functionality">ℹ️</a> <b>User-facing change</b> (non-requirement):<br>
+<a id="ext-functionality">ℹ️</a> <b>User-facing change</b> (non-requirement):<br>
 ESLint checks the files which are matched by a <code>overrides[].files</code> automatically even if the file is not <code>*.js</code>. (fixes <a href="/eslint/eslint/issues/11223">eslint/eslint#11223</a>)<br>
 For example, <code>files:"*.ts"</code> in configuration makes ESLint checking TypeScript files as well.
 </td></table>
