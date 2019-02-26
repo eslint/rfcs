@@ -207,6 +207,13 @@ Even if unused dependencies have some errors, ESLint doesn't throw it. (fixes <a
 
 </details><br>
 
+<a id="linter-change"></a>If `Linter#verify` received a `ConfigArray` object, it requires `options.filename` as well. The `Linter` object calls `ConfigArray#extractConfig(filePath)` method and set needed parser, rules, and environments up.
+
+> Now we can implement [#3] in `Linter#verify` method because the `ConfigArray` object has the complete information to handle virtual files. So we get two pros.
+>
+> - We don't need to access to the file system for each virtual file.
+> - We don't need to clone the logic of `Linter#verifyAndFix` method.
+
 ### 3. It changes the processing order to "config-then-files" from "files-then-config".
 
 Currently, first it finds target files by globs, next it finds configs for each target file. Therefore, we could not change target files by configuration files because of this ordering.
@@ -264,6 +271,8 @@ It can work fine as is.
 It can work fine as is.
 
 Only if a given `config` has `extractConfig` method, `Linter` does the setup process for the config. Otherwise, it works the same as currently.
+
+See [this paragraph](#linter-change) also.
 
 ### ✅ LintResultCache
 
