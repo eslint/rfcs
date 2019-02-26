@@ -10,13 +10,13 @@ This proposal improves the internal logic of configuration files to maintain our
 
 This RFC fixes two bugs I found while I make a PoC (I guess we don't want to make surprised behaviors on purpose).
 
-- ([link](#fix-error-in-unused-deps)) A fatal error by unused dependencies (fixes [eslint/eslint#11396]).
-- ([link](#fix-overrides-order)) A surprised behavior of `overrides` (see [details](#️-fix-a-surprised-behavior-of-overrides)).
+- ([link](#fix-error-in-unused-deps)) Even if unused dependencies have some errors, ESLint doesn't throw it. (fixes <a href="/eslint/eslint/issues/11396">eslint/eslint#11396</a>)
+- ([link](#fix-overrides-order)) The configuration of <code>overrides</code> in shareable configs no longer overwrites user settings in <code>.eslintrc</code> files. (see <a href="#️-fix-a-surprised-behavior-of-overrides">details</a>)
 
 To make sure if this refactoring is effective to make easier to enhance, the PoC of this RFC has added enhancements. I don't think this RFC requires those enhancements, but we can add.
 
 - ([link](#ext-functionality)) ESLint checks the files which are matched by a `overrides[].files` automatically even if the file is not `*.js` (fixes [eslint/eslint#11223]).
-- ([link](#overrides-extends)) `overrides` supports `extends` and nested `overrides` (the logic is just recursive) (fixes [eslint/eslint#8813]).
+- ([link](#overrides-extends)) The configuration of <code>overrides</code> gets supporting <code>extends</code> proeprty and <code>overrides</code> property. (fixes <a href="/eslint/eslint/issues/8813">eslint/eslint#8813</a>)
 
 And, sorry, this RFC contains the change of the plugin resolution logic because I had misunderstood it has been accepted in [#7].
 
@@ -49,17 +49,17 @@ If it cannot load a configuration of `extends` property, it throws an error imme
 
 If a loaded configuration of `extends` property has `extends` property or `overrides` property, it flattens those recursively.
 
-> <a id="fix-overrides-order"></a>This causes a user-facing change:
->
-> 1. The configuration of `overrides` in shareable configs no longer overwrites user settings in `.eslintrc` files. (see [details](#️-fix-a-surprised-behavior-of-overrides))
+<table><td>
+<p><a id="fix-overrides-order">ℹ️</a> <b>User-facing change</b>:<br>
+The configuration of <code>overrides</code> in shareable configs no longer overwrites user settings in <code>.eslintrc</code> files. (see <a href="#️-fix-a-surprised-behavior-of-overrides">details</a>)
+</td></table>
 
 If a configuration of `overrides` property has `extends` property or `overrides` property, it flattens those recursively. The `files` property and `excludedFiles` property of the configuration are applied to every flattened item. If a flattened item has own `files` property and `excludedFiles` property, it composes those by logical AND.
 
-> <a id="overrides-extends"></a>This causes a user-facing change:
->
-> 1. The configuration of `overrides` gets supporting `extends` proeprty and `overrides` property. (fixes [eslint/eslint#8813])
->
-> But this is not a requirement of this RFC.
+<table><td>
+<p><a id="overrides-extends">ℹ️</a> <b>User-facing change</b>  (non-requirement):<br>
+The configuration of <code>overrides</code> gets supporting <code>extends</code> proeprty and <code>overrides</code> property. (fixes <a href="/eslint/eslint/issues/8813">eslint/eslint#8813</a>)
+</td></table>
 
 For duplicated settings, a later element in the array has precedence over an earlier element in the array.
 
@@ -173,9 +173,10 @@ Surprisingly, now the return value of `ConfigArrayFactory.loadFile(filePath)` ha
 If arbitrary errors happen while loading a plugin or a parser, the config array stores the error information rather than throws it. Because the plugin or the parser might not be used finally.
 When `ConfigArray#extractConfig(filePath)` method extracted configuration for a file, if the final configuration contains the error, it throws the error. Here, "extract" means merge the elements in the config array as filtering it by `files` property and `excludedFiles` property.
 
-> <a id="fix-error-in-unused-deps"></a>This causes a user-facing change:
->
-> 1. Even if unused dependencies have some errors, ESLint doesn't throw it (fixes [eslint/eslint#11396]).
+<table><td>
+<p><a id="fix-error-in-unused-deps">ℹ️</a> <b>User-facing change</b>:<br>
+Even if unused dependencies have some errors, ESLint doesn't throw it. (fixes <a href="/eslint/eslint/issues/11396">eslint/eslint#11396</a>)
+</td></table>
 
 <details><summary>Example (error):</summary>
 
@@ -225,11 +226,11 @@ As the result, we can change target files by settings of configuration files.
 
 In this proposal, if any of `overrides` matches a file, the file enumerator yields the file additionally. For example, if `overrides[].files` includes `"*.ts"`, the file enumerator yields `*.ts` files additionally.
 
-> <a id="ext-functionality"></a>This is a user-facing change:
->
-> 1. ESLint checks the files which are matched by a `overrides[].files` automatically even if the file is not `*.js` (fixes [eslint/eslint#11223]).
->
-> But this is not a requirement of this RFC.
+<table><td>
+<p><a id="ext-functionality">ℹ️</a> <b>User-facing change</b> (non-requirement):<br>
+ESLint checks the files which are matched by a <code>overrides[].files</code> automatically even if the file is not <code>*.js</code>. (fixes <a href="/eslint/eslint/issues/11223">eslint/eslint#11223</a>)<br>
+For example, <code>files:"*.ts"</code> in configuration makes ESLint checking TypeScript files as well.
+</td></table>
 
 ### 4. It restructures the files about CLIEngine and lookup.
 
@@ -271,11 +272,6 @@ It can work fine as is.
 
 The `ConfigArray` has all information to distinguish if the config was changed since the last time.
 
-### ⚠️ `overrides` affects target files.
-
-For example, `files: ["*.ts"]` in configuration makes ESLint checking TypeScript files as well.
-This is a breaking change, but I think reasonable. If we don't want this change, we can remove this feature from this RFC.
-
 ### ⚠️ Fix a surprised behavior of `overrides`.
 
 Currently, `overrides` is applied after all `overrides` properties are merged. This means that the `overrides` in a shareable config priors to the setting in your `.eslintrc`.
@@ -288,19 +284,19 @@ rules:
 ```
 
 After this proposal, the setting in your `.eslintrc` priors to the setting in shareable configs always.
-This is a breaking change, but I think reasonable.
+This is a breaking change, but I think this is a bug fix.
 
 ### ⚠️ It looks plugins up from the location where the config file is.
 
 This means we get the consistent way to load dependencies on `extends`, `parser`, and `plugins`.
 
-Currently, ESLint looks shareable configs and parsers relatively from the location where the config file is. But ESLint looks plugins from the project root. This is forcing inconvenient to shareable config maintainers ([eslint/eslint#3458], [eslint/eslint#10643]).
+Currently, ESLint finds shareable configs and parsers relatively from the location where the config file is. But ESLint finds plugins from the project root. This is forcing inconvenient to shareable config maintainers ([eslint/eslint#3458], [eslint/eslint#10643]).
 
-This proposal makes those behaviors consistent.
+This proposal makes that all dependencies are found from the location where the config file is.
 
 Each element of `ConfigArray` has the loaded plugins. When ESLint merges those by `ConfigArray#extractConfig(filePath)`, if one same plugin loaded from different config files (except self-loading), it throws a confliction error because of https://gist.github.com/not-an-aardvark/169bede8072c31a500e018ed7d6a8915.
 
-This behavior is described on [#14] as well. This change has huge impact, probably we should discuss on [#14] individually.
+> This behavior is described on [#14] as well. This change has huge impact, probably we should discuss on [#14] individually.
 
 People can resolve this problem with `.eslintrc.js` and to install needed plugins:
 
