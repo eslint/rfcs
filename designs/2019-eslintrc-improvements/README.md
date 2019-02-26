@@ -207,7 +207,7 @@ Even if unused dependencies have some errors, ESLint doesn't throw it. (fixes <a
 
 </details><br>
 
-<a id="linter-change"></a>If `Linter#verify` received a `ConfigArray` object, it requires `options.filename` as well. The `Linter` object calls `ConfigArray#extractConfig(filePath)` method and set needed parser, rules, and environments up.
+<a id="linter-change"></a>If `Linter#verify` received a `ConfigArray` object, it requires `options.filename` as well. The `Linter` object calls `ConfigArray#extractConfig(filePath)` method and set needed parser, rules, and environments up. If the `options.filename` was `/path/to/<INPUT>.js`, it gives each rule only `<INPUT>` part.
 
 <table><td>
 📝 <b>Note</b>:<br>
