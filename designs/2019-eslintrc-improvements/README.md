@@ -300,38 +300,42 @@ This is a breaking change, but I think this is a bug fix.
 
 ### ⚠️ It looks plugins up from the location where the config file is.
 
-This means we get the consistent way to load dependencies on `extends`, `parser`, and `plugins`.
+This means we get the consistent way to load `extends`, `parser`, and `plugins`.
 
 Currently, ESLint finds shareable configs and parsers relatively from the location where the config file is. But ESLint finds plugins from the project root. This is forcing inconvenient to shareable config maintainers ([eslint/eslint#3458], [eslint/eslint#10643]).
 
+> This is described on [#14] as well. This change has a huge impact, probably we should discuss on [#14] individually.
+
 This proposal makes that all dependencies are found from the location where the config file is.
 
-Each element of `ConfigArray` has the loaded plugins. When ESLint merges those by `ConfigArray#extractConfig(filePath)`, if one same plugin loaded from different config files (except self-loading), it throws a confliction error because of https://gist.github.com/not-an-aardvark/169bede8072c31a500e018ed7d6a8915.
+This means one same plugin can be loaded from different locations by two or more shareable configs. See more details: [Overview of options and tradeoffs for throwing an error on duplicate plugin names][shareable-config-conflict-overview.md]. ESLint has to throw a conflict error in such a situation.
 
-> This behavior is described on [#14] as well. This change has huge impact, probably we should discuss on [#14] individually.
+Each element of `ConfigArray` has the loaded plugins. When ESLint merges those by `ConfigArray#extractConfig(filePath)`, if one same plugin is loaded from different config files and either file doesn't import another file by `extends` property regardless of direct or indirect, it throws a confliction error. This is the solution **4** of [Overview of options and tradeoffs for throwing an error on duplicate plugin names][shareable-config-conflict-overview.md].
 
-People can resolve this problem with `.eslintrc.js` and to install needed plugins:
+People can solve the conflict error by importing the problematic plugin from own config file.
 
-```js
-const foo = require("eslint-config-foo")
-const bar = require("eslint-config-bar")
+```yml
+extends:
+  - foo
+  - bar
 
-module.exports = {
-    overrides: [
-        Object.assign({ files: "*.js" }, foo),
-        Object.assign({ files: "*.js" }, bar),
-        {
-            files: "*.js",
-            rules: {
-                "a-problematic-rule": "off",
-                /* some overrides for this project */
-            }
-        }
-    ]
-}
+# Because this file imports both `eslint-config-foo` and `eslint-config-bar` by
+# `extends` property, the conflict error disappears.
+plugins:
+  - common
+
+# If some settings of the shareable config file raised problems, they can tweak
+# the settings.
+rules:
+  common/problematic-rule: "off"
 ```
 
-Then two shareable configs which depend on a same plugin can work together with a choosen version of the plugin.
+This means, the configuration uses the plugin the user selected rather than the plugin the shareable configs selected. This is a simpler solution than that the every plugin which is imported by shareable config works together.
+
+<table><td>
+📝 <b>Note</b>:<br>
+For <a href="https://github.com/eslint/eslint/issues/9505">eslint/eslint#9505</a>, we need to use unused plugin instances as well in order to check rule's existence.
+</td></table>
 
 ## Alternatives
 
@@ -356,6 +360,7 @@ Then two shareable configs which depend on a same plugin can work together with 
 - [eslint/eslint#3458]
 - [eslint/eslint#6732]
 - [eslint/eslint#8813]
+- [eslint/eslint#9505]
 - [eslint/eslint#9897]
 - [eslint/eslint#10125]
 - [eslint/eslint#10643]
@@ -373,9 +378,11 @@ Especially, this proposal is inspired by the discussion on [#9].
 [eslint/eslint#3458]: https://github.com/eslint/eslint/issues/3458
 [eslint/eslint#6732]: https://github.com/eslint/eslint/issues/6732
 [eslint/eslint#8813]: https://github.com/eslint/eslint/issues/8813
+[eslint/eslint#9505]: https://github.com/eslint/eslint/issues/9505
 [eslint/eslint#9897]: https://github.com/eslint/eslint/issues/9897
 [eslint/eslint#10125]: https://github.com/eslint/eslint/issues/10125
 [eslint/eslint#10643]: https://github.com/eslint/eslint/issues/10643
 [eslint/eslint#10891]: https://github.com/eslint/eslint/issues/10891
 [eslint/eslint#11223]: https://github.com/eslint/eslint/issues/11223
 [eslint/eslint#11396]: https://github.com/eslint/eslint/issues/11396
+[shareable-config-conflict-overview.md]: https://gist.github.com/not-an-aardvark/169bede8072c31a500e018ed7d6a8915
