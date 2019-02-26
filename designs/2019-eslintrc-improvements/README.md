@@ -228,8 +228,7 @@ In this proposal, if any of `overrides` matches a file, the file enumerator yiel
 
 <table><td>
 <a id="ext-functionality">ℹ️</a> <b>User-facing change</b> (non-requirement):<br>
-ESLint checks the files which are matched by a <code>overrides[].files</code> automatically even if the file is not <code>*.js</code>. (fixes <a href="/eslint/eslint/issues/11223">eslint/eslint#11223</a>)<br>
-For example, <code>files:"*.ts"</code> in configuration makes ESLint checking TypeScript files as well.
+ESLint checks the files which are matched by a <code>overrides[].files</code> automatically even if the file is not <code>*.js</code>. For example, <code>files:"*.ts"</code> in configuration makes ESLint checking TypeScript files as well. (fixes <a href="/eslint/eslint/issues/11223">eslint/eslint#11223</a>)<br>
 </td></table>
 
 ### 4. It restructures the files about CLIEngine and lookup.
