@@ -6,7 +6,7 @@
 
 ## Summary
 
-This proposal improves the internal logic of configuration files to maintain our codebase easier and add enhancements easier. This is a change of architecture and large refactoring.
+This proposal improves our configuration files. This changes the architecture of configuration files to maintain our codebase easier and make enhancing easier.
 
 This RFC fixes two bugs I found while I make a PoC (I guess we don't want to make surprised behaviors on purpose).
 
@@ -18,9 +18,10 @@ To make sure if this refactoring is effective to make easier to enhance, the PoC
 - ([link](#ext-functionality)) ESLint checks the files which are matched by a `overrides[].files` automatically even if the file is not `*.js` (fixes [eslint/eslint#11223]).
 - ([link](#overrides-extends)) The configuration of <code>overrides</code> gets supporting <code>extends</code> proeprty and <code>overrides</code> property. (fixes <a href="/eslint/eslint/issues/8813">eslint/eslint#8813</a>)
 
-And, sorry, this RFC contains the change of the plugin resolution logic because I had misunderstood it has been accepted in [#7].
-
-- ([link](#️-it-looks-plugins-up-from-the-location-where-the-config-file-is)) ESLint looks plugins up from the location where the config file is. This is a similar thing to [#14].
+<table><td>
+📝 <b>Note</b>:<br>
+This RFC doesn't contain it, but <a href="/eslint/rfcs/pull/14">#14</a> (the change of plugin resolution way) is very important. <a href="/eslint/rfcs/pull/14">#14</a> solves an important pain of shareable config maintainers.
+</td></table>
 
 ## Motivation
 
@@ -297,45 +298,6 @@ rules:
 
 After this proposal, the setting in your `.eslintrc` priors to the setting in shareable configs always.
 This is a breaking change, but I think this is a bug fix.
-
-### ⚠️ It looks plugins up from the location where the config file is.
-
-This means we get the consistent way to load `extends`, `parser`, and `plugins`.
-
-Currently, ESLint finds shareable configs and parsers relatively from the location where the config file is. But ESLint finds plugins from the project root. This is forcing inconvenient to shareable config maintainers ([eslint/eslint#3458], [eslint/eslint#10643]).
-
-> This is described on [#14] as well. This change has a huge impact, probably we should discuss on [#14] individually.
-
-This proposal makes that all dependencies are found from the location where the config file is.
-
-This means one same plugin can be loaded from different locations by two or more shareable configs. See more details: [Overview of options and tradeoffs for throwing an error on duplicate plugin names][shareable-config-conflict-overview.md]. ESLint has to throw a conflict error in such a situation.
-
-Each element of `ConfigArray` has the loaded plugins. When ESLint merges those by `ConfigArray#extractConfig(filePath)`, if one same plugin is loaded from different config files and either file doesn't import another file by `extends` property regardless of direct or indirect, it throws a confliction error. This is the solution **4** of [Overview of options and tradeoffs for throwing an error on duplicate plugin names][shareable-config-conflict-overview.md].
-
-People can solve the conflict error by importing the problematic plugin from own config file.
-
-```yml
-extends:
-  - foo
-  - bar
-
-# Because this file imports both `eslint-config-foo` and `eslint-config-bar` by
-# `extends` property, the conflict error disappears.
-plugins:
-  - common
-
-# If some settings of the shareable config file raised problems, they can tweak
-# the settings.
-rules:
-  common/problematic-rule: "off"
-```
-
-This means, the configuration uses the plugin the user selected rather than the plugin the shareable configs selected. This is a simpler solution than that the every plugin which is imported by shareable config works together.
-
-<table><td>
-📝 <b>Note</b>:<br>
-For <a href="https://github.com/eslint/eslint/issues/9505">eslint/eslint#9505</a>, we need to use unused plugin instances as well in order to check rule's existence.
-</td></table>
 
 ## Alternatives
 
