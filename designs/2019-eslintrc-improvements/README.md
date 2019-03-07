@@ -305,6 +305,10 @@ In https://eslint.org/docs/user-guide/configuring:
 - In "Configuration Based on Glob Patterns" section, it adds that `files` property (except patterns end with `*`) adds the matched files to lint automatically.
 - In "Configuration Based on Glob Patterns" section, it removes `extends` and `overrides` from the sentence "Override blocks can contain any configuration options that are valid in a regular config, with the exception of `extends`, `overrides`, and `root`."
 
+In https://eslint.org/docs/developer-guide/working-with-plugins:
+
+- In "Processors in Plugins" section, it adds that file extension processors add the file types to lint automatically.
+
 ## Drawbacks
 
 This is a large change. Currently we have multiple pull requests around configuration files, this will conflict with those pull requests severely. And this will be a large change for tests. Our tests really depend on internal structures seriously.
