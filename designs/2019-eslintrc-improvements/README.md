@@ -69,9 +69,9 @@ The configuration of <code>overrides</code> gets supporting <code>extends</code>
 
 For duplicated settings, a later element in the array has precedence over an earlier element in the array.
 
-<details><summary>Example:</summary>
-
-```jsonc
+<table><td>
+💡 <b>Example</b>:
+<pre lang="jsonc">
 {
     "extends": ["eslint:recommended", "plugin:node/recommended"],
     "rules": { ... },
@@ -83,54 +83,50 @@ For duplicated settings, a later element in the array has precedence over an ear
         }
     ]
 }
-```
-
+</pre>
 is flattend to:
-
-```jsonc
+<pre lang="jsonc">
 [
     // extends
     {
-        "name": "eslint:recommended",
-        "filePath": null,
+        "name": ".eslintrc.json » eslint:recommended",
+        "filePath": "node_modules/eslint/conf/eslint-recommended.js",
         "rules": { ... }
     },
     {
-        "name": "plugin:node/recommended",
+        "name": ".eslintrc.json » plugin:node/recommended",
         "filePath": "node_modules/eslint-plugin-node/lib/index.js",
         "env": { ... },
         "parserOptions": { ... },
         "plugins": { ... },
         "rules": { ... }
     },
-
     // main
     {
         "name": ".eslintrc.json",
         "filePath": ".eslintrc.json",
         "rules": { ... }
     },
-
     // overrides (because it flattens recursively, extends in overrides is here)
     {
-        "name": "plugin:@typescript-eslint/recommended",
+        "name": ".eslintrc.json#overrides[0] » plugin:@typescript-eslint/recommended",
         "filePath": "node_modules/@typescript-eslint/eslint-plugin/dist/index.js",
         // `matchFile` is merged from the parent `overrides` entry and itself.
         "matchFile": { "includes": ["*.ts"], "excludes": null },
         "parser": { ... },
         "parserOptions": { ... },
         "plugins": { ... },
-        "rules": { ... },
+        "rules": { ... }
     },
     {
         "name": ".eslintrc.json#overrides[0]",
         "filePath": ".eslintrc.json",
-        "matchFile": { "includes": ["*.ts"], "excludes": null }
+        "matchFile": { "includes": ["*.ts"], "excludes": null },
+        "rules": { ... }
     }
 ]
-```
-
-</details><br>
+</pre>
+</td></table>
 
 ### 2. The config object owns loaded plugins and parsers rather than registers those to somewhere.
 
@@ -146,13 +142,11 @@ The codebase can get simple by the removal of the registration. Instead, the int
 
 Surprisingly, now the return value of `ConfigArrayFactory.loadFile(filePath)` has all needed information to check files. Previously, we also needed information that was registered somewhere.
 
-<details><summary>Example:</summary>
-
-> Note this is an internal structure. This proposal doesn't change config file's format.
-
-```jsonc
+<table><td>
+💡 <b>Example</b>:
+<pre lang="jsonc">
 {
-    "name": "plugin:@typescript-eslint/recommended",
+    "name": ".eslintrc.json#overrides[0] » plugin:@typescript-eslint/recommended",
     "filePath": "node_modules/@typescript-eslint/eslint-plugin/dist/index.js",
     "parser": {
         "definition": { ... }, // the parser implementation.
@@ -171,10 +165,9 @@ Surprisingly, now the return value of `ConfigArrayFactory.loadFile(filePath)` ha
             "importerPath": "node_modules/@typescript-eslint/eslint-plugin/dist/index.js"
         }
     },
-},
-```
-
-</details><br>
+}
+</pre>
+</td></table>
 
 If arbitrary errors happen while loading a plugin or a parser, the config array stores the error information rather than throws it. Because the plugin or the parser might not be used finally.
 When `ConfigArray#extractConfig(filePath)` method extracted configuration for a file, if the final configuration contains the error, it throws the error. Here, "extract" means merge the elements in the config array as filtering it by `files` property and `excludedFiles` property.
@@ -184,13 +177,11 @@ When `ConfigArray#extractConfig(filePath)` method extracted configuration for a 
 Even if unused dependencies have some errors, ESLint doesn't throw it. (fixes <a href="https://github.com/eslint/eslint/issues/11396">eslint/eslint#11396</a>)
 </td></table>
 
-<details><summary>Example (error):</summary>
-
-> Note this is an internal structure. This proposal doesn't change config file's format.
-
-```jsonc
+<table><td>
+💡 <b>Example</b>:
+<pre lang="jsonc">
 {
-    "name": "plugin:@typescript-eslint/recommended",
+    "name": ".eslintrc.json#overrides[0] » plugin:@typescript-eslint/recommended",
     "filePath": "node_modules/@typescript-eslint/eslint-plugin/dist/index.js",
     "parser": {
         "error": Error, // an error object (maybe "Module Not Found").
@@ -202,16 +193,15 @@ Even if unused dependencies have some errors, ESLint doesn't throw it. (fixes <a
     },
     "plugins": {
         "@typescript-eslint": {
-            "definition": { ... }, // the plugin implementation.
+            "definition": { ... },
             "id": "@typescript-eslint",
             "filePath": "node_modules/@typescript-eslint/eslint-plugin/dist/index.js",
             "importerPath": "node_modules/@typescript-eslint/eslint-plugin/dist/index.js"
         }
     },
-},
-```
-
-</details><br>
+}
+</pre>
+</td></table>
 
 <a id="linter-change"></a>If `Linter#verify` received a `ConfigArray` object, it requires `options.filename` as well. The `Linter` object calls `ConfigArray#extractConfig(filePath)` method and set needed parser, rules, and environments up. If the `options.filename` was `/path/to/<INPUT>.js`, it gives each rule only `<INPUT>` part.
 
