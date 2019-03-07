@@ -291,9 +291,19 @@ We should be able to understand the lookup logic only the files in [lib/lookup](
 
 ## Documentation
 
-There are no changes because this is refactoring.
+This RFC has some breaking changes, so it needs migration guide.
 
-If we decided to go with some enhancements the PoC includes, we should update https://eslint.org/docs/user-guide/configuring.
+- If people was affected by the plugin resolution change, they have to solve the plugin conflict manually.
+- If people was affected by the `overrides` order change, they have to modify their config file.
+
+This RFC has some enhancements, so it needs to update documents.
+
+In https://eslint.org/docs/user-guide/configuring:
+
+- In "Configuring Plugins" section, it adds that plugins which have file extension processors add the file types to lint automatically.
+- In "Configuring Plugins" section, it changes the note "Due to the behavior of Node’s require function, a globally-installed instance of ESLint can only use globally-installed ESLint plugins, and locally-installed version can only use locally-installed plugins. Mixing local and global plugins is not supported."
+- In "Configuration Based on Glob Patterns" section, it adds that `files` property (except patterns end with `*`) adds the matched files to lint automatically.
+- In "Configuration Based on Glob Patterns" section, it removes `extends` and `overrides` from the sentence "Override blocks can contain any configuration options that are valid in a regular config, with the exception of `extends`, `overrides`, and `root`."
 
 ## Drawbacks
 
