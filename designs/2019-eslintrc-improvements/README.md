@@ -1,6 +1,6 @@
 - Start Date: 2019-02-25
-- RFC PR: (leave this empty, to be filled in later)
-- Authors: (the names of everyone contributing to this RFC)
+- RFC PR: https://github.com/eslint/rfcs/pull/13
+- Authors: Toru Nagashima (@mysticatea)
 
 # Config File Improvements
 
@@ -8,26 +8,26 @@
 
 This proposal improves our configuration files. This changes the architecture of configuration files to maintain our codebase easier and make enhancing easier.
 
-This RFC fixes two bugs I found while I make a PoC (I guess we don't want to make surprised behaviors on purpose).
+This RFC fixes two bugs I found while I make a PoC. I guess we don't want to make surprised behaviors on purpose.
 
-- ([link](#fix-error-in-unused-deps)) Even if unused dependencies have some errors, ESLint doesn't throw it. (fixes <a href="/eslint/eslint/issues/11396">eslint/eslint#11396</a>)
+- ([link](#fix-error-in-unused-deps)) Even if unused dependencies have some errors, ESLint doesn't throw it. (fixes <a href="https://github.com/eslint/eslint/issues/11396">eslint/eslint#11396</a>)
 - ([link](#fix-overrides-order)) The configuration of <code>overrides</code> in shareable configs no longer overwrites user settings in <code>.eslintrc</code> files. (see <a href="#️-fix-a-surprised-behavior-of-overrides">details</a>)
 
-To make sure if this refactoring is effective to make easier to enhance, the PoC of this RFC has added enhancements. I don't think this RFC requires those enhancements, but we can add.
+This RFC includes three enhancements. Those would solve the important pains of the ecosystem.
 
 - ([link](#ext-functionality)) ESLint checks the files which are matched by a `overrides[].files` automatically even if the file is not `*.js` (fixes [eslint/eslint#11223]).
-- ([link](#overrides-extends)) The configuration of <code>overrides</code> gets supporting <code>extends</code> proeprty and <code>overrides</code> property. (fixes <a href="/eslint/eslint/issues/8813">eslint/eslint#8813</a>)
-
-<table><td>
-📝 <b>Note</b>:<br>
-This RFC doesn't contain it, but <a href="/eslint/rfcs/pull/14">#14</a> (the change of plugin resolution way) is very important. <a href="/eslint/rfcs/pull/14">#14</a> solves an important pain of shareable config maintainers.
-</td></table>
+- ([link](#overrides-extends)) The configuration of <code>overrides</code> gets supporting <code>extends</code> proeprty and <code>overrides</code> property. (fixes <a href="https://github.com/eslint/eslint/issues/8813">eslint/eslint#8813</a>)
+- ([link](#plugin-resolution-change)) ESLint now resolves plugins relative to the config file, but it can throw the plugin conflict error for the version conflict of plugins. (fixes <a href="https://github.com/eslint/eslint/issues/3458">eslint/eslint#3458</a>)
 
 ## Motivation
 
-- The codebase about configuration files is complicated.
+- The codebase about configuration files is complicated. It has made us hard to maintain and enhance the configuration system.
 - The current process determines target files at first. Next, it finds configuration files on the directory where each target file exists and that ancestors. This "files-then-config" order prevents adding some enhancements such as `--ext` functionality to our configuration file system.
 - Several good ideas have been born in [#9]. We can simplify the logic about configuration files by the ideas.
+
+Therefore, the goal of this RFC is to simplify our codebase by some architecture changes in order to maintain our codebase easier and make enhancing easier.
+
+Then some enhancements that the simplification gives would solve the important pains of the ecosystem.
 
 ## Detailed Design
 
@@ -35,6 +35,7 @@ Proof of Concept (implementation): https://github.com/eslint/eslint/tree/proof-o
 
 1. It simplifies the internal structure of configuration files by an array.
 1. The config object owns loaded plugins and parsers rather than registers those to somewhere.
+1. It changes the plugin loading strategy.
 1. It changes the processing order to "config-then-files" from "files-then-config".
 1. It restructures the files about CLIEngine and lookup.
 
@@ -45,6 +46,8 @@ When it reads configuration files, it flattens the `extends` property and `overr
 1. The loaded configurations of `extends` property.
 1. The configuration except `extends` property and `overrides` property.
 1. The configurations of `overrides` property.
+
+> [lib/lookup/config-array-factory.js#L635-L680](https://github.com/eslint/eslint/blob/153640180a8944af3a1c488462ed30d0c215f5ed/lib/_lookup/config-array-factory.js#L635-L680) in PoC.
 
 If it cannot load a configuration of `extends` property, it throws an error immediately.
 
@@ -57,9 +60,11 @@ The configuration of <code>overrides</code> in shareable configs no longer overw
 
 If a configuration of `overrides` property has `extends` property or `overrides` property, it flattens those recursively. The `files` property and `excludedFiles` property of the configuration are applied to every flattened item. If a flattened item has own `files` property and `excludedFiles` property, it composes those by logical AND.
 
+> [lib/lookup/config-array-factory.js#L601-L624](https://github.com/eslint/eslint/blob/153640180a8944af3a1c488462ed30d0c215f5ed/lib/_lookup/config-array-factory.js#L601-L624) in PoC.
+
 <table><td>
-<a id="overrides-extends">ℹ️</a> <b>User-facing change</b>  (non-requirement):<br>
-The configuration of <code>overrides</code> gets supporting <code>extends</code> proeprty and <code>overrides</code> property. (fixes <a href="/eslint/eslint/issues/8813">eslint/eslint#8813</a>)
+<a id="overrides-extends">ℹ️</a> <b>User-facing change</b>:<br>
+The configuration of <code>overrides</code> gets supporting <code>extends</code> proeprty and <code>overrides</code> property. (fixes <a href="https://github.com/eslint/eslint/issues/8813">eslint/eslint#8813</a>)
 </td></table>
 
 For duplicated settings, a later element in the array has precedence over an earlier element in the array.
@@ -176,7 +181,7 @@ When `ConfigArray#extractConfig(filePath)` method extracted configuration for a 
 
 <table><td>
 <a id="fix-error-in-unused-deps">ℹ️</a> <b>User-facing change</b>:<br>
-Even if unused dependencies have some errors, ESLint doesn't throw it. (fixes <a href="/eslint/eslint/issues/11396">eslint/eslint#11396</a>)
+Even if unused dependencies have some errors, ESLint doesn't throw it. (fixes <a href="https://github.com/eslint/eslint/issues/11396">eslint/eslint#11396</a>)
 </td></table>
 
 <details><summary>Example (error):</summary>
@@ -212,14 +217,40 @@ Even if unused dependencies have some errors, ESLint doesn't throw it. (fixes <a
 
 <table><td>
 📝 <b>Note</b>:<br>
-<p>Now we can implement <a href="/eslint/rfcs/pull/3">#3</a> in <code>Linter#verify</code> method because the <code>ConfigArray</code> object has the complete information to handle virtual files. So we get two pros.
+<p>Now we can implement <a href="https://github.com/eslint/rfcs/pull/3">#3</a> in <code>Linter#verify</code> method because the <code>ConfigArray</code> object has the complete information to handle virtual files. So we get two pros.
 <ul>
 <li>We don't need to access to the file system for each virtual file.
 <li>We don't need to clone the logic of <code>Linter#verifyAndFix</code> method.
 </ul>
 </td></table>
 
-### 3. It changes the processing order to "config-then-files" from "files-then-config".
+### 3. It changes the plugin loading strategy.
+
+Currently, ESLint loads three stuff from config files.
+
+1. other config files (`extends` property)
+1. parsers (`parser` property)
+1. plugins (`plugins` property)
+
+In those, only plugins are special. ESLint resolves plugins relative to the location ESLint was installed, but ESLint resolves other stuff relative to the config file.
+
+This RFC changes this strategy to that ESLint resolves all of the three consistently relative to the config file.
+
+This change introduces a new problem that a plugin can be loaded from two different locations for some situations. Therefore, when `ConfigArray#extractConfig(filePath)` method determines the final config, if a plugin had been loaded from different locations, it throws "plugin conflict" error.
+
+> [lib/lookup/config-array.js#L76-L88](https://github.com/eslint/eslint/blob/153640180a8944af3a1c488462ed30d0c215f5ed/lib/_lookup/config-array.js#L76-L88) in PoC.
+
+<table><td>
+<a id="plugin-resolution-change">ℹ️</a> <b>User-facing change</b>:<br>
+ESLint now resolves plugins relative to the config file, but it can throw the plugin conflict error for the version conflict of plugins. (fixes <a href="https://github.com/eslint/eslint/issues/3458">eslint/eslint#3458</a>)<br>
+</td></table>
+
+<table><td>
+<a id="q-robustness-guarantee">❓</a> <b>Open question</b>:<br>
+Should we keep <a href="https://gist.github.com/not-an-aardvark/169bede8072c31a500e018ed7d6a8915">Robustness Guarantee</a> for the plugin conflict error? (<a href="#robustness-guarantee">details</a>)<br>
+</td></table>
+
+### 4. It changes the processing order to "config-then-files" from "files-then-config".
 
 Currently, first it finds target files by globs, next it finds configs for each target file. Therefore, we could not change target files by configuration files because of this ordering.
 
@@ -232,18 +263,25 @@ This proposal changes that ordering.
         - If a file is a regular file and matched the current criteria, yields the pair of the file and the current configuration.
         - If a file is a directory, enters into the directory (go step 1).
 
-> As a side effect, the file enumerator reuses configuration instances naturally without a special cache logic.
+> [lib/lookup/file-enumerator.js#L303-L360](https://github.com/eslint/eslint/blob/153640180a8944af3a1c488462ed30d0c215f5ed/lib/_lookup/file-enumerator.js#L303-L360) in PoC.
+
+<table><td>
+📝 <b>Note</b>:<br>
+As a side effect, the file enumerator reuses configuration instances naturally without a special cache logic.
+</td></table>
 
 As the result, we can change target files by settings of configuration files.
 
 In this proposal, if any of `overrides` matches a file, the file enumerator yields the file additionally. For example, if `overrides[].files` includes `"*.ts"`, the file enumerator yields `*.ts` files additionally.
 
+> [lib/lookup/file-enumerator.js#L338](https://github.com/eslint/eslint/blob/153640180a8944af3a1c488462ed30d0c215f5ed/lib/_lookup/file-enumerator.js#L338) in PoC.
+
 <table><td>
-<a id="ext-functionality">ℹ️</a> <b>User-facing change</b> (non-requirement):<br>
-ESLint checks the files which are matched by a <code>overrides[].files</code> automatically even if the file is not <code>*.js</code>. For example, <code>files:"*.ts"</code> in configuration makes ESLint checking TypeScript files as well. (fixes <a href="/eslint/eslint/issues/11223">eslint/eslint#11223</a>)<br>
+<a id="ext-functionality">ℹ️</a> <b>User-facing change</b>:<br>
+ESLint checks the files which are matched by a <code>overrides[].files</code> automatically even if the file is not <code>*.js</code>. (fixes <a href="https://github.com/eslint/eslint/issues/11223">eslint/eslint#11223</a>)<br>
 </td></table>
 
-### 4. It restructures the files about CLIEngine and lookup.
+### 5. It restructures the files about CLIEngine and lookup.
 
 It's premature optimization if we moved a logic only one functionality is using to the shared utility directory. The shared utility directory is similar to global variables, so it makes hard to know who use the utilities.
 
@@ -285,6 +323,12 @@ It can work fine as is.
 
 The `ConfigArray` has all information to distinguish if the config was changed since the last time.
 
+### ✅ Plugin resolution change
+
+Because this is after [#7], the effect of the plugin resolution change is limited.
+
+If people are using multiple shareable configs which depend on plugins via `dependencies` field of `package.json`, a package manager may fail to dedupe the plugins. However, most shareable configs are using `peerDependencies` to depend on plugins currently.
+
 ### ⚠️ Fix a surprised behavior of `overrides`.
 
 Currently, `overrides` is applied after all `overrides` properties are merged. This means that the `overrides` in a shareable config priors to the setting in your `.eslintrc`.
@@ -299,19 +343,26 @@ rules:
 After this proposal, the setting in your `.eslintrc` priors to the setting in shareable configs always.
 This is a breaking change, but I think this is a bug fix.
 
+### ⚠️ Lint files other than `*.js` automatically.
+
+If a configuration has `overrides` property with specific file types or depends on plugins which have file extension processors, ESLint now verifies those files additionally.
+
+I guess people are using `--ext` option together in most cases, but it can affect unintentional.
+
 ## Alternatives
 
-- [#9] ... Double duplicate features cause confusion for the ecosystem. For newcomers, a mix of articles about two config systems makes hard to understand ESLint. For non-English users, the official document is far.
+- [#9] is the alternative. But double duplicate features cause confusion for the ecosystem. For newcomers, a mix of articles about two config systems makes hard to understand ESLint. For non-English users, the official document is far.
+- [#5] and [#14] are alternatives about the plugin resolution change. But those need some complex logic.
+
+## Open Questions
+
+- <a href="#q-robustness-guarantee" id="robustness-guarantee">❓</a> Should we keep [Robustness Guarantee] for the plugin conflict error?<br>
+  As @not-an-aardvark's gist described, if a shareable config pinned a plugin version in a patch version, it may disable dedupe of a plugin manager, then it may cause breaking user's builds.<br>
+  Should we address this problem?
 
 ## Frequently Asked Questions
 
-<!--
-    This section is optional but suggested.
-
-    Try to anticipate points of clarification that might be needed by
-    the people reviewing this RFC. Include those questions and answers
-    in this section.
--->
+-
 
 ## Related Discussions
 
@@ -348,4 +399,4 @@ Especially, this proposal is inspired by the discussion on [#9].
 [eslint/eslint#10891]: https://github.com/eslint/eslint/issues/10891
 [eslint/eslint#11223]: https://github.com/eslint/eslint/issues/11223
 [eslint/eslint#11396]: https://github.com/eslint/eslint/issues/11396
-[shareable-config-conflict-overview.md]: https://gist.github.com/not-an-aardvark/169bede8072c31a500e018ed7d6a8915
+[Robustness Guarantee]: https://gist.github.com/not-an-aardvark/169bede8072c31a500e018ed7d6a8915
