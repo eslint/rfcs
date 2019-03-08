@@ -17,16 +17,16 @@ On code bases in larger companies (in my case, Intuit) ESLint can take a very lo
 Based on discussion in the original [PR](https://github.com/eslint/eslint/issues/10606#issue-341171187)there are some main points.
 
 1. The features that are intended to be async/parallel need to be behind a flag on the CLI, and opt in when using the API (maybe through an async command or option when using CLIEngine).
-2. There are two options here: `promise` based and `thread` based. Some users suggested looking at [esprint](https://github.com/pinterest/esprint) for inspiration. Some of the concerns were that `promises` would not be faster per say depending on the implementation. As a first iteration, the API should suppor `async` calls backed by `Promise`s. This will allow the main thread to continue operating while ESLint is doing its thing.
+2. There are two options here: `promise` based and `thread` based. Some users suggested looking at [esprint](https://github.com/pinterest/esprint) for inspiration. Some of the concerns were that `promises` would not be faster per say depending on the implementation. As a first iteration, the API should support `async` calls backed by `Promise`s. This will allow the main thread to continue operating while ESLint is doing its thing.
 3. The experience should not break existing users.
 
 Based on looking at other libraries, like JSCodeShift, the general flow should look like.
 
-1) Get all the files to be processed (via a [promise](https://github.com/facebook/jscodeshift/blob/master/src/Runner.js#L216))
-2) [Determine the threshold of processes](https://github.com/facebook/jscodeshift/blob/master/src/Runner.js#L224) we can have running at once. This is done by looking at the CPU count on the given system, and taking `Math.min` of the files relative to the CPU (which means in most cases this will come out to be 4 assuming a quad core processor). If someone passes `runInBand`, it is single threaded by default.
-3) [Determine how many files can go to each process](https://github.com/facebook/jscodeshift/blob/master/src/Runner.js#L225). Take some arbitrary `CHUNK_SIZE` (50 in this case) and apply it relative to how efficiently you can split the number of files across the processes provided. If we have 200 files for example and 4 processors, the math works out to ((200/4)/50) = 1. NOTE: `CHUNK_SIZE` will have to be determined through testing for ESLint to see what is most performant.
-4) Send the batched files off to a worker that has a predefined set of functions (in the case of ESLint, this would be the bit you specified). Based on the [messages the workers send](https://github.com/facebook/jscodeshift/blob/master/src/Runner.js#L270-L285) act accordingly. In the case of ESLint, this gets to the point we mentioned earlier about keeping track of failures. `jscodeshift` [reports issues to the console](https://github.com/facebook/jscodeshift/blob/master/src/Runner.js#L66). One thing we need to determine is whether or not a failure to lint, or even write/fix, is grounds for ending the process. I'd prefer if ESLint failed gracefully and just said "unable to lint/fix files:" and provided output.
-5) Once the workers are done, [provide output to the user](https://github.com/facebook/jscodeshift/blob/master/src/Runner.js#L292).
+1. Get all the files to be processed (via a [promise](https://github.com/facebook/jscodeshift/blob/master/src/Runner.js#L216)). These can be stored in a FIFO (first in first out) queue for later parsing since order should not matter. NOTE: The loading of the files can remain synchronous for first iteration, but should be asynchronous in a second round change once the initial change is released.
+2. [Determine the threshold of processes](https://github.com/facebook/jscodeshift/blob/master/src/Runner.js#L224) we can have running at once. This is done by looking at the CPU count on the given system, and taking `Math.min` of the files relative to the CPU (which means in most cases this will come out to be 4 assuming a quad core processor). If someone passes `runInBand`, it is single threaded by default.
+3. [Determine how many files can go to each process](https://github.com/facebook/jscodeshift/blob/master/src/Runner.js#L225). Take some arbitrary `CHUNK_SIZE` (50 in this case) and apply it relative to how efficiently you can split the number of files across the processes provided. If we have 200 files for example and 4 processors, the math works out to ((200/4)/50) = 1. NOTE: `CHUNK_SIZE` will have to be determined through testing for ESLint to see what is most performant.
+4. Send the batched files off to a worker that has a predefined set of functions (in the case of ESLint, this would be the bit you specified). Based on the [messages the workers send](https://github.com/facebook/jscodeshift/blob/master/src/Runner.js#L270-L285) act accordingly. In the case of ESLint, this gets to the point we mentioned earlier about keeping track of failures. `jscodeshift` [reports issues to the console](https://github.com/facebook/jscodeshift/blob/master/src/Runner.js#L66). One thing we need to determine is whether or not a failure to lint, or even write/fix, is grounds for ending the process. I'd prefer if ESLint failed gracefully and just said "unable to lint/fix files:" and provided output.
+5. Once the workers are done, [provide output to the user](https://github.com/facebook/jscodeshift/blob/master/src/Runner.js#L292).
 
 The flow in turn would look like:
 
@@ -34,7 +34,7 @@ The flow in turn would look like:
 - _Determine processors available_
 - _Determine batch size_
 - _Send each batch to a worker_
-- For each  _batch sent to a worker_:
+- For each _batch sent to a worker_:
   - Check the cache to see if the file has changed
   - Determine the correct configuration for the file
   - Lint the file
@@ -43,6 +43,10 @@ The flow in turn would look like:
   - _Send a message back to the parent process_
 - Gather messages
 - Output lint results to console
+
+For this change, we will not need to modify the logic for `.eslintcache`, nor `cli.execute` as they are not exposed. We do need to keep the functionality of `CLIEngine.executeOnFiles` unchanged.
+
+Since Node 6 is intended to be deprecated in ESLint 6, it is ok for us to rely on and use `async/await` syntax to support this change.
 
 ## Documentation
 
@@ -57,6 +61,8 @@ The flow in turn would look like:
 ## Backwards Compatibility Analysis
 
 As long as this functionality is marked as "beta" until ready and hid behind a flag or options, it should not break any existing users.
+
+As noted by [discussions during the RFC](https://github.com/eslint/rfcs/pull/4#issuecomment-469583046), Node 6 or earlier will not need supporting.
 
 ## Alternatives
 
