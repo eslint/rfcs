@@ -18,6 +18,8 @@ This proposal enhances [there](README.md#plugin-renaming).
 
 If `plugins` property of a configuration was an object, `ConfigArrayFactory` loads the value of each property as a plugin then store the loaded plugin as the key of the property. Here, `["foo", "bar"]` is equivalent to `{ "foo": "foo", "bar": "bar" }`. The object form supports file paths.
 
+> [lib/lookup/config-array-factory.js#L807-L828](https://github.com/eslint/eslint/blob/fedb0293ef8fb3e2e17d88bdfeb5e5cfb725a282/lib/_lookup/config-array-factory.js#L807-L828) in PoC.
+
 <table><td>
 💡 <b>Example</b>:
 <pre lang="jsonc">
