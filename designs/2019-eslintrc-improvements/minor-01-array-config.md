@@ -51,7 +51,7 @@ module.exports = {
 }
 </pre>
 is rewritable to:
-<pre lang="yml">
+<pre lang="js">
 module.exports = [
     "eslint:recommended",
     "plugin:node/recommended",
