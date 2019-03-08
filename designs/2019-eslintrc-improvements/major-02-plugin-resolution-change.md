@@ -76,26 +76,31 @@ module.exports = {
 }
 </pre>
 <code>config.withConvert("eslint-config-foo", { mapPluginName: id => `foo::${id}` })</code> method with the above config returns as:
-<pre lang="js">
-// eslint-config-foo
-module.exports = {
-    plugins: {
-        // Renaming with absolute path.
-        "foo::a-plugin": "/path/to/node_modules/eslint-config-foo/node_modules/eslint-plugin-a-plugin/index.js"
-    },
-    // absolute path.
-    parser: "/path/to/node_modules/eslint-plugin-foo/lib/parser.js",
-    env: {
-        "foo::a-plugin/env": true
-    },
-    rules: {
-        eqeqeq: "error",
-        "foo::a-plugin/x": "error",
-        "foo::a-plugin/y": "error"
+<pre lang="jsonc">
+[
+    {
+        "plugins": {
+            // Renaming with absolute path.
+            "foo::a-plugin": "/path/to/node_modules/eslint-config-foo/node_modules/eslint-plugin-a-plugin/index.js"
+        },
+        // absolute path.
+        "parser": "/path/to/node_modules/eslint-plugin-foo/lib/parser.js",
+        "env": {
+            "foo::a-plugin/env": true
+        },
+        "rules": {
+            "eqeqeq": "error",
+            "foo::a-plugin/x": "error",
+            "foo::a-plugin/y": "error"
+        }
     }
-}
+]
 </pre>
 </td></table>
+
+The `config.withConvert(request, options)` method loads `extends` property and flattens `extends` property and `overrides` property recursively. Then it converts all plugin names in the configs.
+
+> TODO: AND expression in configs for `files`/`excludedFiles`. Maybe `test: Array<{files:string[],excludedFiles?:string[]}>`?
 
 ## Documentation
 
