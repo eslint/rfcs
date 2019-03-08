@@ -35,6 +35,7 @@ This section depends on two enhancements [Array Config](minor-01-array-config.md
 We provide a utility to load shareable configs with renaming problematic plugins.
 
 ```js
+// .eslintrc.js
 const config = require("@eslint/config")
 
 module.exports = [
@@ -59,35 +60,40 @@ I assume that the `@eslint/config` package is used only in the rare case.
 
 <table><td>
 💡 <b>Example</b>:
-<pre lang="yml">
-# eslint-config-foo
-plugins:
-  - a-plugin
-parser: ./lib/parser
-env:
-  a-plugin/env: true
-rules:
-  eqeqeq: error
-  a-plugin/x: error
-  a-plugin/y: error
+<pre lang="js">
+// eslint-config-foo
+module.exports = {
+    plugins: ["a-plugin"],
+    parser: "./lib/parser",
+    env: {
+        "a-plugin/env": true
+    },
+    rules: {
+        eqeqeq: "error",
+        "a-plugin/x": "error",
+        "a-plugin/y": "error"
+    }
+}
 </pre>
-
-`config.withConvert("eslint-config-foo", { mapPluginName: id => "foo::" + id })` method with the above config returns:
-
-<table><td>
-💡 <b>Example</b>:
-<pre lang="yml">
-# eslint-config-foo
-plugins:
-  # rename and absolute path.
-  foo::a-plugin: /path/to/node_modules/eslint-config-foo/node_modules/eslint-plugin-a-plugin/index.js
-parser: /path/to/node_modules/eslint-config-foo/lib/parser.js
-env:
-  foo::a-plugin/env: true
-rules:
-  eqeqeq: error
-  foo::a-plugin/x: error
-  foo::a-plugin/y: error
+<code>config.withConvert("eslint-config-foo", { mapPluginName: id => `foo::${id}` })</code> method with the above config returns as:
+<pre lang="js">
+// eslint-config-foo
+module.exports = {
+    plugins: {
+        // Renaming with absolute path.
+        "foo::a-plugin": "/path/to/node_modules/eslint-config-foo/node_modules/eslint-plugin-a-plugin/index.js"
+    },
+    // absolute path.
+    parser: "/path/to/node_modules/eslint-plugin-foo/lib/parser.js",
+    env: {
+        "foo::a-plugin/env": true
+    },
+    rules: {
+        eqeqeq: "error",
+        "foo::a-plugin/x": "error",
+        "foo::a-plugin/y": "error"
+    }
+}
 </pre>
 </td></table>
 
