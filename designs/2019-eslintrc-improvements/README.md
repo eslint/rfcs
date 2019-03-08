@@ -37,6 +37,8 @@ Then some enhancements that the simplification gives would solve the important p
 
 ## Detailed Design
 
+(✨ in this section means the enhancement point for additional enhancement proposals.)
+
 > Proof of Concept (implementation): https://github.com/eslint/eslint/tree/proof-of-concept/config-array-in-eslintrc
 
 1. It simplifies the internal structure of configuration files by an array.
