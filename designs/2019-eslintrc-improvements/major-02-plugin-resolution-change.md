@@ -28,6 +28,12 @@ This change introduces a new problem that a plugin can be loaded from two differ
 
 > [lib/lookup/config-array.js#L76-L88](https://github.com/eslint/eslint/blob/153640180a8944af3a1c488462ed30d0c215f5ed/lib/_lookup/config-array.js#L76-L88) in PoC.
 
+### Uniqueness of plugin names
+
+For [#10], plugin names must be unique per each `CLIEngine#executeOnFiles()` method call. Therefore, `CLIEngine#executeOnFiles()` method checks the `ConfigArray` instances of all target files to verify if every plugin name is mapped to one plugin instance (including all `overrides` configurations).
+
+> [lib/cli-engine/cli-engine.js#L574-L596](https://github.com/eslint/eslint/blob/5004bffd14dd956ba3886e14ae64ca1988919239/lib/_cli-engine/cli-engine.js#L574-L596) in PoC.
+
 ### Save people from the "plugin conflict" error
 
 This section depends on two enhancements [Array Config](minor-01-array-config.md) and [Plugin Renaming](minor-03-plugin-renaming.md).
@@ -136,6 +142,7 @@ If people are using multiple shareable configs which depend on plugins via `depe
 ## Related Discussions
 
 - [#14]
+- [#10]
 - [#9]
 - [#7]
 - [#5]
@@ -145,6 +152,7 @@ If people are using multiple shareable configs which depend on plugins via `depe
 - [eslint/eslint#10643]
 
 [#14]: https://github.com/eslint/rfcs/pull/14
+[#10]: https://github.com/eslint/rfcs/pull/10
 [#9]: https://github.com/eslint/rfcs/pull/9
 [#7]: https://github.com/eslint/rfcs/pull/7
 [#5]: https://github.com/eslint/rfcs/pull/5
