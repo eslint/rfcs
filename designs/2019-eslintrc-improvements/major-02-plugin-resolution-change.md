@@ -33,6 +33,7 @@ This change introduces a new problem that a plugin can be loaded from two differ
 This section depends on two enhancements [Array Config](minor-01-array-config.md) and [Plugin Renaming](minor-03-plugin-renaming.md).
 
 We provide a utility to load shareable configs with renaming problematic plugins.
+I assume that the `@eslint/config` package is used only in the rare case.
 
 ```js
 // .eslintrc.js
@@ -43,7 +44,8 @@ module.exports = [
     // It renames the prefixes of rules, environments, and processors at the same time.
     // It resolves the relative paths in `parser` and `plugins` to work file on this file.
     config.withConvert("eslint-config-foo", {
-        mapPluginName: (id) => `foo::${id}`
+        relativeTo: __filename,
+        mapPluginName: id => `foo::${id}`
     }),
 
     "eslint-config-bar",
@@ -54,9 +56,6 @@ module.exports = [
     }
 ]
 ```
-
-
-I assume that the `@eslint/config` package is used only in the rare case.
 
 <table><td>
 💡 <b>Example</b>:
@@ -75,7 +74,7 @@ module.exports = {
     }
 }
 </pre>
-<code>config.withConvert("eslint-config-foo", { mapPluginName: id => `foo::${id}` })</code> method with the above config returns as:
+<code>config.withConvert(...)</code> method with the above config returns as:
 <pre lang="jsonc">
 [
     {
@@ -100,7 +99,7 @@ module.exports = {
 
 The `config.withConvert(request, options)` method loads `extends` property and flattens `extends` property and `overrides` property recursively. Then it converts all plugin names in the configs.
 
-> TODO: AND expression in configs for `files`/`excludedFiles`. Maybe `test: Array<{files:string[],excludedFiles?:string[]}>`?
+With [`extends` in `overries`](minor-02-extends-in-overrides.md) enhancement, it uses nested `overrides` properties to express logical AND conditions.
 
 ## Documentation
 
