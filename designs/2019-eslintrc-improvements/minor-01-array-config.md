@@ -29,7 +29,7 @@ This RFC adds the support of an array. Each array element can be:
 
 `ConfigArrayFactory` loads strings as `extends` and normalizes others recursively.
 
-> [lib/lookup/config-array-factory.js#L626-L645](https://github.com/eslint/eslint/blob/proof-of-concept/config-array-in-eslintrc/lib/_lookup/config-array-factory.js#L626-L645)
+> [lib/lookup/config-array-factory.js#L653-L671](https://github.com/eslint/eslint/blob/c5c22cad7c27113840ac8005f18e6fcee657acf9/lib/_lookup/config-array-factory.js#L653-L671)
 
 <table><td>
 💡 <b>Example</b>:
