@@ -27,26 +27,24 @@ This proposal adds the following properties.
 - `variable.eslintExplicitGlobalComments` (an array of `Comment` objects) ... All `/*globals*/` comments that define this variable.
 - `variable.eslintImplicitGlobalSetting` (`"readonly"` | `"writable"` | `null`) ... The setting in config files. This is `null` if config files didn't define it.
 
+And this proposal removes existing `variable.eslintExplicitGlobalComment` property in favor of new `variable.eslintExplicitGlobalComments` property.
+
 Both `variable.eslintExplicitGlobalComments` and `variable.eslintImplicitGlobalSetting` are instantiated even if regular variable declarations (E.g. `let foo` syntax) exist. Therefore, [no-redeclare] rule can verify redeclaration by a mix of regular variable declarations, `/*globals*/` comments, and config files.
 
 This will be implemented into [`addDeclaredGlobals(globalScope, configGlobals, commentDirectives)`][lib/linter.js#L73-L131] function.
 
-<table><td>
-<a id="question1">❓</a> <b>Open Question</b>:<br>
-(<a href="question1a">link</a>) Should we handle de-declaration such as <code>/*globals foo:off*/</code>? Because variable objects don't exist for de-declared variables, rules cannot know de-declared variables under this proposal.
-</td></table>
-
 ## Documentation
 
-All of the existing `variable.eslintExplicitGlobal`, `variable.eslintExplicitGlobalComment`, and `variable.writeable` are undocumented. So new properties also can be undocumented.
+This proposal is related to making rules. So [Working with Rules](https://eslint.org/docs/developer-guide/working-with-rules) page should describe those properties, including undocumented existing properties.
 
-<table><td>
-<a id="question2">❓</a> <b>Open Question</b>:<br>
-(<a href="question2a">link</a>) Should we document those properties as public API officially?
-</td></table>
+- `variable.writeable`
+- `variable.eslintExplicitGlobal`
+- `variable.eslintExplicitGlobalComments`
+- `variable.eslintImplicitGlobalSetting`
 
-If we decided to make those properties public, it will be in [context.getScope()
-](https://eslint.org/docs/developer-guide/working-with-rules#contextgetscope) section so plugins can use those properties.
+And, we should make an item in the migration guide. One undocumented property is removed.
+
+- `variable.eslintExplicitGlobalComment`
 
 ## Drawbacks
 
@@ -54,25 +52,13 @@ Rules get accessible to `globals` setting values. It might restrict us to change
 
 ## Backwards Compatibility Analysis
 
-This proposal doesn't change the existing things.
+If a plugin rule used `variable.eslintExplicitGlobalComment` property, because this proposal removes it, the rule will be broken. But that property was undocumented and [GitHub search](https://github.com/search?p=1&q=eslintExplicitGlobalComment+language%3Ajavascript&type=Code) shows only copies of `no-unused-vars` rule or ESLint core, so this removal is no danger. (One point, `eslint-plugin-closure` package has [the type definition of escope](https://github.com/google/eslint-closure/blob/bf5c0d4d2a67ea3e8394c228717ae23d1a1ae4ba/packages/eslint-plugin-closure/lib/externs/escope.js#L163). That will need to be tweaked regardless of the removal.)
 
 If a plugin rule used `variable.eslintExplicitGlobalComments` property or `variable.eslintImplicitGlobalSetting` property for some reason, the rule will be broken. But it's a pretty little possibility.
 
 ## Alternatives
 
 - Adding `context.getImplicitGlobalSettings()` method to `RuleContext` object to retrieve normalized `globals` setting. In this case, rules can know settings in config files even if `/*globals foo:off*/` comment existed. On the other hand, rules have to search and parse `/*globals*/` comments manually although ESLint core has handled those once.
-
-## Open Questions
-
-- (<a href="#question1" id="question1a">link</a>) Should we handle de-declaration such as `/*globals foo:off*/`? Because variable objects don't exist for de-declared variables, rules cannot know de-declared variables under this proposal.<br>
-  [@mysticatea]'s preference is no. The [no-redeclare] rule will ignore such a removed declaration because it's a corner case and ECMAScript doesn't have the analogy of that. Probably [eslint-plugin-eslint-comments] plugin can report such a de-declaration.
-
-- (<a href="#question2" id="question2a">link</a>) Should we document those properties as public API officially although all of the existing `variable.eslintExplicitGlobal`, `variable.eslintExplicitGlobalComment`, and `variable.writeable` are undocumented?<br>
-  [@mysticatea]'s preference is yes.
-
-## Frequently Asked Questions
-
-Nothing in particular yet.
 
 ## Related Discussions
 
