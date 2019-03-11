@@ -1,5 +1,5 @@
 - Start Date: 2019-03-04
-- RFC PR: (leave this empty, to be filled in later)
+- RFC PR: https://github.com/eslint/rfcs/pull/17
 - Authors: Toru Nagashima ([@mysticatea])
 
 # Variable Definition Information of Config Files
