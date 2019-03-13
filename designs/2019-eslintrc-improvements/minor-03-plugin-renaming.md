@@ -159,6 +159,11 @@ The `config.withConvert(request, options)` method loads `extends` property and f
 
 With [`extends` in `overries`](minor-02-extends-in-overrides.md) enhancement, it uses nested `overrides` properties to express logical AND conditions.
 
+### Deprecating `--rulesdir` CLI option
+
+This feature allows us to define rules in config files in local.
+Therefore, now we don't have to add `--rulesdir` CLI option for each `eslint` command call, we can deprecate `--rulesdir` CLI option.
+
 ## Documentation
 
 This enhancement should be documented in "Configuring ESLint" page.
