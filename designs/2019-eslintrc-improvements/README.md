@@ -13,13 +13,12 @@ This RFC fixes two bugs I found while I make a PoC. I guess we don't want to mak
 - ([link](#fix-error-in-unused-deps)) Even if unused dependencies have some errors, ESLint doesn't throw it. (fixes <a href="https://github.com/eslint/eslint/issues/11396">eslint/eslint#11396</a>)
 - ([link](#fix-overrides-order)) The configuration of <code>overrides</code> in shareable configs no longer overwrites user settings in <code>.eslintrc</code> files. (see <a href="#️-fix-a-surprised-behavior-of-overrides">details</a>)
 
-This RFC includes five enhancements. Those would solve the important pains of the ecosystem.
+This RFC includes four enhancements.
 
-- [Additional Lint Targets](major-01-additional-lint-targets.md)
-- [Plugin Resolution Change](major-02-plugin-resolution-change.md)
-- [Array Config](minor-01-array-config.md)
-- [`extends` in `overrides`](minor-02-extends-in-overrides.md)
-- [Plugin Naming](minor-03-plugin-renaming.md)
+- [Additional Lint Targets](major-01-additional-lint-targets.md) (major)
+- [Array Config](minor-01-array-config.md) (minor)
+- [`extends` in `overrides`](minor-02-extends-in-overrides.md) (minor)
+- [Plugin Naming](minor-03-plugin-renaming.md) (minor)
 
 I made the enhancements in my PoC in order to confirm this architecture change is effective to maintain our codebase easier and make enhancing easier. Therefore, the enhancements are not required for this proposal.
 
@@ -29,7 +28,7 @@ However, I'd like to add the enhancements with this because those will solve som
 
 - The codebase about configuration files is complicated. It has made us hard to maintain and enhance the configuration system.
 - The current process determines target files at first. Next, it finds configuration files on the directory where each target file exists and that ancestors. This "files-then-config" order prevents adding some enhancements such as `--ext` functionality to our configuration file system.
-- Several good ideas have been born in [#9]. We can simplify the logic about configuration files by the ideas.
+- Several good ideas have been born in [#9] and [#14]. We can simplify the logic about configuration files by the ideas.
 
 Therefore, the goal of this RFC is to simplify our codebase by some architecture changes in order to maintain our codebase easier and make enhancing easier.
 
@@ -131,7 +130,7 @@ The loading logic of configuration files is complicated because it has complicat
 
 The main reason is registration. The loading logic has side-effects that register loaded plugins to the plugin manager, and plugins have side-effects that register rules and environments to other managers.
 
-The codebase gets pretty simple by the removal of the registration. Instead, the internal structure of configuration owns loaded plugins and parsers <a id="plugin-resolution-change" href="major-02-plugin-resolution-change.md" title="Enhancement point for Plugin Resolution Change">✨</a><a id="plugin-renaming" href="minor-03-plugin-renaming.md" title="Enhancement point for Plugin Renaming">✨</a>.
+The codebase gets pretty simple by the removal of the registration. Instead, the internal structure of configuration owns loaded plugins and parsers <a id="plugin-renaming" href="minor-03-plugin-renaming.md" title="Enhancement point for Plugin Renaming">✨</a>.
 
 ![New relationship graph](diagrams/new-deps.svg)
 
@@ -256,7 +255,6 @@ This core proposal needs migration guide because of a breaking change by a bug f
 Additional enhancements need documents as well:
 
 - [Additional Lint Targets](major-01-additional-lint-targets.md#documentation)
-- [Plugin Resolution Change](major-02-plugin-resolution-change.md#documentation)
 - [Array Config](minor-01-array-config.md#documentation)
 - [`extends` in `overrides`](minor-02-extends-in-overrides.md#documentation)
 - [Plugin Naming](minor-03-plugin-renaming.md#documentation)
@@ -304,10 +302,9 @@ This is a breaking change, but I think this is a bug fix.
 
 ### ⚠️ About additional enhancements
 
-The two enhancements have breaking changes.
+An additional enhancement have a breaking change.
 
 - [Additional Lint Targets](major-01-additional-lint-targets.md#backwards-compatibility-analysis)
-- [Plugin Resolution Change](major-02-plugin-resolution-change.md#backwards-compatibility-analysis)
 
 ## Alternatives
 
@@ -315,7 +312,7 @@ The two enhancements have breaking changes.
 
 ## Open Questions
 
-- [Plugin Resolution Change](major-02-plugin-resolution-change.md#open-questions)
+-
 
 ## Frequently Asked Questions
 
@@ -339,7 +336,7 @@ The two enhancements have breaking changes.
 - [eslint/eslint#11223]
 - [eslint/eslint#11396]
 
-Especially, this proposal is inspired by the discussion on [#9].
+Especially, this proposal is inspired by the discussion on [#9] and [#14].
 
 [#14]: https://github.com/eslint/rfcs/pull/14
 [#9]: https://github.com/eslint/rfcs/pull/9

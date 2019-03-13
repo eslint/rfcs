@@ -10,7 +10,7 @@ The current config file has both parent config (`extends`) and child configs (`o
 
 The array notation makes this relationship simpler: "a later element in the array has precedence over an earlier element in the array."
 
-Also, this is useful for [Save people from the "plugin conflict" error](major-02-plugin-resolution-change.md#save-people-from-the-plugin-conflict-error).
+Also, this is useful to [use two shareable configs which have the same plugin ID with renaming](minor-03-plugin-renaming.md#using-two-shareable-configs-which-have-the-same-plugin-id-with-renaming).
 
 ## Detailed Design
 

@@ -2,13 +2,13 @@
 
 ## Summary
 
-This proposal adds the feature that renames plugins in config files. This enhancement will be the official successor of `--rulesdir` option. Also, this enhancement is required to [save people from the "plugin conflict" error](major-02-plugin-resolution-change.md#save-people-from-the-plugin-conflict-error).
+This proposal adds the feature that renames plugins in config files. This enhancement will be the official successor of `--rulesdir` option. And, this solves the important pain of the ecosystem as making shareable configs being able to have plugins.
 
 ## Motivation
 
 People cannot define local rules with config files (rather than `--rules` CLI option). The ecosystem has hacked this problem by several plugins to solve such as `eslint-plugin-rulesdir`, `eslint-plugin-local`, etc. However, the official way is great.
 
-Also, to solve "plugin conflict" error, a utility that renames the plugins in shareable configs would be useful. This enhancement is required to implement such a utility.
+And if a shareable config depends on plugins, people have to install the plugins manually. The combination of this enhancement and `require.resolve()` function makes shareable configs being able to have plugins, so solves the pain!
 
 ## Detailed Design
 
@@ -25,7 +25,7 @@ If `plugins` property of a configuration was an object, `ConfigArrayFactory` loa
 <pre lang="jsonc">
 {
     "plugins": {
-        "foo": "foo",
+        "foo": "foo", // Or long version "eslint-plugin-foo" is OK as well.
         "abc": "xyz",
         "local": "./tools/eslint-rules/index.js"
     },
@@ -43,18 +43,21 @@ is loaded as:
         "name": ".eslintrc.json",
         "filePath": ".eslintrc.json",
         "plugins": {
+            // This `foo` is not renamed because property key and `id` in value is same.
             "foo": {
                 "definition": { ... },
                 "id": "foo",
                 "filePath": "node_modules/eslint-plugin-foo/index.js",
                 "importerPath": ".eslintrc.json"
             },
+            // This `foo` is renamed because property key and `id` in value is different.
             "abc": {
                 "definition": { ... },
                 "id": "xyz",
                 "filePath": "node_modules/eslint-plugin-xyz/index.js",
                 "importerPath": ".eslintrc.json"
             },
+            // This `foo` is renamed because property key and `id` in value is different.
             "local": {
                 "definition": { ... },
                 "id": "./tools/eslint-rules/index.js",
@@ -72,6 +75,90 @@ is loaded as:
 </pre>
 </td></table>
 
+### Conflict handling
+
+If a plugin was renamed, it can be different content to other declarations even if it has the same plugin ID.
+Therefore, if a config file had a renamed plugin and another config file included the same plugin ID regardless of renamed or not, ESLint throws "plugin conflict" error.
+
+ESLint loads plugins which are not renamed relative to CWD (by [#7]), it doesn't conflict because of unique if there are no renamed plugins.
+
+### Using two shareable configs which have the same plugin ID with renaming
+
+This section depends on two enhancements [Array Config](minor-01-array-config.md).
+
+We can provide a utility to use conflicted two shareable configs.
+The utility does load a given shareable config with renaming conflicted plugins.
+
+I assume that the utility is used only in the pretty rare case.
+
+```js
+// .eslintrc.js
+const config = require("@eslint/config")
+
+module.exports = [
+    // Rename conflicted plugins while loading.
+    // It renames the prefixes of rules, environments, and processors at the same time.
+    // It resolves the relative paths in `parser` and `plugins` to work file on this file.
+    config.withConvert("eslint-config-foo", {
+        relativeTo: __filename,
+        mapPluginName: id => `foo::${id}`
+    }),
+
+    "eslint-config-bar",
+
+    {
+        root: true,
+        rules: { ... }
+    }
+]
+```
+
+<table><td>
+💡 <b>Example</b>:
+<pre lang="js">
+// eslint-config-foo
+module.exports = {
+    plugins: {
+        "a-plugin": require.resolve("eslint-plugin-a-plugin")
+    },
+    parser: "./lib/parser",
+    env: {
+        "a-plugin/env": true
+    },
+    rules: {
+        eqeqeq: "error",
+        "a-plugin/x": "error",
+        "a-plugin/y": "error"
+    }
+}
+</pre>
+<code>config.withConvert(...)</code> method with the above config returns as:
+<pre lang="jsonc">
+[
+    {
+        "plugins": {
+            // Renaming with absolute path.
+            "foo::a-plugin": "/path/to/node_modules/eslint-config-foo/node_modules/eslint-plugin-a-plugin/index.js"
+        },
+        // absolute path.
+        "parser": "/path/to/node_modules/eslint-plugin-foo/lib/parser.js",
+        "env": {
+            "foo::a-plugin/env": true
+        },
+        "rules": {
+            "eqeqeq": "error",
+            "foo::a-plugin/x": "error",
+            "foo::a-plugin/y": "error"
+        }
+    }
+]
+</pre>
+</td></table>
+
+The `config.withConvert(request, options)` method loads `extends` property and flattens `extends` property and `overrides` property recursively. Then it converts all plugin names in the configs.
+
+With [`extends` in `overries`](minor-02-extends-in-overrides.md) enhancement, it uses nested `overrides` properties to express logical AND conditions.
+
 ## Documentation
 
 This enhancement should be documented in "Configuring ESLint" page.
@@ -86,7 +173,7 @@ If people depend on the behavior that ESLint throws an error if they give an obj
 
 ## Alternatives
 
-- [#9] is the alternative. But double duplicate features cause confusion for the ecosystem. For newcomers, a mix of articles about two config systems makes hard to understand ESLint. For non-English users, the official document is far.
+- [#9] is the alternative. But double duplicate features cause confusion for the ecosystem. For newcomers, a mix of articles about two config systems makes hard to understand ESLint. For non-English users, the official document is far. Also, this proposal has information that a plugin name was renamed or not, so it helps to address [Robustness Guarantee].
 - [#14] is a different idea to handle local plugins. I think people have gotten used to key-value form via JavaScript object literals.
 
 ## Open Questions
@@ -101,6 +188,9 @@ If people depend on the behavior that ESLint throws an error if they give an obj
 
 - [#14]
 - [#9]
+- [#7]
 
 [#14]: https://github.com/eslint/rfcs/pull/14
 [#9]: https://github.com/eslint/rfcs/pull/9
+[#7]: https://github.com/eslint/rfcs/pull/7
+[Guarantee Robustness]: https://gist.github.com/not-an-aardvark/169bede8072c31a500e018ed7d6a8915
