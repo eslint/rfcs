@@ -2,7 +2,7 @@
 
 ## Summary
 
-This proposal adds the feature that renames plugins in config files. This enhancement will be the official successor of `--rulesdir` option. And, this solves the important pain of the ecosystem as making shareable configs being able to have plugins.
+This proposal adds the feature that renames plugins in config files. This enhancement will be the official successor of `--rulesdir` option. And, this solves the important pain of the ecosystem by making shareable configs being able to have plugins.
 
 ## Motivation
 
@@ -43,21 +43,21 @@ is loaded as:
         "name": ".eslintrc.json",
         "filePath": ".eslintrc.json",
         "plugins": {
-            // This `foo` is not renamed because property key and `id` in value is same.
+            // This plugin is not renamed because property key and `id` in value is same.
             "foo": {
                 "definition": { ... },
                 "id": "foo",
                 "filePath": "node_modules/eslint-plugin-foo/index.js",
                 "importerPath": ".eslintrc.json"
             },
-            // This `foo` is renamed because property key and `id` in value is different.
+            // This plugin is renamed because property key and `id` in value is different.
             "abc": {
                 "definition": { ... },
                 "id": "xyz",
                 "filePath": "node_modules/eslint-plugin-xyz/index.js",
                 "importerPath": ".eslintrc.json"
             },
-            // This `foo` is renamed because property key and `id` in value is different.
+            // This plugin is renamed because property key and `id` in value is different.
             "local": {
                 "definition": { ... },
                 "id": "./tools/eslint-rules/index.js",
