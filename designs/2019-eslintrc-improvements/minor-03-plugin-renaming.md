@@ -84,7 +84,7 @@ ESLint loads plugins which are not renamed relative to CWD (by [#7]), it doesn't
 
 ### Using two shareable configs which have the same plugin ID with renaming
 
-This section depends on two enhancements [Array Config](minor-01-array-config.md).
+This section depends on an enhancement [Array Config](minor-01-array-config.md).
 
 We can provide a utility to use conflicted two shareable configs.
 The utility does load a given shareable config with renaming conflicted plugins.
