@@ -28,7 +28,7 @@ The implementation is expected to be fairly simple when building on top of [esli
 
 ## Documentation
 
-This feature might be useful to add as a footnote for the larger announcement of package-loading changes. It would be worth mentioning in the parts of the documentation that describe how plugins are loaded, and it would also be added to the Node.js docs. However, most end users would not need to use this option or be aware of its existence.
+This feature might be useful to add as a footnote for the larger announcement of package-loading changes. It would be worth mentioning in the parts of the documentation that describe how plugins are loaded, and it would also be added to the Node.js API docs. However, most end users would not need to use this option or be aware of its existence.
 
 ## Drawbacks
 
