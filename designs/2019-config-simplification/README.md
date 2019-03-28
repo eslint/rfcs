@@ -42,6 +42,7 @@ Design Summary:
 1. All `eslint.config.js` files are treated as if they have `root: true`
 1. There is no automatic merging of config files
 1. The `eslint.config.js` configuration is not serializable and objects such as functions and plugins may be added directly into configuration
+1. An `@eslint/config` utility is provided to aid with backwards compatibility
 1. Remove the concept of environments (`env`)
 1. Remove `.eslintignore` and `--ignore-file` (no longer necessary)
 1. Remove `--rulesdir`
@@ -52,7 +53,7 @@ Design Summary:
 The `eslint.config.js` file is a JavaScript file (there is no JSON or YAML equivalent) that exports a `config` object: 
 
 ```js
-exports.config = {
+module.exports = {
     name: "name",
     files: ["*.js"],
     ignores: ["*.test.js"],
@@ -102,10 +103,10 @@ Each of these keys represent different ways of augmenting how configuration is c
 
 #### Extending Another Config
 
-Extending another config is accomplished by returning an array as the value of `exports.config`. Configs that come later in the array are merged with configs that come earlier in the array. For example:
+Extending another config is accomplished by returning an array as the value of `module.exports`. Configs that come later in the array are merged with configs that come earlier in the array. For example:
 
 ```js
-exports.config = [
+module.exports = [
     require("eslint-config-standard"),
     {
         files: ["*.js"],
@@ -119,7 +120,7 @@ exports.config = [
 This config extends `eslint-config-standard` because that package is included first in the array. You can add multiple configs into the array to extend from multiple configs, such as:
 
 ```js
-exports.config = [
+module.exports = [
     require("eslint-config-standard"),
     require("@me/eslint-config"),
     {
@@ -134,7 +135,7 @@ exports.config = [
 Each item in a config array can be a config array. For example, this is a valid config array and equivalent to the previous example:
 
 ```js
-exports.config = [
+module.exports = [
     [
         require("eslint-config-standard"),
         require("@me/eslint-config")
@@ -153,7 +154,7 @@ A config array is always flattened before being evaluated, so even though this e
 When using a config array, only one config object must have a `files` key (config arrays where no objects contain `files` will result in an error). If a config in the config array does not contain `files` or `ignores`, then that config is merged into every config with a `files` pattern. For example:
 
 ```js
-exports.config = [
+module.exports = [
     {
         globals: {
             Foo: true
@@ -181,7 +182,7 @@ In this example, the first config in the array defines a global variable of `Foo
 Both `eslint:recommended` and `eslint:all` can be represented as strings in a config array. For example:
 
 ```js
-exports.config = [
+module.exports = [
     "eslint:recommended",
     require("eslint-config-standard"),
     require("@me/eslint-config"),
@@ -256,7 +257,7 @@ compatConfig.defs.ruleNamespaces["compat::example"] = require("eslint-plugin-exa
 delete compatConfig.defs.ruleNamespaces.example;
 
 // include in config
-exports.config = [
+module.exports = [
 
     require("eslint-config-first");
     compatConfig,
@@ -286,7 +287,7 @@ In `eslint.config.js`, the same configuration is achieved using a `ruledefs` key
 ```js
 const reactPlugin = require("eslint-plugin-react");
 
-exports.config = {
+module.exports = {
     files: ["*.js"],
     defs: {
         ruleNamespaces: {
@@ -301,7 +302,7 @@ exports.config = {
 
 Here, it is the `defs.ruleNamespaces` that assigns the name `react` to the rules from `eslint-plugin-react`. The reference to `react/` in a rule will always look up that value in the `defs.ruleNamespaces` key.
 
-**Note:** If a config is merged with another config that already has the same `defs.ruleNamespaces` namespace defined, then an error is thrown. In this case, if a config already has a `react` namespace, then attempting to combine with another config that has a `react` namespace will throw an error. This is to ensure the meaning of `namespace/rule` remains consistent.
+**Note:** If a config is merged with another config that already has the same `defs.ruleNamespaces` namespace defined and the namespace doesn't refer to the same rules object, then an error is thrown. In this case, if a config already has a `react` namespace, then attempting to combine with another config that has a `react` namespace that contains different rules will throw an error. This is to ensure the meaning of `namespace/rule` remains consistent.
 
 #### Plugins Specifying Their Own Namespaces
 
@@ -310,7 +311,7 @@ Rules imported from a plugin must be assigned a namespace using `defs.ruleNamesp
 First, a plugin can export a recommended configuration to place in a config array. For example, a plugin called `eslint-plugin-example`, might define a config that looks like this:
 
 ```js
-exports.configs = {
+module.exportss = {
     recommended: {
         defs: {
             ruleNamespaces: {
@@ -326,7 +327,7 @@ exports.configs = {
 Then, inside of a user config, the plugin's recommended config can be loaded:
 
 ```js
-exports.config = [
+module.exports = [
     require("eslint-plugin-example").configs.recommended,
     {
         rules: {
@@ -351,7 +352,7 @@ exports.ruleNamespaces = {
 Then, inside of a user config, the plugin's `defs.ruleNamespaces` can be included directly`:
 
 ```js
-exports.config = {
+module.exports = {
     defs: {
         ruleNamespaces: {
             ...require("eslint-plugin-example").ruleNamespaces
@@ -378,7 +379,7 @@ processor: "markdown/markdown"
 In `eslint.config.js`, you would need to pass the references directly, such as:
 
 ```js
-exports.config = {
+module.exports = {
     files: ["*.js"],
     parser: require("babel-eslint"),
     processor: require("eslint-plugin-markdown").processors.markdown
@@ -394,7 +395,7 @@ Unlike with `.eslintrc` files, there is no `env` key in `eslint.config.js`. User
 ```js
 const globals = require("globals");
 
-exports.config = {
+module.exports = {
     files: ["*.js"],
     globals: {
         MyGlobal: true,
@@ -426,7 +427,7 @@ overrides:
 This can be written in `eslint.config.js` as an array of two configs:
 
 ```js
-exports.config = [
+module.exports = [
     {
         files: "*.js",
         defs: {
@@ -450,15 +451,28 @@ When ESLint uses this config, it will check each `files` pattern to determine wh
 
 #### Replacing `.eslintignore`
 
-Because there is only one `eslint.config.js` file to consider, ESLint doesn't have to first search directories to determine its location. That allows `eslint.config.js` to specify files to ignore directly instead of relying on `.eslintignore`. For backwards compatibility, users could create a config like this:
+Because there is only one `eslint.config.js` file to consider, ESLint doesn't have to first search directories to determine its location. That allows `eslint.config.js` to specify files to ignore directly instead of relying on `.eslintignore`. 
+
+Anytime `ignores` appears in a config object without `files`, then the `ignores` patterns acts like the current `.eslintignore` file in that the patterns are excluded from all searches before any other matching is done. For example:
+
+```js
+module.exports = [{
+    ignores: "web_modules"
+}];
+```
+
+Here, the directory `web_modules` will be ignored as if it were defined in an `.eslintignore` file. The `web_modules` directory will be excluded from the glob pattern used to determine which files ESLint will run against.
+
+For backwards compatibility, users could create a config like this:
 
 ```js
 const fs = require("fs");
 
-exports.config = {
-    files: ["*.js"],
-    ignores: fs.readFileSync(".eslintignore", "utf8").split("\n")
-};
+module.exports = [
+    {
+        ignores: fs.readFileSync(".eslintignore", "utf8").split("\n")
+    }
+];
 ```
 
 ### Replacing `--ext`
@@ -476,7 +490,7 @@ This proposal removes `--ext` by allowing the same information to be passed in a
 ```js
 const fs = require("fs");
 
-exports.config = {
+module.exports = {
     files: ["*.js", "*.jsx"],
 };
 ```
@@ -496,7 +510,7 @@ In order to recreate the functionality of `--rulesdir`, a user would need to cre
 ```js
 const requireIndex = require("requireindex");
 
-exports.config = {
+module.exports = {
     defs: {
         ruleNamespaces: {
             custom: requireIndex("./custom-rules")
@@ -512,10 +526,10 @@ The `requireIndex()` method returns an object where the keys are the rule IDs (b
 
 ### Function Configs
 
-Some users may need information from ESLint to determine the correct configuration to use. To allow for that, `exports.config` may also be a function that returns an object, such as:
+Some users may need information from ESLint to determine the correct configuration to use. To allow for that, `module.exports` may also be a function that returns an object, such as:
 
 ```js
-exports.config = (context) => {
+module.exports = (context) => {
 
     // do something
 
@@ -531,7 +545,8 @@ exports.config = (context) => {
 
 The `context` object has the following members:
 
-* `core` - information about the ESLint core that is using the config
+* `application` - information about the ESLint core that is using the config
+    * `name` - the name of the application being used
     * `version` - the version of ESLint being used
     * `hasRule(ruleId)` - determine if the given rule is in the core
 * `cwd` - the current working directory for ESLint (might be different than `process.cwd()` but always matches `CLIEngine.options.cwd`, see https://github.com/eslint/eslint/issues/11218)
@@ -547,7 +562,7 @@ One of the problems with shareable configs today is when a new rule is added to 
 ```js
 const requireIndex = require("requireindex");
 
-exports.config = (context) => {
+module.exports = (context) => {
     const myConfig = {
         files: ["*.js"],
         defs: {
@@ -573,7 +588,7 @@ exports.config = (context) => {
 A function config can be used anywhere a config object or a config array is valid. That means you can insert a function config as a config array member:
 
 ```js
-exports.config = [
+module.exports = [
     (context) => someObject,
     require("eslint-config-myconfig")
 ];
@@ -582,6 +597,73 @@ exports.config = [
 Each function config in an array will be executed with a `context` object when ESLint evaluates the configuration file. This also means that shareable configs can export a function instead of an object or array.
 
 **Note:** If a function config inside of a config array happens to return an array, then those config array items are flattened as with any array-in-array situation.
+
+### The `@eslint/config` Utility
+
+To allow for backwards compatibility with existing configs and plugins, an `@eslint/config` utility is provided. The package exports the following functions:
+
+* `importESLintRC(eslintrcName)` - allows using `.eslintrc`-style configs
+* `translateESLintRC(config)` - translates an `.eslintrc`-style config object into the correct format
+* `importPlugin(pluginName)` - automatically loads and merges in plugin information likes rules and processors
+* `importEnvGlobals(envName)` - imports globals from an environment
+* `importEnvConfig(envName)` - imports an environment with globals and things like `parserOptions` (for `es6` and `node` environments)
+
+#### The `importESLintRC()` function
+
+The `importESLintRC()` function allows users to specify an existing `.eslintrc` config location in the same format that used in the `.eslintrc` `extends` key. Users can pass in a filename, a shareable config name, or a plugin config name and have it converted automatically into the correct format. For example:
+
+```js
+module.exports = [
+    "eslint:recommended",
+  
+    // load a file
+    importESLintRC("./.eslintrc.yml", __dirname),
+
+    // load eslint-config-standard
+    importESLintRC("standard", __dirname),
+
+    // load eslint-plugin-vue/recommended
+    importESLintRC("plugin:vue/recommended", __dirname)
+
+];
+```
+
+#### The `translateESLintRC()` function
+
+The `translateESLintRC()` function allows users to pass in a `.eslintrc`-style config and get back a config object that works with `eslint.config.js`. For example:
+
+```js
+const config = {
+    env: {
+        node: true
+    },
+    root: true
+};
+
+module.exports = [
+    "eslint:recommended",
+  
+    translateESLintRC(config)
+];
+```
+
+#### The `importPlugin()` function
+
+The `importPlugin()` function allows users to automatically load a plugin's rules and processors without separately assigning a namespace. For example:
+
+```js
+module.exports = [
+    "eslint:recommended",
+
+    // add in eslint-plugin-vue
+    importPlugin("vue"),
+
+    // add in eslint-plugin-example
+    importPlugin("example")
+];
+```
+
+This example includes both `eslint-plugin-vue` and `eslint-plugin-example` so that all of the rules are available with the correct namespace and processors are automatically hooked up to the correct `files` pattern.
 
 ### Configuration Location Resolution
 
@@ -652,6 +734,12 @@ class ConfigArray extends Array {
 
     // get a single config for the given filename
     getConfig(filename) {}
+
+    // get the file patterns to search for
+    getFilePatterns() {}
+
+    // get the "ignore file" values
+    getIgnorePatterns() {}
 }
 ```
 
@@ -725,7 +813,7 @@ While there are no alternatives that cover all of the functionality in this RFC,
 
 No. Right now it won't be possible to implement a config with an async function because the rest of ESLint is fully synchronous. Once we look at how to make ESLint more asynchronous, we can revisit and allow configs to be created with async functions.
 
-### Why use `exports.config` instead of `module.exports`?
+### Why use `module.exports` instead of `module.exports`?
 
 Using an exported key gives us more flexibility for the future if we decide that config files should be able to output more than one thing. For example, I've been thinking of a `--config-key` option that would allow users to specify which exported key should be used as their config. Users could then export multiple different keys (`config1`, `config2`, etc.) and easily switch between configs on the command line. That option is not part of this proposal because it isn't solving an existing problem and I'd rather focus on existing problems first (this proposal is already big enough).
 
@@ -747,7 +835,7 @@ In the second case, we'd be stuck trying to keep the core ESLint configs in sync
 
 By using strings as placeholders, we allow the core to fill in the values for those configs without adding more restrictions onto the config files.
 
-### Should shareable configs also use `exports.config`?
+### Should shareable configs also use `module.exports`?
 
 It's really up to the shareable configs. With this design, there is no required format for shareable configs, so we can no longer enforce any such conventions. For simplicity, I think that most shareable configs will use `module.exports`, but it's really up to the shareable config author.
 
@@ -760,7 +848,7 @@ In this design, the user is responsible for loading npm packages. Because we are
 An earlier iteration of this design had plugins specified like this:
 
 ```js
-exports.config = {
+module.exports = {
     plugins: [
         require("eslint-plugin-react"),
         require("eslint-plugin-mardkown")
@@ -771,7 +859,7 @@ exports.config = {
 This didn't work because ESLint didn't know how to name the plugin rules (we weren't getting the plugin name, just the object). So the next iteration went to this:
 
 ```js
-exports.config = {
+module.exports = {
     plugins: {
         react: require("eslint-plugin-react"),
         markdown: require("eslint-plugin-mardkown")
@@ -782,7 +870,7 @@ exports.config = {
 This iteration gave the plugin rules names, but then I realized the only things that need names in plugins with this design are rules. Users can get processors, parsers, etc., directly without ESLint being involved in picking them out of plugins. So I renamed `plugins` to `ruledefs` to make this explicit:
 
 ```js
-exports.config = {
+module.exports = {
     ruledefs: {
         react: require("eslint-plugin-react").rules,
         markdown: require("eslint-plugin-mardkown").rules
