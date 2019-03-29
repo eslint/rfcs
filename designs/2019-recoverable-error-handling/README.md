@@ -117,5 +117,7 @@ Nothing in particular.
 ## Related Discussions
 
 - https://github.com/eslint/eslint/issues/3815
+- https://github.com/eslint/espree/issues/368
+- https://github.com/eslint/eslint/pull/11509#pullrequestreview-220174854
 
 [Recoverable Errors]: #recoverable-errors
