@@ -14,41 +14,60 @@ This RFC adds handling of [Recoverable Errors] into ESLint.
 
 The goal of this RFC is that improve ESLint experience by reducing "fixing an error makes more errors."
 
+This feature intends to be used for the syntax errors which don't affect AST shape. For example, name conflicts, type errors, etc. This feature doesn't intend to support invalid AST.
+
 ## Detailed Design
 
 ### Handling [Recoverable Errors] in ESLint
 
-1. `Linter` class passes `parserOptions.recoverableErrors` option with `true` to `espree` or custom parsers.
-1. If the object the parser returned has `recoverableErrors` property with an array, `Linter` class converts the errors to messages.
+- `Linter` class passes `parserOptions.recoverableErrors` option with `true` to `espree` or custom parsers.
+- If the object the parser returned has `recoverableErrors` property with an array, `Linter` class converts the errors to messages.
 
-Each element of `recoverableErrors` array has the following form.
+    Each element of `recoverableErrors` array has the following form.
 
-```jsonc
-{
-    "message": "Identifier 'foo' has already been declared",
-    "line": 1,      // 1-based line number.
-    "column": 10,   // 0-based column number.
-    "endLine": 1,   // Optional. 1-based line number.
-    "endColumn": 13 // Optional. 0-based column number.
-}
-```
+    ```jsonc
+    {
+        "message": "Identifier 'foo' has already been declared",
+        "line": 1,      // 1-based line number.
+        "column": 10,   // 0-based column number.
+        "endLine": 1,   // Optional. 1-based line number.
+        "endColumn": 13 // Optional. 0-based column number.
+    }
+    ```
 
-Then `Linter` class converts that to a message:
+    Then `Linter` class converts that to a message:
 
-```jsonc
-{
-    "fatal": false,
-    "ruleId": null,
-    "severity": 2,
-    "message": "Identifier 'foo' has already been declared",
-    "line": 1,      // 1-based line number.
-    "column": 11,   // 1-based column number.
-    "endLine": 1,   // Optional. 1-based line number.
-    "endColumn": 14 // Optional. 1-based column number.
-}
-```
+    ```jsonc
+    {
+        "fatal": true,
+        "ruleId": null,
+        "severity": 2,
+        "message": "Identifier 'foo' has already been declared",
+        "line": 1,      // 1-based line number.
+        "column": 11,   // 1-based column number.
+        "endLine": 1,   // Optional. 1-based line number.
+        "endColumn": 14 // Optional. 1-based column number.
+    }
+    ```
 
-Directive comments such as `/*eslint-disable*/` cannot hide the messages of [Recoverable Errors].
+- Directive comments such as `/*eslint-disable*/` cannot hide the messages of [Recoverable Errors].
+- If the parser returned any [Recoverable Errors], the `Linter` disables autofix as making [`disableFixes` option](https://github.com/eslint/rfcs/tree/master/designs/2018-processors-improvements#changes-to-cliengine-and-linter) `true` internally because it's considered not safe.
+- If the parser returned any [Recoverable Errors], the `Linter` catches exceptions which were thrown from rules and reports the exceptions as regular messages rather than crash in order to provide linting messages as best effort basis. For example,
+
+    ```jsonc
+    {
+        "fatal": true,
+        "ruleId": "a-rule",
+        "severity": 2,
+        "message": "'a-rule' failed to lint the code because of syntax error(s).",
+        "line": 1,
+        "column": 1,
+        "endLine": 1,
+        "endColumn": 1
+    }
+    ```
+
+    If a rule has an exception and regular messages, the `Linter` drops the regular messages to avoid confusion of wrong messages.
 
 ### Handling [Recoverable Errors] in Espree
 
@@ -73,7 +92,7 @@ In `acorn@6.1.1`, there are the following [Recoverable Errors]:
 
 > https://github.com/acornjs/acorn/search?q=raiseRecoverable
 
-### Other parsers
+### Handling [Recoverable Errors] in Other Parsers
 
 This RFC doesn't contain the update of custom parsers. But this section considers if some popular custom parsers can applicate this feature.
 
@@ -84,6 +103,18 @@ This RFC doesn't contain the update of custom parsers. But this section consider
 - `vue-eslint-parser`<br>
   It reports [HTML parse errors](https://html.spec.whatwg.org/multipage/parsing.html#parse-errors) and JavaScript syntax errors in `<template>` as [Recoverable Errors], then [vue/no-parsing-error](https://eslint.vuejs.org/rules/no-parsing-error.html) rule converts the errors to messages. Therefore, it can provide [Recoverable Errors].
 
+### How should custom parsers use AST with [Recoverable Errors]?
+
+This feature intends to be used for the syntax errors which don't affect AST shape. For example, name conflicts, type errors, etc. This feature doesn't intend to support invalid AST.
+
+If recovering of a syntax error makes invalid AST as ESTree or unexpected mapping between AST and tokens, it should not be [Recoverable Errors].
+
+### How should rules support AST with [Recoverable Errors]?
+
+If given AST is valid along with [Recoverable Errors], rules should support that case.
+
+If mapping between AST nodes and tokens was broken, probably rules cannot support that case.
+
 ## Documentation
 
 - [Disabling Rules with Inline Comments](https://eslint.org/docs/user-guide/configuring#disabling-rules-with-inline-comments) section should note about [Recoverable Errors]. The directive comments cannot hide the [Recoverable Errors].
@@ -91,7 +122,8 @@ This RFC doesn't contain the update of custom parsers. But this section consider
 
 ## Drawbacks
 
-- I think the value of this feature is relatively small because people can verify source code after they fixed syntax errors. This feature provides just efficient.
+- The value of this feature is relatively small because people can verify source code after they fixed syntax errors. This feature provides just efficient.
+- This feature makes core rules more complex if we wanted to support widely situations.
 
 ## Backwards Compatibility Analysis
 
@@ -104,7 +136,7 @@ If users are depending `parserOptions.recoverableErrors`, possibly it will be br
 
 ## Alternatives
 
-- `vue-eslint-parser`'s way is an alternative.
+- `vue-eslint-parser`'s way is an alternative; A custom parser returns `errors` property along with AST and a plugin rule reports the errors in the property. But people can disable plugin rules, so it's not proper as the way that shows syntax errors.
 
 ## Open Questions
 
