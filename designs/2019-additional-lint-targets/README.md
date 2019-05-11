@@ -38,9 +38,10 @@ Per "[Related Discussions](#related-discussions)" section, this is very regularl
 This proposal enhances `overrides` property of the config file.
 
 - If a config file in a directory has `overrides` property, ESLint checks the files which are matched by any of override entries (i.e., `files`/`excludedFiles` criteria) additionally in the directory.
-    - If any of `files` value of an override entry ended with `*`, this feature doesn't use the entry in order to avoid checking too many kinds of files.
-    - This enhancement affects only the case where a directory path is provided on the CLI. If people provide glob patterns on the CLI, ESLint behaves the same as currently.
-    - The ignoring configuration (`.eslintignore`) is prior to this enhancement. If `.eslintignore` contains the additional target files, ESLint just ignores those as same as currently.
+    - If any of `files` value of an override entry ended with `*`, this enhancement doesn't use the entry in order to avoid checking too many kinds of files.
+- This enhancement affects only the case where a directory path is provided on the CLI. If people provide glob patterns on the CLI, ESLint behaves the same as currently.
+- The `--ext` option precedences this enhancement. If the `--ext` option was given, this enhancement is disabled. So people can use the current behavior by `--ext .js`.
+- The ignoring configuration (`.eslintignore`) precedences this enhancement. If `.eslintignore` contains the additional target files, ESLint just ignores those as same as currently.
 
 The `overrides` property means that people intend to check those files. So this behavior is intuitive.
 
