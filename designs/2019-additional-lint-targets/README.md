@@ -1,5 +1,5 @@
 - Start Date: 2019-05-12
-- RFC PR:
+- RFC PR: https://github.com/eslint/rfcs/pull/20
 - Authors: Toru Nagashima ([@mysticatea](https://github.com/mysticatea))
 
 # Configuring Additional Lint Targets with `.eslintrc`
