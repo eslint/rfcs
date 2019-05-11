@@ -50,7 +50,7 @@ The `overrides` property means that people intend to check those files. So this 
 <pre lang="yml">
 overrides:
   - files: "*.ts"
-    parser: "plugin:@typescript-eslint/parser"
+    parser: "@typescript-eslint/parser"
   - files: "tests/**/*"
     env: { mocha: true }
 </pre>
