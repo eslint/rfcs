@@ -58,43 +58,32 @@ overrides:
 With the above config, `eslint .` command will check `*.ts` files additionally. But the command doesn't check all files inside `tests` directory.
 </td></table>
 
-### Implementation
-
-We can add the check to [lib/cli-engine/file-enumerator.js#L410](https://github.com/eslint/eslint/blob/553795712892c8350b1780e947f65d3c019293a7/lib/cli-engine/file-enumerator.js#L410). It's very easy.
-
-### With file extension processors
-
-If a plugin has file extension processors, [the config array factory yields elements which have `files` property](https://github.com/eslint/eslint/blob/553795712892c8350b1780e947f65d3c019293a7/lib/cli-engine/config-array-factory.js#L870-L902). Therefore this enhancement affects file extension processors.
-
-<table><td>
-💡 <b>Example</b>:
-<pre lang="yml">
-plugins:
-  - vue # has `.vue` processor
-</pre>
-
-With the above config, `eslint .` command will check `*.vue` files additionally.
-</td></table>
-
-Similarly, if a shareable config (including the recommended config of plugins) has `overrides` property, it affects to the config file which extends the shareable config.
-
-### For code blocks
+### Code blocks
 
 If a code block that processors extracted has the virtual filename, ESLint filters the file extension of the virtual filename with `--ext` option. This enhancement affects to that check. ESLint lints the code block if the `overrides` matches the virtual filename.
+
+### Legacy file extension processors
+
+This enhancement doesn't affect legacy file extension processors. This means that `plugins` property in config files never changes the kinds of target files.
+
+On the other hand, `extends` property in config files can change the kinds of target files by the `overrides` property in the shareable configs.
+
+### Implementation
+
+- We can add the check to [lib/cli-engine/file-enumerator.js#L410](https://github.com/eslint/eslint/blob/553795712892c8350b1780e947f65d3c019293a7/lib/cli-engine/file-enumerator.js#L410).
+- For code blocks, `CLIEngine` has to give file selector to `Linter` object (related to [eslint/eslint#11552](https://github.com/eslint/eslint/pull/11552)). This will be `options.filterNamedCodeBlock` (`(filename:string) => boolean`) or something like.
 
 ## Documentation
 
 This enhancement needs migration guide because of a breaking change.
 
-- If your config contains `overrides` property or plugins which have file extension processors, `eslint` command with directory paths lints the files which are matched automatically. This may increase errors of your command.<br>
-  If you don't want to add file types to check, please use glob patterns instead of directory paths.
+- If your config contains `overrides` property, `eslint` command with directory paths lints the files which are matched automatically. This may increase errors of your command.<br>
+  If you don't want to add file types to check, please use glob patterns instead of directory paths or `--ext .js` option.
 
 This enhancement, so it needs to update some documents.
 
 - In the description of `--ext` CLI option, it should say that your config file may add file types automatically.
 - In the description of `overrides` property, it should say that the `overrides[].files` property adds target files automatically.
-- In the description of `plugins` property, it should say that plugins which have file extension processors add target files automatically.
-- In the "working with plugins" page, it should say that file extension processors add target files automatically.
 
 ## Drawbacks
 
@@ -105,7 +94,7 @@ This enhancement, so it needs to update some documents.
 
 In the following situation, `eslint` command increases errors.
 
-- Their configuration has `overrides` property (with `files` property which doesn't end with `*`) or plugins which have file extension processors.
+- Their configuration has `overrides` property (with `files` property which doesn't end with `*`).
 - Their `eslint` command is using directory paths without `--ext` option.
 
 I guess that the impact is limited because people use `--ext` option or glob patterns if they use configuration which affects files other than `*.js`.
