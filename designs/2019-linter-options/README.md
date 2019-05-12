@@ -48,7 +48,7 @@ If `false` then it disables inline directive comments such as `/*eslint-disable*
 
 <table><td>
 🚀 <b>Implementation</b>:
-<p>In <a href="https://github.com/eslint/eslint/blob/af81cb3ecc5e6bf43a6a2d8f326103350513a1b8/lib/linter.js#L859"><code>Linter#_verifyWithoutProcessors</code> method</a>, the linter checks both <code>providedConfig</code> and <code>filenameOrOptions</code> to determine <code>allowInlineConfig</code> option. The <code>filenameOrOptions.allowInlineConfig</code> precedences <code>providedConfig.allowInlineConfig</code>.</p>
+<p>In <a href="https://github.com/eslint/eslint/blob/af81cb3ecc5e6bf43a6a2d8f326103350513a1b8/lib/linter.js#L859"><code>Linter#_verifyWithoutProcessors</code> method</a>, the linter checks both <code>providedConfig</code> and <code>filenameOrOptions</code> to determine <code>allowInlineConfig</code> option. The <code>filenameOrOptions.allowInlineConfig</code> precedences <code>providedConfig.linterOptions.allowInlineConfig</code>.</p>
 </td></table>
 
 ### reportUnusedDisableDirectives
@@ -64,7 +64,7 @@ It reports directive comments like `// eslint-disable-line` when no errors would
 🚀 <b>Implementation</b>:
 <ol>
 <li><code>Linter</code> and <code>CLIEngine</code> have <code>options.reportUnusedDisableDirectives</code>. This RFC enhances these options to accept <code>"off"</code>, <code>"warn"</code>, and <code>"error"</code>. Existing <code>false</code> is the same as <code>"off"</code> and existing <code>true</code> is the same as <code>"error"</code>.</li>
-<li>In <a href="https://github.com/eslint/eslint/blob/af81cb3ecc5e6bf43a6a2d8f326103350513a1b8/lib/linter.js#L859"><code>Linter#_verifyWithoutProcessors</code> method</a>, the linter checks both <code>providedConfig</code> and <code>filenameOrOptions</code> to determine <code>reportUnusedDisableDirectives</code> option. The <code>filenameOrOptions.reportUnusedDisableDirectives</code> precedences <code>providedConfig.reportUnusedDisableDirectives</code>.</li>
+<li>In <a href="https://github.com/eslint/eslint/blob/af81cb3ecc5e6bf43a6a2d8f326103350513a1b8/lib/linter.js#L859"><code>Linter#_verifyWithoutProcessors</code> method</a>, the linter checks both <code>providedConfig</code> and <code>filenameOrOptions</code> to determine <code>reportUnusedDisableDirectives</code> option. The <code>filenameOrOptions.reportUnusedDisableDirectives</code> precedences <code>providedConfig.linterOptions.reportUnusedDisableDirectives</code>.</li>
 </ol>
 </td></table>
 
