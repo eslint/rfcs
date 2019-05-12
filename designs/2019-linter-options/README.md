@@ -2,11 +2,11 @@
 - RFC PR: (leave this empty, to be filled in later)
 - Authors: Toru Nagashima ([@mysticatea](https://github.com/mysticatea))
 
-# The `linterOptions` property in Config Files
+# The `coreOptions` property in Config Files
 
 ## Summary
 
-This RFC adds `linterOptions` property to config files. People can use config files (including shareable configs!) instead of CLI options in order to configure some linter behavior.
+This RFC adds `coreOptions` property to config files. People can use config files (including shareable configs!) instead of CLI options in order to configure some linter behavior.
 
 ## Motivation
 
@@ -14,12 +14,12 @@ We cannot configure some linter's behavior with config files, especially, sharea
 
 ## Detailed Design
 
-This adds `linterOptions` property to config files with three properties.
+This adds `coreOptions` property to config files with three properties.
 
 ```js
 // .eslintrc.js
 module.exports = {
-    linterOptions: {
+    coreOptions: {
         allowInlineConfig: true,              // Corresponds to --no-inline-config / `options.allowInlineConfig`
         reportUnusedDisableDirectives: "off", // Corresponds to --report-unused-disable-directives / `options.reportUnusedDisableDirectives`
         ignorePatterns: [],                   // Corresponds to --ignore-pattern / `options.ignorePattern`
@@ -28,7 +28,7 @@ module.exports = {
     overrides: [
         {
             files: ["*.ts"],
-            linterOptions: {
+            coreOptions: {
                 allowInlineConfig: true,
                 reportUnusedDisableDirectives: "off",
                 ignorePatterns: [],
@@ -38,7 +38,7 @@ module.exports = {
 }
 ```
 
-Ajv should verify it by JSON Scheme and reject unknown properties in `linterOptions`.
+Ajv should verify it by JSON Scheme and reject unknown properties in `coreOptions`.
 
 ### allowInlineConfig
 
@@ -48,7 +48,7 @@ If `false` then it disables inline directive comments such as `/*eslint-disable*
 
 <table><td>
 🚀 <b>Implementation</b>:
-<p>In <a href="https://github.com/eslint/eslint/blob/af81cb3ecc5e6bf43a6a2d8f326103350513a1b8/lib/linter.js#L859"><code>Linter#_verifyWithoutProcessors</code> method</a>, the linter checks both <code>providedConfig</code> and <code>filenameOrOptions</code> to determine <code>allowInlineConfig</code> option. The <code>filenameOrOptions.allowInlineConfig</code> precedences <code>providedConfig.linterOptions.allowInlineConfig</code>.</p>
+<p>In <a href="https://github.com/eslint/eslint/blob/af81cb3ecc5e6bf43a6a2d8f326103350513a1b8/lib/linter.js#L859"><code>Linter#_verifyWithoutProcessors</code> method</a>, the linter checks both <code>providedConfig</code> and <code>filenameOrOptions</code> to determine <code>allowInlineConfig</code> option. The <code>filenameOrOptions.allowInlineConfig</code> precedences <code>providedConfig.coreOptions.allowInlineConfig</code>.</p>
 </td></table>
 
 ### reportUnusedDisableDirectives
@@ -64,7 +64,7 @@ It reports directive comments like `// eslint-disable-line` when no errors would
 🚀 <b>Implementation</b>:
 <ol>
 <li><code>Linter</code> and <code>CLIEngine</code> have <code>options.reportUnusedDisableDirectives</code>. This RFC enhances these options to accept <code>"off"</code>, <code>"warn"</code>, and <code>"error"</code>. Existing <code>false</code> is the same as <code>"off"</code> and existing <code>true</code> is the same as <code>"error"</code>.</li>
-<li>In <a href="https://github.com/eslint/eslint/blob/af81cb3ecc5e6bf43a6a2d8f326103350513a1b8/lib/linter.js#L859"><code>Linter#_verifyWithoutProcessors</code> method</a>, the linter checks both <code>providedConfig</code> and <code>filenameOrOptions</code> to determine <code>reportUnusedDisableDirectives</code> option. The <code>filenameOrOptions.reportUnusedDisableDirectives</code> precedences <code>providedConfig.linterOptions.reportUnusedDisableDirectives</code>.</li>
+<li>In <a href="https://github.com/eslint/eslint/blob/af81cb3ecc5e6bf43a6a2d8f326103350513a1b8/lib/linter.js#L859"><code>Linter#_verifyWithoutProcessors</code> method</a>, the linter checks both <code>providedConfig</code> and <code>filenameOrOptions</code> to determine <code>reportUnusedDisableDirectives</code> option. The <code>filenameOrOptions.reportUnusedDisableDirectives</code> precedences <code>providedConfig.coreOptions.reportUnusedDisableDirectives</code>.</li>
 </ol>
 </td></table>
 
@@ -74,10 +74,10 @@ That value can be an array of strings. Default is an empty array.
 
 This is very similar to `.eslintignore` file. Each value is a file pattern as same as the line of `.eslintignore` file. ESLint compares the path to source code files and the file pattern then it ignores the file if it was matched. The path to source code files is addressed as relative to the entry config file, as same as `files`/`excludedFiles` properties.
 
-ESLint concatenates all ignore patterns from all of `.eslintignore`, `--ignore-path`, `--ignore-pattern`, and `linterOptions.ignorePatterns`. If there are multiple `linterOptions.ignorePatterns`, all of them are concatenated. The order is:
+ESLint concatenates all ignore patterns from all of `.eslintignore`, `--ignore-path`, `--ignore-pattern`, and `coreOptions.ignorePatterns`. If there are multiple `coreOptions.ignorePatterns`, all of them are concatenated. The order is:
 
 1. `--ignore-path` or `.eslintignore`.
-1. `linterOptions.ignorePatterns` in the appearance order in the config array.
+1. `coreOptions.ignorePatterns` in the appearance order in the config array.
 1. `--ignore-pattern`
 
 Negative patterns mean unignoring. For example, `!.*.js` makes ESLint checking JavaScript files which start with `.`. Negative patterns are used to override parent settings.
@@ -85,13 +85,13 @@ Also, negative patterns is worthful for shareable configs of some platforms. For
 
 If this property is in `overrides` entries, ESLint uses the `ignorePatterns` property only if `files`/`excludedFiles` criteria were matched.
 
-The `--no-ignore` CLI option disables `linterOptions.ignorePatterns` as well.
+The `--no-ignore` CLI option disables `coreOptions.ignorePatterns` as well.
 
 <table><td>
 🚀 <b>Implementation</b>:
 <ul>
 <li>At <a href="https://github.com/eslint/eslint/blob/af81cb3ecc5e6bf43a6a2d8f326103350513a1b8/lib/cli-engine/file-enumerator.js#L402">lib/cli-engine/file-enumerator.js#L402</a>, the enumerator checks if the current path should be ignored or not.</li>
-<li>At <a href="https://github.com/eslint/eslint/blob/af81cb3ecc5e6bf43a6a2d8f326103350513a1b8/lib/cli-engine.js#L897-L906">lib/cli-engine.js#L897-L906</a>, <code>CLIEngine#isPathIgnored(filePath)</code> method uses <code>linterOptions.ignorePatterns</code>.
+<li>At <a href="https://github.com/eslint/eslint/blob/af81cb3ecc5e6bf43a6a2d8f326103350513a1b8/lib/cli-engine.js#L897-L906">lib/cli-engine.js#L897-L906</a>, <code>CLIEngine#isPathIgnored(filePath)</code> method uses <code>coreOptions.ignorePatterns</code>.
 </ul>
 </td></table>
 
@@ -104,8 +104,8 @@ The `--no-ignore` CLI option disables `linterOptions.ignorePatterns` as well.
 
 ## Documentation
 
-- [Configuring ESLint](https://eslint.org/docs/user-guide/configuring) page should describe about `linterOptions` setting.
-- [`--no-ignore` document](https://eslint.org/docs/user-guide/command-line-interface#--no-ignore) should mention `linterOptions.ignorePatterns` setting.
+- [Configuring ESLint](https://eslint.org/docs/user-guide/configuring) page should describe about `coreOptions` setting.
+- [`--no-ignore` document](https://eslint.org/docs/user-guide/command-line-interface#--no-ignore) should mention `coreOptions.ignorePatterns` setting.
 
 ## Drawbacks
 
@@ -113,7 +113,7 @@ The `--no-ignore` CLI option disables `linterOptions.ignorePatterns` as well.
 
 ## Backwards Compatibility Analysis
 
-- No concerns. Currently, the `linterOptions` top-level property is a fatal error.
+- No concerns. Currently, the `coreOptions` top-level property is a fatal error.
 
 ## Alternatives
 
