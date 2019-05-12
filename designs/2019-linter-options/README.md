@@ -1,5 +1,5 @@
 - Start Date: 2019-05-12
-- RFC PR: (leave this empty, to be filled in later)
+- RFC PR: https://github.com/eslint/rfcs/pull/22
 - Authors: Toru Nagashima ([@mysticatea](https://github.com/mysticatea))
 
 # The `coreOptions` property in Config Files
