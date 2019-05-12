@@ -74,13 +74,22 @@ That value can be an array of strings. Default is an empty array.
 
 This is very similar to `.eslintignore` file. Each value is a file pattern as same as the line of `.eslintignore` file. ESLint compares the path to source code files and the file pattern then it ignores the file if it was matched. The path to source code files is addressed as relative to the entry config file, as same as `files`/`excludedFiles` properties.
 
-Negative patterns mean unignoring. For example, `!.*.js` makes ESLint checking JavaScript files which start with `.`. This is worthful for shareable configs of some platforms. For example, the config of VuePress can provide the configuration that unignores `.vuepress` directory.
+ESLint concatenates all ignore patterns from all of `.eslintignore`, `--ignore-path`, `--ignore-pattern`, and `linterOptions.ignorePatterns`. If there are multiple `linterOptions.ignorePatterns`, all of them are concatenated. The order is:
+
+1. `--ignore-path` or `.eslintignore`.
+1. `linterOptions.ignorePatterns` in the appearance order in the config array.
+1. `--ignore-pattern`
+
+Negative patterns mean unignoring. For example, `!.*.js` makes ESLint checking JavaScript files which start with `.`. Negative patterns are used to override parent settings.
+Also, negative patterns is worthful for shareable configs of some platforms. For example, the config of VuePress can provide the configuration that unignores `.vuepress` directory.
 
 If this property is in `overrides` entries, ESLint uses the `ignorePatterns` property only if `files`/`excludedFiles` criteria were matched.
 
+The `--no-ignore` CLI option disables `linterOptions.ignorePatterns` as well.
+
 <table><td>
 🚀 <b>Implementation</b>:
-<p>At <a href="https://github.com/eslint/eslint/blob/af81cb3ecc5e6bf43a6a2d8f326103350513a1b8/lib/cli-engine/file-enumerator.js#L402">lib/cli-engine/file-enumerator.js#L402</a>, the enumerator checks if the current path should be ignored or not. ESLint merges <code>.eslintignore</code>, <code>--ignore-path</code>, <code>--ignore-pattern</code>, and this <code>ignorePatterns</code>. The <code>--no-ignore</code> CLI option disables this setting.</p>
+<p>At <a href="https://github.com/eslint/eslint/blob/af81cb3ecc5e6bf43a6a2d8f326103350513a1b8/lib/cli-engine/file-enumerator.js#L402">lib/cli-engine/file-enumerator.js#L402</a>, the enumerator checks if the current path should be ignored or not.</p>
 </td></table>
 
 ### Other options?
