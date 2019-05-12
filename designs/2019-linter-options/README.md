@@ -76,6 +76,7 @@ This is very similar to `.eslintignore` file. Each value is a file pattern as sa
 
 ESLint concatenates all ignore patterns from all of `.eslintignore`, `--ignore-path`, `--ignore-pattern`, and `coreOptions.ignorePatterns`. If there are multiple `coreOptions.ignorePatterns`, all of them are concatenated. The order is:
 
+1. The default ignoring. (E.g. `node_modules/*`)
 1. `--ignore-path` or `.eslintignore`.
 1. `coreOptions.ignorePatterns` in the appearance order in the config array.
 1. `--ignore-pattern`
