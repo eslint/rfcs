@@ -89,7 +89,10 @@ The `--no-ignore` CLI option disables `linterOptions.ignorePatterns` as well.
 
 <table><td>
 🚀 <b>Implementation</b>:
-<p>At <a href="https://github.com/eslint/eslint/blob/af81cb3ecc5e6bf43a6a2d8f326103350513a1b8/lib/cli-engine/file-enumerator.js#L402">lib/cli-engine/file-enumerator.js#L402</a>, the enumerator checks if the current path should be ignored or not.</p>
+<ul>
+<li>At <a href="https://github.com/eslint/eslint/blob/af81cb3ecc5e6bf43a6a2d8f326103350513a1b8/lib/cli-engine/file-enumerator.js#L402">lib/cli-engine/file-enumerator.js#L402</a>, the enumerator checks if the current path should be ignored or not.</li>
+<li>At <a href="https://github.com/eslint/eslint/blob/af81cb3ecc5e6bf43a6a2d8f326103350513a1b8/lib/cli-engine.js#L897-L906">lib/cli-engine.js#L897-L906</a>, <code>CLIEngine#isPathIgnored(filePath)</code> method uses <code>linterOptions.ignorePatterns</code>.
+</ul>
 </td></table>
 
 ### Other options?
