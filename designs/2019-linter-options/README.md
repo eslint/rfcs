@@ -76,7 +76,7 @@ This is very similar to `.eslintignore` file. Each value is a file pattern as sa
 
 Negative patterns mean unignoring. For example, `!.*.js` makes ESLint checking JavaScript files which start with `.`. This is worthful for shareable configs of some platforms. For example, the config of VuePress can provide the configuration that unignores `.vuepress` directory.
 
-If this property is in `overrides` entries, ESLint checks only if `files`/`excludedFiles` criteria were matched.
+If this property is in `overrides` entries, ESLint uses the `ignorePatterns` property only if `files`/`excludedFiles` criteria were matched.
 
 <table><td>
 🚀 <b>Implementation</b>:
