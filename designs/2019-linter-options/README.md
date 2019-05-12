@@ -125,7 +125,30 @@ The `--no-ignore` CLI option disables `coreOptions.ignorePatterns` as well.
 
 ## Frequently Asked Questions
 
--
+### What is different between `excludedFiles` and `coreOptions.ignorePatterns` in `overrides`?
+
+For example:
+
+```js
+// .eslintrc.js
+module.exports = {
+    overrides: [
+        // (A)
+        {
+            files: ["*.js"],
+            excludedFiles: ["_*"],
+        },
+        // (B)
+        {
+            files: ["*.js"],
+            coreOptions: { ignorePatterns: ["_*"] },
+        },
+    ],
+}
+```
+
+- The `(A)`, `excludedFiles` affects ESLint to adopt the override entry or not. In that case, this override entry doesn't apply to the files which start with `_`. But ESLint verifies the files with other parts of the config.
+- The `(B)`, `coreOptions.ignorePatterns` affects ESLint to ignore the file. In that case, this override entry applies to the files which start with `_`. Then ESLint ignores (doesn't verify) the files.
 
 ## Related Discussions
 
