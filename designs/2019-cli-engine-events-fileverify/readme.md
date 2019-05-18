@@ -142,7 +142,14 @@ These changes do not affect the existing behavior
 
 As an alternative solution to the problem,
 may use the callback function for the `executeOnFiles` method, that is called for each file.
-I did not consider this decision, as it changes the existing API, and in my opinion is less convenient.
+
+```js
+executeOnFiles(patterns, {
+    onReport(result) {
+      // do something...
+    }
+})
+```
 
 ## Open Questions
 
