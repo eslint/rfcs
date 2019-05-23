@@ -21,7 +21,7 @@ This adds `coreOptions` property to config files with three properties.
 module.exports = {
     coreOptions: {
         allowInlineConfig: true,              // Corresponds to --no-inline-config / `options.allowInlineConfig`
-        reportUnusedDisableDirectives: "off", // Corresponds to --report-unused-disable-directives / `options.reportUnusedDisableDirectives`
+        reportUnusedDisableDirectives: false, // Corresponds to --report-unused-disable-directives / `options.reportUnusedDisableDirectives`
         ignorePatterns: [],                   // Corresponds to --ignore-pattern / `options.ignorePattern`
     },
 
@@ -30,7 +30,7 @@ module.exports = {
             files: ["*.ts"],
             coreOptions: {
                 allowInlineConfig: true,
-                reportUnusedDisableDirectives: "off",
+                reportUnusedDisableDirectives: false,
                 ignorePatterns: [],
             },
         },
@@ -53,12 +53,11 @@ If `false` then it disables inline directive comments such as `/*eslint-disable*
 
 ### reportUnusedDisableDirectives
 
-That value can be one of `"off"`, `"warn"`, and `"error"`. Default is `"off"`.
+That value can be a boolean value. Default is `false`.
 
-It reports directive comments like `// eslint-disable-line` when no errors would have been reported on that line anyway.
+It reports directive comments like `//eslint-disable-line` when no errors would have been reported on that line anyway.
 
-- If `"warn"` then it doesn't cause to change the exit code of ESLint.
-- If `"error"` then it causes to change the exit code of ESLint.
+This option is different a bit from `--report-unused-disable-directives` CLI option. The `--report-unused-disable-directives` CLI option fails the linting with non-zero exit code (i.e., it's the same behavior as `severity=2`), but this `coreOptions.reportUnusedDisableDirectives` setting doesn't fail the linting (i.e., it's the same behavior as `severity=1`). This is for the concern https://github.com/eslint/rfcs/pull/22#discussion_r283118349.
 
 <table><td>
 🚀 <b>Implementation</b>:
