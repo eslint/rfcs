@@ -20,7 +20,7 @@ This adds `coreOptions` property to config files with three properties.
 // .eslintrc.js
 module.exports = {
     coreOptions: {
-        allowInlineConfig: true,              // Corresponds to --no-inline-config / `options.allowInlineConfig`
+        disableInlineConfig: false,           // Corresponds to --no-inline-config / `options.allowInlineConfig`
         reportUnusedDisableDirectives: false, // Corresponds to --report-unused-disable-directives / `options.reportUnusedDisableDirectives`
         ignorePatterns: [],                   // Corresponds to --ignore-pattern / `options.ignorePattern`
     },
@@ -29,7 +29,7 @@ module.exports = {
         {
             files: ["*.ts"],
             coreOptions: {
-                allowInlineConfig: true,
+                disableInlineConfig: false,
                 reportUnusedDisableDirectives: false,
                 ignorePatterns: [],
             },
@@ -40,22 +40,22 @@ module.exports = {
 
 Ajv should verify it by JSON Scheme and reject unknown properties in `coreOptions`.
 
-### allowInlineConfig
+### disableInlineConfig
 
-That value can be a boolean value. Default is `true`.
+That value can be a boolean value. Default is `false`.
 
-If `false` then it disables inline directive comments such as `/*eslint-disable*/`.
+If `true` then it disables inline directive comments such as `/*eslint-disable*/`.
 
 <table><td>
 🚀 <b>Implementation</b>:
-<p>In <a href="https://github.com/eslint/eslint/blob/af81cb3ecc5e6bf43a6a2d8f326103350513a1b8/lib/linter.js#L859"><code>Linter#_verifyWithoutProcessors</code> method</a>, the linter checks both <code>providedConfig</code> and <code>filenameOrOptions</code> to determine <code>allowInlineConfig</code> option. The <code>filenameOrOptions.allowInlineConfig</code> precedences <code>providedConfig.coreOptions.allowInlineConfig</code>.</p>
+<p>In <a href="https://github.com/eslint/eslint/blob/af81cb3ecc5e6bf43a6a2d8f326103350513a1b8/lib/linter.js#L859"><code>Linter#_verifyWithoutProcessors</code> method</a>, the linter checks both <code>providedConfig</code> and <code>filenameOrOptions</code> to determine <code>allowInlineConfig</code> option. The <code>filenameOrOptions.allowInlineConfig</code> precedences <code>providedConfig.coreOptions.disableInlineConfig</code>.</p>
 </td></table>
 
 ### reportUnusedDisableDirectives
 
 That value can be a boolean value. Default is `false`.
 
-It reports directive comments like `//eslint-disable-line` when no errors would have been reported on that line anyway.
+If `true` then it reports directive comments like `//eslint-disable-line` when no errors would have been reported on that line anyway.
 
 This option is different a bit from `--report-unused-disable-directives` CLI option. The `--report-unused-disable-directives` CLI option fails the linting with non-zero exit code (i.e., it's the same behavior as `severity=2`), but this `coreOptions.reportUnusedDisableDirectives` setting doesn't fail the linting (i.e., it's the same behavior as `severity=1`). This is for the concern https://github.com/eslint/rfcs/pull/22#discussion_r283118349.
 
