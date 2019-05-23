@@ -46,6 +46,8 @@ That value can be a boolean value. Default is `false`.
 
 If `true` then it disables inline directive comments such as `/*eslint-disable*/`.
 
+If `coreOptions.disableInlineConfig` is `true`, `--no-inline-config` was not given, and there are one or more directive comments, then ESLint reports each directive comment as a warning message (`severify=1`). For example, `"'eslint-disable' comment was ignored because your config file has 'coreOptions.disableInlineConfig' setting."`. This is for the concern https://github.com/eslint/rfcs/pull/22#discussion_r283118349.
+
 <table><td>
 🚀 <b>Implementation</b>:
 <p>In <a href="https://github.com/eslint/eslint/blob/af81cb3ecc5e6bf43a6a2d8f326103350513a1b8/lib/linter.js#L859"><code>Linter#_verifyWithoutProcessors</code> method</a>, the linter checks both <code>providedConfig</code> and <code>filenameOrOptions</code> to determine <code>allowInlineConfig</code> option. The <code>filenameOrOptions.allowInlineConfig</code> precedences <code>providedConfig.coreOptions.disableInlineConfig</code>.</p>
