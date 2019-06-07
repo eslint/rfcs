@@ -20,9 +20,10 @@ This adds `coreOptions` property to config files with three properties.
 // .eslintrc.js
 module.exports = {
     coreOptions: {
-        disableInlineConfig: false,           // Corresponds to --no-inline-config / `options.allowInlineConfig`
-        reportUnusedDisableDirectives: false, // Corresponds to --report-unused-disable-directives / `options.reportUnusedDisableDirectives`
-        ignorePatterns: [],                   // Corresponds to --ignore-pattern / `options.ignorePattern`
+        disableInlineConfig: false,              // Corresponds to --no-inline-config
+        reportUnusedDisableDirectives: false,    // Corresponds to --report-unused-disable-directives
+        verifyOnRecoverableParsingErrors: false, // Corresponds to --verify-on-recoverable-parsing-errors in https://github.com/eslint/rfcs/pull/19
+        ignorePatterns: [],                      // Corresponds to --ignore-pattern
     },
 
     overrides: [
@@ -31,6 +32,7 @@ module.exports = {
             coreOptions: {
                 disableInlineConfig: false,
                 reportUnusedDisableDirectives: false,
+                verifyOnRecoverableParsingErrors: false,
                 ignorePatterns: [],
             },
         },
@@ -40,36 +42,49 @@ module.exports = {
 
 Ajv should verify it by JSON Scheme and reject unknown properties in `coreOptions`.
 
-### disableInlineConfig
+### § disableInlineConfig
 
 That value can be a boolean value. Default is `false`.
 
 If `true` then it disables inline directive comments such as `/*eslint-disable*/`.
 
-If `coreOptions.disableInlineConfig` is `true`, `--no-inline-config` was not given, and there are one or more directive comments, then ESLint reports each directive comment as a warning message (`severify=1`). For example, `"'eslint-disable' comment was ignored because your config file has 'coreOptions.disableInlineConfig' setting."`. This is for the concern https://github.com/eslint/rfcs/pull/22#discussion_r283118349.
+If `coreOptions.disableInlineConfig` is `true`, `--no-inline-config` was not given, and there are one or more directive comments, then ESLint reports each directive comment as a warning message (`severify=1`). For example, `"'eslint-disable' comment was ignored because your config file has 'coreOptions.disableInlineConfig' setting."`. Therefore, end-users can know why directive comments didn't work.
 
 <table><td>
-🚀 <b>Implementation</b>:
+<b>Implementation</b>:
 <p>In <a href="https://github.com/eslint/eslint/blob/af81cb3ecc5e6bf43a6a2d8f326103350513a1b8/lib/linter.js#L859"><code>Linter#_verifyWithoutProcessors</code> method</a>, the linter checks both <code>providedConfig</code> and <code>filenameOrOptions</code> to determine <code>allowInlineConfig</code> option. The <code>filenameOrOptions.allowInlineConfig</code> precedences <code>providedConfig.coreOptions.disableInlineConfig</code>.</p>
 </td></table>
 
-### reportUnusedDisableDirectives
+### § reportUnusedDisableDirectives
 
 That value can be a boolean value. Default is `false`.
 
 If `true` then it reports directive comments like `//eslint-disable-line` when no errors would have been reported on that line anyway.
 
-This option is different a bit from `--report-unused-disable-directives` CLI option. The `--report-unused-disable-directives` CLI option fails the linting with non-zero exit code (i.e., it's the same behavior as `severity=2`), but this `coreOptions.reportUnusedDisableDirectives` setting doesn't fail the linting (i.e., it's the same behavior as `severity=1`). This is for the concern https://github.com/eslint/rfcs/pull/22#discussion_r283118349.
+This option is different a bit from `--report-unused-disable-directives` CLI option. The `--report-unused-disable-directives` CLI option fails the linting with non-zero exit code (i.e., it's the same behavior as `severity=2`), but this `coreOptions.reportUnusedDisableDirectives` setting doesn't fail the linting (i.e., it's the same behavior as `severity=1`). Therefore, we cannot configure ESLint with `coreOptions.reportUnusedDisableDirectives` as failed by patch releases.
 
 <table><td>
-🚀 <b>Implementation</b>:
+<b>Implementation</b>:
 <ol>
 <li><code>Linter</code> and <code>CLIEngine</code> have <code>options.reportUnusedDisableDirectives</code>. This RFC enhances these options to accept <code>"off"</code>, <code>"warn"</code>, and <code>"error"</code>. Existing <code>false</code> is the same as <code>"off"</code> and existing <code>true</code> is the same as <code>"error"</code>.</li>
 <li>In <a href="https://github.com/eslint/eslint/blob/af81cb3ecc5e6bf43a6a2d8f326103350513a1b8/lib/linter.js#L859"><code>Linter#_verifyWithoutProcessors</code> method</a>, the linter checks both <code>providedConfig</code> and <code>filenameOrOptions</code> to determine <code>reportUnusedDisableDirectives</code> option. The <code>filenameOrOptions.reportUnusedDisableDirectives</code> precedences <code>providedConfig.coreOptions.reportUnusedDisableDirectives</code>.</li>
 </ol>
 </td></table>
 
-### ignorePatterns
+### § verifyOnRecoverableParsingErrors
+
+> This section is valid only if [#19](https://github.com/eslint/rfcs/pull/19) was accepted.
+
+That value can be a boolean value. Default is `false`.
+
+If `true` then it runs rules even if recoverable errors existed. Then it shows both results.
+
+<table><td>
+<b>Implementation</b>:
+<p>In <a href="https://github.com/eslint/eslint/blob/af81cb3ecc5e6bf43a6a2d8f326103350513a1b8/lib/linter.js#L859"><code>Linter#_verifyWithoutProcessors</code> method</a>, the linter checks both <code>providedConfig</code> and <code>filenameOrOptions</code> to determine <code>verifyOnRecoverableParsingErrors</code> option. The <code>filenameOrOptions.verifyOnRecoverableParsingErrors</code> precedences <code>providedConfig.coreOptions.verifyOnRecoverableParsingErrors</code>.</p>
+</td></table>
+
+### § ignorePatterns
 
 That value can be an array of strings. Default is an empty array.
 
@@ -90,14 +105,14 @@ If this property is in `overrides` entries, ESLint uses the `ignorePatterns` pro
 The `--no-ignore` CLI option disables `coreOptions.ignorePatterns` as well.
 
 <table><td>
-🚀 <b>Implementation</b>:
+<b>Implementation</b>:
 <ul>
 <li>At <a href="https://github.com/eslint/eslint/blob/af81cb3ecc5e6bf43a6a2d8f326103350513a1b8/lib/cli-engine/file-enumerator.js#L402">lib/cli-engine/file-enumerator.js#L402</a>, the enumerator checks if the current path should be ignored or not.</li>
 <li>At <a href="https://github.com/eslint/eslint/blob/af81cb3ecc5e6bf43a6a2d8f326103350513a1b8/lib/cli-engine.js#L897-L906">lib/cli-engine.js#L897-L906</a>, <code>CLIEngine#isPathIgnored(filePath)</code> method uses <code>coreOptions.ignorePatterns</code>.
 </ul>
 </td></table>
 
-### Other options?
+### § Other options?
 
 - `extensions` - This RFC doesn't add `extensions` option that corresponds to `--ext` because [#20 "Configuring Additional Lint Targets with `.eslintrc`"](https://github.com/eslint/rfcs/pull/20) is the good successor of that.
 - `rulePaths` - This RFC doesn't add `rulePaths` option that corresponds to `--rulesdir` because [#14 (`localPlugins`)](https://github.com/eslint/rfcs/pull/20) is the good successor of that. Because the `rulePaths` doesn't have namespace, shareable configs should not be able to configure that. (Or but it may be useful for some plugins such as `@typescript-eslint/eslint-plugin` in order to replace core rules. I'd like to discuss the replacement way in another place.)
