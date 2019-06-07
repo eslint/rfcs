@@ -1,5 +1,5 @@
 - Start Date: 2019-06-07
-- RFC PR: (leave this empty, to be filled in later)
+- RFC PR: https://github.com/eslint/rfcs/pull/25
 - Authors: Toru Nagashima ([@mysticatea](https://github.com/mysticatea))
 
 # `RuleTester` Improvements
