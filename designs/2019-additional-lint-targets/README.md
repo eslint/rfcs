@@ -64,14 +64,14 @@ If a code block that processors extracted has the virtual filename, ESLint filte
 
 ### Legacy file extension processors
 
-This enhancement doesn't affect legacy file extension processors. This means that `plugins` property in config files never changes the kinds of target files.
+This enhancement **doesn't** affect legacy file extension processors. This means that `plugins` property in config files never changes the kinds of target files.
 
 On the other hand, `extends` property in config files can change the kinds of target files by the `overrides` property in the shareable configs.
 
 ### Implementation
 
-- We can add the check to [lib/cli-engine/file-enumerator.js#L410](https://github.com/eslint/eslint/blob/553795712892c8350b1780e947f65d3c019293a7/lib/cli-engine/file-enumerator.js#L410).
-- For code blocks, `CLIEngine` has to give file selector to `Linter` object (related to [eslint/eslint#11552](https://github.com/eslint/eslint/pull/11552)). This will be `options.filterNamedCodeBlock` (`(filename:string) => boolean`) or something like.
+- For files, we can add the check to [lib/cli-engine/file-enumerator.js#L410](https://github.com/eslint/eslint/blob/553795712892c8350b1780e947f65d3c019293a7/lib/cli-engine/file-enumerator.js#L410).
+- For code blocks, we can add the check to [lib/cli-engine/cli-engine.js#L248](https://github.com/eslint/eslint/blob/21f3131aa1636afa8e5c01053e0e870f968425b1/lib/cli-engine/cli-engine.js#L248).
 
 ## Documentation
 
