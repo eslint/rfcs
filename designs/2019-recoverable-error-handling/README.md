@@ -64,7 +64,8 @@ Practically, this is the support for multiple syntax errors.
 - `verifyOnRecoverableParsingErrors` in `Linter#verify()` option (`boolean`, default is `false`)
 
 <table><tr><td>
-<p>And <a href="https://github.com/eslint/rfcs/pull/22">#22</a> <code>coreOptions.verifyOnRecoverableParsingErrors</code> in config files if both RFCs accepted.
+<b>An aside:</b><br>
+And <a href="https://github.com/eslint/rfcs/pull/22">#22</a> <code>coreOptions.verifyOnRecoverableParsingErrors</code> in config files if both RFCs accepted.
 </td></tr></table>
 
 If the `verifyOnRecoverableParsingErrors` option was given, ESLint runs configured rules even if the parser returned recoverable errors. In that case, ESLint additionally controls lint messages to avoid confusion.
@@ -113,7 +114,8 @@ In `acorn@6.1.1`, there are the following recoverable errors:
 > https://github.com/acornjs/acorn/search?q=raiseRecoverable
 
 <table><tr><td>
-<p>A crazy idea is that we can make the parsing errors which are caused by older <code>ecmaVersion</code> recoverable. The parser parses code with the latest <code>ecmaVersion</code> always, then reports newer syntaxes as recoverable errors with understandable messages such as "async functions are not supported in ES5. Please set '2017' to 'parserOptions.ecmaVersion'."
+<b>An aside:</b><br>
+A crazy idea is that we can make the parsing errors which are caused by older <code>ecmaVersion</code> recoverable. The parser parses code with the latest <code>ecmaVersion</code> always, then reports newer syntaxes as recoverable errors with understandable messages such as "async functions are not supported in ES5. Please set '2017' to 'parserOptions.ecmaVersion'."
 </td></tr></table>
 
 ### § Handling [Recoverable Errors] in Other Parsers
