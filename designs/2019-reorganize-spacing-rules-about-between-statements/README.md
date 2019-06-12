@@ -1,5 +1,5 @@
 - Start Date: 2019-06-12
-- RFC PR: (leave this empty, to be filled in later)
+- RFC PR: https://github.com/eslint/rfcs/pull/26
 - Authors: Toru Nagashima &lt;https://github.com/mysticatea&gt;
 
 # Reorganizing Spacing Rules about between Statements
