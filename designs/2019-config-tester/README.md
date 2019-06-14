@@ -1,5 +1,5 @@
 - Start Date: 2019-06-14
-- RFC PR: (leave this empty, to be filled in later)
+- RFC PR: https://github.com/eslint/rfcs/pull/27
 - Authors: Toru Nagashima &lt;https://github.com/mysticatea&gt;
 
 # Config Tester
