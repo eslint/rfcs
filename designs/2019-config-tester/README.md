@@ -28,21 +28,28 @@ This RFC adds `ConfigTester` API to check configs.
 const { ConfigTester } = require("eslint")
 
 // Instantiate the tester.
-const tester = new ConfigTester({
-    projectRoot: process.cwd(),
+const tester = new ConfigTester()
+const options = {
+    ignoreDeprecatedRules: false,
+    ignoreDisabledUnknownRules: false,
+    ignoreMissingDependencies: false,
     ignoreMissingRules: false,
-    ignoreMissingDependencies: false
-})
+}
 
-// Verify a shareable config.
-tester.run("eslint-config-xxxx", require("../lib/index.js"))
+// Verify a shareable config (a path to the target file).
+tester.run("index.js", options)
+tester.run("es5.js", options)
+tester.run("es2015.js", options)
 
-// Or verify plugin's preset configs.
-tester.run("eslint-plugin-xxxx/recommended", require("../lib/configs/recommended.js"))
-tester.run("eslint-plugin-xxxx/opinionated", require("../lib/configs/opinionated.js"))
+// Or verify plugin's preset configs (a config name in the plugin).
+tester.run("base", options)
+tester.run("recommended", options)
+tester.run("opinionated", options)
 ```
 
-### § `ConfigTester(options)` constructor
+### § `ConfigTester(projectRoot)` constructor
+
+Instantiate a new `ConfigTester` instance.
 
 #### Parameters
 
@@ -50,11 +57,17 @@ The constructor has an optional parameter.
 
 Name | Description
 :----|:-----------
-`options.projectRoot` | Default is `process.cwd()`. The path to the project root. The root should contain `package.json`.
-`options.ignoreMissingRules` | Default is `false`. If `true` then the tester ignores missing rules. The missing rules mean the rules that ESLint or a plugin defined but not configured.
-`options.ignoreMissingDependencies` | Default is `false`. If `true` then the tester ignores wrong dependency definition (`dependencies`/`peerDependencies`).
+`projectRoot` | Default is `process.cwd()`. The path to the project root. The root should contain `package.json`.
 
-### § `tester.run(displayName, config)` method
+#### Behavior
+
+The tester reads `` `${projectRoot}/package.json` `` to use in `run()` method.
+
+<table><tr><td>
+<b>⏩ PoC</b>: <a href="https://github.com/eslint/eslint/blob/2fb21b5dd52c81fe3c93cce0eb5fda3bf7789da0/lib/config-tester/config-tester.js#L60-L66">lib/config-tester/config-tester.js#L60-L66</a>
+</td></tr></table>
+
+### § `tester.run(targetName, options)` method
 
 Validates a config data.
 
@@ -62,28 +75,52 @@ Validates a config data.
 
 Name | Description
 :----|:-----------
-`displayName` | Required. The display name of this check.
-`config` | Required. The config object to check.
+`targetName` | Required. If this package was a plugin, this is a config name of the plugin. Otherwise, this is a path to a file (relative from `projectRoot`).
+`options.ignoreDeprecatedRules` | Default is `false`. If `true` then the tester ignores deprecated rules.
+`options.ignoreDisabledUnknownRules` | Default is `false`. If `true` then the tester ignores unknown rules if the rule was configured as `0` (`"off"`).
+`options.ignoreMissingRules` | Default is `false`. If `true` then the tester ignores missing rules. The missing rules mean the rules that ESLint or a plugin defined but not configured.
+`options.ignoreMissingDependencies` | Default is `false`. If `true` then the tester ignores wrong dependency definition (`dependencies`/`peerDependencies`).
 
 #### Behavior
 
 Similarly to `RuleTester`, `ConfigTester` defines tests by `describe` and `it` global variables. Then it does:
 
-1. Validate the config object has the valid scheme ([validateConfigScheme(config, source)](https://github.com/eslint/eslint/blob/aef8ea1a44b9f13d468f48536c4c93f79f201d9b/lib/shared/config-validator.js#L282)).
-1. Parse the config to `ConfigArray` with [ConfigArrayFactory#create(config, options)](https://github.com/eslint/eslint/blob/aef8ea1a44b9f13d468f48536c4c93f79f201d9b/lib/cli-engine/config-array-factory.js#L360).
-    - `cwd` and `resolvePluginsRelativeTo` options of the factory are `options.projectRoot`.
-    - if the `name` field of `${options.projectRoot}/package.json` is an ESLint plugin name, it loads the `main` field's file then adds it to `additionalPluginPool`.
-1. Validate the content ([validateConfigArray(configArray)](https://github.com/eslint/eslint/blob/aef8ea1a44b9f13d468f48536c4c93f79f201d9b/lib/shared/config-validator.js#L322)).
+1. Validate the config object has the valid scheme with `validateConfigSchema()`.
+    <table><tr><td>
+    <b>🔗PoC</b>: <a href="https://github.com/eslint/eslint/blob/2fb21b5dd52c81fe3c93cce0eb5fda3bf7789da0/lib/config-tester/config-tester.js#L244-L248">lib/config-tester/config-tester.js#L244-L248</a>
+    </td></tr></table>
+1. Validate the config content with `validateConfigArray()`.
+    <table><tr><td>
+    <b>🔗PoC</b>: <a href="https://github.com/eslint/eslint/blob/2fb21b5dd52c81fe3c93cce0eb5fda3bf7789da0/lib/config-tester/config-tester.js#L250-L265">lib/config-tester/config-tester.js#L250-L265</a>
+    </td></tr></table>
 1. Report non-existence rules.
     - Because `validateConfigArray(configArray)` ignores non-existence rules.
     - Configured plugin's rules are in `configArray.pluginRules`.
-1. Report deprecated rules if it's `warn` or `error`.
-    - Check `meta.deprecated` in core rules and `configArray.pluginRules`.
-1. If `options.ignoreMissingRules` was not `true`, check whether the config contains the settings of all rules.
-1. If `options.ignoreMissingDependencies` was not `true`, check whether `${options.projectRoot}/package.json` contains the configured parser, plugins, and shareable configs.
+    - If `ignoreDisabledUnknownRules` option was `true` and non-existence rule's severity was `"off"`, the tester ignores it.
+    <table><tr><td>
+    <b>🔗PoC</b>: <a href="https://github.com/eslint/eslint/blob/2fb21b5dd52c81fe3c93cce0eb5fda3bf7789da0/lib/config-tester/config-tester.js#L267-L299">lib/config-tester/config-tester.js#L267-L299</a>
+    </td></tr></table>
+1. Report deprecated rules.
+    - If `ignoreDeprecatedRules` option was `true`, the tester skips this step.
+    - If the rule severity was `"off"`, the tester ignores it.
+    - Check `meta.deprecated` in both core rules and `configArray.pluginRules`.
+    <table><tr><td>
+    <b>🔗PoC</b>: <a href="https://github.com/eslint/eslint/blob/2fb21b5dd52c81fe3c93cce0eb5fda3bf7789da0/lib/config-tester/config-tester.js#L301-L338">lib/config-tester/config-tester.js#L301-L338</a>
+    </td></tr></table>
+1. Check whether the config congiures all rules.
+    - If `ignoreMissingRules` option was `true`, the tester skips this step.
+    - This step lets people know about new rules.
+    <table><tr><td>
+    <b>🔗PoC</b>: <a href="https://github.com/eslint/eslint/blob/2fb21b5dd52c81fe3c93cce0eb5fda3bf7789da0/lib/config-tester/config-tester.js#L340-L363">lib/config-tester/config-tester.js#L340-L363</a>
+    </td></tr></table>
+1. Check whether `${options.projectRoot}/package.json` contains the configured parser, plugins, and shareable configs.
+    - If `ignoreMissingDependencies` option was `true`, the tester skips this step.
     - If `parser` or `extends` were a file path except `node_modules/**`, the file should be published; check `.npmignore` and `package.json`'s `lib` field.
     - If `parser` or `extends` were a package or a file path to `node_modules/**`, the package should be in `dependencies` or `peerDependencies`.
     - `plugins` should be in `peerDependencies` or `name`.
+    <table><tr><td>
+    <b>🔗PoC</b>: <a href="https://github.com/eslint/eslint/blob/2fb21b5dd52c81fe3c93cce0eb5fda3bf7789da0/lib/config-tester/config-tester.js#L365-L420">lib/config-tester/config-tester.js#L365-L420</a>
+    </td></tr></table>
 
 ## Documentation
 
