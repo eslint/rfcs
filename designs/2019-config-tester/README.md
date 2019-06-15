@@ -64,7 +64,7 @@ Name | Description
 The tester reads `` `${projectRoot}/package.json` `` to use in `run()` method.
 
 <table><tr><td>
-<b>⏩ PoC</b>: <a href="https://github.com/eslint/eslint/blob/2fb21b5dd52c81fe3c93cce0eb5fda3bf7789da0/lib/config-tester/config-tester.js#L60-L66">lib/config-tester/config-tester.js#L60-L66</a>
+<b>🔗PoC</b>: <a href="https://github.com/eslint/eslint/blob/2fb21b5dd52c81fe3c93cce0eb5fda3bf7789da0/lib/config-tester/config-tester.js#L60-L66">lib/config-tester/config-tester.js#L60-L66</a>
 </td></tr></table>
 
 ### § `tester.run(targetName, options)` method
