@@ -2,11 +2,11 @@
 - RFC PR: https://github.com/eslint/rfcs/pull/22
 - Authors: Toru Nagashima ([@mysticatea](https://github.com/mysticatea))
 
-# The `coreOptions` property in Config Files
+# Configuring core opsions in Config Files
 
 ## Summary
 
-This RFC adds `coreOptions` property to config files. People can use config files (including shareable configs!) instead of CLI options in order to configure some linter behavior.
+This RFC adds several properties into config files to configure core options. People can use config files (including shareable configs!) instead of CLI options in order to configure some linter behavior.
 
 ## Motivation
 
@@ -14,33 +14,27 @@ We cannot configure some linter's behavior with config files, especially, sharea
 
 ## Detailed Design
 
-This adds `coreOptions` property to config files with three properties.
+This RFC adds four properties to config files.
 
 ```js
 // .eslintrc.js
 module.exports = {
-    coreOptions: {
-        disableInlineConfig: false,              // Corresponds to --no-inline-config
-        reportUnusedDisableDirectives: false,    // Corresponds to --report-unused-disable-directives
-        verifyOnRecoverableParsingErrors: false, // Corresponds to --verify-on-recoverable-parsing-errors in https://github.com/eslint/rfcs/pull/19
-        ignorePatterns: [],                      // Corresponds to --ignore-pattern
-    },
+    disableInlineConfig: false,              // Corresponds to --no-inline-config
+    reportUnusedDisableDirectives: false,    // Corresponds to --report-unused-disable-directives
+    verifyOnRecoverableParsingErrors: false, // Corresponds to --verify-on-recoverable-parsing-errors
+    ignorePatterns: [],                      // Corresponds to --ignore-pattern
 
     overrides: [
         {
             files: ["*.ts"],
-            coreOptions: {
-                disableInlineConfig: false,
-                reportUnusedDisableDirectives: false,
-                verifyOnRecoverableParsingErrors: false,
-                ignorePatterns: [],
-            },
+            disableInlineConfig: false,
+            reportUnusedDisableDirectives: false,
+            verifyOnRecoverableParsingErrors: false,
+            // ignorePatterns: [], // Forbid this to avoid confusion with 'excludedFiles' property.
         },
     ],
 }
 ```
-
-Ajv should verify it by JSON Scheme and reject unknown properties in `coreOptions`.
 
 ### § disableInlineConfig
 
@@ -48,11 +42,11 @@ That value can be a boolean value. Default is `false`.
 
 If `true` then it disables inline directive comments such as `/*eslint-disable*/`.
 
-If `coreOptions.disableInlineConfig` is `true`, `--no-inline-config` was not given, and there are one or more directive comments, then ESLint reports each directive comment as a warning message (`severify=1`). For example, `"'eslint-disable' comment was ignored because your config file has 'coreOptions.disableInlineConfig' setting."`. Therefore, end-users can know why directive comments didn't work.
+If `disableInlineConfig` is `true`, `--no-inline-config` was not given, and there are one or more directive comments, then ESLint reports each directive comment as a warning message (`severify=1`). For example, `"'eslint-disable' comment was ignored because your config file has 'disableInlineConfig' setting."`. Therefore, end-users can know why directive comments didn't work.
 
 <table><td>
-<b>Implementation</b>:
-<p>In <a href="https://github.com/eslint/eslint/blob/af81cb3ecc5e6bf43a6a2d8f326103350513a1b8/lib/linter.js#L859"><code>Linter#_verifyWithoutProcessors</code> method</a>, the linter checks both <code>providedConfig</code> and <code>filenameOrOptions</code> to determine <code>allowInlineConfig</code> option. The <code>filenameOrOptions.allowInlineConfig</code> precedences <code>providedConfig.coreOptions.disableInlineConfig</code>.</p>
+<b>💠Implementation</b>:
+<p>In <a href="https://github.com/eslint/eslint/blob/af81cb3ecc5e6bf43a6a2d8f326103350513a1b8/lib/linter.js#L859"><code>Linter#_verifyWithoutProcessors</code> method</a>, the linter checks both <code>providedConfig</code> and <code>filenameOrOptions</code> to determine <code>disableInlineConfig</code> option. The <code>filenameOrOptions.allowInlineConfig</code> precedences <code>providedConfig.disableInlineConfig</code>.</p>
 </td></table>
 
 ### § reportUnusedDisableDirectives
@@ -61,54 +55,52 @@ That value can be a boolean value. Default is `false`.
 
 If `true` then it reports directive comments like `//eslint-disable-line` when no errors would have been reported on that line anyway.
 
-This option is different a bit from `--report-unused-disable-directives` CLI option. The `--report-unused-disable-directives` CLI option fails the linting with non-zero exit code (i.e., it's the same behavior as `severity=2`), but this `coreOptions.reportUnusedDisableDirectives` setting doesn't fail the linting (i.e., it's the same behavior as `severity=1`). Therefore, we cannot configure ESLint with `coreOptions.reportUnusedDisableDirectives` as failed by patch releases.
+This option is different a bit from `--report-unused-disable-directives` CLI option. The `--report-unused-disable-directives` CLI option fails the linting with non-zero exit code (i.e., it's the same behavior as `severity=2`), but this `reportUnusedDisableDirectives` setting doesn't fail the linting (i.e., it's the same behavior as `severity=1`). Therefore, we cannot configure ESLint with `reportUnusedDisableDirectives` as failed by patch releases.
 
 <table><td>
-<b>Implementation</b>:
+<b>💠Implementation</b>:
 <ol>
 <li><code>Linter</code> and <code>CLIEngine</code> have <code>options.reportUnusedDisableDirectives</code>. This RFC enhances these options to accept <code>"off"</code>, <code>"warn"</code>, and <code>"error"</code>. Existing <code>false</code> is the same as <code>"off"</code> and existing <code>true</code> is the same as <code>"error"</code>.</li>
-<li>In <a href="https://github.com/eslint/eslint/blob/af81cb3ecc5e6bf43a6a2d8f326103350513a1b8/lib/linter.js#L859"><code>Linter#_verifyWithoutProcessors</code> method</a>, the linter checks both <code>providedConfig</code> and <code>filenameOrOptions</code> to determine <code>reportUnusedDisableDirectives</code> option. The <code>filenameOrOptions.reportUnusedDisableDirectives</code> precedences <code>providedConfig.coreOptions.reportUnusedDisableDirectives</code>.</li>
+<li>In <a href="https://github.com/eslint/eslint/blob/af81cb3ecc5e6bf43a6a2d8f326103350513a1b8/lib/linter.js#L859"><code>Linter#_verifyWithoutProcessors</code> method</a>, the linter checks both <code>providedConfig</code> and <code>filenameOrOptions</code> to determine <code>reportUnusedDisableDirectives</code> option. The <code>filenameOrOptions.reportUnusedDisableDirectives</code> precedences <code>providedConfig.reportUnusedDisableDirectives</code>.</li>
 </ol>
 </td></table>
 
 ### § verifyOnRecoverableParsingErrors
-
-> This section is valid only if [#19](https://github.com/eslint/rfcs/pull/19) was accepted.
 
 That value can be a boolean value. Default is `false`.
 
 If `true` then it runs rules even if recoverable errors existed. Then it shows both results.
 
 <table><td>
-<b>Implementation</b>:
-<p>In <a href="https://github.com/eslint/eslint/blob/af81cb3ecc5e6bf43a6a2d8f326103350513a1b8/lib/linter.js#L859"><code>Linter#_verifyWithoutProcessors</code> method</a>, the linter checks both <code>providedConfig</code> and <code>filenameOrOptions</code> to determine <code>verifyOnRecoverableParsingErrors</code> option. The <code>filenameOrOptions.verifyOnRecoverableParsingErrors</code> precedences <code>providedConfig.coreOptions.verifyOnRecoverableParsingErrors</code>.</p>
+<b>💠Implementation</b>:
+<p>In <a href="https://github.com/eslint/eslint/blob/af81cb3ecc5e6bf43a6a2d8f326103350513a1b8/lib/linter.js#L859"><code>Linter#_verifyWithoutProcessors</code> method</a>, the linter checks both <code>providedConfig</code> and <code>filenameOrOptions</code> to determine <code>verifyOnRecoverableParsingErrors</code> option. The <code>filenameOrOptions.verifyOnRecoverableParsingErrors</code> precedences <code>providedConfig.verifyOnRecoverableParsingErrors</code>.</p>
 </td></table>
 
 ### § ignorePatterns
 
 That value can be an array of strings. Default is an empty array.
 
-This is very similar to `.eslintignore` file. Each value is a file pattern as same as the line of `.eslintignore` file. ESLint compares the path to source code files and the file pattern then it ignores the file if it was matched. The path to source code files is addressed as relative to the entry config file, as same as `files`/`excludedFiles` properties.
+This is very similar to `.eslintignore` file. Each value is a file pattern as same as each line of `.eslintignore` file. ESLint compares the path to source code files and the file pattern then it ignores the file if it was matched. The path to source code files is addressed as relative to the entry config file, as same as `files`/`excludedFiles` properties.
 
-ESLint concatenates all ignore patterns from all of `.eslintignore`, `--ignore-path`, `--ignore-pattern`, and `coreOptions.ignorePatterns`. If there are multiple `coreOptions.ignorePatterns`, all of them are concatenated. The order is:
+ESLint concatenates all ignore patterns from all of `.eslintignore`, `--ignore-path`, `--ignore-pattern`, and `ignorePatterns`. If there are multiple `ignorePatterns` in a `ConfigArray`, all of them are concatenated. The order is:
 
-1. The default ignoring. (E.g. `node_modules/*`)
+1. The default ignoring. (I.e. `.*`, `node_modules/*`, and `bower_components/*`)
 1. `--ignore-path` or `.eslintignore`.
-1. `coreOptions.ignorePatterns` in the appearance order in the config array.
+1. `ignorePatterns` in the appearance order in the config array.
 1. `--ignore-pattern`
 
 Negative patterns mean unignoring. For example, `!.*.js` makes ESLint checking JavaScript files which start with `.`. Negative patterns are used to override parent settings.
 Also, negative patterns is worthful for shareable configs of some platforms. For example, the config of VuePress can provide the configuration that unignores `.vuepress` directory.
 
-If this property is in `overrides` entries, ESLint uses the `ignorePatterns` property only if `files`/`excludedFiles` criteria were matched.
+It disallows `ignorePatterns` property in `overrides` entries in order to avoid confusion with `excludedFiles`. And if a `ignorePatterns` property came from shareable configs in `overrides` entries, ESLint ignores it. This is the same behavior as `root` property.
 
-The `--no-ignore` CLI option disables `coreOptions.ignorePatterns` as well.
+The `--no-ignore` CLI option disables `ignorePatterns` as well.
 
 <table><td>
-<b>Implementation</b>:
+<b>💠Implementation</b>:
 <ul>
 <li>At <a href="https://github.com/eslint/eslint/blob/af81cb3ecc5e6bf43a6a2d8f326103350513a1b8/lib/cli-engine/file-enumerator.js#L402">lib/cli-engine/file-enumerator.js#L402</a>, the enumerator checks if the current path should be ignored or not.</li>
-<li>At <a href="https://github.com/eslint/eslint/blob/af81cb3ecc5e6bf43a6a2d8f326103350513a1b8/lib/cli-engine.js#L897-L906">lib/cli-engine.js#L897-L906</a>, <code>CLIEngine#isPathIgnored(filePath)</code> method uses <code>coreOptions.ignorePatterns</code>.
+<li>At <a href="https://github.com/eslint/eslint/blob/af81cb3ecc5e6bf43a6a2d8f326103350513a1b8/lib/cli-engine.js#L897-L906">lib/cli-engine.js#L897-L906</a>, <code>CLIEngine#isPathIgnored(filePath)</code> method uses <code>ignorePatterns</code>.
 </ul>
 </td></table>
 
@@ -121,51 +113,20 @@ The `--no-ignore` CLI option disables `coreOptions.ignorePatterns` as well.
 
 ## Documentation
 
-- [Configuring ESLint](https://eslint.org/docs/user-guide/configuring) page should describe about `coreOptions` setting.
-- [`--no-ignore` document](https://eslint.org/docs/user-guide/command-line-interface#--no-ignore) should mention `coreOptions.ignorePatterns` setting.
+- [Configuring ESLint](https://eslint.org/docs/user-guide/configuring) page should describe new top-level properties.
+- [`--no-ignore` document](https://eslint.org/docs/user-guide/command-line-interface#--no-ignore) should mention `ignorePatterns` setting.
 
 ## Drawbacks
 
-- Nothing in particular.
+Nothing in particular.
 
 ## Backwards Compatibility Analysis
 
-- No concerns. Currently, the `coreOptions` top-level property is a fatal error.
+No concerns. Currently, unknown top-level properties are a fatal error.
 
 ## Alternatives
 
 -
-
-## Open Questions
-
--
-
-## Frequently Asked Questions
-
-### What is different between `excludedFiles` and `coreOptions.ignorePatterns` in `overrides`?
-
-For example:
-
-```js
-// .eslintrc.js
-module.exports = {
-    overrides: [
-        // (A)
-        {
-            files: ["*.js"],
-            excludedFiles: ["_*"],
-        },
-        // (B)
-        {
-            files: ["*.js"],
-            coreOptions: { ignorePatterns: ["_*"] },
-        },
-    ],
-}
-```
-
-- The `(A)`, `excludedFiles` affects ESLint to adopt the override entry or not. In that case, this override entry doesn't apply to the files which start with `_`. But ESLint verifies the files with other parts of the config.
-- The `(B)`, `coreOptions.ignorePatterns` affects ESLint to ignore the file. In that case, this override entry applies to the files which start with `_`. Then ESLint ignores (doesn't verify) the files.
 
 ## Related Discussions
 
