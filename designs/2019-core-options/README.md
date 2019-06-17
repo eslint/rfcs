@@ -2,7 +2,7 @@
 - RFC PR: https://github.com/eslint/rfcs/pull/22
 - Authors: Toru Nagashima ([@mysticatea](https://github.com/mysticatea))
 
-# Configuring core opsions in Config Files
+# Configuring core options in Config Files
 
 ## Summary
 
