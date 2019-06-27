@@ -22,11 +22,11 @@ When ESLint loads the personal config, if it could not resolve dependencies in t
 
 This is not the same way as ESLint 5. This RFC handles the personal config in special regardless of where ESLint was installed.
 
-### With `--resolve-plugins-relative-to` CLI option
+### § With `--resolve-plugins-relative-to` CLI option
 
 If `--resolve-plugins-relative-to` CLI option was given, ESLint doesn't find plugin packages from global. All plugins must be in the specified location.
 
-### With `--plugins` CLI option
+### § With `--plugins` CLI option
 
 If `--plugins` CLI option was given and ESLint have to load the personal config, it throws a fatal error ("'--plugins' option cannot use with the personal config") because it causes to mix local-installed plugins and global-installed plugins.
 
@@ -34,20 +34,20 @@ If both `--resolve-plugins-relative-to` CLI option and `--plugins` CLI option wa
 
 (This limitations came from implementation details. CLI options are loaded in the different phase from config files and it will be reused with every config file. Therefore, it's inconvenient if the result of CLI options is variable for each config file.)
 
-### With `--config` CLI option
+### § With `--config` CLI option
 
 If `--config` CLI option was given, ESLint will never use the personal config. It works as is.
 
-### With `baseConfig` CLIEngine option
+### § With `baseConfig` CLIEngine option
 
 If `baseConfig` option was given and ESLint have to load the personal config, it throws a fatal error as same as with `--plugins` option.
 
-### Implementation
+### § Implementation
 
 1. Make the methods of `ConfigArrayFactory` having `findDependenciesInGlobal` option
 1. Make `CascadingConfigArrayFactory` loading the personal config with `findDependenciesInGlobal` option
 
-#### Make the methods of `ConfigArrayFactory` having `findDependenciesInGlobal` option
+#### 1. Make the methods of `ConfigArrayFactory` having `findDependenciesInGlobal` option
 
 ```ts
 class ConfigArrayFactory {
@@ -61,7 +61,7 @@ class ConfigArrayFactory {
 - If `findDependenciesInGlobal` was `true` and the `resolvePluginsRelativeTo` of constructor options was `undefined`, then `_loadPlugin` method finds the package in global if the package was not found in local.
 - It uses [resolve-global](https://github.com/sindresorhus/resolve-global) package to resolve global packages.
 
-#### Make `CascadingConfigArrayFactory` loading the personal config with `findDependenciesInGlobal` option
+#### 2. Make `CascadingConfigArrayFactory` loading the personal config with `findDependenciesInGlobal` option
 
 In [lib/cli-engine/cascading-config-array-factory.js#L372-L384](https://github.com/eslint/eslint/blob/e5f1ccc9e2d07ad0acf149027ffc382021d54da1/lib/cli-engine/cascading-config-array-factory.js#L372-L384),
 
