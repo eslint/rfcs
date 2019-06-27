@@ -2,7 +2,7 @@
 - RFC PR: https://github.com/eslint/rfcs/pull/28
 - Authors: Toru Nagashima ([@mysticatea](https://github.com/mysticatea))
 
-# Personal Config Loads Global-Installed Paclages
+# Personal Config Loads Global-Installed Packages
 
 ## Summary
 
