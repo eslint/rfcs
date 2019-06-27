@@ -1,5 +1,5 @@
 - Start Date: 2019-06-27
-- RFC PR: (leave this empty, to be filled in later)
+- RFC PR: https://github.com/eslint/rfcs/pull/28
 - Authors: Toru Nagashima ([@mysticatea](https://github.com/mysticatea))
 
 # Personal Config Loads Global-Installed Paclages
