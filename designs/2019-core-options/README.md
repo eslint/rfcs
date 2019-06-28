@@ -85,8 +85,8 @@ This is very similar to `.eslintignore` file. Each value is a file pattern as sa
 ESLint concatenates all ignore patterns from all of `.eslintignore`, `--ignore-path`, `--ignore-pattern`, and `ignorePatterns`. If there are multiple `ignorePatterns` in a `ConfigArray`, all of them are concatenated. The order is:
 
 1. The default ignoring. (I.e. `.*`, `node_modules/*`, and `bower_components/*`)
-1. `--ignore-path` or `.eslintignore`.
 1. `ignorePatterns` in the appearance order in the config array.
+1. `--ignore-path` or `.eslintignore`.
 1. `--ignore-pattern`
 
 Negative patterns mean unignoring. For example, `!.*.js` makes ESLint checking JavaScript files which start with `.`. Negative patterns are used to override parent settings.
