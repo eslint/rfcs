@@ -19,7 +19,7 @@ This RFC adds four properties to config files.
 ```js
 // .eslintrc.js
 module.exports = {
-    disableInlineConfig: false,              // Corresponds to --no-inline-config
+    noInlineConfig: false,              // Corresponds to --no-inline-config
     reportUnusedDisableDirectives: false,    // Corresponds to --report-unused-disable-directives
     verifyOnRecoverableParsingErrors: false, // Corresponds to --verify-on-recoverable-parsing-errors
     ignorePatterns: [],                      // Corresponds to --ignore-pattern
@@ -27,7 +27,7 @@ module.exports = {
     overrides: [
         {
             files: ["*.ts"],
-            disableInlineConfig: false,
+            noInlineConfig: false,
             reportUnusedDisableDirectives: false,
             verifyOnRecoverableParsingErrors: false,
             // ignorePatterns: [], // Forbid this to avoid confusion with 'excludedFiles' property.
@@ -36,17 +36,17 @@ module.exports = {
 }
 ```
 
-### § disableInlineConfig
+### § noInlineConfig
 
 That value can be a boolean value. Default is `false`.
 
 If `true` then it disables inline directive comments such as `/*eslint-disable*/`.
 
-If `disableInlineConfig` is `true`, `--no-inline-config` was not given, and there are one or more directive comments, then ESLint reports each directive comment as a warning message (`severify=1`). For example, `"'eslint-disable' comment was ignored because your config file has 'disableInlineConfig' setting."`. Therefore, end-users can know why directive comments didn't work.
+If `noInlineConfig` is `true`, `--no-inline-config` was not given, and there are one or more directive comments, then ESLint reports each directive comment as a warning message (`severify=1`). For example, `"'eslint-disable' comment was ignored because your config file has 'noInlineConfig' setting."`. Therefore, end-users can know why directive comments didn't work.
 
 <table><td>
 <b>💠Implementation</b>:
-<p>In <a href="https://github.com/eslint/eslint/blob/af81cb3ecc5e6bf43a6a2d8f326103350513a1b8/lib/linter.js#L859"><code>Linter#_verifyWithoutProcessors</code> method</a>, the linter checks both <code>providedConfig</code> and <code>filenameOrOptions</code> to determine <code>disableInlineConfig</code> option. The <code>filenameOrOptions.allowInlineConfig</code> precedences <code>providedConfig.disableInlineConfig</code>.</p>
+<p>In <a href="https://github.com/eslint/eslint/blob/af81cb3ecc5e6bf43a6a2d8f326103350513a1b8/lib/linter.js#L859"><code>Linter#_verifyWithoutProcessors</code> method</a>, the linter checks both <code>providedConfig</code> and <code>filenameOrOptions</code> to determine <code>noInlineConfig</code> option. The <code>filenameOrOptions.allowInlineConfig</code> precedences <code>providedConfig.noInlineConfig</code>.</p>
 </td></table>
 
 ### § reportUnusedDisableDirectives
