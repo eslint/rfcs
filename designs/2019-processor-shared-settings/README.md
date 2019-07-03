@@ -16,6 +16,25 @@ There is currently no good way to provide any sort of configuration to processor
 
 A new top-level key called `processorOptions` would be added. (Typically, this would be configured alongside `processor` inside an override). This options object would then be sent as a third argument to `preprocess` and `postprocess`.
 
+For example, this is how configuring linting to use [`eslint-plugin-svelte3`](https://github.com/sveltejs/eslint-plugin-svelte3) with options might look:
+
+```js
+module.exports = {
+  // ...
+  plugins: ['svelte3'],
+  overrides: [
+    {
+      files: '*.svelte',
+      processor: 'svelte3/svelte3',
+      processorOptions: {
+        ignoreStyles: () => true,
+        // ...
+      },
+    },
+  ],
+};
+```
+
 ## Documentation
 
 We'd document how to send options to processors that support them in <https://eslint.org/docs/user-guide/configuring#specifying-processor>.
