@@ -1,5 +1,5 @@
 - Start Date: 2018-12-2
-- RFC PR: (leave this empty, to be filled in later)
+- RFC PR: https://github.com/eslint/rfcs/pull/4
 - Authors: David Aghassi
 
 # Async/Parallizing ESLint Processing Of Files
