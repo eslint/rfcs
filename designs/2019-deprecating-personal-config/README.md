@@ -23,7 +23,7 @@ Three steps:
     - ESLint shows a warning when it loaded the personal config.
     - ESLint shows a warning when it ignored the personal config (Currently, it ignores `.eslintrc` files on home directory if a project directory is in home directory and the project has `.eslintrc` files.)
 3. **Removal**: Remove the personal config functionality on ESLint 8.0.0.
-    - ESLint no longer loada the personal config even if the project config was not found.
+    - ESLint no longer loads the personal config even if the project config was not found.
     - ESLint no longer ignores the config files on home directory even if the project config was found.
 
 ## Documentation
