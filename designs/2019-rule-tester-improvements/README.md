@@ -23,7 +23,7 @@ This RFC improves `RuleTester` to check more mistakes.
 
 1. Disallowing `node.start` and `node.end`
 1. Ensuring to test autofix
-1. Deprecating the `errors` property with a number
+1. Changing the `errors` property of a number to fail on syntax errors
 
 ### 1. Disallowing `node.start` and `node.end`
 
@@ -42,19 +42,18 @@ This RFC improves `RuleTester` to check more mistakes.
 
 - If `output` property didn't exist but the rule fixed the code, `RuleTester` fails the test case as "The rule fixed the code. Please add 'output' property." It's implemented around [lib/rule-tester/rule-tester.js#L594](https://github.com/eslint/eslint/blob/21f3131aa1636afa8e5c01053e0e870f968425b1/lib/rule-tester/rule-tester.js#L594).
 
-### 3. Deprecating the `errors` property with a number
+### 3. Changing the `errors` property of a number to fail on syntax errors
 
-ESLint prints a deprecation warning if `errors` property was used with a number.
+`RuleTester` fails test cases always if the `code` has a syntax error.
 
 #### Implementation
 
-- Adds a deprecation warning to [lib/rule-tester/rule-tester.js#L495](https://github.com/eslint/eslint/blob/21f3131aa1636afa8e5c01053e0e870f968425b1/lib/rule-tester/rule-tester.js#L495). It uses [`emitDeprecationWarning()`](https://github.com/eslint/eslint/blob/21f3131aa1636afa8e5c01053e0e870f968425b1/lib/shared/config-validator.js#L265) function for that.
+- Unwrap [lib/rule-tester/rule-tester.js#L414-L419](https://github.com/eslint/eslint/blob/02d7542cfd0c2e95c2222b1e9e38228f4c19df19/lib/rule-tester/rule-tester.js#L414-L419).
 
 ## Documentation
 
 [RuleTester](https://eslint.org/docs/developer-guide/nodejs-api#ruletester) should be updated.
 
-- `errors` ("number or array" → "array")
 - `output` ("optional" → "required if the rule fixes code")
 
 ## Drawbacks
@@ -70,10 +69,6 @@ But the breaking cases may indicate that the rule was not tested enough.
 ## Alternatives
 
 - About "Disallowing `node.start` and `node.end`", we can standardize those properties. But it's a breaking change for custom parser owners. On the other hand, using `node.start` and `node.end` breaks the rule if users used custom parsers, so the impact of this disallowing is limited.
-
-## Open Questions
-
-## Frequently Asked Questions
 
 ## Related Discussions
 
