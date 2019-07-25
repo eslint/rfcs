@@ -10,7 +10,7 @@ Make the CLIEngine `cwd` option available to rules to avoid the misalignment bet
 see: https://github.com/eslint/eslint/issues/11218
 
 ## Motivation
-To avoid the misalignment between it and process.cwd().
+To avoid the misalignment between it and `process.cwd()`.
 There is a situation where a rule need to get the relative path of the current file to the root folder of the project.
 But it's hard to guarantee that all developers will open the root folder in their IDE (VSCode with eslint plugin for example), especially when the project grows.
 
@@ -23,10 +23,20 @@ Expected:
 It is expected that the rule has access to the `cwd` in the option of the CLI engine.
 
 ## Detailed Design
-Refactor the `Linter` constructor to accept a nullable string parameter `cwd`.
-Refactor the `runRules` method in `linter.js` to accept the nullable string parameter `cwd`, and pass it to the shared context so the rule can access it via `context`.
-If the `cwd` is `undefined`, `process` exists, it will be `process.cwd()`.
-If both of the `cwd` and the `process` are undefined, it will be undefined.
+### Change in Linter
+Modify the `Linter` constructor to accept an object with a nullable string parameter `cwd`.
+```
+const linter = new Linter({
+  cwd: '/path/to/cwd'
+});
+```
+or `const linter = new Linter({})`.
+
+### Change in Context
+This RFC adds `getCwd()` method to rule context.
+The `getCwd()` method returns the value of the `cwd` option that was given in `Linter` constructor.
+If the `cwd` is `undefined` in the `Linter` but the `process` exists, `getCwd()` will return `process.cwd()`.
+If both of the `cwd` and the `process` are undefined, `getCwd()` will return `undefined`.
 
 https://github.com/eslint/eslint/pull/12021
 
