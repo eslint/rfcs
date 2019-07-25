@@ -1,5 +1,5 @@
 -   Start Date: 2019-07-20
--   RFC PR: (leave this empty, to be filled in later)
+-   RFC PR: https://github.com/eslint/rfcs/pull/33
 -   Authors: Toru Nagashima ([@mysticatea](https://github.com/mysticatea))
 
 # Description in directive comments
