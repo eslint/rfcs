@@ -11,6 +11,8 @@ see: https://github.com/eslint/eslint/issues/11218
 
 ## Motivation
 To avoid the misalignment between it and process.cwd().
+There is a situation where a rule need to get the relative path of the current file to the root folder of the project.
+But it's hard to guarantee that all developers will open the root folder in their IDE (VSCode with eslint plugin for example), especially when the project grows.
 
 Use case:
 Say, the project is supposed to be open in `web` folder.
