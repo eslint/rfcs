@@ -1,5 +1,5 @@
 - Start Date: 2019-07-25
-- RFC PR: Allow snapshot test
+- RFC PR: https://github.com/eslint/rfcs/pull/36
 - Authors: Eric Wang
 
 # Allow snapshot test
@@ -22,6 +22,28 @@ There will be a new class `rule-snapshot-tester` which consumes the `runRuleForI
 Mark the error position with "~~~" in one snapshot and the fix in another.
 The result will be pure string and it's user's responsibility to decide what kind of snapshot test tool to compare them.
 
+### Difference between the existing one
+The existing Api gives non-intuitive information only such as `row` and `column`
+The new one will return a snapshot.
+
+### New Apis
+A `RuleSnapshotTester` which takes the same constructor parameter as the existing `RuleTester` class.
+The `RuleSnapshotTester` will expose two public methods
+- `generateErrorMarkingSnapshot: (rule: ESLintRule, testCase: TestCase) => string`. It will return the snapshot with error marking. Error will be marked as "~~~" under the code as a new line. If there are multiple errors with same message, "~" will be shown for all errors but only the last error message will be added as the text.
+- `generateFixSnapshot:(rule: ESLintRule, testCase: TestCase) => string`. It will return the snapshot after the autofix. Errors that are not fixable will not be marked.
+
+The user can consume it as
+```
+const ruleSnapshotTester = new RuleSnapshotTester();
+const snapshot = ruleSnaphostTester.generateErrorMarkingSnapshot(require("../../fixtures/testers/rule-tester/no-eval"), {
+  code: `
+    eval(foo)
+  `
+})
+// It's user's decision which test framework they want to use to compare the snapshot
+// The Api only return the string
+expect(snapshot).toMatchSnapshot();
+```
 ## Documentation
 There will be a new class `rule-snapshot-tester`.
 Yes, it need a formal announcement on the ESLint blog to explain the motivation.
