@@ -1,5 +1,5 @@
 - Start Date: 2019-07-25
-- RFC PR: https://github.com/eslint/eslint/pull/12021
+- RFC PR: https://github.com/eslint/rfcs/pull/35
 - Authors: Eric Wang
 
 # Pass cwd from cli engine
@@ -14,19 +14,23 @@ To avoid the misalignment between it and process.cwd().
 
 Use case:
 Say, the project is supposed to be open in `web` folder.
-But as the project grows, prople tends to open some subfolder under the `web` to minimize sidebar.
+But as the project grows, people tends to open some subfolder under the `web` to minimize sidebar.
 `eslint` plugin in VSCode will then run the `eslint` from the subfolder which cause the `process.cwd` not to return the expected value (e.g. the `web` folder)
 
 Expected:
 It is expected that the rule has access to the `cwd` in the option of the CLI engine.
 
 ## Detailed Design
-It could be easier to look at the code directly, as it has 15 LOC
+Refactor the `Linter` constructor to accept a nullable string parameter `cwd`.
+Refactor the `runRules` method in `linter.js` to accept the nullable string parameter `cwd`, and pass it to the shared context so the rule can access it via `context`.
+If the `cwd` is `undefined`, `process` exists, it will be `process.cwd()`.
+If both of the `cwd` and the `process` are undefined, it will be undefined.
+
 https://github.com/eslint/eslint/pull/12021
 
 ## Documentation
-I don't think it's a big change.
-Adding the `cwd` into the `context` Api should be enough.
+Adding the `cwd` into the `context` Api.
+Adding the `cwd` into the `Linter` constructor Api.
 
 ## Drawbacks
 Can't think of any.
