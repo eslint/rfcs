@@ -24,19 +24,19 @@ It is expected that the rule has access to the `cwd` in the option of the CLI en
 
 ## Detailed Design
 ### Change in Linter
-Modify the `Linter` constructor to accept an object with a nullable string parameter `cwd`.
+Modify the `Linter` constructor to accept an object with a optional string parameter `cwd` with a default value.
 ```
 const linter = new Linter({
   cwd: '/path/to/cwd'
 });
 ```
 or `const linter = new Linter({})`.
+The default value will be `process.cwd()` if the `process` exists, or `undefined` if not.
+
 
 ### Change in Context
 This RFC adds `getCwd()` method to rule context.
 The `getCwd()` method returns the value of the `cwd` option that was given in `Linter` constructor.
-If the `cwd` is `undefined` in the `Linter` but the `process` exists, `getCwd()` will return `process.cwd()`.
-If both of the `cwd` and the `process` are undefined, `getCwd()` will return `undefined`.
 
 https://github.com/eslint/eslint/pull/12021
 
