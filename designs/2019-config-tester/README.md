@@ -33,7 +33,7 @@ const options = {
     ignoreDeprecatedRules: false,
     ignoreDisabledUnknownRules: false,
     ignoreMissingDependencies: false,
-    ignoreMissingRules: false,
+    ignoreRulesMissingFromConfig: false,
 }
 
 // Verify a shareable config (a path to the target file).
@@ -78,7 +78,7 @@ Name | Description
 `targetName` | Required. If this package was a plugin, this is a config name of the plugin. Otherwise, this is a path to a file (relative from `projectRoot`).
 `options.ignoreDeprecatedRules` | Default is `false`. If `true` then the tester ignores deprecated rules.
 `options.ignoreDisabledUnknownRules` | Default is `false`. If `true` then the tester ignores unknown rules if the rule was configured as `0` (`"off"`).
-`options.ignoreMissingRules` | Default is `false`. If `true` then the tester ignores missing rules. The missing rules mean the rules that ESLint or a plugin defined but not configured.
+`options.ignoreRulesMissingFromConfig` | Default is `false`. If `true` then the tester ignores missing rules. The missing rules mean the rules that ESLint or a plugin defined but not configured.
 `options.ignoreMissingDependencies` | Default is `false`. If `true` then the tester ignores wrong dependency definition (`dependencies`/`peerDependencies`).
 
 #### Behavior
@@ -108,7 +108,7 @@ Similarly to `RuleTester`, `ConfigTester` defines tests by `describe` and `it` g
     <b>🔗PoC</b>: <a href="https://github.com/eslint/eslint/blob/2fb21b5dd52c81fe3c93cce0eb5fda3bf7789da0/lib/config-tester/config-tester.js#L301-L338">lib/config-tester/config-tester.js#L301-L338</a>
     </td></tr></table>
 1. Check whether the config congiures all rules.
-    - If `ignoreMissingRules` option was `true`, the tester skips this step.
+    - If `ignoreRulesMissingFromConfig` option was `true`, the tester skips this step.
     - This step lets people know about new rules.
     <table><tr><td>
     <b>🔗PoC</b>: <a href="https://github.com/eslint/eslint/blob/2fb21b5dd52c81fe3c93cce0eb5fda3bf7789da0/lib/config-tester/config-tester.js#L340-L363">lib/config-tester/config-tester.js#L340-L363</a>
