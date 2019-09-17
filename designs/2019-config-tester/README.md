@@ -107,7 +107,7 @@ Similarly to `RuleTester`, `ConfigTester` defines tests by `describe` and `it` g
     <table><tr><td>
     <b>🔗PoC</b>: <a href="https://github.com/eslint/eslint/blob/2fb21b5dd52c81fe3c93cce0eb5fda3bf7789da0/lib/config-tester/config-tester.js#L301-L338">lib/config-tester/config-tester.js#L301-L338</a>
     </td></tr></table>
-1. Check whether the config congiures all rules.
+1. Check whether the config configures all rules.
     - If `ignoreRulesMissingFromConfig` option was `true`, the tester skips this step.
     - This step lets people know about new rules.
     <table><tr><td>
