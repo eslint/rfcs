@@ -18,12 +18,15 @@ This RFC improves `RuleTester` to check more mistakes.
   If people forgot to write `output` property in test cases, `RuleTester` doesn't test autofix silently.
 - `errors` property with a number (found in [eslint/eslint#11798](https://github.com/eslint/eslint/pull/11798)).<br>
   `errors` property with a number ignores syntax errors in test code. We overlooked the mistake of [tests/lib/rules/complexity.js#L84](https://github.com/eslint/eslint/blob/cb1922bdc07e58de0e55c13fd992dd8faf3292a4/tests/lib/rules/complexity.js#L84) due to this. The number `errors` property cannot check the reported error was the expected error.
+- Typo property names in `errors` property with objects.<br>
+  [eslint/eslint#12096](https://github.com/eslint/eslint/pull/12096).
 
 ## Detailed Design
 
 1. Disallowing `node.start` and `node.end`
 1. Ensuring to test autofix
 1. Changing the `errors` property of a number to fail on syntax errors
+1. Changing the `errors` property of objects to fail on unknown properties
 
 ### 1. Disallowing `node.start` and `node.end`
 
@@ -50,6 +53,14 @@ This RFC improves `RuleTester` to check more mistakes.
 
 - Unwrap [lib/rule-tester/rule-tester.js#L414-L419](https://github.com/eslint/eslint/blob/02d7542cfd0c2e95c2222b1e9e38228f4c19df19/lib/rule-tester/rule-tester.js#L414-L419).
 
+### 4. Changing the `errors` property of objects to fail on unknown properties
+
+`RuleTester` fails test cases if any item of `errors` has unknown properties.
+
+#### Implementation
+
+- [eslint/eslint#12096](https://github.com/eslint/eslint/pull/12096)
+
 ## Documentation
 
 [RuleTester](https://eslint.org/docs/developer-guide/nodejs-api#ruletester) should be updated.
@@ -75,4 +86,5 @@ But the breaking cases may indicate that the rule was not tested enough.
 - https://github.com/eslint/eslint/issues/8956
 - https://github.com/eslint/eslint/pull/8984
 - https://github.com/eslint/eslint/pull/11798
+- https://github.com/eslint/eslint/pull/12096
 - https://github.com/typescript-eslint/typescript-eslint/issues/405
