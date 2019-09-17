@@ -37,14 +37,14 @@ const options = {
 }
 
 // Verify a shareable config (a path to the target file).
-tester.run("index.js", options)
-tester.run("es5.js", options)
-tester.run("es2015.js", options)
+tester.runOnConfigFile("index.js", options)
+tester.runOnConfigFile("es5.js", options)
+tester.runOnConfigFile("es2015.js", options)
 
 // Or verify plugin's preset configs (a config name in the plugin).
-tester.run("base", options)
-tester.run("recommended", options)
-tester.run("opinionated", options)
+tester.runOnPluginConfig("base", options)
+tester.runOnPluginConfig("recommended", options)
+tester.runOnPluginConfig("opinionated", options)
 ```
 
 ### § `ConfigTester(projectRoot)` constructor
@@ -67,7 +67,7 @@ The tester reads `` `${projectRoot}/package.json` `` to use in `run()` method.
 <b>🔗PoC</b>: <a href="https://github.com/eslint/eslint/blob/2fb21b5dd52c81fe3c93cce0eb5fda3bf7789da0/lib/config-tester/config-tester.js#L60-L66">lib/config-tester/config-tester.js#L60-L66</a>
 </td></tr></table>
 
-### § `tester.run(targetName, options)` method
+### § `tester.runOnConfigFile(filePath, options)` method / `tester.runOnPluginConfig(configName, options)` method
 
 Validates a config data.
 
@@ -75,7 +75,8 @@ Validates a config data.
 
 Name | Description
 :----|:-----------
-`targetName` | Required. If this package was a plugin, this is a config name of the plugin. Otherwise, this is a path to a file (relative from `projectRoot`).
+`filePath` | Required. This is a path to a file (relative from `projectRoot`).
+`configName` | Required. This is a config name of the plugin. If it cannot load the entry file (`main` field in `${projectRoot}/package.json` or `${projectRoot}/index.js`), it throws `MODULE_NOT_FOUND_ERROR`.
 `options.ignoreDeprecatedRules` | Default is `false`. If `true` then the tester ignores deprecated rules.
 `options.ignoreDisabledUnknownRules` | Default is `false`. If `true` then the tester ignores unknown rules if the rule was configured as `0` (`"off"`).
 `options.ignoreRulesMissingFromConfig` | Default is `false`. If `true` then the tester ignores missing rules. The missing rules mean the rules that ESLint or a plugin defined but not configured.
