@@ -1,5 +1,5 @@
 - Start Date: 2019-09-18
-- RFC PR: (leave this empty, to be filled in later)
+- RFC PR: https://github.com/eslint/rfcs/pull/37
 - Authors: Toru Nagashima <http://github.com/mysticatea>
 
 # Changing Base Path of `overrides` and `ignorePatterns` that CLI Options Specify
