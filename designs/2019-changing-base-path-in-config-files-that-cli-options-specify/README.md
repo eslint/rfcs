@@ -85,7 +85,7 @@ The behavior of `--config` and `--ignore-path` options will be changed.
 
 ### Prior Arts
 
-- [`.gitignore` and `core.excludesFile`](#-gitignore-and-core-excludesfile) is similar to this RFC's behavior.
+- [`.gitignore` and `core.excludesFile`](#gitignore-and-coreexcludesfile) is similar to this RFC's behavior.
 
 ## Related Discussions
 
