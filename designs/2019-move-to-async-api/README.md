@@ -1,5 +1,5 @@
 - Start Date: 2019-09-28
-- RFC PR: (leave this empty, to be filled in later)
+- RFC PR: https://github.com/eslint/rfcs/pull/40
 - Authors: Toru Nagashima ([@mysticatea](https://github.com/mysticatea))
 
 # Moving to Asynchronous API
