@@ -100,6 +100,7 @@ With recommendations on new features of accounting comments in the code.
     This section should also include prior art, such as whether similar
     projects have already implemented a similar feature.
 -->
+* https://github.com/eslint/eslint/issues/11129#issuecomment-536327392
 
 ## Open Questions
 
