@@ -101,6 +101,7 @@ With recommendations on new features of accounting comments in the code.
     projects have already implemented a similar feature.
 -->
 * https://github.com/eslint/eslint/issues/11129#issuecomment-536327392
+* https://github.com/eslint/eslint/pull/12342
 
 ## Open Questions
 
