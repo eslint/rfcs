@@ -1,0 +1,91 @@
+@startuml overview
+skinparam monochrome true
+skinparam backgroundColor #ffffff
+skinparam sequenceGroupBodyBackGroundColor transparent
+skinparam boxPadding 10
+
+box "Master"
+    participant "ESLint" as engine1
+    participant "LintResultCache" as cache
+    participant "fs" as fs1
+end box
+
+box "Workers"
+    participant "A worker" as worker
+    participant "CLIEngine" as engine2
+    participant "fs" as fs2
+end box
+
+[-> engine1 : executeOnFiles
+activate engine1
+
+engine1 -> engine1 : enumerate files
+
+engine1 -> cache : check files if cached or not
+activate cache
+cache --> engine1
+deactivate cache
+  
+engine1 -> engine1 : extract non-cached files
+  
+alt concurrency = 1
+    group in 16 concurrent
+        loop for each file
+            engine1 -> fs1 : read file content
+            deactivate engine1
+            activate fs1
+            fs1 -> engine1
+            deactivate fs1
+            activate engine1
+            engine1 -> engine1 : verify files
+        end
+    end
+    |||
+else concurrency >= 2
+    loop 'concurrency' times
+        create worker
+        engine1 ->> worker : create worker
+        engine1 ->> worker : send options and initial files
+        deactivate engine1
+        activate worker
+        create engine2
+        worker -> engine2 : create
+        group in 16 concurrent
+            loop until no more file
+                worker -> engine2 : read config
+                activate engine2
+                engine2 --> worker
+                deactivate engine2
+                worker ->> fs2 : read file content
+                deactivate worker
+                activate fs2
+                fs2 ->> worker
+                deactivate fs2
+                activate worker
+                worker -> engine2 : verify file
+                activate engine2
+                engine2 --> worker
+                deactivate engine2
+                worker ->> engine1 : report lint result
+                deactivate worker
+                activate engine1
+                engine1 ->> worker : send next file if exist
+                deactivate engine1
+                activate worker
+            end
+        end
+        worker -->> engine1
+        destroy worker
+        activate engine1
+    end
+    note over engine1: wait for all workers exit
+end
+
+engine1 -> cache : update cache
+activate cache
+cache --> engine1
+deactivate cache
+
+[<-- engine1
+deactivate engine1
+@enduml
