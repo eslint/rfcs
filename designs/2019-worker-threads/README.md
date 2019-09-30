@@ -95,6 +95,33 @@ We can use parallel linting along with `--fix` option. ESLint modifies files aft
 
 We can use parallel linting along with `--debug` option, but ESLint cannot guarantee the order of the debug log. The order of the logs that are received from worker threads is messed.
 
+#### About Error Handling
+
+If exceptions happen in worker threads, the worker transfers the error information to the main thread if possible. The transferred information contains the properties of `message`, `stack`, `messageTemplate`, and `messageData`.
+
+Therefore, people can see the error message as-is even if it happened in worker threads.
+For example:
+
+```
+$ eslint lib
+Number of files: 368
+Lint files in 3 worker threads.
+Error: FAILED!!!
+Occurred while linting C:\Users\t-nagashima.AD\dev\eslint\lib\rules\no-mixed-operators.js:229
+    at BinaryExpression (C:\Users\t-nagashima.AD\dev\eslint\lib\rules\eqeqeq.js:152:27)
+    at C:\Users\t-nagashima.AD\dev\eslint\lib\linter\safe-emitter.js:45:58
+    at Array.forEach (<anonymous>)
+    at Object.emit (C:\Users\t-nagashima.AD\dev\eslint\lib\linter\safe-emitter.js:45:38)
+    at NodeEventGenerator.applySelector (C:\Users\t-nagashima.AD\dev\eslint\lib\linter\node-event-generator.js:253:26)
+    at NodeEventGenerator.applySelectors (C:\Users\t-nagashima.AD\dev\eslint\lib\linter\node-event-generator.js:282:22)
+    at NodeEventGenerator.enterNode (C:\Users\t-nagashima.AD\dev\eslint\lib\linter\node-event-generator.js:296:14)
+    at CodePathAnalyzer.enterNode (C:\Users\t-nagashima.AD\dev\eslint\lib\linter\code-path-analysis\code-path-analyzer.js:646:23)
+    at C:\Users\t-nagashima.AD\dev\eslint\lib\linter\linter.js:936:32
+    at Array.forEach (<anonymous>)
+```
+
+As a side note, master terminates the other workers if a worker reported an error.
+
 #### Locally Concurrency
 
 Now ESLint does linting in parallel by thread workers if target files are many.
