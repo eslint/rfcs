@@ -24,9 +24,9 @@ This RFC does the following items:
 
 ### § New CLI Option
 
-`eslint` command runs linting in parallel automatically if the target files are many. So this RFC adds two CLI options to let users control the behavior.
+`eslint` command runs linting in parallel automatically if the target files are many. So this RFC adds a CLI option to let users control the behavior.
 
-- `--concurrency <n>` ... The number should be a positive integer. If this is `1`, ESLint does linting in the main thread. Otherwise, ESLint creates this number of worker threads then the worker threads do linting.<br>
+- `--concurrency <n>` ... The `<n>` should be a positive integer. If this is `1`, ESLint does linting in the main thread. Otherwise, ESLint creates this number of worker threads then the worker threads do linting.<br>
   Defaults to a dependent variable on the number of target files.
 
 If `--concurrency` option is not present, ESLint estimates the proper value of the option. It's the number of target files divided by the constant `128`, but `os.cpus().length` at most.
@@ -104,8 +104,6 @@ For example:
 
 ```
 $ eslint lib
-Number of files: 368
-Lint files in 3 worker threads.
 Error: FAILED!!!
 Occurred while linting C:\Users\t-nagashima.AD\dev\eslint\lib\rules\no-mixed-operators.js:229
     at BinaryExpression (C:\Users\t-nagashima.AD\dev\eslint\lib\rules\eqeqeq.js:152:27)
