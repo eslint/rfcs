@@ -1,5 +1,5 @@
 - Start Date: 2019-09-29
-- RFC PR: (leave this empty, to be filled in later)
+- RFC PR: https://github.com/eslint/rfcs/pull/42
 - Authors: Toru Nagashima ([@mysticatea](https://github.com/mysticatea))
 
 # Lint files in parallel if many files exist
