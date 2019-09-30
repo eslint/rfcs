@@ -188,22 +188,22 @@ This section is an instance of performance measurement. The worker threads make 
 $ eslint lib tests/lib --concurrency 1
 Number of files: 697
 Lint files in the main thread.
-Linting complete in: 19975ms
+Linting complete in: 19636ms
 
 $ eslint lib tests/lib
 Number of files: 697
-Lint files in 7 worker threads.
-Linting complete in: 7723ms
+Lint files in 6 worker threads.
+Linting complete in: 7486ms
 
 $ eslint lib --concurrency 1
 Number of files: 368
 Lint files in the main thread.
-Linting complete in: 8237ms
+Linting complete in: 8442ms
 
 $ eslint lib
 Number of files: 368
-Lint files in 4 worker threads.
-Linting complete in: 4274ms
+Lint files in 3 worker threads.
+Linting complete in: 4672ms
 ```
 
 If forced to use workers with a few files, it's slower.
