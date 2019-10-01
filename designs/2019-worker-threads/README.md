@@ -16,28 +16,33 @@ Linting logic uses CPU heavily, so parallel linting by threads may reduce spent 
 
 **PoC**: [eslint/eslint#very-rough-worker-threads-poc](https://github.com/eslint/eslint/tree/very-rough-worker-threads-poc/lib/eslint)
 
-This RFC does the following items:
+This RFC has two steps.
 
-- Adds a new CLI option.
-- Adds a new constructor option to `ESLint` class.
+**The step 1 (semver-minor):**
+
+- Adds `--concurrency` CLI option to specify the number of worker threads. Defaults to `1`.
+- Adds `concurrency` constructor option to `ESLint` class to specify the number of worker threads. Defaults to `1`.
 - Changes the behavior of `ESLint#executeOnFiles(patterns)` method.
 
-### § New CLI Option
+**The step 2 (semver-major):**
 
-`eslint` command runs linting in parallel automatically if the target files are many. So this RFC adds a CLI option to let users control the behavior.
+- Changes the default of the `--concurrency` CLI option to `"auto"`.
+- Changes the default of the `concurrency` constructor option to `"auto"`.
 
-- `--concurrency <n>` ... The `<n>` should be a positive integer. If this is `1`, ESLint does linting in the main thread. Otherwise, ESLint creates this number of worker threads then the worker threads do linting.<br>
-  Defaults to a dependent variable on the number of target files.
+### [STEP 1] New `--concurrency` CLI Option
 
-If `--concurrency` option is not present, ESLint estimates the proper value of the option. It's the number of target files divided by the constant `128`, but `os.cpus().length` at most.
+The `--concurrency` has an argument. The argument should be a positive integer or `"auto"`. Defaults to `1`.
+
+- If `1` is present, ESLint does linting in the main thread.
+- If another integer is present, ESLint creates this number of worker threads then the worker threads do linting.
+
+If `auto` is present, ESLint estimates the best value from the number of target files. It's the number of target files divided by the constant `128`, but `os.cpus().length` at most.
 
 ```js
 concurrency = Math.min(os.cpus().length, Math.ceil(targetFiles.length / 128))
 ```
 
 This means that ESLint does linting in the main thread if the number of target files is less than `128` in order to avoid the overhead of multithreading. But ESLint does linting with using worker threads automatically if target files are many.
-
-If people don't like this behavior, they can enforce arbitrary concurrency with `--concurrency` option.
 
 If `--concurrency` option is present along with the following options, ESLint throws a fatal error.
 
@@ -49,17 +54,15 @@ If `--concurrency` option is present along with the following options, ESLint th
 - `--print-config`
 - `--env-info`
 
-### § New constructor option of `ESLint` class
+### [STEP 1] New `concurrency` constructor option of `ESLint` class
 
 `ESLint` class is the new API that is discussed in [RFC 40](https://github.com/eslint/rfcs/pull/40).
 
-This RFC adds a constructor option to `ESLint` class.
-
-- `concurrency` (`number`) ... Corresponds to `--concurrency` CLI option. The number should be a positive integer. Defaults to a dependent variable on the number of target files.
+The `concurrency` option corresponds to `--concurrency` CLI option. Defaults to `1`. If `"auto"` is present, `ESLint` class estimates the best value with the way the previous section descrived.
 
 This RFC doesn't change `CLIEngine` class because this requires asynchronous API to expose.
 
-### § New behavior of `ESLint#executeOnFiles(patterns)` method
+### [STEP 1] New behavior of `ESLint#executeOnFiles(patterns)` method
 
 The overview is:
 
@@ -67,7 +70,7 @@ The overview is:
 
 1. Master enumerates the lint target files.
 1. Master checks if the files exist in the lint result cache and it extracts only the files which are not cached.
-1. Master estimates the proper `concurrency` from the number of the extracted files if not present.
+1. Master estimates the proper `concurrency` from the number of the extracted files if `"auto"` is present.
 1. Lint the extracted files:
    - If `concurrency` is `1`, master [verifies files][verify files] directly. It doesn't create any worker.
    - Otherwise, master creates workers then the workers [verify files]. The number of the workers is `concurrency`.
@@ -185,7 +188,7 @@ On the other hand, this RFC doesn't change the logic that loads config files. It
 
 We can improve config loading by async in the future, but it's out of the scope of this RFC.
 
-### § Constants
+#### Constants
 
 This RFC contains two constants.
 
@@ -194,7 +197,7 @@ This RFC contains two constants.
 
 Those values are changeable by measuring performance in real.
 
-### § Performance
+#### Performance
 
 Please try the PoC.
 
@@ -215,7 +218,7 @@ Number of files: 697
 Lint files in the main thread.
 Linting complete in: 19636ms
 
-$ eslint lib tests/lib
+$ eslint lib tests/lib --concurrency auto
 Number of files: 697
 Lint files in 6 worker threads.
 Linting complete in: 7486ms
@@ -225,7 +228,7 @@ Number of files: 368
 Lint files in the main thread.
 Linting complete in: 8442ms
 
-$ eslint lib
+$ eslint lib --concurrency auto
 Number of files: 368
 Lint files in 3 worker threads.
 Linting complete in: 4672ms
@@ -234,7 +237,7 @@ Linting complete in: 4672ms
 If forced to use workers with a few files, it's slower.
 
 ```
-$ eslint lib/cli-engine
+$ eslint lib/cli-engine --concurrency auto
 Number of files: 28
 Lint files in the main thread.
 Linting complete in: 1521ms
@@ -245,25 +248,35 @@ Lint files in 2 worker threads.
 Linting complete in: 2054ms
 ```
 
+### [STEP 2] Changing the default of `concurrency` option to `"auto"`
+
+This change needs a major release.
+
+ESLint gets using worker threads by default if target files are many.
+
 ## Documentation
 
 - The "[Command Line Interface](https://eslint.org/docs/user-guide/command-line-interface)" page should describe new `--concurrency` option.
 - The "[Node.js API](https://eslint.org/docs/developer-guide/nodejs-api)" page should describe new `concurrency` option.
+- When step 2, it needs an entry of the migration guide because of a breaking change.
 
 ## Drawbacks
 
 This feature introduces complexity for parallelism. It will be an additional cost to maintain our codebase.
 
-This feature may not fit the TypeScript ecosystem. TS compiler parses whole codebase to check types but workers cannot share the parsed information. Every worker has to parse whole codebase individually.
+This feature might not fit `eslint-plugin-import` and `@typescript-eslint`. Those have to parse the entire codebase to check types, but workers cannot share the parsed information. Every worker has to parse the entire codebase individually. But linting in parallel is faster than single-thread in spite of the cost of duplicate works.
 
 ## Backwards Compatibility Analysis
 
-This feature doesn't change existing features.
+Step 1 is not a breaking change. It just adds a new option.
 
-We have the [parser services](https://eslint.org/docs/developer-guide/working-with-custom-parsers) API. The parser services can be implemented to use the shared state for target files. Also plugin rules can be implemented to use the shared state for target files.
-As far as I know, such a parser/plugin doesn't exist. But if it existed, this feature breaks it because it cannot share state between worker threads.
+Step 2 is a breaking change technically.
 
-I think the impact of this feature is very small.
+- If a parser/plugin shares state for multiple files and the state can changes the parser/plugin behavior, the workflow is broken. Because every worker thread cannot share state each other.
+- If a parser/plugin consumes OS resources exclusively (e.g., bind a TCP port), the workflow is broken. Because it runs multiple times at the same time by worker threads.
+- If a parser/plugin writes a file which has a constant name (e.g., common cache file), the workflow is broken as a race condition.
+
+However, I think that the above is enough rare cases and the impact is limited.
 
 ## Alternatives
 
