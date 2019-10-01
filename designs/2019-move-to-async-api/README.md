@@ -27,9 +27,31 @@ This RFC adds a new class `ESLint`. It has almost the same methods as `CLIEngine
 - `executeOnFiles()`
 - `executeOnText()`
 - `getConfigForFile()`
-- `getFormatter()`
 - `isPathIgnored()`
 - `outputFixes()`
+
+And the following method returns a `(results: LintReport, metadata: any) => stream.Readable`.
+
+- `getFormatter()`
+
+<details>
+
+```js
+    getFormatter(name) {
+        const formatter = cliEngine.getFormatter(name)
+        return (...args) => {
+            const text = formatter(...args)
+            const s = new stream.PassThrough()
+            process.nextTick(() => {
+                s.write(text)
+                s.end()
+            })
+            return s
+        }
+    }
+```
+
+</details>
 
 The following methods are as-is because those don't touch both file system and module system.
 
