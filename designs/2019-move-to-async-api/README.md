@@ -30,7 +30,7 @@ This RFC adds a new class `ESLint`. It has almost the same methods as `CLIEngine
 - `isPathIgnored()`
 - `outputFixes()`
 
-And the following method returns a `(results: LintReport, metadata: any) => stream.Readable`.
+And the following method returns a `Promise<(results: LintReport, metadata: any) => stream.Readable>`.
 
 - `getFormatter()`
 
@@ -39,7 +39,7 @@ And the following method returns a `(results: LintReport, metadata: any) => stre
 ```js
     getFormatter(name) {
         const formatter = cliEngine.getFormatter(name)
-        return (...args) => {
+        return Promise.resolve((...args) => {
             const text = formatter(...args)
             const s = new stream.PassThrough()
             process.nextTick(() => {
@@ -47,7 +47,7 @@ And the following method returns a `(results: LintReport, metadata: any) => stre
                 s.end()
             })
             return s
-        }
+        })
     }
 ```
 
