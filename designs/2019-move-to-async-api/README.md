@@ -161,7 +161,7 @@ The following methods are removed because those don't fit the current API.
 
 Existing `getErrorResults()` method doesn't fit the new `executeOnFiles()` method because the result is an async iterator.
 
-The new `filterErrorResults()` method receives an `AsyncIterator<LintResult>` object and returns an `AsyncIterator<LintResult>` object. It extracts only the lint messages which are `severity === 2`, abandons the other messages.
+The new `filterErrorResults()` method receives an `AsyncIterator<LintResult>` object and returns an `AsyncIterator<LintResult>` object. It extracts only the lint messages which are `severity === 2` and abandons the other messages.
 
 <details>
 <summary>A rough sketch of the `filterErrorResults()` static method.</summary>
