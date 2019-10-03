@@ -240,6 +240,7 @@ The new API depends on [Asynchronous Iteration](https://github.com/tc39/proposal
 ## Alternatives
 
 - Adding `engine.executeAsyncOnFiles()`-like methods and we maintain it along with the existing synchronous API. But as what I wrote in the "[Deprecate `CLIEngine` class](#deprecate-cliengine-class)" section, it would be tough.
+- Using [Streams](https://nodejs.org/dist/latest-v12.x/docs/api/stream.html) instead of [Asynchronous Iteration](https://github.com/tc39/proposal-async-iteration). We can introduce `ESLint` class in a minor release if we used Streams. But because Node.js 8 will be EOL two months later, we should be able to use Asynchronous Iteration soon. Iterator protocol is smaller spec than streams, and it's easy to use.
 
 ## Related Discussions
 
