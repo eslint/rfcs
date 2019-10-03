@@ -20,13 +20,13 @@ The name of new class, `ESLint`, is our primary API clearly.
 
 ## Detailed Design
 
-### Add new `ESLint` class
+### ■ Add new `ESLint` class
 
 This RFC adds a new class `ESLint`. It has almost the same methods as `CLIEngine`, but the return value of some methods are different.
 
 So, for now, `ESLint` class will be a tiny wrapper of `CLIEngine` that modifies the type of the return values.
 
-#### The `executeOnFiles()` method
+#### § The `executeOnFiles()` method
 
 This method returns a `AsyncIterator<LintResult>` object iterates the lint result of each file in random order.
 
@@ -80,7 +80,7 @@ print(results)
 
 Once the `executeOnFiles()` method got this change, we can support "linting in parallel", streaming, and plugins/configs which are ES modules in the future.
 
-#### The `getFormatter()` method
+#### § The `getFormatter()` method
 
 This method returns a `Promise<Formatter>`. The `Formatter` type is a function `(results: AsyncIterator<LintResult>) => AsyncIterator<string>`. It receives lint results then outputs the formatted text.
 
@@ -136,7 +136,7 @@ for await (const textPiece of formatter(results)) {
 
 Once the `getFormatter()` method got this change, we can update the specification of custom formatters without breakage in the future to support streaming.
 
-#### The other methods
+#### § The other methods
 
 The following methods return `Promise` which gets fulfilled with each result.
 
@@ -157,7 +157,7 @@ The following methods are removed because those don't fit the current API.
 
 - `resolveFileGlobPatterns()` ... ESLint doesn't use this logic since `v6.0.0`, but it has stayed there for backward compatibility. Once [RFC 20](https://github.com/eslint/rfcs/tree/master/designs/2019-additional-lint-targets) is implemented, what ESLint iterates and what the glob of this method iterates will be different, then it will confuse users. This is good timing to remove the legacy.
 
-#### A new `filterErrorResults()` static method
+#### § A new `filterErrorResults()` static method
 
 Existing `getErrorResults()` method doesn't fit the new `executeOnFiles()` method because the result is an async iterator.
 
@@ -210,13 +210,13 @@ for await (const textPiece of formatter(results)) {
 
 </details>
 
-### Deprecate `CLIEngine` class
+### ■ Deprecate `CLIEngine` class
 
 This RFC soft-deprecates `CLIEngine` class.
 
 Because it's tough to maintain two versions (sync and async) of implementation. The two are almost copy-pasted stuff, but hard to share the code. Therefore, this RFC deprecates the sync version to improve our code with the way which needs asynchronous behavior in the future. For example, `CLIEngine` cannot support parallel linting, plugins/configs as ES modules, etc...
 
-### Out of scope
+### ■ Out of scope
 
 - Not change API for rules. This RFC doesn't change APIs that rule implementation uses. We may be able to support asynchronous stuff in rules in the future, but it's out of this RFC's scope.
 - Not change internal logics. This RFC just adds the public interface that is asynchronous. It would be a wrapper of `CLIEngine` for now.
