@@ -136,39 +136,16 @@ for await (const textPiece of formatter(results)) {
 
 Once the `getFormatter()` method got this change, we can update the specification of custom formatters without breakage in the future to support streaming.
 
-#### § The other methods
+#### § The `getErrorResults()` method
 
-The following methods return `Promise` which gets fulfilled with each result.
-
-- `executeOnText()`
-- `getConfigForFile()`
-- `isPathIgnored()`
-- `outputFixes()`
-
-Once the former three methods got this change, we can support plugins/configs that are ES modules without breakage in the future. And once the `outputFixes()` method got this change, we can write many files more efficiently in the future.
-
-The following methods are as-is because those don't touch both file system and module system.
-
-- `addPlugin()`
-- `getRules()`
-- `getErrorResults()`
-
-The following methods are removed because those don't fit the current API.
-
-- `resolveFileGlobPatterns()` ... ESLint doesn't use this logic since `v6.0.0`, but it has stayed there for backward compatibility. Once [RFC 20](https://github.com/eslint/rfcs/tree/master/designs/2019-additional-lint-targets) is implemented, what ESLint iterates and what the glob of this method iterates will be different, then it will confuse users. This is good timing to remove the legacy.
-
-#### § A new `filterErrorResults()` static method
-
-Existing `getErrorResults()` method doesn't fit the new `executeOnFiles()` method because the result is an async iterator.
-
-The new `filterErrorResults()` method receives an `AsyncIterator<LintResult>` object and returns an `AsyncIterator<LintResult>` object. It extracts only the lint messages which are `severity === 2` and abandons the other messages.
+As related to the above, this method now receives an `AsyncIterator<LintResult>` object and returns an `AsyncIterator<LintResult>` object. Because this method is sandwiched between `executeOnFiles()` and formatters.
 
 <details>
-<summary>A rough sketch of the `filterErrorResults()` static method.</summary>
+<summary>A rough sketch of the `getErrorResults()` static method.</summary>
 
 ```js
 class ESLint {
-  static async *filterErrorResults(results) {
+  static async *getErrorResults(results) {
     for await (const result of results) {
       const messages = result.messages.filter(m => m.severity === 2)
 
@@ -189,7 +166,7 @@ class ESLint {
 </details>
 
 <details>
-<summary>Example: Use `filterErrorResults()`.</summary>
+<summary>Example: Use `getErrorResults()`.</summary>
 
 ```js
 const { ESLint } = require("eslint")
@@ -200,7 +177,7 @@ const formatter = eslint.getFormatter("stylish")
 let results = eslint.executeOnFiles(patterns)
 // Filter the results if needed
 if (process.argv.includes("--quiet")) {
-    results = ESLint.filterErrorResults(results)
+    results = ESLint.getErrorResults(results)
 }
 // Format and write the results
 for await (const textPiece of formatter(results)) {
@@ -209,6 +186,26 @@ for await (const textPiece of formatter(results)) {
 ```
 
 </details>
+
+#### § The other methods
+
+The following methods return `Promise` which gets fulfilled with each result.
+
+- `executeOnText()`
+- `getConfigForFile()`
+- `isPathIgnored()`
+- `outputFixes()`
+
+Once the former three methods got this change, we can support plugins/configs that are ES modules without breakage in the future. And once the `outputFixes()` method got this change, we can write many files more efficiently in the future.
+
+The following methods are as-is because those don't touch both file system and module system.
+
+- `addPlugin()`
+- `getRules()`
+
+The following methods are removed because those don't fit the current API.
+
+- `resolveFileGlobPatterns()` ... ESLint doesn't use this logic since `v6.0.0`, but it has stayed there for backward compatibility. Once [RFC 20](https://github.com/eslint/rfcs/tree/master/designs/2019-additional-lint-targets) is implemented, what ESLint iterates and what the glob of this method iterates will be different, then it will confuse users. This is good timing to remove the legacy.
 
 ### ■ Deprecate `CLIEngine` class
 
