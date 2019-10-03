@@ -188,6 +188,28 @@ class ESLint {
 
 </details>
 
+<details>
+<summary>Example: Use `filterErrorResults()`.</summary>
+
+```js
+const { ESLint } = require("eslint")
+const eslint = new ESLint()
+const formatter = eslint.getFormatter("stylish")
+
+// Verify files
+let results = eslint.executeOnFiles(patterns)
+// Filter the results if needed
+if (process.argv.includes("--quiet")) {
+    results = ESLint.filterErrorResults(results)
+}
+// Format and write the results
+for await (const textPiece of formatter(results)) {
+    process.stdout.write(textPiece)
+}
+```
+
+</details>
+
 ### Deprecate `CLIEngine` class
 
 This RFC soft-deprecates `CLIEngine` class.
