@@ -209,9 +209,11 @@ People that use `CLIEngine` have to update their application with the new API. I
 
 ## Backwards Compatibility Analysis
 
-Deprecating `CLIEngine` is a drastic change. But people can continue to use `CLIEngine` as-is until we decide to remove it. The decision would not be near future.
+This is a breaking change.
 
-We can do both adding a new class and the deprecation in a minor release.
+Deprecating `CLIEngine` is a drastic change. But people can continue to use `CLIEngine` as-is until we decide to remove it.
+
+The new API depends on [Asynchronous Iteration](https://github.com/tc39/proposal-async-iteration) syntax. Node.js supports the syntax since `10.0.0`, so we have to drop Node.js `8.x`. Because the `8.x` will be EOL in December 2019 (two months later!), we can work on this soon.
 
 ## Alternatives
 
