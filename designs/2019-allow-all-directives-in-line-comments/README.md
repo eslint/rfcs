@@ -19,7 +19,7 @@ I propose that we allow all directives to work in either type of comment.
 
 ## Motivation
 
-As a user of ESLint I occasionally wish to disable a rule, declare a valid global or add some other file level config. In doing so I often forget that these directives are only valid inside block level comments and add them as inline comments by mistake. When the comment fails to have its desired effect I consult the documentation to see what I did wrong. Did I missremember the directive syntax or name? On more than one occasion the problem has been that I used the wrong kind of comment.
+As a user of ESLint I occasionally wish to disable a rule, declare a valid global or add some other file level config. In doing so I often forget that these directives are only valid inside block level comments and add them as inline comments by mistake. When the comment fails to have its desired effect I consult the documentation to see what I did wrong. Did I remember the directive syntax or name incorrectly? On more than one occasion the problem has been that I used the wrong kind of comment.
 
 It would be nice if I didn't have to think about the comment type that I'm using.
 
@@ -70,7 +70,7 @@ This would result in the following, somewhat confusing, error after upgrading to
 
 ## Alternatives
 
-An earlier revision of this RFC suggested reporting an error/warning when a directive that is only supported in a bock comment was found in a line comment. See the following section for a discussion of why this may be a worth doing in addition to the changes detailed above.
+An earlier revision of this RFC suggested reporting an error/warning when a directive that is only supported in a block comment was found in a line comment. See the following section for a discussion of why this may be a worth doing in addition to the changes detailed above.
 
 ## Optional Short Term Improvements
 
