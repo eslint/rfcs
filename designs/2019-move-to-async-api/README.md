@@ -80,6 +80,8 @@ print(results)
 
 Once the `executeOnFiles()` method got this change, we can support "linting in parallel", streaming, and plugins/configs which are ES modules in the future.
 
+⚠️ Because this method updates the cache file, if people call this method in parallel then it causes broken. To prevent the broken, it should throw an error if people called this method while the previous call is still running.
+
 #### § The `getFormatter()` method
 
 This method returns a `Promise<Formatter>`. The `Formatter` type is a function `(results: AsyncIterator<LintResult>) => AsyncIterator<string>`. It receives lint results then outputs the formatted text.
