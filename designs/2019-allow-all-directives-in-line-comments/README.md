@@ -25,9 +25,11 @@ It would be nice if I didn't have to think about the comment type that I'm using
 
 ## Detailed Design
 
-The function `getDirectiveComments` in [`linter.js`](https://github.com/eslint/eslint/blob/1fb362093a65b99456a11029967d9ee0c31fd697/lib/linter/linter.js#L263) currently does a `if (comment.type === "Block")` check before it looks for some types of directives.
+The function `getDirectiveComments` in [`linter.js`](https://github.com/eslint/eslint/blob/1fb362093a65b99456a11029967d9ee0c31fd697/lib/linter/linter.js#L263) currently does an `if (comment.type === "Block")` check before it looks for some types of directives.
 
 I believe we could simply remove that check.
+
+For `/* eslint-env */` directives which, by necessity, are parsed out of the file before an AST is avaliable, the regular expression in [linter.js](https://github.com/eslint/eslint/blob/fb08b7c9d28bc68864eb940e26df274059228b6a/lib/linter/linter.js#L406) would need to be updated to allow it to match line comments.
 
 ## Documentation
 
@@ -38,7 +40,6 @@ We would need to update the [configuration](https://eslint.org/docs/user-guide/c
 I don't see any drawbacks to this change.
 
 ## Backwards Compatibility Analysis
-
 
 ### Latent Directives
 
@@ -69,7 +70,34 @@ This would result in the following, somewhat confusing, error after upgrading to
 
 ## Alternatives
 
-An earlier revision of this RFC suggested reporting an error/warning when a directive that is only supported in a bock comment was found in a line comment.
+An earlier revision of this RFC suggested reporting an error/warning when a directive that is only supported in a bock comment was found in a line comment. See the following section for a discussion of why this may be a worth doing in addition to the changes detailed above.
+
+## Optional Short Term Improvements
+
+Since code bases may contain line comments which were not intended as directives, but would be parsed as such after this change, (see [Accidental Directives](#accidental-directives) above) this change will be a breaking change and thus will need to wait for a major release. If the next major release is far off we could employ a short term fix of making line comment directives warnings which could be shipped in a minor release.
+
+This would have two benefits:
+
+1. In the time between when the minor release ships and when the next major release ships, user would get explicit feedback when they accidentally write a line comment directive when ESLint is expecting a block comment directive rather than having it silently fail.
+2. Accidental directives would be surfaced as errors in the minor version which means that those who adopt the minor release before the next major release, and resolved all new warnings would have a smooth upgrade experience.
+
+### Implementation of Warnings
+
+If we decide to do the additional work of adding warnings in a minor version, here is how it could be implemented:
+
+The function `getDirectiveComments` in [`linter.js`](https://github.com/eslint/eslint/blob/1fb362093a65b99456a11029967d9ee0c31fd697/lib/linter/linter.js#L263) already has some examples of reporting problems with directive comments via the `createLintingProblem` function.
+
+Currently `getDirectiveComments` works by first handling `eslint-disable-(next-)line` directives, which are comment type agnostic, and then only looking for the other types of directives if the comment type is `Block`.
+
+Instead, after handling the `eslint-disable-(next-)line` directives, we could check to see if we are in an inline comment. If we are, we could add a problem with something like:
+
+```JavaScript
+problems.push(createLintingProblem({
+  ruleId: null,
+  message: `The ${match[1]} directive is only allowed in block comments.`,
+  loc: comment.loc
+}));
+```
 
 ## Open Questions
 
