@@ -6,7 +6,7 @@
 
 ## Summary
 
-ESLint currently only allows the following types in directives to be used inside of block comments (`/* Block Comment */`):
+ESLint currently only allows the following types of directives to be used inside of block comments (`/* Block Comment */`):
 
 * `exported`
 * `global(s)`
@@ -40,6 +40,10 @@ We would need to update the [configuration](https://eslint.org/docs/user-guide/c
 I don't see any drawbacks to this change.
 
 ## Backwards Compatibility Analysis
+
+While this change is backwards compatible in that it does not change any existing API contract, there is a possiblity that user's code bases will contain [accidental directives](#accidental-directives) (see below) which could potentially mean that upgrading to a version that contained this change would result in lint errors when it did not before.
+
+Therefore, we will consider this change a _breaking change_.
 
 ### Latent Directives
 
