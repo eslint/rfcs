@@ -58,7 +58,7 @@ If `--concurrency` option is present along with the following options, ESLint th
 
 `ESLint` class is the new API that is discussed in [RFC 40](https://github.com/eslint/rfcs/pull/40).
 
-The `concurrency` option corresponds to `--concurrency` CLI option. Defaults to `1`. If `"auto"` is present, `ESLint` class estimates the best value with the way the previous section descrived.
+The `concurrency` option corresponds to `--concurrency` CLI option. Defaults to `1`. If `"auto"` is present, `ESLint` class estimates the best value with the way the previous section described.
 
 This RFC doesn't change `CLIEngine` class because this requires asynchronous API to expose.
 
