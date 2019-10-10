@@ -1,12 +1,14 @@
 - Start Date: 2019-10-05
-- RFC PR: [#12321](https://github.com/eslint/eslint/pull/12321)
+- RFC PR: [#43](https://github.com/eslint/rfcs/pull/43)
 - Authors: Evan Plaice ([@evanplaice](https://github.com/evanplaice))
 
 # ES Module Compatibility
 
 ## Summary
 
-ES module support has been rolled out in all evergreen browsers and will soon land (unflagged) in node. Now is a good time to fill in the gaps to ensure ESLint users can effectively lint their ESM-based packages.
+ES module support is rolling out in the latest version of Node. One change included in that update is the ability to define a package as an ES module by default. That means all `.js` files will be evaluated as ES rather than CommonJS modules by default.
+
+This breakes the existing functionality for ESLint JS configs (ie which are CJS). The fix for this is to use the alternative `.cjs` extension to explicitly signal that the config file is a CommonJS module. This RFC addresses this issue and outlines the specifics required to add support for the `.cjs` extension.
 
 ## Motivation
 
@@ -48,7 +50,7 @@ A user is creating a new package. They want it to be ESM for Browser <-> Node co
 
 The user adds `eslint` as a devDependency, w/ a typical NPM script to lint the package contents.
 
-The user defines `eslint.config.js` outlining the ruleset they prefer to use within their package.
+The user defines `.eslintrc.js` outlining the ruleset they prefer to use within their package.
 
 ### The Issue
 
@@ -60,7 +62,7 @@ The configuration file is defined as a CJS module (ie `module.exports`), but has
 
 ### The Fix
 
-Rename `eslint.config.js -> eslint.config.cjs`
+Rename `.eslintrc.js -> .eslintrc.cjs`
 
 There is no documentation outlining how to define a ESM-based configuration. As such, it can be assumed that any JS-based ESLint config will always be a CJS module.
 
@@ -151,29 +153,6 @@ There has been and will continue to be a lot of talk about using this approach a
 
 For now it presents too many unknowns and -- even if it didn't -- adding `import()` to ESLint's core would force Node 13+ as a hard constraint.
 
-### Alternative 3: Deprecate JS-based configurations altogether
-
-This approach is controversial but this RFC would be incomplete w/o mentioning it.
-
-What is the benefit of supporting JS-based configurations at all?
-
-- JSON (w/ `strip-comments`) and YAML both support comments
-- JS will load slower than it's context-free alternatives
-- Do the config definitions really require a turing-complete syntax?
-- Is the added complexity of supporting JS configs worth it?
-
-Benefits:
-
-- less complexity
-- reduces ambiguity (ex CJS vs ESM)
-- removes the `import-fresh` dependency
-
-Downsides 
-
-- major breaking change w/ existing patterns
-- JSON requires all strings to be quoted
-- seriously, major breaking changes are not fun
-
 ## Open Questions
 
 <!--
@@ -212,11 +191,5 @@ They aren't impacted by this change. 3rd-party modules define both their code an
 
 ## Related Discussions
 
+- [Issue #12321](https://github.com/eslint/eslint/pull/12321)
 - [Transition Path Problems for Tooling - node/modules](https://github.com/nodejs/modules/issues/388)
-
-<!--
-    This section is optional but suggested.
-
-    If there is an issue, pull request, or other URL that provides useful
-    context for this proposal, please include those links here.
--->
