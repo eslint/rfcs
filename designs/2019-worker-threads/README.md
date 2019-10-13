@@ -276,7 +276,7 @@ ESLint gets using worker threads by default if target files are many.
 
 This feature introduces complexity for parallelism. It will be an additional cost to maintain our codebase.
 
-This feature might not fit `eslint-plugin-import` and `@typescript-eslint`. Those have to parse the entire codebase to check types, but workers cannot share the parsed information. Every worker has to parse the entire codebase individually. But linting in parallel is faster than single-thread in spite of the cost of duplicate works.
+This feature might not fit `eslint-plugin-import` and `@typescript-eslint`. Those have to parse the entire codebase to check types, but workers cannot share the parsed information. Every worker has to parse the entire codebase individually. But if there are many files, linting in parallel is faster than single-thread in spite of the cost of duplicate works. And in the future, maybe we can add the step that initializes the shared data then shares the data with every worker by `SharedArrayBuffer`.
 
 ## Backwards Compatibility Analysis
 
