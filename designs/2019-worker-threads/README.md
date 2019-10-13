@@ -22,27 +22,28 @@ This RFC has two steps.
 
 - Adds `--concurrency` CLI option to specify the number of worker threads. Defaults to `1`.
 - Adds `concurrency` constructor option to `ESLint` class to specify the number of worker threads. Defaults to `1`.
+- Adds `disallowWorkerThreads` option to plugins. Defaults to `false`.
 - Changes the behavior of `ESLint#executeOnFiles(patterns)` method.
 
 **The step 2 (semver-major):**
 
-- Changes the default of the `--concurrency` CLI option to `"auto"`.
+- Changes the default of the `--concurrency` CLI option to `auto`.
 - Changes the default of the `concurrency` constructor option to `"auto"`.
 
-### [STEP 1] New `--concurrency` CLI Option
+### [STEP 1] New `--concurrency` CLI option
 
-The `--concurrency` has an argument. The argument should be a positive integer or `"auto"`. Defaults to `1`.
+The `--concurrency` has an argument. The argument should be a positive integer or `auto`. Defaults to `1`.
 
 - If `1` is present, ESLint does linting in the main thread.
 - If another integer is present, ESLint creates this number of worker threads then the worker threads do linting.
 
-If `auto` is present, ESLint estimates the best value from the number of target files. It's the number of target files divided by the constant `128`, but `os.cpus().length` at most.
+If `auto` is present, ESLint estimates the best value from the number of target files. It's the number of target files divided by the constant [128](#constants), but `os.cpus().length` at most.
 
 ```js
 concurrency = Math.min(os.cpus().length, Math.ceil(targetFiles.length / 128))
 ```
 
-This means that ESLint does linting in the main thread if the number of target files is less than `128` in order to avoid the overhead of multithreading. But ESLint does linting with using worker threads automatically if target files are many.
+This means that ESLint does linting in the main thread if the number of target files is less than [128](#constants) in order to avoid the overhead of multithreading. But ESLint does linting with using worker threads automatically if target files are many.
 
 If `--concurrency` option is present along with the following options, ESLint throws a fatal error.
 
@@ -61,6 +62,17 @@ If `--concurrency` option is present along with the following options, ESLint th
 The `concurrency` option corresponds to `--concurrency` CLI option. Defaults to `1`. If `"auto"` is present, `ESLint` class estimates the best value with the way the previous section described.
 
 This RFC doesn't change `CLIEngine` class because this requires asynchronous API to expose.
+
+### [STEP 1] New `disallowWorkerThreads` top-level property of plugins
+
+This RFC adds `disallowWorkerThreads` top-level property to plugins.
+
+If a loaded plugin has this property with `true`,
+
+- When the `concurrency` option was `"auto"`, ESLint enforces the estimated value to `1`.
+- When the `concurrency` option was `2` or larger, ESLint throws a fatal error.
+
+Therefore, plugins that don't work fine in workers can tell ESLint to disallow workers.
 
 ### [STEP 1] New behavior of `ESLint#executeOnFiles(patterns)` method
 
@@ -195,7 +207,7 @@ This RFC contains two constants.
 - `128` ... the denominator to estimate the proper `concurrency` option value.
 - `16` ... concurrency for non-blocking IO.
 
-Those values are changeable by measuring performance in real.
+The current values are improvised values. We may find more proper values by measuring performance.
 
 #### Performance
 
