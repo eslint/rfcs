@@ -1,5 +1,5 @@
 - Start Date: 2019-10-13
-- RFC PR: (leave this empty, to be filled in later)
+- RFC PR: https://github.com/eslint/rfcs/pull/44
 - Authors: Toru Nagashima ([@mysticatea](https://github.com/mysticatea))
 
 # Drop supports for Node.js 8.x and 11.x
