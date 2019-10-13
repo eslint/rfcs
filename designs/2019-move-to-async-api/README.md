@@ -24,7 +24,7 @@ So, for now, `ESLint` class will be a tiny wrapper of `CLIEngine` that modifies 
 
 #### § The `executeOnFiles()` method
 
-This method returns an object that has two properties two methods `then()` and `[Symbol.asyncIterator]()`, and we can use the returned object with `await` expression and `for-await-of` statement.
+This method returns an object that has two methods `then()` and `[Symbol.asyncIterator]()`, so we can use the returned object with `await` expression and `for-await-of` statement.
 
 - If you used the returned object with `for-await-of` statement, it iterates the lint result of each file in random order. This way yields each lint result immediately. Therefore you can print the results in streaming, or print progress state. ESLint may spend time to lint files (for example, ESLint needs about 20 seconds to lint our codebase), to print progress state will be useful.
 
