@@ -24,12 +24,53 @@ So, for now, `ESLint` class will be a tiny wrapper of `CLIEngine` that modifies 
 
 #### § The `executeOnFiles()` method
 
-This method returns an `AsyncIterable<LintResult> & Thennable<LintResult[]>` object. It means that we can use the returned value with `for-await-of` syntax or `await` syntax.
+This method returns an object that has two properties two methods `then()` and `[Symbol.asyncIterator]()`, and we can use the returned object with `await` expression and `for-await-of` statement.
 
-- If the returned value is used with `for-await-of`, it iterates the lint result of each file in random order. This way yields each lint result immediately. Therefore people can print the results in streaming, or print progress state.
-- If the returned value is used with `await`, it returns the array contains all lint results in random order. This way waits for all lint results then returns it.
+- If you used the returned object with `for-await-of` statement, it iterates the lint result of each file in random order. This way yields each lint result immediately. Therefore you can print the results in streaming, or print progress state. ESLint may spend time to lint files (for example, ESLint needs about 20 seconds to lint our codebase), to print progress state will be useful.
+
+  ```js
+  const { ESLint } = require("eslint")
+  const eslint = new ESLint()
+
+  for await (const result of eslint.executeOnFiles(patterns)) {
+    print(result)
+  }
+  ```
+
+- If you used the returned object with `await` expression, it returns the array that contains all lint results in random order. This way waits for all lint results then returns it.
+
+  ```js
+  const { ESLint } = require("eslint")
+  const eslint = new ESLint()
+
+  const results = await eslint.executeOnFiles(patterns)
+  // Optionally you can sort the results.
+  // results.sort(ESLint.compareResultsByFilePath)
+  print(results)
+  ```
 
 Either way, we can support "linting in parallel", loading configs/plugins with `import()`, and other stuff that needs asynchronous logic.
+
+##### Move the `usedDeprecatedRules` property
+
+The returned object of `CLIEngine#executeOnFiles()` has the `usedDeprecatedRules` property that includes the deprecated rule IDs which the linting used. But the location doesn't fit the use with `for-await-of` statement. Therefore, this RFC mvoes the `usedDeprecatedRules` property to each lint result.
+
+```js
+const { ESLint } = require("eslint")
+const eslint = new ESLint()
+
+for await (const result of eslint.executeOnFiles(patterns)) {
+  console.log(result.usedDeprecatedRules)
+}
+```
+
+As a side-effect, formatters gets the capability to print the used deprecated rules. (!?)
+
+##### Fail-fast on parallel calling
+
+Because this method updates the cache file, if people call this method in parallel then it causes broken. To prevent the broken, it should throw an error if people called this method while the previous call is still running.
+
+##### Implementation
 
 <details>
 <summary>A rough sketch of the `executeOnFiles()` method.</summary>
@@ -39,25 +80,21 @@ A tiny wrapper of `CLIEngine`.
 ```js
 class ESLint {
   executeOnFiles(patterns) {
+    let promise
     try {
-      const { results } = this.cliEngine.executeOnFiles(patterns)
-      return {
-        then(onFulfilled) {
-          return Promise.resolve(results).then(onFulfilled)
-        },
-        async *[Symbol.asyncIterator]() {
-          yield* results
-        },
-      }
+      const report = this.cliEngine.executeOnFiles(patterns)
+      promise = Promise.resolve(report.results)
     } catch (error) {
-      return {
-        then(_, onRejected) {
-          return Promise.reject(error).then(undefined, onRejected)
-        },
-        [Symbol.asyncIterator]() {
-          return Promise.reject(error)
-        },
-      }
+      promise = Promise.reject(error)
+    }
+
+    return {
+      then(onFulfilled, onRejected) {
+        return promise.then(onFulfilled, onRejected)
+      },
+      async *[Symbol.asyncIterator]() {
+        yield* await promise
+      },
     }
   }
 }
@@ -65,56 +102,11 @@ class ESLint {
 
 </details>
 
-<details>
-<summary>Example: Show the results step by step.</summary>
-
-```js
-const { ESLint } = require("eslint")
-const eslint = new ESLint()
-
-for await (const result of eslint.executeOnFiles(patterns)) {
-  print(result)
-}
-```
-
-</details>
-
-<details>
-<summary>Example: Show the results at once.</summary>
-
-```js
-const { ESLint } = require("eslint")
-const eslint = new ESLint()
-
-const results = await eslint.executeOnFiles(patterns)
-print(results)
-```
-
-</details>
-
-<details>
-<summary>Example: Show the results in the stable order.</summary>
-
-The [ESLint.compareResultsByFilePath](#-a-new-compareresultsbyfilepath-static-method) static method is useful to sort results.
-
-```js
-const { ESLint } = require("eslint")
-const eslint = new ESLint()
-
-const results = await eslint.executeOnFiles(patterns)
-results.sort(ESLint.compareResultsByFilePath)
-print(results)
-```
-
-</details>
-
-⚠️ Because this method updates the cache file, if people call this method in parallel then it causes broken. To prevent the broken, it should throw an error if people called this method while the previous call is still running.
-
 #### § The `executeOnText()` method
 
-This method returns an `AsyncIterable<LintResult> & Thennable<LintResult[]>` object (the same type as the `executeOnFiles()` method).
+This method returns the same type of an object as the `executeOnFiles()` method.
 
-Because the returned value of `CLIEngine#executeOnText()` method is the same type as the `CLIEngine#executeOnFiles()` method. The `ESLint` class inherits that mannar.
+Because the returned object of `CLIEngine#executeOnText()` method is the same type as the `CLIEngine#executeOnFiles()` method. The `ESLint` class inherits that mannar.
 
 <details>
 <summary>Example: Show the result.</summary>
@@ -156,8 +148,6 @@ This means the `getFormatter()` method wraps the current formatter to adapt the 
 <details>
 <summary>A rough sketch of the `getFormatter()` method.</summary>
 
-The [ESLint.compareResultsByFilePath](#-a-new-compareresultsbyfilepath-static-method) static method is useful to sort results.
-
 ```js
 class ESLint {
   async getFormatter(name) {
@@ -165,7 +155,7 @@ class ESLint {
 
     // Return the wrapper.
     return async function* formatter(resultIterator) {
-      // Collect the results.
+      // Collect and sort the results.
       const results = []
       for await (const result of resultIterator) {
         results.push(result)
@@ -223,7 +213,7 @@ const formatter = eslint.getFormatter("stylish")
 // Verify files
 let results = eslint.executeOnFiles(patterns)
 // Update the files of the results if needed
-// (This must be done before `--quiet` for backward compatibility.)
+// (This must be done before `--quiet`)
 if (process.argv.includes("--fix")) {
     results = ESLint.outputFixes(results)
 }
