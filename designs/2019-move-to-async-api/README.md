@@ -22,6 +22,100 @@ This RFC adds a new class `ESLint`. It has almost the same methods as `CLIEngine
 
 So, for now, `ESLint` class will be a tiny wrapper of `CLIEngine` that modifies the type of the return values.
 
+#### § Constructor
+
+The constructor has the most same arguments as `CLIEngine`, but there are small differences.
+
+- It throws fatal errors if the options contain unknown properties or an option is invalid type ([eslint/eslint#10272](https://github.com/eslint/eslint/issues/10272)).
+- It disallows the deprecated `cacheFile` option.
+- It has a new `pluginImplementations` option as the successor of `addPlugin()` method. This is an object that keys are plugin IDs and each value is the plugin object.
+
+##### Implementation
+
+<details>
+<summary>A rough sketch of the constructor.</summary>
+
+```js
+class ESLint {
+  constructor({
+    allowInlineConfig = true,
+    baseConfig = null,
+    cache = false,
+    cacheLocation = ".eslintcache",
+    configFile = null,
+    cwd = process.cwd(),
+    envs = [],
+    extensions = [".js"],
+    fix = false,
+    fixTypes = ["problem", "suggestion", "layout"],
+    globInputPaths = true,
+    globals = [],
+    ignore = true,
+    ignorePath = null,
+    ignorePattern = [],
+    parser = "espree",
+    parserOptions = null,
+    pluginImplementations = null,
+    plugins = [],
+    reportUnusedDisableDirectives = false,
+    resolvePluginsRelativeTo = cwd,
+    rulePaths = [],
+    rules = null,
+    useEslintrc = true,
+    ...unknownOptions
+  } = {}) {
+    // Throws on unknown options
+    {
+      const keys = Object.keys(unknownOptions)
+      if (keys.length >= 1) {
+        //...
+      }
+    }
+    // Throws on the invalid value of options
+    if (typeof allowInlineConfig !== "boolean") {
+      // ...
+    }
+    // ...
+
+    // Initialize CLIEngine because this is a tiny wrapper.
+    const engine = (this._cliEngine = new CLIEngine({
+      allowInlineConfig,
+      baseConfig,
+      cache,
+      cacheLocation,
+      configFile,
+      cwd,
+      envs,
+      extensions,
+      fix,
+      fixTypes,
+      globInputPaths,
+      globals,
+      ignore,
+      ignorePath,
+      ignorePattern,
+      parser,
+      parserOptions,
+      plugins,
+      reportUnusedDisableDirectives,
+      resolvePluginsRelativeTo,
+      rulePaths,
+      rules,
+      useEslintrc,
+    }))
+
+    // Apply `pluginImplementations` option.
+    if (pluginImplementations) {
+      for (const [id, definition] of Object.entries(pluginImplementations)) {
+        engine.addPlugin(id, definition)
+      }
+    }
+  }
+}
+```
+
+</details>
+
 #### § The `executeOnFiles()` method
 
 This method returns an object that has two methods `then()` and `[Symbol.asyncIterator]()`, so we can use the returned object with `await` expression and `for-await-of` statement.
@@ -253,13 +347,13 @@ The following methods return `Promise` which gets fulfilled with each result in 
 - `getConfigForFile()`
 - `isPathIgnored()`
 
-The following methods are as-is because those don't touch both file system and module system.
+The following method is as-is because those don't touch both file system and module system.
 
-- `addPlugin()`
 - `getRules()`
 
-The following method is removed because it doesn't fit the current API.
+The following methods are removed because those don't fit the current API.
 
+- `addPlugin()` ... This method has caused to confuse people. We have introduced this method to add plugin implementations and expected people to use this method to test plugins, but people have thought that this method loads a new plugin for the following linting. And this method is only one that mutates the state of `CLIEngine` objects (except cache). This RFC moves this functionality to the constructor options.
 - `resolveFileGlobPatterns()` ... ESLint doesn't use this logic since `v6.0.0`, but it has stayed there for backward compatibility. Once [RFC 20](https://github.com/eslint/rfcs/tree/master/designs/2019-additional-lint-targets) is implemented, what ESLint iterates and what the glob of this method iterates will be different, then it will confuse users. This is good timing to remove the legacy.
 
 #### § A new `compareResultsByFilePath` static method
@@ -320,6 +414,7 @@ The new API depends on [Asynchronous Iteration](https://github.com/tc39/proposal
 ## Related Discussions
 
 - https://github.com/eslint/eslint/issues/3565 - Lint multiple files in parallel
+- https://github.com/eslint/eslint/issues/10272 - Validate options passed to CLIEngine API
 - https://github.com/eslint/eslint/issues/12319 - `ERR_REQUIRE_ESM` when requiring `.eslintrc.js`
 - https://github.com/eslint/rfcs/pull/4 - New: added draft for async/parallel proposal
 - https://github.com/eslint/rfcs/pull/11 - New: Lint files in parallel
