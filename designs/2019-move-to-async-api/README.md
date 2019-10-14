@@ -70,6 +70,25 @@ As a side-effect, formatters gets the capability to print the used deprecated ru
 
 Because this method updates the cache file, if people call this method in parallel then it causes broken. To prevent the broken, it should throw an error if people called this method while the previous call is still running.
 
+##### Abort linting
+
+The iterator has optional [`return()` method](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator/return). The `for-of`/`for-await-of` syntax calls the `return()` method automatically if the execution escaped from the loop by `braek`, `return`, or `throw`. In short, the `return()` method will be called when aborted.
+
+Therefore, ESLint aborts linting when the `return()` method is called. This will mean that the `return()` method terminates all workers once we implement parallel linting.
+
+```js
+const { ESLint } = require("eslint")
+const eslint = new ESLint()
+
+for await (const result of eslint.executeOnFiles(patterns)) {
+  if (Math.random() < 0.5) {
+    break // abort linting.
+  }
+}
+```
+
+And it throws an error if you reuse the aborted results.
+
 ##### Implementation
 
 <details>
