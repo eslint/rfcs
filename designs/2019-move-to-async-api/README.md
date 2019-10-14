@@ -53,7 +53,7 @@ Either way, we can support "linting in parallel", loading configs/plugins with `
 
 ##### Move the `usedDeprecatedRules` property
 
-The returned object of `CLIEngine#executeOnFiles()` has the `usedDeprecatedRules` property that includes the deprecated rule IDs which the linting used. But the location doesn't fit the use with `for-await-of` statement. Therefore, this RFC mvoes the `usedDeprecatedRules` property to each lint result.
+The returned object of `CLIEngine#executeOnFiles()` has the `usedDeprecatedRules` property that includes the deprecated rule IDs which the linting used. But the location doesn't fit the use with `for-await-of` statement. Therefore, this RFC moves the `usedDeprecatedRules` property to each lint result.
 
 ```js
 const { ESLint } = require("eslint")
