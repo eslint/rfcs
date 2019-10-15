@@ -162,7 +162,7 @@ As a side-effect, formatters gets the capability to print the used deprecated ru
 
 ##### Fail-fast on parallel calling
 
-Because this method updates the cache file, if people call this method in parallel then it causes broken. To prevent the broken, it should throw an error if people called this method while the previous call is still running.
+Because this method updates the cache file, it will break of called multiple times in parallel. To prevent that, it should throw an error if the method is called while a previous call is still running.
 
 ##### Abort linting
 
