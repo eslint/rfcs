@@ -10,7 +10,7 @@ This RFC adds a new class `ESLint` that has asynchronous API and deprecates `CLI
 
 ## Motivation
 
-- We have the functionality that we cannot support with synchronous API. For example, ESLint verifies files in parallel, formatters print progress state, or formatters print results in streaming.
+- We have functionality that cannot be supported with the current synchronous API. For example, ESLint verifying files in parallel, formatters printing progress state, formatters printing results in streams etc. A move to an asynchronous API would be beneficial and a new `ESLint` class can be created with an async API in mind from the start.
 - Dynamic `import()` has arrived at Stage 4. The dynamic loading of ES modules requires asynchronous API. Migrating to asynchronous API opens up doors to write plugins/configs with ES modules.
 - The name of `CLIEngine`, our primary API, has caused confusion to the community. People try `Linter` class at first because the name sounds the main class of ESLint, then they notice it doesn't work as expected. We have a lot of issues that say "please use `CLIEngine` instead." The name of the new class, `ESLint`, is our primary API clearly.
 
