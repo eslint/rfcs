@@ -14,7 +14,11 @@ Linting logic uses CPU heavily, so parallel linting by threads may reduce spent 
 
 ## Detailed Design
 
-**PoC**: [eslint/eslint#very-rough-worker-threads-poc](https://github.com/eslint/eslint/tree/very-rough-worker-threads-poc/lib/eslint)
+- **PoC Source Code**: [eslint/eslint#very-rough-worker-threads-poc](https://github.com/eslint/eslint/tree/very-rough-worker-threads-poc/lib/eslint)
+- **PoC Installation**:
+  ```
+  npm install eslint/eslint#very-rough-worker-threads-poc
+  ```
 
 This RFC has two steps.
 
@@ -44,6 +48,15 @@ concurrency = Math.min(os.cpus().length, Math.ceil(targetFiles.length / 128))
 ```
 
 This means that ESLint does linting in the main thread if the number of target files is less than [128](#constants) in order to avoid the overhead of multithreading. But ESLint does linting with using worker threads automatically if target files are many.
+
+For example, if there are 4 processors, `--concurrency=auto` behaves like below. This means that each worker lints [128](#constants)/2 files in the mean at least. Because the cost of multithreading is larger than speed up if each worker lints only a few files.
+
+| The number of files | What executes linting |
+| :------------------ | :-------------------- |
+| 1 - 128             | the main thread       |
+| 129 - 256           | 2 workers             |
+| 257 - 384           | 3 workers             |
+| 385 - ∞             | 4 workers             |
 
 If `--concurrency` option is present along with the following options, ESLint throws a fatal error.
 
