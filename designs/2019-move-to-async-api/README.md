@@ -20,7 +20,7 @@ This RFC adds a new class `ESLint` that has asynchronous API and deprecates `CLI
 
 This RFC adds a new class `ESLint`. It has almost the same methods as `CLIEngine`, but the return value of some methods are different.
 
-So, for now, `ESLint` class will be a tiny wrapper of `CLIEngine` that modifies the type of the return values.
+Initially the `ESLint` class will be a wrapper around `CLIEngine`, modifying return types. Later it can take on a more independent shape as `CLIEngine` gets more deprecated.
 
 #### § Constructor
 
