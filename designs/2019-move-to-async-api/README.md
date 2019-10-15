@@ -168,7 +168,7 @@ Because this method updates the cache file, it will break of called multiple tim
 
 The iterator has optional [`return()` method](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator/return). The `for-of`/`for-await-of` syntax calls the `return()` method automatically if the execution escaped from the loop by `braek`, `return`, or `throw`. In short, the `return()` method will be called when aborted.
 
-Therefore, ESLint aborts linting when the `return()` method is called. This will mean that the `return()` method terminates all workers once we implement parallel linting.
+ESLint aborts all linting when the `return()` method is called. This will eg. terminate all workers if parallel linting is implemented.
 
 ```js
 const { ESLint } = require("eslint")
