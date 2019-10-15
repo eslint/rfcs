@@ -6,19 +6,21 @@
 
 ## Summary
 
-ES module support is rolling out in the latest version of Node. One change included in that update is the ability to define a package as an ES module by default. That means all `.js` files will be evaluated as ES rather than CommonJS modules by default.
+**This Issue**
 
-This breakes the existing functionality for ESLint JS configs (ie which are CJS). The fix for this is to use the alternative `.cjs` extension to explicitly signal that the config file is a CommonJS module. This RFC addresses this issue and outlines the specifics required to add support for the `.cjs` extension.
+Node now supports ES modules. ESLint configurations that use the CommonJS format (i.e., `.eslintrc`, `.eslintrc.js`) are not compatible with ES module based packages.
+
+**The Impact**
+
+This applies to ES module based packages (i.e., packages using `"type": "module"`) using a CommonJS configuration (i.e., `.eslintrc`, `.eslintrc.js`).
+
+**The Fix**
+
+Node provides an 'escape hatch' via the `.cjs` extension. The extension explicitly signals to Node that the file should *always* evaluate as CommonJS. Support for the `.cjs` needs to be added to ESLint, and ESLint users building ES module based packages need to be notified.
 
 ## Motivation
 
-The new ES module standard is finally rolling out but, there already exists a massive ecosystem of packages build as CommonJS modules (incl ESLint).
-
-In the majority case, changing a package to be interpreted as an ES module by default is as simple as adding `"type": "module"` to `package.json`.
-
-In excepitonal edge cases it may require extra work to establish interoperability across package boundaries. The way ESLint uses `.js` config files is one of those edge cases.
-
-The goal of this RFC is to explore the different options for addressing this issue.
+ES modules are here. ESLint is ubiquitous in the JS ecosystem. With some minor adjustments, ESLint can be made to be compatible with the new format.
 
 ## Detailed Design
 
@@ -26,73 +28,47 @@ To understand the design outlined here requires some background info into the me
 
 ### Jargon
 
-- Package - A NPM package (ie contains `package.json`)
+- Package - A NPM package (i.e., contains `package.json`)
 - Module - A JS file
 - CJS - A CommonJS module
-- ESM - A Standard ECMAScript module
+- ESM - A standard ECMAScript module
 - Consumer - A package that uses/depends on this package
 - Dependent - Package(s) that this package needs to work
 - Boundary - The demarcation between package, consumer, dependent
 
 ### A Crash Course on Package Boundaries
 
-Historically, NPM packages have come in a variety of different package formats (ie IIFE, AMD, UMD, CJS). Prior to an actual spec, NPM settled on CJS as it's de-facto module format. CJS isn't going anywhere, the addition of ESM is additive.
+Historically, NPM packages have come in a variety of different package formats (e.g., IIFE, AMD, UMD, CJS). Prior to an actual spec, NPM settled on CJS as it's de-facto module format. CJS isn't going anywhere, the addition of ESM is additive.
 
 By default, all NPM packages are CJS-based. That means all `.js` files will be read as CJS modules. To include an ES module in a CJS package, it must have the `.mjs` extension.
 
-In addition, if `package.json` contains `"type": "module"` then the package is ESM-based. Meaning, all `.js` files contained within will be treated as ESM. To include a CJS module in a ESM-based package, it must have the `.cjs` extension.
+If, `package.json` contains `"type": "module"` then the package is ESM-based. Meaning, all `.js` files contained within will be treated as ESM. To include a CJS module in a ESM-based package, it must have the `.cjs` extension.
 
-This configuration option does *not* affect consumers or dependents. Their functionality depends entirely on their own configuration. Assuming all packages follow this rule, there should be no issues with interoperability between CJS/ESM.
+This configuration option does *not* affect consumers or dependents. Whatever the configuration, it applies to all modules within the package boundary. Assuming packages only ever directly import within their package boundary, there should be no issues with interoperability between CJS/ESM.
 
 ### The Scenario
 
-A user is creating a new package. They want it to be ESM for Browser <-> Node compatibility so they configure their package to be ESM-based.
+A user is creating a new package. They prefer ESM for Browser <-> Node compatibility so they configure their package to be ESM-based.
 
-The user adds `eslint` as a devDependency, w/ a typical NPM script to lint the package contents.
+The user adds `eslint` as a devDependency and a typical NPM script to lint the package's contents.
 
-The user defines `.eslintrc.js` outlining the ruleset they prefer to use within their package.
+The user defines `.eslintrc.js` outlining the rule set they prefer to use within their package.
 
 ### The Issue
 
-The user pacakge is ESM-based, all `.js` files within are read as ESM.
+The user package is ESM-based, all `.js` files within are read as ESM.
 
 ESLint is CJS-based, it loads all files within it's package boundary as CJS.
 
-The configuration file is defined as a CJS module (ie `module.exports`), but has the `.js` syntax so requiring it throws an error. ESLint, by design reaches across the package boundary to load the configuration but the user has inadvertently signaled to Node that it uses the wrong module type.
+The configuration file is defined as a CJS module (i.e., `module.exports`), but has a `.js` extension syntax so requiring it throws an error. ESLint, by design reaches across the package boundary to load the user-defined configuration but the user has inadvertently signaled to Node to load it with the wrong module loader.
 
 ### The Fix
 
-Rename `.eslintrc.js -> .eslintrc.cjs`
+Add support for the `.cjs` file extension
 
-There is no documentation outlining how to define a ESM-based configuration. As such, it can be assumed that any JS-based ESLint config will always be a CJS module.
+*Note: In Node, `.cjs` will always load as a CommonJS module, irrespective of package configuration*
 
-Therefore, the `.cjs` extension needs to be assiciated w/ JS-based configrations.
-
-*/lib/cli-engine/config-array-factory.js*
-
-```diff
-function loadConfigFile(filePath) {
-    switch (path.extname(filePath)) {
-        case ".js":
-+        case ".cjs:
-            return loadJSConfigFile(filePath);
-
-        case ".json":
-            if (path.basename(filePath) === "package.json") {
-                return loadPackageJSONConfigFile(filePath);
-            }
-            return loadJSONConfigFile(filePath);
-
-        case ".yaml":
-        case ".yml":
-            return loadYAMLConfigFile(filePath);
-
-        default:
-            return loadLegacyConfigFile(filePath);
-    }
-}
-
-```
+### Usage
 
 If a user:
 
@@ -113,7 +89,7 @@ None. The change has no negative functionality or performance impacts.
 
 ## People
 
-Some devs within the Node ecosystem are strongly opposed to supporting `"type": "module"` based packages at all.
+Some developers within the Node ecosystem are strongly opposed to supporting `"type": "module"` at all.
 
 ## Backwards Compatibility Analysis
 
@@ -121,17 +97,17 @@ Some devs within the Node ecosystem are strongly opposed to supporting `"type": 
 
 ### Story 1 - ESLint Compatibility
 
-This change is additive. It associates `.cjs` files with the existing Javascript configuration loader.
+This change is additive. It associates `.cjs` files with JS configurations.
 
-The actual semantics of loading the CommonJS config do not change at all. The `.cjs` extension specifically exists as a escape hatch for this use case (ie loading a CommonJS file that exists in a ESM-based package).
+The existing semantics of loading CommonJS configurations for CommonJS-based packages do not change.
 
-### Story 2 - Node Compatiblity
+### Story 2 - Node Compatibility
 
-ESM support rolls out (as a non-experimental feature) w/ Node 13. This includes: the ability to define a package as a ESM; and backward interoperability w/ CJS in ES modules by using the `.cjs` file extension.
+In Node, ES module and `.cjs` support roll out together.
 
-This change *only* impacts users who define their package as an ES module. Without Node 13+ that isn't possible.
+This change *only* impacts users who define their package as an ES module.
 
-Existing packages that use the default (ie CommonJS) will be unaffected.
+Existing packages that use the default (i.e., CommonJS module resolution) will be unaffected.
 
 ## Alternatives
 
@@ -139,19 +115,17 @@ Existing packages that use the default (ie CommonJS) will be unaffected.
 
 **[PR#12333](https://github.com/eslint/eslint/pull/12333)**
 
-There is some debate among the node/modules group surrounding whether the error that causes this issue should be removed altogether.
+The fencing exists to prevent users from creating dual-mode (i.e., both ESM/CJS) packages as interoperability between the two format can cause issues. In the case of ESLint, loading a simple config file from a user-defined package should not cause any issues or side-effects.
 
-The fencing exists to prevent users from creating dual-mode (ie both ESM/CJS) packages as interoperability between the two formats has issues. In the case of ESLint, loading a simple config file from a user-defined package should not cause any issues or side-effecs.
-
-Eating the exception is viable solution. Although, this may become dead code if the error is removed from Node's core.
+Eating the exception is viable solution.
 
 ### Alternative 2 - Support dynamic `import()`
 
 Instead of using 'import-fresh' to require the config, import it in a cross-format-compatible way using dynamic `import()`.
 
-There has been and will continue to be a lot of talk about using this approach as the CJS/ESM interop story is fleshed out.
+There has been and will continue to be a lot of talk about using this approach as the CJS/ESM interoperability story is fleshed out.
 
-For now it presents too many unknowns and -- even if it didn't -- adding `import()` to ESLint's core would force Node 13+ as a hard constraint.
+For now it presents too many unknowns.
 
 ## Open Questions
 
@@ -179,17 +153,22 @@ For now it presents too many unknowns and -- even if it didn't -- adding `import
 
 > Why doesn't compatibility w/ ESM-based packages 'just work'?
 
-ESLint reaches across the package boundary to retrieve the user-defined configuration. If the consumer package is ESM-based, the `.js` config file will be seen as an ES module, and trying to `require()` it will throw an error.
+ESLint reaches across the package boundary to retrieve the user-defined configuration. If the consumer package is ESM-based, the `.js` config file will be seen as an ES module. When the ES module loader encounters `module.exports` (i.e., the CommonJS module specifier) it will throw an error.
 
-> What does this interop issue affect?
+> What does this interoperability issue affect?
 
-Only ESM-based packages (ie `"type": "module"`).
+Only ESM-based packages (i.e., packages with `"type": "module"` defined in package.json).
 
-> What about 3rd-party linting tools that provide their own built-in ruleset for ESLint (ex [StandardJS](https://standardjs.com/))?
+> What about 3rd-party linting tools that provide their own built-in rule set for ESLint (ex [StandardJS](https://standardjs.com/))?
 
-They aren't impacted by this change. 3rd-party modules define both their code and the ESLint ruleset used within the same package boundary.
+They aren't impacted by this change. 3rd-party modules define both their code and the ESLint rule set used within the same package boundary.
+
+> What about support for ES module configurations
+
+The scope of this RFC is limited to only ES module compatibility concerns. If there is a desire to add support for ESM-based configurations, it will need to be addressed in another RFC.
 
 ## Related Discussions
 
 - [Issue #12321](https://github.com/eslint/eslint/pull/12321)
+- [PR #12321](https://github.com/eslint/eslint/pull/12321)
 - [Transition Path Problems for Tooling - node/modules](https://github.com/nodejs/modules/issues/388)
