@@ -148,6 +148,26 @@ Occurred while linting C:\Users\t-nagashima.AD\dev\eslint\lib\rules\no-mixed-ope
 
 As a side note, master terminates the other workers if a worker reported an error.
 
+#### About aborting
+
+In [RFC 40](https://github.com/eslint/rfcs/pull/40), `ESLint#executeOnFiles()` returns async iterable object.
+
+The iterator has optional [`return()` method](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator/return). The `for-of`/`for-await-of` syntax calls the `return()` method automatically if the execution escaped from the loop by `braek`, `return`, or `throw`. In short, the `return()` method will be called when aborted.
+
+Therefore, ESLint aborts linting when the `return()` method is called. This means that the `return()` method terminates all workers.
+
+```js
+const { ESLint } = require("eslint")
+const eslint = new ESLint()
+for await (const result of eslint.executeOnFiles(patterns)) {
+  if (Math.random() < 0.5) {
+    break // abort linting -- terminate all workers if running.
+  }
+}
+```
+
+And it throws an error if it's reused after aborted.
+
 #### Locally Concurrency
 
 Now ESLint does linting in parallel by thread workers if target files are many.
