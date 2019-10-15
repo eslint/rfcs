@@ -38,6 +38,7 @@ alt concurrency = 1
             deactivate fs1
             activate engine1
             engine1 -> engine1 : verify files
+            [<<- engine1 : yield the result
         end
     end
     |||
@@ -69,6 +70,7 @@ else concurrency >= 2
                 worker ->> engine1 : report lint result
                 deactivate worker
                 activate engine1
+                [<<- engine1 : yield the result
                 engine1 ->> worker : send next file if exist
                 deactivate engine1
                 activate worker
