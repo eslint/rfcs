@@ -24,7 +24,7 @@ Initially the `ESLint` class will be a wrapper around `CLIEngine`, modifying ret
 
 #### § Constructor
 
-The constructor has the most same arguments as `CLIEngine`, but there are small differences.
+The constructor has mostly the same options as `CLIEngine`, but with some small differences:
 
 - It throws fatal errors if the options contain unknown properties or an option is invalid type ([eslint/eslint#10272](https://github.com/eslint/eslint/issues/10272)).
 - It disallows the deprecated `cacheFile` option.
