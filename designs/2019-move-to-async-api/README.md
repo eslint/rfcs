@@ -347,7 +347,7 @@ The following methods return `Promise` which gets fulfilled with each result in 
 - `getConfigForFile()`
 - `isPathIgnored()`
 
-The following method is as-is because those don't touch both file system and module system.
+The following method is as-is because they touch neither file system or module system.
 
 - `getRules()`
 
