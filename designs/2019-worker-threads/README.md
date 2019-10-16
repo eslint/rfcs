@@ -49,7 +49,7 @@ concurrency = Math.min(os.cpus().length, Math.ceil(targetFiles.length / 128))
 
 This means that ESLint does linting in the main thread if the number of target files is less than [128](#constants) in order to avoid the overhead of multithreading. But ESLint does linting with using worker threads automatically if target files are many.
 
-For example, if there are 4 processors, `--concurrency=auto` behaves like below. This means that each worker lints [128](#constants)/2 files in the mean at least. Because the cost of multithreading is larger than speed up if each worker lints only a few files.
+For example, if there are 4 processor cores, `--concurrency=auto` behaves like below. This means that each worker lints [128](#constants)/2 files in the mean at least. Because the cost of multithreading is larger than speed up if each worker lints only a few files.
 
 | The number of files | What executes linting |
 | :------------------ | :-------------------- |
