@@ -56,9 +56,9 @@ The user defines `.eslintrc.js` outlining the rule set they prefer to use within
 
 ### The Issue
 
-The user package is ESM-based, all `.js` files within are read as ESM.
+When the user package is ESM-based, all `.js` files within are read as ESM.
 
-ESLint is CJS-based, it loads all files within it's package boundary as CJS.
+However, ESLint is CJS-based so, it loads all files within it's package boundary as CJS.
 
 The configuration file is defined as a CJS module (i.e., `module.exports`), but has a `.js` extension syntax so requiring it throws an error. ESLint, by design reaches across the package boundary to load the user-defined configuration but the user has inadvertently signaled to Node to load it with the wrong module loader.
 
@@ -87,7 +87,7 @@ A quick mention in the [FAQ](https://github.com/eslint/eslint#frequently-asked-q
 
 None. The change has no negative functionality or performance impacts.
 
-## People
+### People
 
 Some developers within the Node ecosystem are strongly opposed to supporting `"type": "module"` at all.
 
@@ -169,6 +169,6 @@ The scope of this RFC is limited to only ES module compatibility concerns. If th
 
 ## Related Discussions
 
-- [Issue #12321](https://github.com/eslint/eslint/pull/12321)
+- [Issue #12319](https://github.com/eslint/eslint/issues/12319)
 - [PR #12321](https://github.com/eslint/eslint/pull/12321)
 - [Transition Path Problems for Tooling - node/modules](https://github.com/nodejs/modules/issues/388)
