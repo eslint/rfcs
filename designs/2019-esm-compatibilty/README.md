@@ -58,7 +58,7 @@ The user defines `.eslintrc.js` outlining the rule set they prefer to use within
 
 When the user package is ESM-based, all `.js` files within are read as ESM.
 
-However, ESLint is CJS-based so, it loads all files within it's package boundary as CJS.
+However, ESLint is CJS-based so, it loads all files within its package boundary as CJS.
 
 The configuration file is defined as a CJS module (i.e., `module.exports`), but has a `.js` extension syntax so requiring it throws an error. ESLint, by design reaches across the package boundary to load the user-defined configuration but the user has inadvertently signaled to Node to load it with the wrong module loader.
 
