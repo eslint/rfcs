@@ -2,33 +2,34 @@
 - RFC PR: https://github.com/eslint/rfcs/pull/40
 - Authors: Toru Nagashima ([@mysticatea](https://github.com/mysticatea))
 
-# Moving to Asynchronous API
+# `ESLint` Class Replacing `CLIEngine`
 
 ## Summary
 
-This RFC adds a new class `ESLint` that has asynchronous API and deprecates `CLIEngine`.
+This RFC adds a new class `ESLint` that provides asynchronous API and deprecates `CLIEngine`.
 
 ## Motivation
 
 - We have functionality that cannot be supported with the current synchronous API. For example, ESLint verifying files in parallel, formatters printing progress state, formatters printing results in streams etc. A move to an asynchronous API would be beneficial and a new `ESLint` class can be created with an async API in mind from the start.
-- Dynamic `import()` has arrived at Stage 4. The dynamic loading of ES modules requires asynchronous API. Migrating to asynchronous API opens up doors to write plugins/configs with ES modules.
+- Node.js will support [ES modules](https://nodejs.org/api/esm.html) stably on `13.0.0` at last. Node.js doesn't provide any way that loads ES modules synchronously from CJS. This means that ESLint (CJS) cannot load configs/plugins that are written as ES modules synchronously. Migrating to asynchronous API opens up doors to support those.
 - The name of `CLIEngine`, our primary API, has caused confusion in the community and is sub-optimal. We have a lot of issues that say "please use `CLIEngine` instead.". A new class, `ESLint`, while fixing other issues, will also make our primary API more clear.
 
 ## Detailed Design
 
-### ■ Add new `ESLint` class
+### Add new `ESLint` class
 
 This RFC adds a new class `ESLint`. It has almost the same methods as `CLIEngine`, but the return value of some methods are different.
 
 Initially the `ESLint` class will be a wrapper around `CLIEngine`, modifying return types. Later it can take on a more independent shape as `CLIEngine` gets more deprecated.
 
-#### § Constructor
+#### ● Constructor
 
-The constructor has mostly the same options as `CLIEngine`, but with some small differences:
+The constructor has mostly the same options as `CLIEngine`, but with some differences:
 
 - It throws fatal errors if the options contain unknown properties or an option is invalid type ([eslint/eslint#10272](https://github.com/eslint/eslint/issues/10272)).
 - It disallows the deprecated `cacheFile` option.
-- It has a new `pluginImplementations` option as the successor of `addPlugin()` method. This is an object that keys are plugin IDs and each value is the plugin object.
+- It has a new `errorsOnly` option as the successor of `getErrorResults()` method. This option is a boolean value and defaults to `false`. If `true` is present then ESLint disables the rules which are configured with the warning severity. This option corresponds to [`--quiet` CLI option](https://eslint.org/docs/user-guide/command-line-interface#--quiet). See also "[The other methods](#-the-other-methods)" section.
+- It has a new `pluginImplementations` option as the successor of `addPlugin()` method. This is an object that keys are plugin IDs and each value is the plugin object. See also "[The other methods](#-the-other-methods)" section.
 
 ##### Implementation
 
@@ -45,6 +46,7 @@ class ESLint {
     configFile = null,
     cwd = process.cwd(),
     envs = [],
+    errorsOnly = false,
     extensions = [".js"],
     fix = false,
     fixTypes = ["problem", "suggestion", "layout"],
@@ -65,17 +67,17 @@ class ESLint {
     ...unknownOptions
   } = {}) {
     // Throws on unknown options
-    {
-      const keys = Object.keys(unknownOptions)
-      if (keys.length >= 1) {
-        //...
-      }
+    if (Object.keys(unknownOptions).length >= 1) {
+      //...
     }
     // Throws on the invalid value of options
     if (typeof allowInlineConfig !== "boolean") {
       // ...
     }
-    // ...
+    if (typeof baseConfig !== "object") {
+      // ...
+    }
+    // and other options...
 
     // Initialize CLIEngine because this is a tiny wrapper.
     const engine = (this._cliEngine = new CLIEngine({
@@ -116,11 +118,11 @@ class ESLint {
 
 </details>
 
-#### § The `executeOnFiles()` method
+#### ● The `executeOnFiles()` method
 
 This method returns an object that has two methods `then()` and `[Symbol.asyncIterator]()`, so we can use the returned object with `await` expression and `for-await-of` statement.
 
-- If you used the returned object with `for-await-of` statement, it iterates the lint result of each file in random order. This way yields each lint result immediately. Therefore you can print the results in streaming, or print progress state. ESLint may spend time to lint files (for example, ESLint needs about 20 seconds to lint our codebase), to print progress state will be useful.
+- If you used the returned object with `for-await-of` statement, it iterates the lint result of each file in random order. This way yields each lint result immediately. Therefore you can print the results in streaming, or print progress state. ESLint may spend time to lint files (for example, ESLint needs about 20 seconds to lint [our codebase](https://github.com/eslint/eslint)), to print progress state will be useful.
 
   ```js
   const { ESLint } = require("eslint")
@@ -143,11 +145,31 @@ This method returns an object that has two methods `then()` and `[Symbol.asyncIt
   print(results)
   ```
 
-Either way, we can support "linting in parallel", loading configs/plugins with `import()`, and other stuff that needs asynchronous logic.
+Either way, we can support [linting in parallel](https://github.com/eslint/rfcs/pull/42), loading configs/plugins with `import()`, and other stuff that needs asynchronous logic.
+
+##### Iterate only one time
+
+We can iterate the returned object of this method only one time similar to generators.
+
+```js
+const { ESLint } = require("eslint")
+const eslint = new ESLint()
+
+const resultGenerator = eslint.executeOnFiles(patterns)
+for await (const result of resultGenerator) {
+  print(result)
+}
+// ↓ Throw "This generator has been consumed already"
+for await (const result of resultGenerator) {
+  print(result)
+}
+```
 
 ##### Move the `usedDeprecatedRules` property
 
-The returned object of `CLIEngine#executeOnFiles()` has the `usedDeprecatedRules` property that includes the deprecated rule IDs which the linting used. But the location doesn't fit the use with `for-await-of` statement. Therefore, this RFC moves the `usedDeprecatedRules` property to each lint result.
+The returned object of `CLIEngine#executeOnFiles()` has the `usedDeprecatedRules` property that includes the deprecated rule IDs which the linting used.
+
+But the location doesn't fit asynchronous because the used deprecated rule list is not determined until the iteration finished. Therefore, this RFC moves the `usedDeprecatedRules` property to each lint result.
 
 ```js
 const { ESLint } = require("eslint")
@@ -158,7 +180,7 @@ for await (const result of eslint.executeOnFiles(patterns)) {
 }
 ```
 
-As a side-effect, formatters gets the capability to print the used deprecated rules. (!?)
+As a side-effect, formatters gets the capability to print the used deprecated rules. Previously, ESLint has not passed the returned object to formatters, so the formatters could not print used deprecated rules. After this RFC, each lint result has the `usedDeprecatedRules` property and the formatters receive those.
 
 ##### Fail-fast on parallel calling
 
@@ -166,9 +188,9 @@ Because this method updates the cache file, it will break of called multiple tim
 
 ##### Abort linting
 
-The iterator has optional [`return()` method](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator/return). The `for-of`/`for-await-of` syntax calls the `return()` method automatically if the execution escaped from the loop by `braek`, `return`, or `throw`. In short, the `return()` method will be called when aborted.
+The iterator protocol has optional [`return()` method](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator/return) that forces to finish the iterator. The `for-of`/`for-await-of` syntax calls the `return()` method automatically if the loop is stopped through a `braek`, `return`, or `throw`.
 
-ESLint aborts all linting when the `return()` method is called. This will eg. terminate all workers if parallel linting is implemented.
+ESLint aborts linting when the `return()` method is called. For example, it will terminate all workers if [RFC42](https://github.com/eslint/rfcs/pull/42) is implemented.
 
 ```js
 const { ESLint } = require("eslint")
@@ -180,8 +202,6 @@ for await (const result of eslint.executeOnFiles(patterns)) {
   }
 }
 ```
-
-And it throws an error if you reuse the aborted results.
 
 ##### Implementation
 
@@ -213,9 +233,11 @@ class ESLint {
 }
 ```
 
+But once [RFC42](https://github.com/eslint/rfcs/pull/42) is implemented, the returned object will be an instance of [`LintResultGenerator`](https://github.com/eslint/eslint/blob/836c0e48704d70bc1a5cbdbf0211368b0ada942d/lib/eslint/lint-result-generator.js#L136) class. The class implements async iterable protocol, async iterator protocol, and thenable.
+
 </details>
 
-#### § The `executeOnText()` method
+#### ● The `executeOnText()` method
 
 This method returns the same type of an object as the `executeOnFiles()` method.
 
@@ -252,11 +274,13 @@ for await (const result of report) {
 
 </details>
 
-#### § The `getFormatter()` method
+#### ● The `getFormatter()` method
 
 This method returns a `Promise<Formatter>`. The `Formatter` type is a function `(results: AsyncIterable<LintResult>) => AsyncIterableIterator<string>`. It receives lint results then outputs the formatted text.
 
 This means the `getFormatter()` method wraps the current formatter to adapt the interface.
+
+Once the `getFormatter()` method got this change, in the future, we can update the specification of custom formatters without breakage to support streaming.
 
 <details>
 <summary>A rough sketch of the `getFormatter()` method.</summary>
@@ -306,17 +330,14 @@ for await (const textPiece of formatter(results)) {
 
 </details>
 
-Once the `getFormatter()` method got this change, we can update the specification of custom formatters without breakage in the future to support streaming.
+#### ● The `outputFixesInIteration()` method
 
-#### § The other methods
+The original `CLIEngine.outputFixes()` static method writes the fix results to the source code files.
 
-The following methods receive an `AsyncIterable<LintResult>` object as the first argument then return an `AsyncIterableIterator<LintResult>` object because those methods are sandwiched between `executeOnFiles()` and formatters.
-
-- `outputFixes()`
-- `getErrorResults()`
+The goal of this method is same as the `CLIEngine.outputFixes()` method, but we cannot share async iterators with this method and formatters, so this method receives an `AsyncIterable<LintResult>` object as the first argument then return an `AsyncIterableIterator<LintResult>` object. This method is sandwiched between `executeOnFiles()` and formatters.
 
 <details>
-<summary>Example: Use `outputFixes()` and `getErrorResults()`.</summary>
+<summary>Example: Use `outputFixesInIteration()`.</summary>
 
 ```js
 const { ESLint } = require("eslint")
@@ -326,13 +347,8 @@ const formatter = eslint.getFormatter("stylish")
 // Verify files
 let results = eslint.executeOnFiles(patterns)
 // Update the files of the results if needed
-// (This must be done before `--quiet`)
 if (process.argv.includes("--fix")) {
-    results = ESLint.outputFixes(results)
-}
-// Filter the results if needed
-if (process.argv.includes("--quiet")) {
-    results = ESLint.getErrorResults(results)
+    results = ESLint.outputFixesInIteration(results)
 }
 // Format and write the results
 for await (const textPiece of formatter(results)) {
@@ -342,21 +358,21 @@ for await (const textPiece of formatter(results)) {
 
 </details>
 
+#### ● The other methods
+
 The following methods return `Promise` which gets fulfilled with each result in order to support plugins/configs that are ES modules without breakage in the future.
 
 - `getConfigForFile()`
+- `getRules()`
 - `isPathIgnored()`
 
-The following method is as-is because they touch neither file system or module system.
+The following methods are removed because those don't fit the new API.
 
-- `getRules()`
+- `addPlugin()` ... This method has caused to confuse people. We have introduced this method to add plugin implementations and expected people to use this method to test plugins, but people have thought that this method loads a new plugin for the following linting. And this method is only one that mutates the state of `CLIEngine` objects (except cache) and messes all caches. Therefore, this RFC moves this functionality to a constructor option. See also "[Constructor](#-constructor)" section.
+- `getErrorResults()` ... This method is a utility to filter warning messages and is used for `--quiet` CLI option. But disabling the rules which are configured with the warning severity is more efficient than the current way. Therefore, this RFC moves this functionality to a constructor option. See also "[Constructor](#-constructor)" section.
+- `resolveFileGlobPatterns()` ... ESLint doesn't use this logic since `v6.0.0`, but it has stayed there for backward compatibility. Once [RFC20](https://github.com/eslint/rfcs/tree/master/designs/2019-additional-lint-targets) is implemented, what ESLint iterates and what the glob of this method iterates will be different, then it will confuse users. This is good timing to remove the legacy.
 
-The following methods are removed because those don't fit the current API.
-
-- `addPlugin()` ... This method has caused to confuse people. We have introduced this method to add plugin implementations and expected people to use this method to test plugins, but people have thought that this method loads a new plugin for the following linting. And this method is only one that mutates the state of `CLIEngine` objects (except cache). This RFC moves this functionality to the constructor options.
-- `resolveFileGlobPatterns()` ... ESLint doesn't use this logic since `v6.0.0`, but it has stayed there for backward compatibility. Once [RFC 20](https://github.com/eslint/rfcs/tree/master/designs/2019-additional-lint-targets) is implemented, what ESLint iterates and what the glob of this method iterates will be different, then it will confuse users. This is good timing to remove the legacy.
-
-#### § A new `compareResultsByFilePath` static method
+#### ● A new `compareResultsByFilePath` static method
 
 This method receives two lint results then returns `+1`, `-1`, or `0`. This method is intended to use in order to sort results.
 
@@ -383,7 +399,7 @@ class ESLint {
 
 This RFC soft-deprecates `CLIEngine` class.
 
-Because it's tough to maintain two versions (sync and async) of implementation. The two are almost copy-pasted stuff, but hard to share the code. Therefore, this RFC deprecates the sync version to improve our code with the way which needs asynchronous behavior in the future. For example, `CLIEngine` cannot support parallel linting, plugins/configs as ES modules, etc...
+Because it's tough to maintain two versions (sync and async) of implementation. The two are almost copy-pasted stuff, but hard to share the code. Therefore, this RFC deprecates the sync version to improve our code with the way which needs asynchronous behavior in the future. For example, `CLIEngine` cannot support [linting in parallel](https://github.com/eslint/rfcs/pull/42), plugins/configs as ES modules, etc...
 
 ### ■ Out of scope
 
@@ -413,8 +429,10 @@ The new API depends on [Asynchronous Iteration](https://github.com/tc39/proposal
 
 ## Related Discussions
 
+- https://github.com/eslint/eslint/issues/1098 - Show results for each file as eslint is running
 - https://github.com/eslint/eslint/issues/3565 - Lint multiple files in parallel
 - https://github.com/eslint/eslint/issues/10272 - Validate options passed to CLIEngine API
 - https://github.com/eslint/eslint/issues/12319 - `ERR_REQUIRE_ESM` when requiring `.eslintrc.js`
 - https://github.com/eslint/rfcs/pull/4 - New: added draft for async/parallel proposal
 - https://github.com/eslint/rfcs/pull/11 - New: Lint files in parallel
+- https://github.com/eslint/rfcs/pull/42 - New: Lint files in parallel if many files exist
