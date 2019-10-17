@@ -432,6 +432,7 @@ The new API depends on [Asynchronous Iteration](https://github.com/tc39/proposal
 - https://github.com/eslint/eslint/issues/1098 - Show results for each file as eslint is running
 - https://github.com/eslint/eslint/issues/3565 - Lint multiple files in parallel
 - https://github.com/eslint/eslint/issues/10272 - Validate options passed to CLIEngine API
+- https://github.com/eslint/eslint/issues/10606 - Make CLIEngine and supporting functions async via Promises
 - https://github.com/eslint/eslint/issues/12319 - `ERR_REQUIRE_ESM` when requiring `.eslintrc.js`
 - https://github.com/eslint/rfcs/pull/4 - New: added draft for async/parallel proposal
 - https://github.com/eslint/rfcs/pull/11 - New: Lint files in parallel
