@@ -49,14 +49,19 @@ concurrency = Math.min(os.cpus().length, Math.ceil(targetFiles.length / 128))
 
 This means that ESLint does linting in the main thread if the number of target files is less than [128](#constants) in order to avoid the overhead of multithreading. But ESLint does linting with using worker threads automatically if target files are many.
 
-For example, if there are 4 processor cores, `--concurrency=auto` behaves like below. This means that each worker lints [128](#constants)/2 files in the mean at least. Because the cost of multithreading is larger than speed up if each worker lints only a few files.
+For example, `--concurrency=auto` behaves like below on some different CPU processor cores. This means that each worker lints [128](#constants)/2 files in the mean at least. Because the cost of multithreading is larger than speed up if each worker lints only a few files.
 
-| The number of files | What executes linting |
-| :------------------ | :-------------------- |
-| 1 - 128             | the main thread       |
-| 129 - 256           | 2 workers             |
-| 257 - 384           | 3 workers             |
-| 385 - ∞             | 4 workers             |
+| The number of files | On single core  | On 2 core       | On 4 core       | On 32 core      |
+| :------------------ | :-------------- | --------------- | --------------- | --------------- |
+| 1 - 128             | the main thread | the main thread | the main thread | the main thread |
+| 129 - 256           | the main thread | 2 workers       | 2 workers       | 2 workers       |
+| 257 - 384           | the main thread | 2 workers       | 3 workers       | 3 workers       |
+| 385 - 512           | the main thread | 2 workers       | 4 workers       | 4 workers       |
+| 513 - 640           | the main thread | 2 workers       | 4 workers       | 5 workers       |
+| ...                 | ...             | ...             | ...             | ...             |
+| 2049 - 2176         | the main thread | 2 workers       | 4 workers       | 16 workers      |
+| ...                 | ...             | ...             | ...             | ...             |
+| 4096 - ∞            | the main thread | 2 workers       | 4 workers       | 32 workers      |
 
 If `--concurrency` option is present along with the following options, ESLint throws a fatal error.
 
@@ -70,7 +75,7 @@ If `--concurrency` option is present along with the following options, ESLint th
 
 ### [STEP 1] New `concurrency` constructor option of `ESLint` class
 
-`ESLint` class is the new API that is discussed in [RFC 40](https://github.com/eslint/rfcs/pull/40).
+`ESLint` class is the new API that is discussed in [RFC40](https://github.com/eslint/rfcs/pull/40).
 
 The `concurrency` option corresponds to `--concurrency` CLI option. Defaults to `1`. If `"auto"` is present, `ESLint` class estimates the best value with the way the previous section described.
 
@@ -80,10 +85,11 @@ This RFC doesn't change `CLIEngine` class because this requires asynchronous API
 
 This RFC adds `disallowWorkerThreads` top-level property to plugins.
 
-If a loaded plugin has this property with `true`,
+If a loaded plugin has this property with `true`, ESLint doesn't use workers always. And ESLint outputs a warning to `stderr` if the computed `concurrency` option is `2` or larger.
 
-- When the `concurrency` option was `"auto"`, ESLint enforces the estimated value to `1`.
-- When the `concurrency` option was `2` or larger, ESLint throws a fatal error.
+```
+ESLint didn't use workers because 'eslint-plugin-xxx' disallows worker threads.
+```
 
 Therefore, plugins that don't work fine in workers can tell ESLint to disallow workers.
 
@@ -117,7 +123,7 @@ We can use parallel linting along with `--cache` option because worker threads d
 
 #### About `--fix` option
 
-We can use parallel linting along with `--fix` option. ESLint modifies files after all linting completed.
+We can use parallel linting along with `--fix` option. ESLint modifies files after linting of each file completed.
 
 #### About `--debug` option
 
@@ -150,9 +156,7 @@ As a side note, master terminates the other workers if a worker reported an erro
 
 #### About aborting
 
-In [RFC 40](https://github.com/eslint/rfcs/pull/40), `ESLint#executeOnFiles()` returns async iterable object.
-
-The iterator has optional [`return()` method](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator/return). The `for-of`/`for-await-of` syntax calls the `return()` method automatically if the execution escaped from the loop by `braek`, `return`, or `throw`. In short, the `return()` method will be called when aborted.
+In [RFC40](https://github.com/eslint/rfcs/pull/40), `ESLint#executeOnFiles()` returns an async iterable object.
 
 Therefore, ESLint aborts linting when the `return()` method is called. This means that the `return()` method terminates all workers.
 
@@ -166,7 +170,7 @@ for await (const result of eslint.executeOnFiles(patterns)) {
 }
 ```
 
-And it throws an error if it's reused after aborted.
+See also [the "Abort linting" section in RFC40](https://github.com/eslint/rfcs/blob/00be95b618535723ab054119494f9a251aa28a95/designs/2019-move-to-async-api/README.md#abort-linting).
 
 #### Locally Concurrency
 
@@ -325,7 +329,7 @@ However, I think that the above is enough rare cases and the impact is limited.
 
 ## Alternatives
 
-- [RFC 4](https://github.com/eslint/rfcs/pull/4) and [RFC 11](https://github.com/eslint/rfcs/pull/11) implement this feature behind a flag. On the other hand, this RFC does lint files in parallel by default if files are many, and people can enforce to not use workers by `--concurrency 1` option.
+- [RFC4](https://github.com/eslint/rfcs/pull/4) and [RFC11](https://github.com/eslint/rfcs/pull/11) implement this feature behind a flag. On the other hand, this RFC does lint files in parallel by default if files are many, and people can enforce to not use workers by `--concurrency 1` option.
 
 ## Related Discussions
 
