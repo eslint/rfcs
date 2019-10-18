@@ -156,9 +156,9 @@ As a side note, master terminates the other workers if a worker reported an erro
 
 #### About aborting
 
-In [RFC40](https://github.com/eslint/rfcs/pull/40), `ESLint#executeOnFiles()` returns an async iterable object.
+In [RFC40](https://github.com/eslint/rfcs/pull/40), `ESLint#executeOnFiles()` returns an async iterable object and the `return()` method of the iterator of the iterable object aborts linting.
 
-Therefore, ESLint aborts linting when the `return()` method is called. This means that the `return()` method terminates all workers.
+Therefore, after this RFC, the `return()` method terminates all workers.
 
 ```js
 const { ESLint } = require("eslint")
