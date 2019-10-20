@@ -1,5 +1,5 @@
 - Start Date: 2019-10-20
-- RFC PR: (leave this empty, to be filled in later)
+- RFC PR: https://github.com/eslint/rfcs/pull/45
 - Authors: Toru Nagashima ([@mysticatea](https://github.com/mysticatea))
 
 # Formatter v2
