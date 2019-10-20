@@ -65,7 +65,7 @@ The formatter author can include [CSI sequences] to represent stuff such as prog
 
 ##### Examples
 
-##### The `stylish` formatter with progress
+###### The `stylish` formatter with progress
 
 See [/lib/cli-engine/formatters/stylish.js].
 
