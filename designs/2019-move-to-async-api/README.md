@@ -190,7 +190,10 @@ Because this method updates the cache file, it will break of called multiple tim
 
 The iterator protocol has optional [`return()` method](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator/return) that forces to finish the iterator. The `for-of`/`for-await-of` syntax calls the `return()` method automatically if the loop is stopped through a `braek`, `return`, or `throw`.
 
-ESLint aborts linting when the `return()` method is called. For example, it will terminate all workers if [RFC42](https://github.com/eslint/rfcs/pull/42) is implemented.
+ESLint aborts linting when the `return()` method is called. The abort does:
+
+- ESLint updates the cache file with the current state when the `return()` method is first called. Therefore, the next time, ESLint can use the cache of the already linted files and lint only the canceled files.
+- ESLint will terminate all workers if [RFC42](https://github.com/eslint/rfcs/pull/42) is implemented.
 
 ```js
 const { ESLint } = require("eslint")
