@@ -29,7 +29,7 @@ This RFC adds a new class `ESLint`. It has almost the same methods as `CLIEngine
 - [getConfigForFile()](#-the-other-methods)
 - [getRules()](#-the-other-methods)
 - [isPathIgnored()](#-the-other-methods)
-- ~~addPlugin()~~ (delete)
+- ~~addPlugin()~~ (move to a constructor option)
 - ~~resolveFileGlobPatterns()~~ (delete)
 - [static collectResults()](#-new-methods) (new)
 - [static compareResultsByFilePath()](#-new-methods) (new)
