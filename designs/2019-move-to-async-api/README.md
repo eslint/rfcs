@@ -442,8 +442,56 @@ The new API depends on [Asynchronous Iteration](https://github.com/tc39/proposal
 
 ## Alternatives
 
-- Adding `engine.executeAsyncOnFiles()`-like methods and we maintain it along with the existing synchronous API. But as what I wrote in the "[Deprecate `CLIEngine` class](#deprecate-cliengine-class)" section, it would be tough.
-- Using [Streams](https://nodejs.org/dist/latest-v12.x/docs/api/stream.html) instead of [Asynchronous Iteration](https://github.com/tc39/proposal-async-iteration). We can introduce `ESLint` class in a minor release if we used Streams. But because Node.js 8 will be EOL two months later, we should be able to use Asynchronous Iteration soon. And Streams don't support `for-await-of` syntax until `v11.14.0`. Iterator protocol is smaller spec than streams, and it's easy to use.
+### Alternatives for the new class
+
+Adding `CLIEngine#executeOnFilesAsync()` method is an alternative.
+
+**Pros:**
+
+- It's smaller change than adding `ESLint` class.
+
+**Cons:**
+
+- We have to maintain both synchronous and asynchronous APIs. It's kind of hard works.
+  - We can deprecate the synchronous version, but in that case, I feel odd because `executeOnFiles()` is the essential name of `executeOnFilesAsync()`.
+- We need the asynchronous version of the other APIs in the future. The `getFormatterAsync()` is needed for formatters with progress. The asynchronous version of the other methods is needed for ES modules.
+  - `CLIEngine` will get huge because we cannot share the most code between asynchronous API and synchronous API.
+  - API users need the number of API migrations.
+- It causes confusion for API users. As Node.js built-in libraries are so, I guess that people expect the two (`executeOnFiles()` and `executeOnFilesAsync()`) to have exactly the same features. However, it's impossible. We have a bundle of the features that we cannot support on synchronous API, such as linting in parallel, formatters with progress, ES modules, etc.
+
+Therefore, I think that introducing the new class that has only asynchronous API makes more sense. This RFC solves:
+
+- We can freeze the code of the synchronous version of our API by deprecating `CLIEngine`. This reduces the maintenance cost of duplicate codes.
+- We can reduce the number of API migrations for API users.
+- We can reduce the confusion of similar but different methods.
+- And as a bonus, we can reduce the confusion of the name of `CLIEngine`.
+
+### Alternatives for [Asynchronous Iteration](https://github.com/tc39/proposal-async-iteration)
+
+Using [streams](https://nodejs.org/dist/latest-v12.x/docs/api/stream.html) instead is an alternative.
+
+**Pros:**
+
+- We can introduce `ESLint` class in a minor release. (To use Async Iteration, we have to wait for [RFC44](https://github.com/eslint/rfcs/pull/44)).
+
+**Cons:**
+
+- Streams are problematic a bit about error propagation.
+  - [straem.pipeline()](https://nodejs.org/api/stream.html#stream_stream_pipeline_streams_callback) function reduces this pain, but [it doesn't cover all cases](https://github.com/nodejs/node/issues/26311).
+- We have to wait for Node.js `v11.14.0` to use streams with `for-await-of` syntax.
+
+Because Node.js 8 will be EOL two months later, we should be able to use Asynchronous Iteration soon. And Iterator protocol is smaller spec than streams, and it's easy to use.
+
+### Alternatives for disallow execution in parallel
+
+- Throwing if the previous call has not finished yet (fail-fast).
+- Aborting the previous call then run (steal ownership of the cache file).
+
+are alternatives.
+
+Both cases stop the previous or current call. It may be surprising users.
+
+The access of the cache file finishes regardless of the progress of the iterator that the method returned. It means that API users cannot know when the file access finished. On the other hand, because `ESLint` objects know when the file access finished, it can execute the next call at the proper timing.
 
 ## Related Discussions
 
