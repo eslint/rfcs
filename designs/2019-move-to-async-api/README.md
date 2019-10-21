@@ -157,6 +157,8 @@ This method returns an object that has two methods `then()` and `[Symbol.asyncIt
 
 Either way, we can support [linting in parallel](https://github.com/eslint/rfcs/pull/42), loading configs/plugins with `import()`, and other stuff that needs asynchronous logic.
 
+This method must not throw any errors synchronously.
+
 ##### Iterate only one time
 
 We can iterate the returned object of this method only one time similar to generators.
@@ -192,17 +194,18 @@ for await (const result of eslint.executeOnFiles(patterns)) {
 
 As a side-effect, formatters gets the capability to print the used deprecated rules. Previously, ESLint has not passed the returned object to formatters, so the formatters could not print used deprecated rules. After this RFC, each lint result has the `usedDeprecatedRules` property and the formatters receive those.
 
-##### Fail-fast on parallel calling
+##### Disallow execution in parallel
 
-Because this method updates the cache file, it will break of called multiple times in parallel. To prevent that, it should throw an error if the method is called while a previous call is still running.
+Because this method updates the cache file, it will break the cache file if called multiple times in parallel. To prevent that, every call of `executeOnFiles()` must wait for the previous call finishes.
 
 ##### Abort linting
 
 The iterator protocol has optional [`return()` method](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator/return) that forces to finish the iterator. The `for-of`/`for-await-of` syntax calls the `return()` method automatically if the loop is stopped through a `braek`, `return`, or `throw`.
 
-ESLint aborts linting when the `return()` method is called. The abort does:
+ESLint aborts linting when the `return()` method is called. The first `return()` method call does:
 
-- ESLint updates the cache file with the current state when the `return()` method is first called. Therefore, the next time, ESLint can use the cache of the already linted files and lint only the canceled files.
+- ESLint cancels the linting of all pending files.
+- ESLint updates the cache file with the current state. Therefore, the next time, ESLint can use the cache of the already linted files and lint only the canceled files.
 - ESLint will terminate all workers if [RFC42](https://github.com/eslint/rfcs/pull/42) is implemented.
 
 ```js
@@ -215,6 +218,8 @@ for await (const result of eslint.executeOnFiles(patterns)) {
   }
 }
 ```
+
+The second and later calls do nothing.
 
 ##### Implementation
 
