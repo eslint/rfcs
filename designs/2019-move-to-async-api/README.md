@@ -20,6 +20,16 @@ This RFC adds a new class `ESLint` that provides asynchronous API and deprecates
 
 This RFC adds a new class `ESLint`. It has almost the same methods as `CLIEngine`, but the return value of some methods are different.
 
+- [constructor()](#-constructor)
+- [executeOnFiles()](#-the-executeonfiles-method)
+- [executeOnText()](#-the-executeontext-method)
+- [getFormatter()](#-the-getformatter-method)
+- [static outputFixesInIteration()](#-the-outputfixesiniteration-method) (rename)
+- [getConfigForFile()](#-the-other-methods)
+- [getRules()](#-the-other-methods)
+- [isPathIgnored()](#-the-other-methods)
+- [static compareResultsByFilePath()](#-new-methods) (new)
+
 Initially the `ESLint` class will be a wrapper around `CLIEngine`, modifying return types. Later it can take on a more independent shape as `CLIEngine` gets more deprecated.
 
 #### ● Constructor
