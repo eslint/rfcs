@@ -67,7 +67,7 @@ For example:
 └ .eslintrc.yml
 ```
 
-- With `eslint . --resolve-plugins-relative-to pckages/zeta`<br>
+- With `eslint . --resolve-plugins-relative-to packages/zeta`<br>
   It's `pckages/zeta` always.
 - With `eslint . --config /home/me/my-config.js`<br>
   It's `/home/me` always.
