@@ -89,8 +89,6 @@ With the addition of `.cjs`, the new priority for configuration files will be
 6. .eslintrc
 7. package.json
 
-`.cjs` is placed higher than `.js` because -- unlike the latter -- `.cjs` does not allow for ambiguity. A `.cjs` file is always interpreted as CommonJS regardless of context.
-
 ## Documentation
 
 A quick mention in the [FAQ](https://github.com/eslint/eslint#frequently-asked-questions) should be suitable to document usage.
