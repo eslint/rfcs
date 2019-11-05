@@ -1,103 +1,95 @@
-- Start Date: (fill me in with today's date, YYYY-MM-DD)
+- Start Date: 2019-11-04
 - RFC PR: (leave this empty, to be filled in later)
-- Authors: (the names of everyone contributing to this RFC)
+- Authors: Pete Gonzalez ([@octogonz](https://github.com/octogonz))
 
-# (RFC title goes here)
+# Add resolveRelativeToConfigFile setting
 
 ## Summary
 
-<!-- One-paragraph explanation of the feature. -->
+RFC #14 proposes a way for a shared ESLint config package to supply its own plugin dependencies, rather than imposing
+that responsibility on every consumer of the package.  But because that RFC seeks to design a comprehensive solution,
+its discussion has been open for a long time without encouraging progress.  In the interim, this RFC proposes
+a temporary workaround, that allows users opt-in to a resolution behavior that works well in practice (despite having
+some known limitations).  This feature would be designated as experimental, with the intent to remove it when/if
+the ideal solution finally ships.
 
 ## Motivation
 
-<!-- Why are we doing this? What use cases does it support? What is the expected
-outcome? -->
+For the more narrow (and perhaps more common) scenario tackled by this RFC, please refer to
+[this comment](https://github.com/eslint/eslint/issues/3458#issuecomment-516666620) from ESLint issue 3458.
+
+The more general set of requirements is already spelled out in RFC #14.
 
 ## Detailed Design
 
-<!--
-   This is the bulk of the RFC.
+Change [line 841 of config-array-factory.js](
+https://github.com/eslint/eslint/blob/586855060afb3201f4752be8820dc85703b523a6/lib/cli-engine/config-array-factory.js#L845)
+from this:
 
-   Explain the design with enough detail that someone familiar with ESLint
-   can implement it by reading this document. Please get into specifics
-   of your approach, corner cases, and examples of how the change will be
-   used. Be sure to define any new terms in this section.
--->
+```js
+        try {
+            filePath = ModuleResolver.resolve(request, relativeTo);
+        } catch (resolveError) {
+```
+
+...to this:
+
+```ts
+        try {
+            filePath = ModuleResolver.resolve(request, importerPath);
+        } catch (resolveError) {
+```
+
+Gate this change behind a new option `resolveRelativeToConfigFile` in `.eslintrc.js`.  It is an optional boolean
+value that is `false` by default.  Thus this behavior will be off by default.
+
+A complete implementation is already provided in [ESLint PR 12460](https://github.com/eslint/eslint/pull/12460).
 
 ## Documentation
 
-<!--
-    How will this RFC be documented? Does it need a formal announcement
-    on the ESLint blog to explain the motivation?
--->
+The PR will include documentation for the new option.
 
 ## Drawbacks
 
-<!--
-    Why should we *not* do this? Consider why adding this into ESLint
-    might not benefit the project or the community. Attempt to think 
-    about any opposing viewpoints that reviewers might bring up. 
-
-    Any change has potential downsides, including increased maintenance
-    burden, incompatibility with other tools, breaking existing user
-    experience, etc. Try to identify as many potential problems with
-    implementing this RFC as possible.
--->
+The `resolveRelativeToConfigFile` feature does not consider all possible design considerations, such as naming
+conflicts between plugins.  The PR also assumes that `resolveRelativeToConfigFile` is assigned by the main project,
+not by an extended config.  This is okay, because it's a temporary workaround.  It's not meant to be an ideal design.
 
 ## Backwards Compatibility Analysis
 
-<!--
-    How does this change affect existing ESLint users? Will any behavior
-    change for them? If so, how are you going to minimize the disruption
-    to existing users?
--->
+No impact, because the option is off by default.
 
 ## Alternatives
 
-<!--
-    What other designs did you consider? Why did you decide against those?
-
-    This section should also include prior art, such as whether similar
-    projects have already implemented a similar feature.
--->
+If RFC #14 can be completed and implemented within a reasonable timeframe, then this workaround would not be needed.
 
 ## Open Questions
 
-<!--
-    This section is optional, but is suggested for a first draft.
-
-    What parts of this proposal are you unclear about? What do you
-    need to know before you can finalize this RFC?
-
-    List the questions that you'd like reviewers to focus on. When
-    you've received the answers and updated the design to reflect them, 
-    you can remove this section.
--->
+None.
 
 ## Help Needed
 
-<!--
-    This section is optional.
-
-    Are you able to implement this RFC on your own? If not, what kind
-    of help would you need from the team?
--->
+None.
 
 ## Frequently Asked Questions
 
-<!--
-    This section is optional but suggested.
+### In order to modify one line of logic, do we really need to wait an entire month (21 + 7 days) for an "RFC"?
 
-    Try to anticipate points of clarification that might be needed by
-    the people reviewing this RFC. Include those questions and answers
-    in this section.
--->
+Yes, the ESLint maintainers have insisted on this formalism.
+
+### Why should we accept a solution with known limitations?
+
+Back in July, the workaround was presented as a
+[monkey patch](https://github.com/eslint/eslint/issues/3458#issuecomment-516716165).
+Several people are using it in large multi-project repos for serious shipping applications,
+and they've reported that it works correctly.  Thus, it's "good enough" for many people who would be otherwise blocked.
+
+### Why can't everyone just use a monkey patch then?
+
+Monkey patching is awkward and brittle.  An .eslintrc.js file should not probe into the ESLint binary
+and overwrite its module objects at runtime.  It may be acceptable for small projects, but at a large company,
+project admins would be rightly concerned about the supportability of such a solution.
 
 ## Related Discussions
 
-<!--
-    This section is optional but suggested.
-
-    If there is an issue, pull request, or other URL that provides useful
-    context for this proposal, please include those links here.
--->
+None.
