@@ -1,17 +1,17 @@
 - Start Date: 2019-11-04
-- RFC PR: (leave this empty, to be filled in later)
+- RFC PR: https://github.com/eslint/rfcs/pull/46
 - Authors: Pete Gonzalez ([@octogonz](https://github.com/octogonz))
 
 # Add resolveRelativeToConfigFile setting
 
 ## Summary
 
-RFC #14 proposes a way for a shared ESLint config package to supply its own plugin dependencies, rather than imposing
-that responsibility on every consumer of the package.  But because that RFC seeks to design a comprehensive solution,
-its discussion has been open for a long time without encouraging progress.  In the interim, this RFC proposes
-a temporary workaround, that allows users opt-in to a resolution behavior that works well in practice (despite having
-some known limitations).  This feature would be designated as experimental, with the intent to remove it when/if
-the ideal solution finally ships.
+RFC #14 proposes a way for a shared ESLint config package to supply its own plugin dependencies, rather than
+imposing that responsibility on every consumer of the package.  But because that RFC seeks to design a comprehensive
+solution, its discussion has been open for a long time without encouraging progress.  In the interim, RFC 46 proposes
+a temporary workaround. It will allow users to opt-in to a resolution behavior that works well in practice (despite
+having some known limitations).  This this new `resolveRelativeToConfigFile` option would be designated as experimental,
+with the intent to remove it when/if the ideal solution finally ships.
 
 ## Motivation
 
