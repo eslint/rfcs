@@ -51,9 +51,11 @@ The PR will include documentation for the new option.
 
 ## Drawbacks
 
-The `resolveRelativeToConfigFile` feature does not consider all possible design considerations, such as naming
-conflicts between plugins.  The PR also assumes that `resolveRelativeToConfigFile` is assigned by the main project,
-not by an extended config.  This is okay, because it's a temporary workaround.  It's not meant to be an ideal design.
+The `resolveRelativeToConfigFile` feature does not consider all possible design considerations, such as
+conflicts between plugins.  The PR also assumes that `resolveRelativeToConfigFile` is not set back to `false`
+after it has been set to `true`.  Once it is enabled, it affects all subsequent module resolutions.
+
+This is acceptable because it's a temporary workaround.  It's not meant to be an ideal design.
 
 ## Backwards Compatibility Analysis
 
@@ -65,7 +67,7 @@ If RFC #14 can be completed and implemented within a reasonable timeframe, then 
 
 ## Open Questions
 
-None.
+Since a PR has already been created, please provide feedback on the implementation details.
 
 ## Help Needed
 
@@ -73,9 +75,9 @@ None.
 
 ## Frequently Asked Questions
 
-### In order to modify one line of logic, do we really need to wait an entire month (21 + 7 days) for an "RFC"?
+### In order to modify one line of logic, do we really need to wait an entire month for the RFC process?
 
-Yes, the ESLint maintainers have insisted on this formalism.
+Yes, the ESLint maintainers have requested this.
 
 ### Why should we accept a solution with known limitations?
 
