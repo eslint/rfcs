@@ -237,9 +237,13 @@ for await (const result of eslint.lintFiles(patterns)) {
 
 As a side-effect, formatters gets the capability to print the used deprecated rules. Previously, ESLint has not passed the returned object to formatters, so the formatters could not print used deprecated rules. After this RFC, each lint result has the `usedDeprecatedRules` property and the formatters receive those.
 
-##### Disallow execution in parallel
+##### Write cache safely (best effort)
 
-Because this method updates the cache file, it will break the cache file if called multiple times in parallel. To prevent that, every call of `lintFiles()` must wait for the previous call finishes.
+Because this method updates the cache file, it will break the cache file if called multiple times in parallel. To prevent that, this method doesn't write the cache file if the cache file has been updated since this method read.
+
+This method does this check with the best effort (e.g., check `mtime` of the cache file) because Node.js doesn't provide the way that reads/writes a file exclusively.
+
+If the cache file was broken, this method should ignore the cache file and does lint.
 
 ##### Abort linting
 
@@ -502,11 +506,13 @@ Because Node.js 8 will be EOL two months later, we should be able to use Asynchr
 - Throwing if the previous call has not finished yet (fail-fast).
 - Aborting the previous call then run (steal ownership of the cache file).
 
-are alternatives.
+are alternatives. Both cases stop the previous or current call. It may be surprising users.
 
-Both cases stop the previous or current call. It may be surprising users.
+- Waiting the previous call internally.
 
 The access of the cache file finishes regardless of the progress of the iterator that the method returned. It means that API users cannot know when the file access finished. On the other hand, because `ESLint` objects know when the file access finished, it can execute the next call at the proper timing.
+
+However, the `ESLint` objects cannot know the existence of other threads and processes that write the cache file. The current way has a smaller risk than the alternatives.
 
 ## Related Discussions
 
