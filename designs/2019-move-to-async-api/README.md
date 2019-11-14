@@ -41,7 +41,7 @@ The constructor has mostly the same options as `CLIEngine`, but with some differ
 
 - It throws fatal errors if the options contain unknown properties or an option is invalid type ([eslint/eslint#10272](https://github.com/eslint/eslint/issues/10272)).
 - It disallows the deprecated `cacheFile` option.
-- It has a new `pluginImplementations` option as the successor of `addPlugin()` method. This is an object that keys are plugin IDs and each value is the plugin object. See also "[The other methods](#-the-other-methods)" section.
+- The array of the `plugins` option can contain objects `{ id: string; definition: Object }` along with strings. If the objects are present, the `id` property is the plugin ID and the `definition` property is the definition of the plugin. This is the successor of `addPlugin()` method. See also "[The other methods](#-the-other-methods)" section.
 
 <details>
 <summary>A rough sketch of the constructor.</summary>
@@ -66,7 +66,6 @@ class ESLint {
     ignorePattern = [],
     parser = "espree",
     parserOptions = null,
-    pluginImplementations = null,
     plugins = [],
     reportUnusedDisableDirectives = false,
     resolvePluginsRelativeTo = cwd,
@@ -107,7 +106,7 @@ class ESLint {
       ignorePattern,
       parser,
       parserOptions,
-      plugins,
+      plugins: plugins.map(p => (typeof p === "string" ? p : p.id)),
       reportUnusedDisableDirectives,
       resolvePluginsRelativeTo,
       rulePaths,
@@ -115,14 +114,32 @@ class ESLint {
       useEslintrc,
     }))
 
-    // Apply `pluginImplementations` option.
-    if (pluginImplementations) {
-      for (const [id, definition] of Object.entries(pluginImplementations)) {
-        engine.addPlugin(id, definition)
+    // Add the definitions of the `plugins` option.
+    if (plugins) {
+      for (const plugin of plugins) {
+        if (typeof plugin === "object" && plugin !== null) {
+          engine.addPlugin(plugin.id, plugin.definition)
+        }
       }
     }
   }
 }
+```
+
+</details>
+
+<details>
+<summary>For `plugins` example.</summary>
+
+```js
+const { ESLint } = require("eslint")
+const eslint = new ESLint({
+  plugins: [
+    "foo",
+    "eslint-plugin-bar",
+    { id: "abc", definition: require("./path/to/a-plugin") },
+  ],
+})
 ```
 
 </details>
