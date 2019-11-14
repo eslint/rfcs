@@ -31,7 +31,6 @@ This RFC adds a new class `ESLint`. It has almost the same methods as `CLIEngine
 - [isPathIgnored()](#-the-other-methods)
 - ~~addPlugin()~~ (move to a constructor option)
 - ~~resolveFileGlobPatterns()~~ (delete)
-- [static collectResults()](#-new-methods) (new)
 - [static compareResultsByFilePath()](#-new-methods) (new)
 
 Initially the `ESLint` class will be a wrapper around `CLIEngine`, modifying return types. Later it can take on a more independent shape as `CLIEngine` gets more deprecated.
@@ -165,11 +164,12 @@ But once [RFC42] is implemented, the returned object will be an instance of [`Li
 If you want to use the returned object with `await` expression, you can use a small utility to convert an async iterable object to an array.
 
 ```js
+const toArray = require("@async-generators/to-array").default
 const { ESLint } = require("eslint")
 const eslint = new ESLint()
 
 // Convert the results to an array.
-const results = await ESLint.collectResults(eslint.executeOnFiles(patterns))
+const results = await toArray(eslint.executeOnFiles(patterns))
 
 // Optionally you can sort the results.
 results.sort(ESLint.compareResultsByFilePath)
@@ -255,11 +255,9 @@ Because the returned object of `CLIEngine#executeOnText()` method is the same ty
 const { ESLint } = require("eslint")
 const eslint = new ESLint()
 
-const [result] = await ESLint.collectResults(
-  eslint.executeOnText(text, filePath),
-)
-
-print(result)
+for await (const result of eslint.executeOnText(text, filePath)) {
+  print(result)
+}
 ```
 
 Example: Using along with the `executeOnFiles()` method.
@@ -290,7 +288,7 @@ const formatter = eslint.getFormatter("stylish")
 const results = eslint.executeOnFiles(patterns)
 // Format and write the results
 for await (const textPiece of formatter(results)) {
-    process.stdout.write(textPiece)
+  process.stdout.write(textPiece)
 }
 ```
 
@@ -307,7 +305,7 @@ class ESLint {
     // Return the wrapper.
     return async function* formatter(resultIterator) {
       // Collect and sort the results.
-      const results = await ESLint.collectResults(resultIterator)
+      const results = await toArray(resultIterator)
       results.sort(ESLint.compareResultsByFilePath)
 
       // Make `rulesMeta`.
@@ -343,11 +341,11 @@ const formatter = eslint.getFormatter("stylish")
 let results = eslint.executeOnFiles(patterns)
 // Update the files of the results if needed
 if (process.argv.includes("--fix")) {
-    results = ESLint.outputFixesInIteration(results)
+  results = ESLint.outputFixesInIteration(results)
 }
 // Format and write the results
 for await (const textPiece of formatter(results)) {
-    process.stdout.write(textPiece)
+  process.stdout.write(textPiece)
 }
 ```
 
@@ -366,11 +364,11 @@ const formatter = eslint.getFormatter("stylish")
 let results = eslint.executeOnFiles(patterns)
 // Extract only error results
 if (process.argv.includes("--quiet")) {
-    results = ESLint.extractErrorResults(results)
+  results = ESLint.extractErrorResults(results)
 }
 // Format and write the results
 for await (const textPiece of formatter(results)) {
-    process.stdout.write(textPiece)
+  process.stdout.write(textPiece)
 }
 ```
 
@@ -388,25 +386,6 @@ The following methods are removed because those don't fit the new API.
 - `resolveFileGlobPatterns()` ... ESLint doesn't use this logic since `v6.0.0`, but it has stayed there for backward compatibility. Once [RFC20] is implemented, what ESLint iterates and what the glob of this method iterates will be different, then it will confuse users. This is good timing to remove the legacy.
 
 #### ● New methods
-
-- `collectResults()` ... This method receives an async iterable object then returns an array that contains the iterated values.
-
-  <details>
-  <summary>A rough sketch of the `collectResults()` method.</summary>
-
-  ```js
-  class ESLint {
-    static collectResults(resultIterator) {
-      const results = []
-      for await (const result of resultIterator) {
-        results.push(result)
-      }
-      return results
-    }
-  }
-  ```
-
-  </details>
 
 - `compareResultsByFilePath()` ... This method receives two lint results then returns `+1`, `-1`, or `0`. This method is intended to use in order to sort results.
 
