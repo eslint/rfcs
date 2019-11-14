@@ -27,9 +27,9 @@ This RFC adds a new class `ESLint`. It has almost the same methods as `CLIEngine
 - [static outputFixesInIteration()](#-the-outputfixesiniteration-method) (rename)
 - [static extractErrorResults()](#-the-extracterrorresults-method) (rename)
 - [getConfigForFile()](#-the-other-methods)
-- [getRules()](#-the-other-methods)
 - [isPathIgnored()](#-the-other-methods)
 - ~~addPlugin()~~ (move to a constructor option)
+- ~~getRules()~~ (delete)
 - ~~resolveFileGlobPatterns()~~ (delete)
 - [static compareResultsByFilePath()](#-new-methods) (new)
 
@@ -377,12 +377,12 @@ for await (const textPiece of formatter(results)) {
 The following methods return `Promise` which gets fulfilled with each result. Once we got this change, we can support ES modules for shareable configs, plugins, and custom parsers without more breaking changes.
 
 - `getConfigForFile()`
-- `getRules()`
 - `isPathIgnored()`
 
 The following methods are removed because those don't fit the new API.
 
 - `addPlugin()` ... This method has caused to confuse people. We have introduced this method to add plugin implementations and expected people to use this method to test plugins. But people have often thought that this method loads a new plugin for the following linting so they can use plugins rules without `plugins` setting. And this method is only one that mutates the state of `CLIEngine` objects and messes all caches. Therefore, this RFC moves this functionality to a constructor option. See also "[Constructor](#-constructor)" section.
+- `getRules()` ... This method returns the map that contains core rules and the rules of the plugin that the previous `executeOnFiles()` method call used. This behavior is surprised and forces us to store the config objects that the previous `executeOnFiles()` method call used. This proposal removes this method and a separated RFC (maybe [RFC47]) will add the successor.
 - `resolveFileGlobPatterns()` ... ESLint doesn't use this logic since `v6.0.0`, but it has stayed there for backward compatibility. Once [RFC20] is implemented, what ESLint iterates and what the glob of this method iterates will be different, then it will confuse users. This is good timing to remove the legacy.
 
 #### ● New methods
@@ -508,3 +508,4 @@ The access of the cache file finishes regardless of the progress of the iterator
 [rfc42]: https://github.com/eslint/rfcs/pull/42
 [rfc44]: https://github.com/eslint/rfcs/pull/44
 [rfc45]: https://github.com/eslint/rfcs/pull/45
+[rfc47]: https://github.com/eslint/rfcs/pull/47
