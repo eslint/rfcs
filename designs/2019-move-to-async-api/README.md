@@ -11,7 +11,7 @@ This RFC adds a new class `ESLint` that provides asynchronous API and deprecates
 ## Motivation
 
 - We have functionality that cannot be supported with the current synchronous API. For example, ESLint verifying files in parallel, formatters printing progress state, formatters printing results in streams etc. A move to an asynchronous API would be beneficial and a new `ESLint` class can be created with an async API in mind from the start.
-- Node.js will support [ES modules](https://nodejs.org/api/esm.html) stably on `13.0.0` at last. Node.js doesn't provide any way that loads ES modules synchronously from CJS. This means that ESLint (CJS) cannot load configs/plugins that are written as ES modules synchronously. Migrating to asynchronous API opens up doors to support those.
+- Node.js has supported [ES modules](https://nodejs.org/api/esm.html) stably since `13.2.0`. Because Node.js doesn't provide any way that loads ES modules synchronously from CJS, ESLint cannot load configs/plugins that are written as ES modules. And migrating to asynchronous API opens up doors to support those.
 - The name of `CLIEngine`, our primary API, has caused confusion in the community and is sub-optimal. We have a lot of issues that say "please use `CLIEngine` instead.". A new class, `ESLint`, while fixing other issues, will also make our primary API more clear.
 
 ## Detailed Design
