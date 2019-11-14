@@ -21,11 +21,11 @@ This RFC adds a new class `ESLint` that provides asynchronous API and deprecates
 This RFC adds a new class `ESLint`. It has almost the same methods as `CLIEngine`, but the return value of some methods are different.
 
 - [constructor()](#-constructor)
-- [executeOnFiles()](#-the-executeonfiles-method)
-- [executeOnText()](#-the-executeontext-method)
+- [lintFiles()](#-the-lintfiles-method) (rename from `executeOnFiles()`)
+- [lintText()](#-the-linttext-method) (rename from `executeOnText()`)
 - [getFormatter()](#-the-getformatter-method)
-- [static outputFixesInIteration()](#-the-outputfixesiniteration-method) (rename)
-- [static extractErrorResults()](#-the-extracterrorresults-method) (rename)
+- [static outputFixesInIteration()](#-the-outputfixesiniteration-method) (rename from `outputFixes()`)
+- [static extractErrorResults()](#-the-extracterrorresults-method) (rename from `getErrorResults()`)
 - [getConfigForFile()](#-the-other-methods)
 - [isPathIgnored()](#-the-other-methods)
 - ~~addPlugin()~~ (move to a constructor option)
@@ -127,7 +127,9 @@ class ESLint {
 
 </details>
 
-#### ● The `executeOnFiles()` method
+#### ● The `lintFiles()` method
+
+This method corresponds to `CLIEngine#executeOnFiles()`.
 
 This method returns an object that implements [AsyncIterable] and [AsyncIterator], as similar to async generators. Therefore we can use the returned object with `for-await-of` statement.
 
@@ -135,7 +137,7 @@ This method returns an object that implements [AsyncIterable] and [AsyncIterator
 const { ESLint } = require("eslint")
 const eslint = new ESLint()
 
-for await (const result of eslint.executeOnFiles(patterns)) {
+for await (const result of eslint.lintFiles(patterns)) {
   print(result)
 }
 ```
@@ -145,13 +147,13 @@ The returned object yields the lint result of each file immediately when it has 
 This method must not throw any errors synchronously. Errors may happen in iteration asynchronously.
 
 <details>
-<summary>A rough sketch of the `executeOnFiles()` method.</summary>
+<summary>A rough sketch of the `lintFiles()` method.</summary>
 
 A tiny wrapper of `CLIEngine`.
 
 ```js
 class ESLint {
-  async *executeOnFiles(patterns) {
+  async *lintFiles(patterns) {
     yield* this._cliEngine.executeOnFiles(patterns).results
   }
 }
@@ -169,7 +171,7 @@ const { ESLint } = require("eslint")
 const eslint = new ESLint()
 
 // Convert the results to an array.
-const results = await toArray(eslint.executeOnFiles(patterns))
+const results = await toArray(eslint.lintFiles(patterns))
 
 // Optionally you can sort the results.
 results.sort(ESLint.compareResultsByFilePath)
@@ -191,7 +193,7 @@ We can iterate the returned object of this method only one time similar to gener
 const { ESLint } = require("eslint")
 const eslint = new ESLint()
 
-const resultGenerator = eslint.executeOnFiles(patterns)
+const resultGenerator = eslint.lintFiles(patterns)
 for await (const result of resultGenerator) {
   print(result)
 }
@@ -211,7 +213,7 @@ But the location doesn't fit asynchronous because the used deprecated rule list 
 const { ESLint } = require("eslint")
 const eslint = new ESLint()
 
-for await (const result of eslint.executeOnFiles(patterns)) {
+for await (const result of eslint.lintFiles(patterns)) {
   console.log(result.usedDeprecatedRules)
 }
 ```
@@ -220,7 +222,7 @@ As a side-effect, formatters gets the capability to print the used deprecated ru
 
 ##### Disallow execution in parallel
 
-Because this method updates the cache file, it will break the cache file if called multiple times in parallel. To prevent that, every call of `executeOnFiles()` must wait for the previous call finishes.
+Because this method updates the cache file, it will break the cache file if called multiple times in parallel. To prevent that, every call of `lintFiles()` must wait for the previous call finishes.
 
 ##### Abort linting
 
@@ -236,7 +238,7 @@ ESLint aborts linting when the `return()` method is called. The first `return()`
 const { ESLint } = require("eslint")
 const eslint = new ESLint()
 
-for await (const result of eslint.executeOnFiles(patterns)) {
+for await (const result of eslint.lintFiles(patterns)) {
   if (Math.random() < 0.5) {
     break // abort linting.
   }
@@ -245,9 +247,11 @@ for await (const result of eslint.executeOnFiles(patterns)) {
 
 The second and later calls do nothing.
 
-#### ● The `executeOnText()` method
+#### ● The `lintText()` method
 
-This method returns the same type of an object as the `executeOnFiles()` method.
+This method corresponds to `CLIEngine#executeOnText()`.
+
+This method returns the same type of an object as the `lintFiles()` method.
 
 Because the returned object of `CLIEngine#executeOnText()` method is the same type as the `CLIEngine#executeOnFiles()` method. The `ESLint` class inherits that mannar.
 
@@ -255,20 +259,20 @@ Because the returned object of `CLIEngine#executeOnText()` method is the same ty
 const { ESLint } = require("eslint")
 const eslint = new ESLint()
 
-for await (const result of eslint.executeOnText(text, filePath)) {
+for await (const result of eslint.lintText(text, filePath)) {
   print(result)
 }
 ```
 
-Example: Using along with the `executeOnFiles()` method.
+Example: Using along with the `lintFiles()` method.
 
 ```js
 const { ESLint } = require("eslint")
 const eslint = new ESLint()
 
 const report = useStdin
-  ? eslint.executeOnText(text, filePath)
-  : eslint.executeOnFiles(patterns)
+  ? eslint.lintText(text, filePath)
+  : eslint.lintFiles(patterns)
 
 for await (const result of report) {
   print(result)
@@ -285,7 +289,7 @@ const eslint = new ESLint()
 const formatter = eslint.getFormatter("stylish")
 
 // Verify files
-const results = eslint.executeOnFiles(patterns)
+const results = eslint.lintFiles(patterns)
 // Format and write the results
 for await (const textPiece of formatter(results)) {
   process.stdout.write(textPiece)
@@ -330,7 +334,7 @@ Once we got this change, we can realize the following things:
 
 The original `CLIEngine.outputFixes()` static method writes the fix results to the source code files.
 
-The goal of this method is same as the `CLIEngine.outputFixes()` method, but we cannot share async iterators with this method and formatters, so this method receives an `AsyncIterable<LintResult>` object as the first argument then return an `AsyncIterable<LintResult>` object. This method is sandwiched between `executeOnFiles()` and formatters.
+The goal of this method is same as the `CLIEngine.outputFixes()` method, but we cannot share async iterators with this method and formatters, so this method receives an `AsyncIterable<LintResult>` object as the first argument then return an `AsyncIterable<LintResult>` object. This method is sandwiched between `lintFiles()` and formatters.
 
 ```js
 const { ESLint } = require("eslint")
@@ -338,7 +342,7 @@ const eslint = new ESLint()
 const formatter = eslint.getFormatter("stylish")
 
 // Verify files
-let results = eslint.executeOnFiles(patterns)
+let results = eslint.lintFiles(patterns)
 // Update the files of the results if needed
 if (process.argv.includes("--fix")) {
   results = ESLint.outputFixesInIteration(results)
@@ -353,7 +357,7 @@ for await (const textPiece of formatter(results)) {
 
 The original `CLIEngine.getErrorResults()` static method receives an array of lint results, then extracts only the messages, which are error severity, then returns the results that contain only those.
 
-This method just changed the arrays to async iterables because this method is sandwiched between `executeOnFiles()` and formatters.
+This method just changed the arrays to async iterables because this method is sandwiched between `lintFiles()` and formatters.
 
 ```js
 const { ESLint } = require("eslint")
@@ -361,7 +365,7 @@ const eslint = new ESLint()
 const formatter = eslint.getFormatter("stylish")
 
 // Verify files
-let results = eslint.executeOnFiles(patterns)
+let results = eslint.lintFiles(patterns)
 // Extract only error results
 if (process.argv.includes("--quiet")) {
   results = ESLint.extractErrorResults(results)
