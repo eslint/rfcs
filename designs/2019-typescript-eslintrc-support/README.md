@@ -65,6 +65,11 @@ with a link to @typescript-eslint I think would be all that's needed.
 nicely type & write definitions for ESLint plugins, but that's not strictly
 required by this feature.
 
+It should be documented that _only_ `.eslintrc.ts` is supported (i.e not
+`parsers`,`plugins`, etc), and that the shipping of `.ts` configurations is
+discouraged - instead they should be compiled into JavaScript, and shipped with
+a type definition file (`.eslintrc.d.ts`).
+
 ## Drawbacks
 
 > Slight increase in maintenance burden for core support.
@@ -324,6 +329,20 @@ if it hasn't changed.
 In theory this will increase initial lint speeds, but it should only be by a few
 seconds, depending on config size, since TypeScript only compiles what it needs
 to, and it's rare to import core project files into eslint configuration.
+
+> Does this include TypeScript support for `parser`, `plugins`, or
+> `obj.configs.recommended` of eslint-plugin-foo?
+
+No, this RFC intentionally pertains only to the support of `.eslintrc.ts`.
+
+The reason for this is that the shipping of TypeScript source in packages means
+TypeScript has to be installed to consume the, regardless of if the project is
+using TypeScript.
+
+Instead, these files should be compiled, and shipped with their `.d.ts`
+definition file to allow usage in TypeScript. When using TypeScript, this is the
+same as consuming a TypeScript source file, so still allows for such sharables
+to be written in TypeScript.
 
 ## Related Discussions
 
