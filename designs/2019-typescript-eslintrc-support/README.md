@@ -42,8 +42,9 @@ in the form
 ## Detailed Design
 
 - Adds support for `.eslintrc.ts`
-- Requires uses to install `ts-node` manually adjacent to ESLint in
-  `node_modules`.
+- Requires uses to install `ts-node` manually relative to the `node_modules` of
+  the configuration file, per standard Node
+  [module resolution logic](https://nodejs.org/api/modules.html#modules_loading_from_node_modules_folders)
   - Failure to do so with a `.eslintrc.ts` results in ESLint throwing a fatal
     error
   - The error message should include understandable plain text instructions on
