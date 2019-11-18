@@ -39,8 +39,8 @@ to help improve the two tools.
 ## Detailed Design
 
 - Adds support for `.eslintrc.ts`
-- Requires users to install `ts-node` manually relative to the `node_modules` of
-  the configuration file, per standard Node
+- Requires users to install `ts-node` separately along the path that the
+  `eslint` command is being run, per standard Node
   [module resolution logic](https://nodejs.org/api/modules.html#modules_loading_from_node_modules_folders)
   - Failure to require `ts-node` with a `.eslintrc.ts` results in ESLint
     throwing a fatal error
