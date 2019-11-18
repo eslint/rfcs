@@ -1,5 +1,5 @@
 - Start Date: 2019-11-18
-- RFC PR: (leave this empty, to be filled in later)
+- RFC PR: https://github.com/eslint/rfcs/pull/50
 - Authors: Gareth Jones ([@g-rath](https://github.com/g-rath))
 
 # First-Class Support For `.eslintrc.ts`
