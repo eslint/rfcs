@@ -81,11 +81,6 @@ expect it should be possible to refine `eslint-bot` to triage these issues and
 post a comment detailing common problems & their solutions to help reduce this
 cost.
 
-Personally I don't think the general amount of maintenance that would result
-from this change would be too drastic, as I'm confident that both the core
-TypeScript and @typescript-eslint communities would be happy to foot the
-maintenance bill for this change.
-
 ## Backwards Compatibility Analysis
 
 This should be a completely backwards compatible change, since ESLint currently
