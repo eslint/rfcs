@@ -41,21 +41,17 @@ in the form
 
 ## Detailed Design
 
-- `loadConfigFile` function is passed a `filePath` string parameter.
-- If the `filePath` parameter ends with the extension `.ts`, `loadTSConfigFile`
-  is called passing it `filePath`.
-- `loadTSConfigFile` attempts to require `ts-node` and call `register()`
-  - If an error is thrown, `eslint` bails out with an error.
-- The `registerer` returned by `register()` is stored for use.
-- The `registerer` is enabled (by calling `registerer.enabled(true)`)
-- `importFresh` is called, being passed the `filePath`.
-  - The return is stored for later use.
-- The `registerer` is disabled (by calling `registerer.enabled(false)`)
-  - This is to reduce risk of errors by mistakenly requiring `ts` files during
-    standard linting.
-- The stored return of `importFresh` is returned.
-- `loadConfigFile` returns the result of `loadTSConfigFile`
-- `eslint` continues per normal.
+- Adds support for `.eslintrc.ts`
+- Requires uses to install `ts-node` manually adjacent to ESLint in
+  `node_modules`.
+  - Failure to do so with a `.eslintrc.ts` results in ESLint throwing a fatal
+    error
+  - The error message should include understandable plain text instructions on
+    how to fix the error.
+- ESLint does not validate the configuration object for now.
+- `.eslintrc.ts` is second highest priority, after `.eslintrc.js`
+  - This matches the priority of the other supported types, and generally where
+    TypeScript files it for other tools i.e webpack
 
 ## Documentation
 
