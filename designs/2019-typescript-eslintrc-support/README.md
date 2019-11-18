@@ -42,8 +42,8 @@ to help improve the two tools.
 - Requires users to install `ts-node` manually relative to the `node_modules` of
   the configuration file, per standard Node
   [module resolution logic](https://nodejs.org/api/modules.html#modules_loading_from_node_modules_folders)
-  - Failure to do so with a `.eslintrc.ts` results in ESLint throwing a fatal
-    error
+  - Failure to require `ts-node` with a `.eslintrc.ts` results in ESLint
+    throwing a fatal error
   - The error message should include understandable plain text instructions on
     how to fix the error.
 - ESLint does not validate the configuration object for now.
