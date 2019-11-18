@@ -36,13 +36,10 @@ Finally, ESLint is being adopted as the linter for TypeScript, meaning
 first-class support for `.eslintrc.ts` will help enable a positive feedback loop
 to help improve the two tools.
 
-There are some potential UX benefits for users that use & understand TypeScript,
-in the form
-
 ## Detailed Design
 
 - Adds support for `.eslintrc.ts`
-- Requires uses to install `ts-node` manually relative to the `node_modules` of
+- Requires users to install `ts-node` manually relative to the `node_modules` of
   the configuration file, per standard Node
   [module resolution logic](https://nodejs.org/api/modules.html#modules_loading_from_node_modules_folders)
   - Failure to do so with a `.eslintrc.ts` results in ESLint throwing a fatal
