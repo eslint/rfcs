@@ -1,5 +1,5 @@
 - Start Date: 2019-11-07
-- RFC PR:
+- RFC PR: https://github.com/eslint/rfcs/pull/47
 - Authors: Toru Nagashima ([@mysticatea](https://github.com/mysticatea))
 
 # Plugin Loading Improvement
