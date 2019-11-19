@@ -145,7 +145,7 @@ ESLint loads the plugins that are not declared in config files from the current 
 - `plugins` option of `CLIEngine` (and `--plugin` CLI option)
 - `baseConfig.plugins` option of `CLIEngine`
 
-If a config file has the same plugin as those options ware given, and ESLint resolved ESLint resolved them to different entities, then ESLint throws.
+If a config file has the same plugin as those options ware given, and ESLint resolved them to different entities, then ESLint throws.
 
     Plugin conflict was found. ESLint requires to determine the plugin uniquely.
 
