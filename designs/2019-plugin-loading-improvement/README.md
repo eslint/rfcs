@@ -171,7 +171,7 @@ If the plugins of the personal config conflict with `--plugin` option or somethi
 The implementation will be simple.
 
 - Modify [ConfigArrayFactory](https://github.com/eslint/eslint/blob/62623f9f611a3adb79696304760a2fd14be8afbc/lib/cli-engine/config-array-factory.js) to load plugins relatively `basePath`. If `resolvePluginsRelativeTo` constructor option is present, it ignores the `basePath` and loads from the `resolvePluginsRelativeTo`. The `basePath` is:
-  - `options.basePath` if the `create(data, options)` method is called. Defaults to `cwd`.
+  - the directory of `options.filePath` if the `create(data, options)` method is called. It's `cwd` if `options.filePath` is not present.
   - the directory of `filePath` if the `loadFile(filePath, options)` method is called.
   - the `directoryPath` if the `loadInDirectory(directoryPath, options)` method is called.
 - Modify [the `mergePlugins` function in ConfigArray](https://github.com/eslint/eslint/blob/62623f9f611a3adb79696304760a2fd14be8afbc/lib/cli-engine/config-array/config-array.js#L163) to throw a clear error if a plugin conflict was found. The conflict is `sourceValue.filePath !== targetValue.filePath`. Both `sourceValue` and `targetValue` are [ConfigDependency](https://github.com/eslint/eslint/blob/62623f9f611a3adb79696304760a2fd14be8afbc/lib/cli-engine/config-array/config-dependency.js) objects, so the error object can have the importer's info as the template data easily.
