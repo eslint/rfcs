@@ -81,18 +81,17 @@ They should give the configuration a `.cjs` extension.
 
 With the addition of `.cjs`, the new priority for configuration files will be
 
+1. .eslintrc.js
 1. .eslintrc.cjs
-2. .eslintrc.js
-3. .eslintrc.yaml
-4. .eslintrc.yml
-5. .eslintrc.json
-6. .eslintrc
-7. package.json
+1. .eslintrc.yaml
+1. .eslintrc.yml
+1. .eslintrc.json
+1. .eslintrc
+1. package.json
 
 ## Documentation
 
 The [Configuration File Formats](https://github.com/eslint/website/blob/master/docs/6.0.0/user-guide/configuring.md#configuration-file-formats) section will need to be updated.
-
 
 ```
 ## Configuration File Formats
