@@ -2,23 +2,23 @@
 - RFC PR: https://github.com/eslint/rfcs/pull/40
 - Authors: Toru Nagashima ([@mysticatea](https://github.com/mysticatea))
 
-# `ESLint` Class Replacing `CLIEngine`
+# `LinterShell` Class Replacing `CLIEngine`
 
 ## Summary
 
-This RFC adds a new class `ESLint` that provides asynchronous API and deprecates `CLIEngine`.
+This RFC adds a new class `LinterShell` that provides asynchronous API and deprecates `CLIEngine`.
 
 ## Motivation
 
-- We have functionality that cannot be supported with the current synchronous API. For example, ESLint verifying files in parallel, formatters printing progress state, formatters printing results in streams etc. A move to an asynchronous API would be beneficial and a new `ESLint` class can be created with an async API in mind from the start.
+- We have functionality that cannot be supported with the current synchronous API. For example, ESLint verifying files in parallel, formatters printing progress state, formatters printing results in streams etc. A move to an asynchronous API would be beneficial and a new `LinterShell` class can be created with an async API in mind from the start.
 - Node.js has supported [ES modules](https://nodejs.org/api/esm.html) stably since `13.2.0`. Because Node.js doesn't provide any way that loads ES modules synchronously from CJS, ESLint cannot load configs/plugins that are written as ES modules. And migrating to asynchronous API opens up doors to support those.
-- The name of `CLIEngine`, our primary API, has caused confusion in the community and is sub-optimal. We have a lot of issues that say "please use `CLIEngine` instead.". A new class, `ESLint`, while fixing other issues, will also make our primary API more clear.
+- The name of `CLIEngine`, our primary API, has caused confusion in the community and is sub-optimal. We have a lot of issues that say "please use `CLIEngine` instead.". A new class, `LinterShell`, while fixing other issues, will also make our primary API more clear.
 
 ## Detailed Design
 
-### Add new `ESLint` class
+### Add new `LinterShell` class
 
-This RFC adds a new class `ESLint`. It has almost the same methods as `CLIEngine`, but the return value of some methods are different.
+This RFC adds a new class `LinterShell`. It has almost the same methods as `CLIEngine`, but the return value of some methods are different.
 
 - [constructor()](#-constructor)
 - [lintFiles()](#-the-lintfiles-method) (rename from `executeOnFiles()`)
@@ -33,7 +33,7 @@ This RFC adds a new class `ESLint`. It has almost the same methods as `CLIEngine
 - ~~resolveFileGlobPatterns()~~ (delete)
 - [static compareResultsByFilePath()](#-new-methods) (new)
 
-Initially the `ESLint` class will be a wrapper around `CLIEngine`, modifying return types. Later it can take on a more independent shape as `CLIEngine` gets more deprecated.
+Initially the `LinterShell` class will be a wrapper around `CLIEngine`, modifying return types. Later it can take on a more independent shape as `CLIEngine` gets more deprecated.
 
 #### ● Constructor
 
@@ -47,7 +47,7 @@ The constructor has mostly the same options as `CLIEngine`, but with some differ
 <summary>A rough sketch of the constructor.</summary>
 
 ```js
-class ESLint {
+class LinterShell {
   constructor({
     allowInlineConfig = true,
     baseConfig = null,
@@ -132,8 +132,8 @@ class ESLint {
 <summary>For `plugins` example.</summary>
 
 ```js
-const { ESLint } = require("eslint")
-const eslint = new ESLint({
+const { LinterShell } = require("eslint")
+const linter = new LinterShell({
   plugins: [
     "foo",
     "eslint-plugin-bar",
@@ -151,10 +151,10 @@ This method corresponds to `CLIEngine#executeOnFiles()`.
 This method returns an object that implements [AsyncIterable] and [AsyncIterator], as similar to async generators. Therefore we can use the returned object with `for-await-of` statement.
 
 ```js
-const { ESLint } = require("eslint")
-const eslint = new ESLint()
+const { LinterShell } = require("eslint")
+const linter = new LinterShell()
 
-for await (const result of eslint.lintFiles(patterns)) {
+for await (const result of linter.lintFiles(patterns)) {
   print(result)
 }
 ```
@@ -169,7 +169,7 @@ This method must not throw any errors synchronously. Errors may happen in iterat
 A tiny wrapper of `CLIEngine`.
 
 ```js
-class ESLint {
+class LinterShell {
   async *lintFiles(patterns) {
     yield* this._cliEngine.executeOnFiles(patterns).results
   }
@@ -184,14 +184,14 @@ If you want to use the returned object with `await` expression, you can use a sm
 
 ```js
 const toArray = require("@async-generators/to-array").default
-const { ESLint } = require("eslint")
-const eslint = new ESLint()
+const { LinterShell } = require("eslint")
+const linter = new LinterShell()
 
 // Convert the results to an array.
-const results = await toArray(eslint.lintFiles(patterns))
+const results = await toArray(linter.lintFiles(patterns))
 
 // Optionally you can sort the results.
-results.sort(ESLint.compareResultsByFilePath)
+results.sort(LinterShell.compareResultsByFilePath)
 
 print(results)
 ```
@@ -207,10 +207,10 @@ Once we got this change, we can realize the following things:
 We can iterate the returned object of this method only one time similar to generators.
 
 ```js
-const { ESLint } = require("eslint")
-const eslint = new ESLint()
+const { LinterShell } = require("eslint")
+const linter = new LinterShell()
 
-const resultGenerator = eslint.lintFiles(patterns)
+const resultGenerator = linter.lintFiles(patterns)
 for await (const result of resultGenerator) {
   print(result)
 }
@@ -227,10 +227,10 @@ The returned object of `CLIEngine#executeOnFiles()` has the `usedDeprecatedRules
 But the location doesn't fit asynchronous because the used deprecated rule list is not determined until the iteration finished. Therefore, this RFC moves the `usedDeprecatedRules` property to each lint result.
 
 ```js
-const { ESLint } = require("eslint")
-const eslint = new ESLint()
+const { LinterShell } = require("eslint")
+const linter = new LinterShell()
 
-for await (const result of eslint.lintFiles(patterns)) {
+for await (const result of linter.lintFiles(patterns)) {
   console.log(result.usedDeprecatedRules)
 }
 ```
@@ -256,10 +256,10 @@ ESLint aborts linting when the `return()` method is called. The first `return()`
 - ESLint will terminate all workers if [RFC42] is implemented.
 
 ```js
-const { ESLint } = require("eslint")
-const eslint = new ESLint()
+const { LinterShell } = require("eslint")
+const linter = new LinterShell()
 
-for await (const result of eslint.lintFiles(patterns)) {
+for await (const result of linter.lintFiles(patterns)) {
   if (Math.random() < 0.5) {
     break // abort linting.
   }
@@ -274,13 +274,13 @@ This method corresponds to `CLIEngine#executeOnText()`.
 
 This method returns the same type of an object as the `lintFiles()` method.
 
-Because the returned object of `CLIEngine#executeOnText()` method is the same type as the `CLIEngine#executeOnFiles()` method. The `ESLint` class inherits that mannar.
+Because the returned object of `CLIEngine#executeOnText()` method is the same type as the `CLIEngine#executeOnFiles()` method. The `LinterShell` class inherits that mannar.
 
 ```js
-const { ESLint } = require("eslint")
-const eslint = new ESLint()
+const { LinterShell } = require("eslint")
+const linter = new LinterShell()
 
-for await (const result of eslint.lintText(text, filePath)) {
+for await (const result of linter.lintText(text, filePath)) {
   print(result)
 }
 ```
@@ -288,12 +288,12 @@ for await (const result of eslint.lintText(text, filePath)) {
 Example: Using along with the `lintFiles()` method.
 
 ```js
-const { ESLint } = require("eslint")
-const eslint = new ESLint()
+const { LinterShell } = require("eslint")
+const linter = new LinterShell()
 
 const report = useStdin
-  ? eslint.lintText(text, filePath)
-  : eslint.lintFiles(patterns)
+  ? linter.lintText(text, filePath)
+  : linter.lintFiles(patterns)
 
 for await (const result of report) {
   print(result)
@@ -305,12 +305,12 @@ for await (const result of report) {
 This method returns a `Promise<Formatter>`. The `Formatter` type is a function `(results: AsyncIterable<LintResult>) => AsyncIterable<string>`. It receives lint results then outputs the formatted text.
 
 ```js
-const { ESLint } = require("eslint")
-const eslint = new ESLint()
-const formatter = eslint.getFormatter("stylish")
+const { LinterShell } = require("eslint")
+const linter = new LinterShell()
+const formatter = linter.getFormatter("stylish")
 
 // Verify files
-const results = eslint.lintFiles(patterns)
+const results = linter.lintFiles(patterns)
 // Format and write the results
 for await (const textPiece of formatter(results)) {
   process.stdout.write(textPiece)
@@ -323,7 +323,7 @@ This means the `getFormatter()` method wraps the current formatter to adapt the 
 <summary>A rough sketch of the `getFormatter()` method.</summary>
 
 ```js
-class ESLint {
+class LinterShell {
   async getFormatter(name) {
     const format = this._cliEngine.getFormatter(name)
 
@@ -331,7 +331,7 @@ class ESLint {
     return async function* formatter(resultIterator) {
       // Collect and sort the results.
       const results = await toArray(resultIterator)
-      results.sort(ESLint.compareResultsByFilePath)
+      results.sort(LinterShell.compareResultsByFilePath)
 
       // Make `rulesMeta`.
       const rules = this._cliEngine.getRules()
@@ -358,15 +358,15 @@ The original `CLIEngine.outputFixes()` static method writes the fix results to t
 The goal of this method is same as the `CLIEngine.outputFixes()` method, but we cannot share async iterators with this method and formatters, so this method receives an `AsyncIterable<LintResult>` object as the first argument then return an `AsyncIterable<LintResult>` object. This method is sandwiched between `lintFiles()` and formatters.
 
 ```js
-const { ESLint } = require("eslint")
-const eslint = new ESLint()
-const formatter = eslint.getFormatter("stylish")
+const { LinterShell } = require("eslint")
+const linter = new LinterShell()
+const formatter = linter.getFormatter("stylish")
 
 // Verify files
-let results = eslint.lintFiles(patterns)
+let results = linter.lintFiles(patterns)
 // Update the files of the results if needed
 if (process.argv.includes("--fix")) {
-  results = ESLint.outputFixesInIteration(results)
+  results = LinterShell.outputFixesInIteration(results)
 }
 // Format and write the results
 for await (const textPiece of formatter(results)) {
@@ -381,15 +381,15 @@ The original `CLIEngine.getErrorResults()` static method receives an array of li
 This method just changed the arrays to async iterables because this method is sandwiched between `lintFiles()` and formatters.
 
 ```js
-const { ESLint } = require("eslint")
-const eslint = new ESLint()
-const formatter = eslint.getFormatter("stylish")
+const { LinterShell } = require("eslint")
+const linter = new LinterShell()
+const formatter = linter.getFormatter("stylish")
 
 // Verify files
-let results = eslint.lintFiles(patterns)
+let results = linter.lintFiles(patterns)
 // Extract only error results
 if (process.argv.includes("--quiet")) {
-  results = ESLint.extractErrorResults(results)
+  results = LinterShell.extractErrorResults(results)
 }
 // Format and write the results
 for await (const textPiece of formatter(results)) {
@@ -418,7 +418,7 @@ The following methods are removed because those don't fit the new API.
   <summary>A rough sketch of the `compareResultsByFilePath()` method.</summary>
 
   ```js
-  class ESLint {
+  class LinterShell {
     static compareResultsByFilePath(a, b) {
       if (a.filePath < b.filePath) {
         return -1
@@ -457,7 +457,7 @@ People that use `CLIEngine` have to update their application with the new API. I
 
 If we assume [RFC44] will be merged, this RFC is a drastic change, but not a breaking change until we decide to remove `CLIEngine` class.
 
-This RFC just adds `ESLint` class and deprecates `CLIEngine` class. We can do both in a minor release.
+This RFC just adds `LinterShell` class and deprecates `CLIEngine` class. We can do both in a minor release.
 
 ## Alternatives
 
@@ -467,7 +467,7 @@ Adding `CLIEngine#executeOnFilesAsync()` method is an alternative.
 
 **Pros:**
 
-- It's smaller change than adding `ESLint` class.
+- It's smaller change than adding `LinterShell` class.
 
 **Cons:**
 
@@ -491,7 +491,7 @@ Using [streams](https://nodejs.org/dist/latest-v12.x/docs/api/stream.html) inste
 
 **Pros:**
 
-- We can introduce `ESLint` class in a minor release. (To use Async Iteration, we have to wait for [RFC44]).
+- We can introduce `LinterShell` class in a minor release. (To use Async Iteration, we have to wait for [RFC44]).
 
 **Cons:**
 
@@ -510,9 +510,9 @@ are alternatives. Both cases stop the previous or current call. It may be surpri
 
 - Waiting the previous call internally.
 
-The access of the cache file finishes regardless of the progress of the iterator that the method returned. It means that API users cannot know when the file access finished. On the other hand, because `ESLint` objects know when the file access finished, it can execute the next call at the proper timing.
+The access of the cache file finishes regardless of the progress of the iterator that the method returned. It means that API users cannot know when the file access finished. On the other hand, because `LinterShell` objects know when the file access finished, it can execute the next call at the proper timing.
 
-However, the `ESLint` objects cannot know the existence of other threads and processes that write the cache file. The current way has a smaller risk than the alternatives.
+However, the `LinterShell` objects cannot know the existence of other threads and processes that write the cache file. The current way has a smaller risk than the alternatives.
 
 ## Related Discussions
 
