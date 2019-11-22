@@ -91,7 +91,34 @@ With the addition of `.cjs`, the new priority for configuration files will be
 
 ## Documentation
 
-A quick mention in the [FAQ](https://github.com/eslint/eslint#frequently-asked-questions) should be suitable to document usage.
+The [Configuration File Formats](https://github.com/eslint/website/blob/master/docs/6.0.0/user-guide/configuring.md#configuration-file-formats) section will need to be updated.
+
+
+```
+## Configuration File Formats
+
+ESLint supports configuration files in several formats:
+
+* **JavaScript** - use `.eslintrc.js` and export an object containing your configuration.
+* **JavaScript (ESM) - same as `.eslintrc.js but used with ES module packages <---
+* **YAML** - use `.eslintrc.yaml` or `.eslintrc.yml` to define the configuration structure.
+* **JSON** - use `.eslintrc.json` to define the configuration structure. ESLint's JSON files also allow JavaScript-style comments.
+* **Deprecated** - use `.eslintrc`, which can be either JSON or YAML.
+* **package.json** - create an `eslintConfig` property in your `package.json` file and define your configuration there.
+
+If there are multiple configuration files in the same directory, ESLint will only use one. The priority order is:
+
+1. `.eslintrc.js`
+1. `.eslintrc.cjs` <---
+1. `.eslintrc.yaml`
+1. `.eslintrc.yml`
+1. `.eslintrc.json`
+1. `.eslintrc`
+1. `package.json`
+
+**Note:** JavaScript (ESM) is for use with JavaScript packages that specify `"type":"module"` in `package.json`. <---
+
+```
 
 ## Drawbacks
 
