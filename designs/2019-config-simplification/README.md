@@ -59,8 +59,8 @@ module.exports = {
     ignores: ["*.test.js"],
     globals: {},
     settings: {},
-    processor: object,
-    parser: object,
+    processor: object || "string",
+    parser: object || "string",
     parserOptions: {},
     defs: {
         plugins: {}
@@ -72,7 +72,7 @@ module.exports = {
 The following keys are new to the `eslint.config.js` format:
 
 * `name` - Specifies the name of the config object. This is helpful for printing out debugging information and, while not required, is recommended for that reason.
-* `files` - **Required.** Determines the glob file patterns that this configuration applies to.
+* `files` - Determines the glob file patterns that this configuration applies to.
 * `ignores` - Determines the files that should not be linted using ESLint. This can be used in place of the `.eslintignore` file. The files specified by this array of glob patterns are subtracted from the files specified in `files`.
 * `defs` - Contains definitions that are used in the config.
   * `plugins` - Contains definitions for plugins. This replaces the `plugins` key in `.eslintrc` files and the `--rulesdir` option.
@@ -86,8 +86,8 @@ The following keys are specified the same as in `.eslintrc` files:
 
 The following keys are specified differently than in `.eslintrc` files:
 
-* `parser` - an object in `eslint.config.js` files (a string in `.eslintrc`)
-* `processor` - an object in `eslint.config.js` files (a string in `.eslintrc`)
+* `parser` - an object or string in `eslint.config.js` files (a string in `.eslintrc`)
+* `processor` - an object or string in `eslint.config.js` files (a string in `.eslintrc`)
 
 Each of these keys used to require one or more strings specifying module(s) to load in `.eslintrc`. In `eslint.config.js`, these are all objects, requiring users to manually specify the objects to use.
 
@@ -96,7 +96,6 @@ The following keys are invalid in `eslint.config.js`:
 * `extends` - replaced by config arrays
 * `env` - responsibility of the user
 * `overrides` - responsibility of the user
-* `plugins` - replaced by `ruledefs`
 * `root` - always considered `true`
 
 Each of these keys represent different ways of augmenting how configuration is calculated and all of that responsibility now falls on the user.
@@ -382,7 +381,7 @@ parser: "babel-eslint"
 processor: "markdown/markdown"
 ```
 
-In `eslint.config.js`, you would need to pass the references directly, such as:
+In `eslint.config.js`, there are two options. First, you can pass references directly into these keys:
 
 ```js
 module.exports = {
@@ -392,7 +391,26 @@ module.exports = {
 };
 ```
 
-In both cases, users now must pass a direct object reference. This has the benefit of using the builtin Node.js module resolution system or allowing users to specify their own. There is never a question of where the modules will be resolved from.
+Second, you can use a string to specify an object to load from a plugin, such as:
+
+```js
+module.exports = {
+    defs: {
+        plugins: {
+            markdown: require("eslint-plugin-markdown"),
+            babel: require("eslint-plugin-babel")
+        }
+    }
+    files: ["*.js"],
+    parser: "babel/eslint-parser",
+    processor: "markdown/markdown"
+};
+```
+
+In this example, `"babel/eslint-parser"` loads the parser defined in the `eslint-plugin-babel` plugin and `"markdown/markdown"` loads the processor from the `eslint-plugin-markdown` plugin. Note that the behavior for `parser` is different than with `.eslintrc` in that the string **must** represent a parser defined in a plugin.
+
+
+The benefit to this approach of specifying parsers and processors is that it uses the builtin Node.js module resolution system or allows users to specify their own. There is never a question of where the modules will be resolved from.
 
 #### Applying an Environment
 
@@ -614,7 +632,7 @@ To allow for backwards compatibility with existing configs and plugins, an `@esl
 
 * `importESLintRC(eslintrcName)` - allows using `.eslintrc`-style configs
 * `translateESLintRC(config)` - translates an `.eslintrc`-style config object into the correct format
-* `importPlugin(pluginName)` - automatically loads and merges in plugin information likes rules and processors
+* `importPlugin(pluginName)` - automatically loads and merges in plugin information like rules and processors
 * `importEnvGlobals(envName)` - imports globals from an environment
 * `importEnvConfig(envName)` - imports an environment with globals and things like `parserOptions` (for `es6` and `node` environments)
 
