@@ -63,7 +63,7 @@ module.exports = {
     parser: object,
     parserOptions: {},
     defs: {
-        ruleNamespaces: {}
+        plugins: {}
     },
     rules: {}
 };
@@ -75,7 +75,7 @@ The following keys are new to the `eslint.config.js` format:
 * `files` - **Required.** Determines the glob file patterns that this configuration applies to.
 * `ignores` - Determines the files that should not be linted using ESLint. This can be used in place of the `.eslintignore` file. The files specified by this array of glob patterns are subtracted from the files specified in `files`.
 * `defs` - Contains definitions that are used in the config.
-  * `ruleNamespaces` - Contains definitions for rule namespaces grouped by a specific name. This replaces the `plugins` key in `.eslintrc` files and the `--rulesdir` option.
+  * `plugins` - Contains definitions for plugins. This replaces the `plugins` key in `.eslintrc` files and the `--rulesdir` option.
 
 The following keys are specified the same as in `.eslintrc` files:
 
@@ -233,18 +233,20 @@ your-project
 The problem comes when the shareable configs try to use the default namespace of `eslint-plugin-example` for its rules, such as:
 
 ```js
+const example = require("eslint-plugin-example");
+
 module.exports = {
     defs: {
-        ruleNamespaces: {
-            example: require("eslint-plugin-example").rules
+        plugins: {
+            example
         }
     }
 };
 ```
 
-If both shareable configs do this, and the user tries to use both shareable configs, an error will be thrown when the configs are normalized because the rule namespace `example` can only be assigned once.
+If both shareable configs do this, and the user tries to use both shareable configs, an error will be thrown when the configs are normalized because the plugin namespace `example` can only be assigned once.
 
-To work around this problem, the end user can create a separate namespace for the same plugin so that it doesn't conflict with an existing rule namespace from a shareable config. For example, suppose you want to use `eslint-config-first`, and that has an `example` rule namespace defined. You'd also like to use `eslint-config-second`, which also has an `example` rule namespace defined. Trying to use both shareable configs will throw an error because a rule namespace cannot be defined twice. You can still use both shareable configs by creating a new config from `eslint-config-second` that uses a different namespace. For example:
+To work around this problem, the end user can create a separate namespace for the same plugin so that it doesn't conflict with an existing plugin namespace from a shareable config. For example, suppose you want to use `eslint-config-first`, and that has an `example` plugin namespace defined. You'd also like to use `eslint-config-second`, which also has an `example` plugin namespace defined. Trying to use both shareable configs will throw an error because a plugin namespace cannot be defined twice. You can still use both shareable configs by creating a new config from `eslint-config-second` that uses a different namespace. For example:
 
 ```js
 // get the config you want to extend
@@ -252,9 +254,8 @@ const configToExtend = require("eslint-config-second");
 
 // create a new copy (NOTE: probably best to do this with @eslint/config somehow)
 const compatConfig = Object.create(configToExtend);
-compatConfig.defs.ruleNamespaces = Object.assign({}, configToExtend.defs.ruleNamespaces);
-compatConfig.defs.ruleNamespaces["compat::example"] = require("eslint-plugin-example").rules;
-delete compatConfig.defs.ruleNamespaces.example;
+compatConfig.defs.plugins["compat::example"] = require("eslint-plugin-example");
+delete compatConfig.defs.plugins.example;
 
 // include in config
 module.exports = [
@@ -282,16 +283,16 @@ rules:
 
 This file tells ESLint to load `eslint-plugin-react` and then configure a rule from that plugin. The `react/` is automatically preprended to the rule by ESLint for easy reference.
 
-In `eslint.config.js`, the same configuration is achieved using a `ruledefs` key:
+In `eslint.config.js`, the same configuration is achieved using a `plugins` key:
 
 ```js
-const reactPlugin = require("eslint-plugin-react");
+const react = require("eslint-plugin-react");
 
 module.exports = {
     files: ["*.js"],
     defs: {
-        ruleNamespaces: {
-            react: reactPlugin.rules
+        plugins: {
+            react
         }
     },
     rules: {
@@ -300,13 +301,13 @@ module.exports = {
 };
 ```
 
-Here, it is the `defs.ruleNamespaces` that assigns the name `react` to the rules from `eslint-plugin-react`. The reference to `react/` in a rule will always look up that value in the `defs.ruleNamespaces` key.
+Here, it is the `defs.plugins` that assigns the name `react` to the rules from `eslint-plugin-react`. The reference to `react/` in a rule will always look up that value in the `defs.plugins` key.
 
-**Note:** If a config is merged with another config that already has the same `defs.ruleNamespaces` namespace defined and the namespace doesn't refer to the same rules object, then an error is thrown. In this case, if a config already has a `react` namespace, then attempting to combine with another config that has a `react` namespace that contains different rules will throw an error. This is to ensure the meaning of `namespace/rule` remains consistent.
+**Note:** If a config is merged with another config that already has the same `defs.plugins` namespace defined and the namespace doesn't refer to the same rules object, then an error is thrown. In this case, if a config already has a `react` namespace, then attempting to combine with another config that has a `react` namespace that contains different rules will throw an error. This is to ensure the meaning of `namespace/rule` remains consistent.
 
 #### Plugins Specifying Their Own Namespaces
 
-Rules imported from a plugin must be assigned a namespace using `defs.ruleNamespaces`, which puts the responsibility for that namespace on the config file user. Plugins can define their own namespace for rules in two ways.
+Rules imported from a plugin must be assigned a namespace using `defs.plugins`, which puts the responsibility for that namespace on the config file user. Plugins can define their own namespace for rules in two ways. (Note that plugins will not be required to define their own namespaces.)
 
 First, a plugin can export a recommended configuration to place in a config array. For example, a plugin called `eslint-plugin-example`, might define a config that looks like this:
 
@@ -314,9 +315,12 @@ First, a plugin can export a recommended configuration to place in a config arra
 module.exportss = {
     recommended: {
         defs: {
-            ruleNamespaces: {
+            plugins: {
                 example: {
-                    rule1: require("./rules/rule1")
+                    rules: {
+                        rule1: require("./rules/rule1")
+
+                    }
                 }
             }
         }
@@ -337,25 +341,27 @@ module.exports = [
 ];
 ```
 
-The user config in this example now inherits the `defs.ruleNamespaces` from the plugin's recommended config, automatically adding in the rules with their preferred namespace. (Note that the user config can't have another `defs.ruleNamespaces` namespace called `example` without an error being thrown.)
+The user config in this example now inherits the `defs.plugins` from the plugin's recommended config, automatically adding in the rules with their preferred namespace. (Note that the user config can't have another `defs.plugins` namespace called `example` without an error being thrown.)
 
-The second way for plugins to specify their preferred namespace is to export a `ruleNamespaces` key directly that users can include their own config. This is what it would look like in the plugin:
+The second way for plugins to specify their preferred namespace is to export a `plugin` key directly that users can include their own config. This is what it would look like in the plugin:
 
 ```js
-exports.ruleNamespaces = {
+exports.plugin = {
     example: {
-        rule1: require("./rules/rule1")
+        rules: {
+            rule1: require("./rules/rule1")
+        }
     }
 };
 ```
 
-Then, inside of a user config, the plugin's `defs.ruleNamespaces` can be included directly`:
+Then, inside of a user config, the plugin's `defs.plugins` can be included directly`:
 
 ```js
 module.exports = {
     defs: {
-        ruleNamespaces: {
-            ...require("eslint-plugin-example").ruleNamespaces
+        plugins: {
+            ...require("eslint-plugin-example").plugin
         },
     }
     rules: {
@@ -364,7 +370,7 @@ module.exports = {
 };
 ```
 
-This example imports the `ruleNamespaces` from a plugin directly into the same section in the user config.
+This example imports the `plugin` from a plugin directly into the same section in the user config.
 
 #### Referencing Parsers and Processors
 
@@ -431,8 +437,8 @@ module.exports = [
     {
         files: "*.js",
         defs: {
-            ruleNamespaces: {
-                react: require("eslint-plugin-react").rules,
+            plugins: {
+                react: require("eslint-plugin-react"),
             },
         }
         rules: {
@@ -505,15 +511,17 @@ When evaluating the `files` array in the config, ESLint will end up searching fo
 
 ### Replacing `--rulesdir`
 
-In order to recreate the functionality of `--rulesdir`, a user would need to create a new entry in `defs.ruleNamespaces` and then specify the rules from a directory. This can be accomplished using the [`requireindex`](https://npmjs.com/package/requireindex) npm package:
+In order to recreate the functionality of `--rulesdir`, a user would need to create a new entry in `defs.plugins` and then specify the rules from a directory. This can be accomplished using the [`requireindex`](https://npmjs.com/package/requireindex) npm package:
 
 ```js
 const requireIndex = require("requireindex");
 
 module.exports = {
     defs: {
-        ruleNamespaces: {
-            custom: requireIndex("./custom-rules")
+        plugins: {
+            custom: {
+                rules: requireIndex("./custom-rules")
+            }
         },
     }
     rules: {
@@ -566,8 +574,10 @@ module.exports = (context) => {
     const myConfig = {
         files: ["*.js"],
         defs: {
-            ruleNamespaces: {
-                custom: requireIndex("./custom-rules")
+            plugins: {
+                custom: {
+                    rules: requireIndex("./custom-rules")
+                }
             },
         }
         rules: {
@@ -838,48 +848,6 @@ By using strings as placeholders, we allow the core to fill in the values for th
 ### Should shareable configs also use `module.exports`?
 
 It's really up to the shareable configs. With this design, there is no required format for shareable configs, so we can no longer enforce any such conventions. For simplicity, I think that most shareable configs will use `module.exports`, but it's really up to the shareable config author.
-
-### Why is `ruledefs` the way to load plugin rules instead of `plugins`?
-
-The reason we could enforce naming of both plugin packages and rule namespaces is because ESLint controlled how the plugins were loaded: users passed ESLint a string and then ESLint could both inspect the string to pull out details it needed (the plugin name without the `eslint-plugin-` prefix) and then modify the rule names to be prepended with the plugin name.
-
-In this design, the user is responsible for loading npm packages. Because we are only ever passed an object, we no longer have access to the plugin name.
-
-An earlier iteration of this design had plugins specified like this:
-
-```js
-module.exports = {
-    plugins: [
-        require("eslint-plugin-react"),
-        require("eslint-plugin-mardkown")
-    ]
-};
-```
-
-This didn't work because ESLint didn't know how to name the plugin rules (we weren't getting the plugin name, just the object). So the next iteration went to this:
-
-```js
-module.exports = {
-    plugins: {
-        react: require("eslint-plugin-react"),
-        markdown: require("eslint-plugin-mardkown")
-    }
-};
-```
-
-This iteration gave the plugin rules names, but then I realized the only things that need names in plugins with this design are rules. Users can get processors, parsers, etc., directly without ESLint being involved in picking them out of plugins. So I renamed `plugins` to `ruledefs` to make this explicit:
-
-```js
-module.exports = {
-    ruledefs: {
-        react: require("eslint-plugin-react").rules,
-        markdown: require("eslint-plugin-mardkown").rules
-    }
-};
-```
-
-This is the iteration I first submitted.
-
 
 ## Related Discussions
 
