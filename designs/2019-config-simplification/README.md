@@ -62,9 +62,7 @@ module.exports = {
     processor: object || "string",
     parser: object || "string",
     parserOptions: {},
-    defs: {
-        plugins: {}
-    },
+    plugins: {}
     rules: {}
 };
 ```
@@ -73,9 +71,7 @@ The following keys are new to the `eslint.config.js` format:
 
 * `name` - Specifies the name of the config object. This is helpful for printing out debugging information and, while not required, is recommended for that reason.
 * `files` - Determines the glob file patterns that this configuration applies to.
-* `ignores` - Determines the files that should not be linted using ESLint. This can be used in place of the `.eslintignore` file. The files specified by this array of glob patterns are subtracted from the files specified in `files`.
-* `defs` - Contains definitions that are used in the config.
-  * `plugins` - Contains definitions for plugins. This replaces the `plugins` key in `.eslintrc` files and the `--rulesdir` option.
+* `ignores` - Determines the files that should not be linted using ESLint. This can be used in place of the `.eslintignore` file. The files specified by this array of glob patterns are subtracted from the files specified in `files`. If there is no `files` key, then `ignores` acts the same as `ignorePatterns` in `.eslintrc` files.
 
 The following keys are specified the same as in `.eslintrc` files:
 
@@ -88,6 +84,7 @@ The following keys are specified differently than in `.eslintrc` files:
 
 * `parser` - an object or string in `eslint.config.js` files (a string in `.eslintrc`)
 * `processor` - an object or string in `eslint.config.js` files (a string in `.eslintrc`)
+* `plugins` - an object mapping plugin names to implementations. This replaces the `plugins` key in `.eslintrc` files and the `--rulesdir` option.
 
 Each of these keys used to require one or more strings specifying module(s) to load in `.eslintrc`. In `eslint.config.js`, these are all objects, requiring users to manually specify the objects to use.
 
@@ -235,10 +232,8 @@ The problem comes when the shareable configs try to use the default namespace of
 const example = require("eslint-plugin-example");
 
 module.exports = {
-    defs: {
-        plugins: {
-            example
-        }
+    plugins: {
+        example
     }
 };
 ```
@@ -253,8 +248,8 @@ const configToExtend = require("eslint-config-second");
 
 // create a new copy (NOTE: probably best to do this with @eslint/config somehow)
 const compatConfig = Object.create(configToExtend);
-compatConfig.defs.plugins["compat::example"] = require("eslint-plugin-example");
-delete compatConfig.defs.plugins.example;
+compatConfig.plugins["compat::example"] = require("eslint-plugin-example");
+delete compatConfig.plugins.example;
 
 // include in config
 module.exports = [
@@ -289,10 +284,8 @@ const react = require("eslint-plugin-react");
 
 module.exports = {
     files: ["*.js"],
-    defs: {
-        plugins: {
-            react
-        }
+    plugins: {
+        react
     },
     rules: {
         "react/jsx-uses-react": "error"
@@ -300,26 +293,23 @@ module.exports = {
 };
 ```
 
-Here, it is the `defs.plugins` that assigns the name `react` to the rules from `eslint-plugin-react`. The reference to `react/` in a rule will always look up that value in the `defs.plugins` key.
+Here, it is the `plugins` that assigns the name `react` to the rules from `eslint-plugin-react`. The reference to `react/` in a rule will always look up that value in the `plugins` key.
 
-**Note:** If a config is merged with another config that already has the same `defs.plugins` namespace defined and the namespace doesn't refer to the same rules object, then an error is thrown. In this case, if a config already has a `react` namespace, then attempting to combine with another config that has a `react` namespace that contains different rules will throw an error. This is to ensure the meaning of `namespace/rule` remains consistent.
+**Note:** If a config is merged with another config that already has the same `plugins` namespace defined and the namespace doesn't refer to the same rules object, then an error is thrown. In this case, if a config already has a `react` namespace, then attempting to combine with another config that has a `react` namespace that contains different rules will throw an error. This is to ensure the meaning of `namespace/rule` remains consistent.
 
 #### Plugins Specifying Their Own Namespaces
 
-Rules imported from a plugin must be assigned a namespace using `defs.plugins`, which puts the responsibility for that namespace on the config file user. Plugins can define their own namespace for rules in two ways. (Note that plugins will not be required to define their own namespaces.)
+Rules imported from a plugin must be assigned a namespace using `plugins`, which puts the responsibility for that namespace on the config file user. Plugins can define their own namespace for rules in two ways. (Note that plugins will not be required to define their own namespaces.)
 
 First, a plugin can export a recommended configuration to place in a config array. For example, a plugin called `eslint-plugin-example`, might define a config that looks like this:
 
 ```js
 module.exportss = {
     recommended: {
-        defs: {
-            plugins: {
-                example: {
-                    rules: {
-                        rule1: require("./rules/rule1")
-
-                    }
+        plugins: {
+            example: {
+                rules: {
+                    rule1: require("./rules/rule1")
                 }
             }
         }
@@ -340,7 +330,7 @@ module.exports = [
 ];
 ```
 
-The user config in this example now inherits the `defs.plugins` from the plugin's recommended config, automatically adding in the rules with their preferred namespace. (Note that the user config can't have another `defs.plugins` namespace called `example` without an error being thrown.)
+The user config in this example now inherits the `plugins` from the plugin's recommended config, automatically adding in the rules with their preferred namespace. (Note that the user config can't have another `plugins` namespace called `example` without an error being thrown.)
 
 The second way for plugins to specify their preferred namespace is to export a `plugin` key directly that users can include their own config. This is what it would look like in the plugin:
 
@@ -354,15 +344,13 @@ exports.plugin = {
 };
 ```
 
-Then, inside of a user config, the plugin's `defs.plugins` can be included directly`:
+Then, inside of a user config, the plugin's `plugin` can be included directly`:
 
 ```js
 module.exports = {
-    defs: {
-        plugins: {
-            ...require("eslint-plugin-example").plugin
-        },
-    }
+    plugins: {
+        ...require("eslint-plugin-example").plugin
+    },
     rules: {
         "example/rule1": "error"
     }
@@ -395,12 +383,10 @@ Second, you can use a string to specify an object to load from a plugin, such as
 
 ```js
 module.exports = {
-    defs: {
-        plugins: {
-            markdown: require("eslint-plugin-markdown"),
-            babel: require("eslint-plugin-babel")
-        }
-    }
+    plugins: {
+        markdown: require("eslint-plugin-markdown"),
+        babel: require("eslint-plugin-babel")
+    },
     files: ["*.js"],
     parser: "babel/eslint-parser",
     processor: "markdown/markdown"
@@ -454,11 +440,9 @@ This can be written in `eslint.config.js` as an array of two configs:
 module.exports = [
     {
         files: "*.js",
-        defs: {
-            plugins: {
-                react: require("eslint-plugin-react"),
-            },
-        }
+        plugins: {
+            react: require("eslint-plugin-react"),
+        },
         rules: {
             "react/jsx-uses-react": "error",
             semi: "error"
@@ -529,19 +513,17 @@ When evaluating the `files` array in the config, ESLint will end up searching fo
 
 ### Replacing `--rulesdir`
 
-In order to recreate the functionality of `--rulesdir`, a user would need to create a new entry in `defs.plugins` and then specify the rules from a directory. This can be accomplished using the [`requireindex`](https://npmjs.com/package/requireindex) npm package:
+In order to recreate the functionality of `--rulesdir`, a user would need to create a new entry in `plugins` and then specify the rules from a directory. This can be accomplished using the [`requireindex`](https://npmjs.com/package/requireindex) npm package:
 
 ```js
 const requireIndex = require("requireindex");
 
 module.exports = {
-    defs: {
-        plugins: {
-            custom: {
-                rules: requireIndex("./custom-rules")
-            }
-        },
-    }
+    plugins: {
+        custom: {
+            rules: requireIndex("./custom-rules")
+        }
+    },
     rules: {
         "custom/my-rule": "error"
     }
@@ -591,13 +573,11 @@ const requireIndex = require("requireindex");
 module.exports = (context) => {
     const myConfig = {
         files: ["*.js"],
-        defs: {
-            plugins: {
-                custom: {
-                    rules: requireIndex("./custom-rules")
-                }
-            },
-        }
+        plugins: {
+            custom: {
+                rules: requireIndex("./custom-rules")
+            }
+        },
         rules: {
             "custom/my-rule": "error"
         }
