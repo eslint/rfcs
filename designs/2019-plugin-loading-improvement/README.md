@@ -213,6 +213,13 @@ The `CLIEngine#getRulesForFile(filePath)` method is similar to `CLIEngine#getCon
 
 Once we removed the `CLIEngine#getRules()` method, `CLIEngine` instances no longer need having the configs that the last call of `executeOnFiles()` used. This will simplify the state management of `CLIEngine`. As a side note, for this reason, [RFC40] removed the `getRules()` method from the new API.
 
+#### Performance
+
+The performance impact should be nothing because `CascadingConfigArrayFactory` class caches loaded configs efficiently:
+
+- The cache key is directory paths and each value is the config of the directory.
+- The cache value inherits from the parent directory if the directory doesn't have any config file. Therefore, it loads configs only once per config file.
+
 #### About `LinterShell` class in [RFC40]
 
 If [RFC40] is accepted, this proposal adds `LinterShell#getRulesForFile(filePath)`.
