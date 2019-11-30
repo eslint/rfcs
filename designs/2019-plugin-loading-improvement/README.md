@@ -213,9 +213,9 @@ The `CLIEngine#getRulesForFile(filePath)` method is similar to `CLIEngine#getCon
 
 Once we removed the `CLIEngine#getRules()` method, `CLIEngine` instances no longer need having the configs that the last call of `executeOnFiles()` used. This will simplify the state management of `CLIEngine`. As a side note, for this reason, [RFC40] removed the `getRules()` method from the new API.
 
-#### About `ESLint` class in [RFC40]
+#### About `LinterShell` class in [RFC40]
 
-If [RFC40] is accepted, this proposal adds `ESLint#getRulesForFile(filePath)`.
+If [RFC40] is accepted, this proposal adds `LinterShell#getRulesForFile(filePath)`.
 
 #### Removal plan
 
@@ -233,10 +233,6 @@ The `metadata.getRuleMeta(ruleId, filePath)` method returns `cliEngine.getRulesF
 Existing `metadata.rulesMeta[ruleId]` is replaced to `metadata.getRuleMeta(ruleId, filePath)`.
 
 Once we removed the `metadata.rulesMeta` property, we can remove the deprecated `CLIEngine#getRules()` method (because API users require the deprecated `CLIEngine#getRules()` method to use the `metadata.rulesMeta` property). Then `CLIEngine` instances no longer need having the configs that the last call of `executeOnFiles()` used. This will simplify the state management of `CLIEngine`.
-
-#### About formatter v2 in [RFC45]
-
-If [RFC45] is accepted, this RFC just replaces `context.getRuleMeta(ruleId)` by `context.getRuleMeta(ruleId, filePath)`. This change is safe because the formatter v2 has not published yet.
 
 #### Removal plan
 
@@ -275,7 +271,7 @@ Nothing in particular.
 - https://github.com/microsoft/vscode-eslint/issues/696 - ESLint fails to load plugins when using ESLint 6.x
 - https://github.com/microsoft/vscode-eslint/issues/708 - Autodetect and propose working directories in mono repositories
 - https://github.com/eslint/rfcs/pull/39 - New: Changing the Default Value of --resolve-plugins-relative-to
-- https://github.com/eslint/rfcs/pull/40 - New: `ESLint` Class Replacing `CLIEngine`
+- https://github.com/eslint/rfcs/pull/40 - New: `LinterShell` Class Replacing `CLIEngine`
 - https://github.com/eslint/rfcs/pull/45 - New: Formatter v2
 
 [rfc32]: https://github.com/eslint/rfcs/pull/32
