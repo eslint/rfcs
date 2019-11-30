@@ -24,10 +24,10 @@ This RFC adds a new class `LinterShell`. It has almost the same methods as `CLIE
 - [lintFiles()](#-the-lintfiles-method) (rename from `executeOnFiles()`)
 - [lintText()](#-the-linttext-method) (rename from `executeOnText()`)
 - [getFormatter()](#-the-getformatter-method)
-- [static outputFixesInIteration()](#-the-outputfixesiniteration-method) (rename from `outputFixes()`)
-- [static extractErrorResults()](#-the-extracterrorresults-method) (rename from `getErrorResults()`)
 - [getConfigForFile()](#-the-other-methods)
 - [isPathIgnored()](#-the-other-methods)
+- [static outputFixes()](#-the-other-methods)
+- [static getErrorResults()](#-the-other-methods)
 - ~~addPlugin()~~ (move to a constructor option)
 - ~~getRules()~~ (delete)
 - ~~resolveFileGlobPatterns()~~ (delete)
@@ -146,22 +146,32 @@ const linter = new LinterShell({
 
 #### ● The `lintFiles()` method
 
-This method corresponds to `CLIEngine#executeOnFiles()`.
+##### Parameters
 
-This method returns an object that implements [AsyncIterable] and [AsyncIterator], as similar to async generators. Therefore we can use the returned object with `for-await-of` statement.
+| Name       | Type       | Description                         |
+| :--------- | :--------- | :---------------------------------- |
+| `patterns` | `string[]` | The glob patterns for target files. |
+
+##### Return Value
+
+This method returns a Promise object that will be fulfilled with the array of lint results.
+
+##### Description
+
+This method corresponds to `CLIEngine#executeOnFiles()`.
 
 ```js
 const { LinterShell } = require("eslint")
 const linter = new LinterShell()
 
-for await (const result of linter.lintFiles(patterns)) {
+for (const result of await linter.lintFiles(patterns)) {
   print(result)
 }
 ```
 
-The returned object yields the lint result of each file immediately when it has finished linting each file. Therefore, ESLint doesn't guarantee the order of the iteration. The order is random.
+ESLint doesn't guarantee the order of the lint results in the array. If we implemented parallel linting, the result of the file that finished linting earlier will be in the front of the array. For backward compatibility, the wrapper of formatters sorts the results then gives the formatters the sorted results. See also [getFormatter()](#-the-getformatter-method). And we provide [compareResultsByFilePath()](#-new-methods) method to sort the results in the same order as `CLIEngine`.
 
-This method must not throw any errors synchronously. Errors may happen in iteration asynchronously.
+This method must not throw any errors synchronously. If an error happened, the returned promise goes rejected.
 
 <details>
 <summary>A rough sketch of the `lintFiles()` method.</summary>
@@ -170,72 +180,35 @@ A tiny wrapper of `CLIEngine`.
 
 ```js
 class LinterShell {
-  async *lintFiles(patterns) {
-    yield* this._cliEngine.executeOnFiles(patterns).results
+  async lintFiles(patterns) {
+    return this._cliEngine.executeOnFiles(patterns).results
   }
 }
 ```
 
-But once [RFC42] is implemented, the returned object will be an instance of [`LintResultGenerator`](https://github.com/eslint/eslint/blob/836c0e48704d70bc1a5cbdbf0211368b0ada942d/lib/eslint/lint-result-generator.js#L136) class.
-
 </details>
-
-If you want to use the returned object with `await` expression, you can use a small utility to convert an async iterable object to an array.
-
-```js
-const toArray = require("@async-generators/to-array").default
-const { LinterShell } = require("eslint")
-const linter = new LinterShell()
-
-// Convert the results to an array.
-const results = await toArray(linter.lintFiles(patterns))
-
-// Optionally you can sort the results.
-results.sort(LinterShell.compareResultsByFilePath)
-
-print(results)
-```
 
 Once we got this change, we can realize the following things:
 
 - [RFC42] We can implement linting in parallel by worker threads. It will reduce spending time of linting much.
-- [RFC45] We can implement to print the results in streaming or to print progress state, without more breaking changes. Because ESLint may spend time to lint files (for example, ESLint needs about 20 seconds to lint [our codebase](https://github.com/eslint/eslint)), to print progress state will be useful.
 - (no RFC yet) We can support ES modules for shareable configs, plugins, and custom parsers.
-
-##### Iterate only one time
-
-We can iterate the returned object of this method only one time similar to generators.
-
-```js
-const { LinterShell } = require("eslint")
-const linter = new LinterShell()
-
-const resultGenerator = linter.lintFiles(patterns)
-for await (const result of resultGenerator) {
-  print(result)
-}
-// ↓ Throw "This generator has been consumed already"
-for await (const result of resultGenerator) {
-  print(result)
-}
-```
 
 ##### Move the `usedDeprecatedRules` property
 
 The returned object of `CLIEngine#executeOnFiles()` has the `usedDeprecatedRules` property that includes the deprecated rule IDs which the linting used.
 
-But the location doesn't fit asynchronous because the used deprecated rule list is not determined until the iteration finished. Therefore, this RFC moves the `usedDeprecatedRules` property to each lint result.
+But the location is problematic because it requires the plugin uniqueness in spanning all files. Therefore, this RFC moves the `usedDeprecatedRules` property to each lint result.
 
 ```js
 const { LinterShell } = require("eslint")
 const linter = new LinterShell()
 
-for await (const result of linter.lintFiles(patterns)) {
+for (const result of await linter.lintFiles(patterns)) {
   console.log(result.usedDeprecatedRules)
 }
 ```
 
-As a side-effect, formatters gets the capability to print the used deprecated rules. Previously, ESLint has not passed the returned object to formatters, so the formatters could not print used deprecated rules. After this RFC, each lint result has the `usedDeprecatedRules` property and the formatters receive those.
+As a side-effect, formatters gets the capability to print the used deprecated rules. Previously, ESLint has not passed the returned object to formatters, so the formatters could not print used deprecated rules. After this proposal, each lint result has the `usedDeprecatedRules` property and the formatters receive those.
 
 ##### Write cache safely (best effort)
 
@@ -247,40 +220,34 @@ If the cache file was broken, this method should ignore the cache file and does 
 
 ##### Abort linting
 
-The iterator interface has optional [`return()` method](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator/return) that forces to finish the iterator. The `for-of`/`for-await-of` syntax calls the `return()` method automatically if the loop is stopped through a `braek`, `return`, or `throw`.
-
-ESLint aborts linting when the `return()` method is called. The first `return()` method call does:
-
-- ESLint cancels the linting of all pending files.
-- ESLint updates the cache file with the current state. Therefore, the next time, ESLint can use the cache of the already linted files and lint only the canceled files.
-- ESLint will terminate all workers if [RFC42] is implemented.
-
-```js
-const { LinterShell } = require("eslint")
-const linter = new LinterShell()
-
-for await (const result of linter.lintFiles(patterns)) {
-  if (Math.random() < 0.5) {
-    break // abort linting.
-  }
-}
-```
-
-The second and later calls do nothing.
+This proposal doesn't provide the way to abort linting because we cannot abort linting at this time (the method does linting synchronously internally). We can discuss it along with parallel linting (I'm guessing we can use [AbortSignal] that is the Web Standard. Passing it as `options.signal`).
 
 #### ● The `lintText()` method
 
+##### Parameters
+
+| Name                  | Type      | Description                                                      |
+| :-------------------- | :-------- | :--------------------------------------------------------------- |
+| `code`                | `string`  | The source code to lint.                                         |
+| `options`             | `Object`  | Optional. The options.                                           |
+| `options.filePath`    | `string`  | Optional. The path to the file of the source code.               |
+| `options.warnIgnored` | `boolean` | Optional. If `true`, it warns the `filePath` is an ignored path. |
+
+##### Return Value
+
+This method returns a Promise object that will be fulfilled with the array of lint results.
+
+##### Description
+
 This method corresponds to `CLIEngine#executeOnText()`.
 
-This method returns the same type of an object as the `lintFiles()` method.
-
-Because the returned object of `CLIEngine#executeOnText()` method is the same type as the `CLIEngine#executeOnFiles()` method. The `LinterShell` class inherits that mannar.
+Because the returned object of `CLIEngine#executeOnText()` method is the same type as the `CLIEngine#executeOnFiles()` method, the `LinterShell` class inherits that mannar. Therefore, the returned value is an array that contains one result.
 
 ```js
 const { LinterShell } = require("eslint")
 const linter = new LinterShell()
 
-for await (const result of linter.lintText(text, filePath)) {
+for (const result of await linter.lintText(text, filePath)) {
   print(result)
 }
 ```
@@ -291,111 +258,82 @@ Example: Using along with the `lintFiles()` method.
 const { LinterShell } = require("eslint")
 const linter = new LinterShell()
 
-const report = useStdin
+const results = await (useStdin
   ? linter.lintText(text, filePath)
-  : linter.lintFiles(patterns)
+  : linter.lintFiles(patterns))
 
-for await (const result of report) {
+for (const result of results) {
   print(result)
 }
 ```
 
 #### ● The `getFormatter()` method
 
-This method returns a `Promise<Formatter>`. The `Formatter` type is a function `(results: AsyncIterable<LintResult>) => AsyncIterable<string>`. It receives lint results then outputs the formatted text.
+##### Parameters
+
+| Name   | Type     | Description               |
+| :----- | :------- | :------------------------ |
+| `name` | `string` | The formatter ID to load. |
+
+##### Return Value
+
+This method returns a Promise object that will be fulfilled with the wrapper of the loaded formatter. The wrapper is the object that has `format` method.
+
+| Name     | Type                                | Description                                        |
+| :------- | :---------------------------------- | :------------------------------------------------- |
+| `format` | `(results: LintResult[]) => string` | The function that converts lint results to output. |
+
+##### Description
+
+This method corresponds to `CLIEngine#getFormatter()`.
+
+But as different from that, it returns a wrapper object instead of the loaded formatter. Because we have experienced withdrawn some features because of breaking `getFormatter()` API in the past. The wrapper glues `getFormatter()` API and formatters.
 
 ```js
 const { LinterShell } = require("eslint")
 const linter = new LinterShell()
-const formatter = linter.getFormatter("stylish")
+const formatter = await linter.getFormatter("stylish")
 
 // Verify files
-const results = linter.lintFiles(patterns)
+const results = await linter.lintFiles(patterns)
 // Format and write the results
-for await (const textPiece of formatter(results)) {
-  process.stdout.write(textPiece)
-}
+process.stdout.write(formatter.format(results))
 ```
 
-This means the `getFormatter()` method wraps the current formatter to adapt the interface.
+Currently, the wrapper does:
 
-<details>
-<summary>A rough sketch of the `getFormatter()` method.</summary>
+1. sort given lint results.
+1. create `rulesMeta`.
 
 ```js
 class LinterShell {
   async getFormatter(name) {
     const format = this._cliEngine.getFormatter(name)
 
-    // Return the wrapper.
-    return async function* formatter(resultIterator) {
-      // Collect and sort the results.
-      const results = await toArray(resultIterator)
-      results.sort(LinterShell.compareResultsByFilePath)
+    return {
+      format(results) {
+        let rulesMeta = null
 
-      // Make `rulesMeta`.
-      const rules = this._cliEngine.getRules()
-      const rulesMeta = getRulesMeta(rules)
+        results.sort(LinterShell.compareResultsByFilePath)
 
-      // Format the results with the formatter of the current spec.
-      yield format(results, { rulesMeta })
+        return format(results, {
+          get rulesMeta() {
+            if (!rulesMeta) {
+              rulesMeta = createRulesMeta(this._cliEngine.getRules())
+            }
+            return rulesMeta
+          },
+        })
+      },
     }
   }
 }
 ```
 
-</details>
-
 Once we got this change, we can realize the following things:
 
-- [RFC45] We can implement to print the results in streaming or to print progress state, without more breaking changes.
+- (no RFC yet) We can support to print progress state.
 - (no RFC yet) We can support ES modules for custom formatters.
-
-#### ● The `outputFixesInIteration()` method
-
-The original `CLIEngine.outputFixes()` static method writes the fix results to the source code files.
-
-The goal of this method is same as the `CLIEngine.outputFixes()` method, but we cannot share async iterators with this method and formatters, so this method receives an `AsyncIterable<LintResult>` object as the first argument then return an `AsyncIterable<LintResult>` object. This method is sandwiched between `lintFiles()` and formatters.
-
-```js
-const { LinterShell } = require("eslint")
-const linter = new LinterShell()
-const formatter = linter.getFormatter("stylish")
-
-// Verify files
-let results = linter.lintFiles(patterns)
-// Update the files of the results if needed
-if (process.argv.includes("--fix")) {
-  results = LinterShell.outputFixesInIteration(results)
-}
-// Format and write the results
-for await (const textPiece of formatter(results)) {
-  process.stdout.write(textPiece)
-}
-```
-
-#### ● The `extractErrorResults()` method
-
-The original `CLIEngine.getErrorResults()` static method receives an array of lint results, then extracts only the messages, which are error severity, then returns the results that contain only those.
-
-This method just changed the arrays to async iterables because this method is sandwiched between `lintFiles()` and formatters.
-
-```js
-const { LinterShell } = require("eslint")
-const linter = new LinterShell()
-const formatter = linter.getFormatter("stylish")
-
-// Verify files
-let results = linter.lintFiles(patterns)
-// Extract only error results
-if (process.argv.includes("--quiet")) {
-  results = LinterShell.extractErrorResults(results)
-}
-// Format and write the results
-for await (const textPiece of formatter(results)) {
-  process.stdout.write(textPiece)
-}
-```
 
 #### ● The other methods
 
@@ -403,6 +341,14 @@ The following methods return `Promise` which gets fulfilled with each result. On
 
 - `getConfigForFile()`
 - `isPathIgnored()`
+
+The following methods return a `Promise`. Once we got this change, we can use asynchronous `fs` API to write files.
+
+- `static outputFixes()`
+
+The following methods are as-is.
+
+- `static getErrorResults()`
 
 The following methods are removed because those don't fit the new API.
 
@@ -412,7 +358,7 @@ The following methods are removed because those don't fit the new API.
 
 #### ● New methods
 
-- `compareResultsByFilePath()` ... This method receives two lint results then returns `+1`, `-1`, or `0`. This method is intended to use in order to sort results.
+- `static compareResultsByFilePath()` ... This method receives two lint results then returns `+1`, `-1`, or `0`. This method is intended to use in order to sort results.
 
   <details>
   <summary>A rough sketch of the `compareResultsByFilePath()` method.</summary>
@@ -447,6 +393,7 @@ This RFC soft-deprecates `CLIEngine` class. Because:
 
 ## Documentation
 
+- It needs an entry in the migration guide.
 - The "[Node.js API](https://eslint.org/docs/developer-guide/nodejs-api)" page should describe the new public API and deprecation of `CLIEngine` class.
 
 ## Drawbacks
@@ -455,7 +402,7 @@ People that use `CLIEngine` have to update their application with the new API. I
 
 ## Backwards Compatibility Analysis
 
-If we assume [RFC44] will be merged, this RFC is a drastic change, but not a breaking change until we decide to remove `CLIEngine` class.
+This RFC is a drastic change, but not a breaking change until we decide to remove `CLIEngine` class.
 
 This RFC just adds `LinterShell` class and deprecates `CLIEngine` class. We can do both in a minor release.
 
@@ -485,22 +432,6 @@ Therefore, I think that introducing the new class that has only asynchronous API
 - We can reduce the confusion of similar but different methods.
 - And as a bonus, we can reduce the confusion of the name of `CLIEngine`.
 
-### Alternatives for [Asynchronous Iteration](https://github.com/tc39/proposal-async-iteration)
-
-Using [streams](https://nodejs.org/dist/latest-v12.x/docs/api/stream.html) instead is an alternative.
-
-**Pros:**
-
-- We can introduce `LinterShell` class in a minor release. (To use Async Iteration, we have to wait for [RFC44]).
-
-**Cons:**
-
-- Streams are problematic a bit about error propagation.
-  - [straem.pipeline()](https://nodejs.org/api/stream.html#stream_stream_pipeline_streams_callback) function reduces this pain, but [it doesn't cover all cases](https://github.com/nodejs/node/issues/26311).
-- We have to wait for Node.js `v11.14.0` to use streams with `for-await-of` syntax.
-
-Because Node.js 8 will be EOL two months later, we should be able to use Asynchronous Iteration soon. And Iterator interface is smaller spec than streams, and it's easy to use.
-
 ### Alternatives for disallow execution in parallel
 
 - Throwing if the previous call has not finished yet (fail-fast).
@@ -527,8 +458,8 @@ However, the `LinterShell` objects cannot know the existence of other threads an
 - https://github.com/eslint/rfcs/pull/44 - New: Drop supports for Node.js 8.x and 11.x
 - https://github.com/eslint/rfcs/pull/45 - New: Formatter v2
 
-[asynciterable]: https://tc39.es/ecma262/#sec-asynciterable-interface
-[asynciterator]: https://tc39.es/ecma262/#sec-asynciterator-interface
+[abortcontroller]: https://dom.spec.whatwg.org/#interface-abortcontroller
+[abortsignal]: https://dom.spec.whatwg.org/#interface-abortsignal
 [rfc04]: https://github.com/eslint/rfcs/pull/4
 [rfc11]: https://github.com/eslint/rfcs/pull/11
 [rfc20]: https://github.com/eslint/rfcs/tree/master/designs/2019-additional-lint-targets
