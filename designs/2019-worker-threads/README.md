@@ -25,9 +25,9 @@ This RFC has two steps.
 **The step 1 (semver-minor):**
 
 - Adds `--concurrency` CLI option to specify the number of worker threads. Defaults to `1`.
-- Adds `concurrency` constructor option to `ESLint` class to specify the number of worker threads. Defaults to `1`.
+- Adds `concurrency` constructor option to `LinterShell` class to specify the number of worker threads. Defaults to `1`.
 - Adds `disallowWorkerThreads` option to plugins. Defaults to `false`.
-- Changes the behavior of `ESLint#executeOnFiles(patterns)` method.
+- Changes the behavior of `LinterShell#lintFiles(patterns)` method.
 
 **The step 2 (semver-major):**
 
@@ -73,11 +73,11 @@ If `--concurrency` option is present along with the following options, ESLint th
 - `--print-config`
 - `--env-info`
 
-### [STEP 1] New `concurrency` constructor option of `ESLint` class
+### [STEP 1] New `concurrency` constructor option of `LinterShell` class
 
-`ESLint` class is the new API that is discussed in [RFC40](https://github.com/eslint/rfcs/pull/40).
+`LinterShell` class is the new API that is discussed in [RFC40](https://github.com/eslint/rfcs/pull/40).
 
-The `concurrency` option corresponds to `--concurrency` CLI option. Defaults to `1`. If `"auto"` is present, `ESLint` class estimates the best value with the way the previous section described.
+The `concurrency` option corresponds to `--concurrency` CLI option. Defaults to `1`. If `"auto"` is present, `LinterShell` class estimates the best value with the way the previous section described.
 
 This RFC doesn't change `CLIEngine` class because this requires asynchronous API to expose.
 
@@ -93,7 +93,7 @@ ESLint didn't use workers because 'eslint-plugin-xxx' disallows worker threads.
 
 Therefore, plugins that don't work fine in workers can tell ESLint to disallow workers.
 
-### [STEP 1] New behavior of `ESLint#executeOnFiles(patterns)` method
+### [STEP 1] New behavior of `LinterShell#lintFiles(patterns)` method
 
 The overview is:
 
@@ -156,21 +156,33 @@ As a side note, master terminates the other workers if a worker reported an erro
 
 #### About aborting
 
-In [RFC40](https://github.com/eslint/rfcs/pull/40), `ESLint#executeOnFiles()` returns an async iterable object and the `return()` method of the iterator of the iterable object aborts linting.
-
-Therefore, after this RFC, the `return()` method terminates all workers.
+We can abort linting because the linting happens in workers asynchronously. This proposal uses [AbortController]/[AbortSignal] in the Web Standard to abort linting. If the `LinterShell#lintFiles(patterns, options)` method receives an [AbortSignal] instance as `options.signal`, then it observes the signal and aborts the linting when the signal raised. If linting was aborted, the `LinterShell#lintFiles(patterns, options)` method throws `AbortError`.
 
 ```js
-const { ESLint } = require("eslint")
-const eslint = new ESLint()
-for await (const result of eslint.executeOnFiles(patterns)) {
-  if (Math.random() < 0.5) {
-    break // abort linting -- terminate all workers if running.
+const { AbortController } = require("abort-controller")
+const { LinterShell } = require("eslint")
+const linter = new LinterShell({ concurrency: "auto" })
+
+const abortController = new AbortController()
+const signal = abortController.signal
+
+// Abort linting after a sec.
+setTimeout(() => controller.abort(), 1000)
+
+// Do linting with the signal -- it will be aborted after a sec.
+try {
+  const results = await linter.lintFiles(pattern, { signal })
+  print(results)
+} catch (error) {
+  if (error.name === "AbortError") {
+    // Aborted.
+  } else {
+    // Errored.
   }
 }
 ```
 
-See also [the "Abort linting" section in RFC40](https://github.com/eslint/rfcs/blob/00be95b618535723ab054119494f9a251aa28a95/designs/2019-move-to-async-api/README.md#abort-linting).
+If `--cache` is present and linting was aborted, the `LinterShell#lintFiles(patterns, options)` method saves the cache with the existing results. Therefore, it can resume linting for the rest files.
 
 #### Locally Concurrency
 
@@ -340,3 +352,5 @@ However, I think that the above is enough rare cases and the impact is limited.
 - https://github.com/eslint/rfcs/pull/11 - New: Lint files in parallel
 
 [verify files]: #locally-concurrency
+[abortcontroller]: https://dom.spec.whatwg.org/#interface-abortcontroller
+[abortsignal]: https://dom.spec.whatwg.org/#interface-abortsignal
