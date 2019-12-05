@@ -241,7 +241,7 @@ This method returns a Promise object that will be fulfilled with the array of li
 
 This method corresponds to `CLIEngine#executeOnText()`.
 
-Because the returned object of `CLIEngine#executeOnText()` method is the same type as the `CLIEngine#executeOnFiles()` method, the `LinterShell` class inherits that mannar. Therefore, the returned value is an array that contains one result.
+Because the returned object of `CLIEngine#executeOnText()` method is the same type as the `CLIEngine#executeOnFiles()` method, the `LinterShell` class also returns the same type. Therefore, the returned value is an array that contains one result.
 
 ```js
 const { LinterShell } = require("eslint")
