@@ -2,23 +2,23 @@
 - RFC PR: https://github.com/eslint/rfcs/pull/40
 - Authors: Toru Nagashima ([@mysticatea](https://github.com/mysticatea))
 
-# `LinterShell` Class Replacing `CLIEngine`
+# `ESLint` Class Replacing `CLIEngine`
 
 ## Summary
 
-This RFC adds a new class `LinterShell` that provides asynchronous API and deprecates `CLIEngine`.
+This RFC adds a new class `ESLint` that provides asynchronous API and deprecates `CLIEngine`.
 
 ## Motivation
 
-- We have functionality that cannot be supported with the current synchronous API. For example, ESLint verifying files in parallel. A move to an asynchronous API would be beneficial and a new `LinterShell` class can be created with an async API in mind from the start.
+- We have functionality that cannot be supported with the current synchronous API. For example, ESLint verifying files in parallel. A move to an asynchronous API would be beneficial and a new `ESLint` class can be created with an async API in mind from the start.
 - Node.js has supported [ES modules](https://nodejs.org/api/esm.html) stably since `13.2.0`. Because Node.js doesn't provide any way that loads ES modules synchronously from CJS, ESLint cannot load configs/plugins that are written as ES modules. And migrating to asynchronous API opens up doors to support those.
-- The name of `CLIEngine`, our primary API, has caused confusion in the community and is sub-optimal. We have a lot of issues that say "please use `CLIEngine` instead.". A new class, `LinterShell`, while fixing other issues, will also make our primary API more clear.
+- The name of `CLIEngine`, our primary API, has caused confusion in the community and is sub-optimal. We have a lot of issues that say "please use `CLIEngine` instead.". A new class, `ESLint`, while fixing other issues, will also make our primary API more clear.
 
 ## Detailed Design
 
-### Add new `LinterShell` class
+### Add new `ESLint` class
 
-This RFC adds a new class `LinterShell`. It has almost the same methods as `CLIEngine`, but the return value of some methods are different.
+This RFC adds a new class `ESLint`. It has almost the same methods as `CLIEngine`, but the return value of some methods are different.
 
 - [constructor()](#-constructor)
 - [lintFiles()](#-the-lintfiles-method) (rename from `executeOnFiles()`)
@@ -33,7 +33,18 @@ This RFC adds a new class `LinterShell`. It has almost the same methods as `CLIE
 - ~~resolveFileGlobPatterns()~~ (delete)
 - [static compareResultsByFilePath()](#-new-methods) (new)
 
-Initially the `LinterShell` class will be a wrapper around `CLIEngine`, modifying return types. Later it can take on a more independent shape as `CLIEngine` gets more deprecated.
+Initially the `ESLint` class will be a wrapper around `CLIEngine`, modifying return types. Later it can take on a more independent shape as `CLIEngine` gets more deprecated.
+
+#### The class name `ESLint`
+
+This name means that it's the [facade](https://en.wikipedia.org/wiki/Facade_pattern) class of ESLint Node.js API.
+
+Currently, we have two classes `CLIEngine` and `Linter`. The `Linter` class is the most general name in our API, but it doesn't support some important parts that [our documentation](https://eslint.org/docs/user-guide/configuring) describes. I.e., it doesn't support config files and some configurations such as `extends`, `plugins`, `processor`, and `overrides`. Therefore, some users tried `Linter` class first, but they noticed that it doesn't work as expected. We have a ton of issues that we said: "use CLIEngine instead."
+
+This naming solves this problem. We can expect new API users are to try the `ESLint` class first without hesitation.
+
+On the other hand, there is a concern about this: "the `ESLint` class doesn't work on browsers. Users may try the `ESLint` class to use on browsers but notice it doesn't work." ([thread](https://github.com/eslint/rfcs/pull/40#discussion_r345384576))
+However, this concern is not a high priority because we don't support browsers officially. A more important matter is that the class which has the most general name supports features [our documentation](https://eslint.org/docs/user-guide/configuring) describes.
 
 #### ● Constructor
 
@@ -47,7 +58,7 @@ The constructor has mostly the same options as `CLIEngine`, but with some differ
 <summary>A rough sketch of the constructor.</summary>
 
 ```js
-class LinterShell {
+class ESLint {
   constructor({
     allowInlineConfig = true,
     baseConfig = null,
@@ -132,8 +143,8 @@ class LinterShell {
 <summary>For `plugins` example.</summary>
 
 ```js
-const { LinterShell } = require("eslint")
-const linter = new LinterShell({
+const { ESLint } = require("eslint")
+const linter = new ESLint({
   plugins: [
     "foo",
     "eslint-plugin-bar",
@@ -161,8 +172,8 @@ This method returns a Promise object that will be fulfilled with the array of li
 This method corresponds to `CLIEngine#executeOnFiles()`.
 
 ```js
-const { LinterShell } = require("eslint")
-const linter = new LinterShell()
+const { ESLint } = require("eslint")
+const linter = new ESLint()
 
 for (const result of await linter.lintFiles(patterns)) {
   print(result)
@@ -179,7 +190,7 @@ This method must not throw any errors synchronously. If an error happened, the r
 A tiny wrapper of `CLIEngine`.
 
 ```js
-class LinterShell {
+class ESLint {
   async lintFiles(patterns) {
     return this._cliEngine.executeOnFiles(patterns).results
   }
@@ -200,8 +211,8 @@ The returned object of `CLIEngine#executeOnFiles()` has the `usedDeprecatedRules
 But the location is problematic because it requires the plugin uniqueness in spanning all files. Therefore, this RFC moves the `usedDeprecatedRules` property to each lint result.
 
 ```js
-const { LinterShell } = require("eslint")
-const linter = new LinterShell()
+const { ESLint } = require("eslint")
+const linter = new ESLint()
 
 for (const result of await linter.lintFiles(patterns)) {
   console.log(result.usedDeprecatedRules)
@@ -241,11 +252,11 @@ This method returns a Promise object that will be fulfilled with the array of li
 
 This method corresponds to `CLIEngine#executeOnText()`.
 
-Because the returned object of `CLIEngine#executeOnText()` method is the same type as the `CLIEngine#executeOnFiles()` method, the `LinterShell` class also returns the same type. Therefore, the returned value is an array that contains one result.
+Because the returned object of `CLIEngine#executeOnText()` method is the same type as the `CLIEngine#executeOnFiles()` method, the `ESLint` class also returns the same type. Therefore, the returned value is an array that contains one result.
 
 ```js
-const { LinterShell } = require("eslint")
-const linter = new LinterShell()
+const { ESLint } = require("eslint")
+const linter = new ESLint()
 
 for (const result of await linter.lintText(text, filePath)) {
   print(result)
@@ -255,8 +266,8 @@ for (const result of await linter.lintText(text, filePath)) {
 Example: Using along with the `lintFiles()` method.
 
 ```js
-const { LinterShell } = require("eslint")
-const linter = new LinterShell()
+const { ESLint } = require("eslint")
+const linter = new ESLint()
 
 const results = await (useStdin
   ? linter.lintText(text, filePath)
@@ -290,8 +301,8 @@ This method corresponds to `CLIEngine#getFormatter()`.
 But as different from that, it returns a wrapper object instead of the loaded formatter. Because we have experienced withdrawn some features because of breaking `getFormatter()` API in the past. The wrapper glues `getFormatter()` API and formatters.
 
 ```js
-const { LinterShell } = require("eslint")
-const linter = new LinterShell()
+const { ESLint } = require("eslint")
+const linter = new ESLint()
 const formatter = await linter.getFormatter("stylish")
 
 // Verify files
@@ -306,7 +317,7 @@ Currently, the wrapper does:
 1. create `rulesMeta`.
 
 ```js
-class LinterShell {
+class ESLint {
   async getFormatter(name) {
     const format = this._cliEngine.getFormatter(name)
 
@@ -314,7 +325,7 @@ class LinterShell {
       format(results) {
         let rulesMeta = null
 
-        results.sort(LinterShell.compareResultsByFilePath)
+        results.sort(ESLint.compareResultsByFilePath)
 
         return format(results, {
           get rulesMeta() {
@@ -363,7 +374,7 @@ The following methods are removed because those don't fit the new API.
   <summary>A rough sketch of the `compareResultsByFilePath()` method.</summary>
 
   ```js
-  class LinterShell {
+  class ESLint {
     static compareResultsByFilePath(a, b) {
       if (a.filePath < b.filePath) {
         return -1
@@ -403,9 +414,20 @@ People that use `CLIEngine` have to update their application with the new API. I
 
 This RFC is a drastic change, but not a breaking change until we decide to remove `CLIEngine` class.
 
-This RFC just adds `LinterShell` class and deprecates `CLIEngine` class. We can do both in a minor release.
+This RFC just adds `ESLint` class and deprecates `CLIEngine` class. We can do both in a minor release.
 
 ## Alternatives
+
+### Alternatives for the class name
+
+#### `LinterShell`
+
+- `CLIEngine` ⇒ `LinterShell`
+- `Linter` ⇒ `LinterKernel`
+
+This name is inspired by shell and kernel. This name means that the `LinterShell` wraps `LinterKernel` and provides additional features. Most API users would use `LinterShell` rather than `LinterKernel`.
+
+However, this proposal focuses on adding a successor class of `CLIEngine`, so I'm not sure it's good if we rename `Linter` as well.
 
 ### Alternatives for the new class
 
@@ -413,7 +435,7 @@ Adding `CLIEngine#executeOnFilesAsync()` method is an alternative.
 
 **Pros:**
 
-- It's smaller change than adding `LinterShell` class.
+- It's smaller change than adding `ESLint` class.
 
 **Cons:**
 
@@ -440,7 +462,7 @@ are alternatives. Both cases stop the previous or current call. It may be surpri
 
 - Waiting the previous call internally.
 
-It will work fine in a thread. However, the `LinterShell` objects cannot know the existence of other threads and processes that write the cache file.
+It will work fine in a thread. However, the `ESLint` objects cannot know the existence of other threads and processes that write the cache file.
 
 The current way has a smaller risk than the alternatives.
 
