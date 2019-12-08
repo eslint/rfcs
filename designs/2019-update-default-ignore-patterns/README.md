@@ -1,5 +1,5 @@
 - Start Date: 2019-11-28
-- RFC PR: (leave this empty, to be filled in later)
+- RFC PR: https://github.com/eslint/rfcs/pull/51
 - Authors: Toru Nagashima ([@mysticatea](https://github.com/mysticatea))
 
 # Update Default Ignore Patterns
