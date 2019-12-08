@@ -332,7 +332,6 @@ class LinterShell {
 
 Once we got this change, we can realize the following things:
 
-- (no RFC yet) We can support to print progress state.
 - (no RFC yet) We can support ES modules for custom formatters.
 
 #### ● The other methods
@@ -441,9 +440,9 @@ are alternatives. Both cases stop the previous or current call. It may be surpri
 
 - Waiting the previous call internally.
 
-The access of the cache file finishes regardless of the progress of the iterator that the method returned. It means that API users cannot know when the file access finished. On the other hand, because `LinterShell` objects know when the file access finished, it can execute the next call at the proper timing.
+It will work fine in a thread. However, the `LinterShell` objects cannot know the existence of other threads and processes that write the cache file.
 
-However, the `LinterShell` objects cannot know the existence of other threads and processes that write the cache file. The current way has a smaller risk than the alternatives.
+The current way has a smaller risk than the alternatives.
 
 ## Related Discussions
 
@@ -464,6 +463,4 @@ However, the `LinterShell` objects cannot know the existence of other threads an
 [rfc11]: https://github.com/eslint/rfcs/pull/11
 [rfc20]: https://github.com/eslint/rfcs/tree/master/designs/2019-additional-lint-targets
 [rfc42]: https://github.com/eslint/rfcs/pull/42
-[rfc44]: https://github.com/eslint/rfcs/pull/44
-[rfc45]: https://github.com/eslint/rfcs/pull/45
 [rfc47]: https://github.com/eslint/rfcs/pull/47
