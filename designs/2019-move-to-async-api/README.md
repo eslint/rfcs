@@ -384,7 +384,7 @@ The following methods are removed because those don't fit the new API.
 This RFC soft-deprecates `CLIEngine` class. Because:
 
 - It's tough to maintain two versions (sync and async) of implementation. The two are almost copy-pasted stuff, but hard to share the code. We can freeze the synchronous version of code by deprecation.
-- In the future, `CLIEngine` get not-supported features such as [RFC42], [RFC45], ES modules, etc because of synchronous API. This difference may be surprising for API users, but we can explain that as "Because `CLIEngine` has been deprecated, we don't add any new features into that class."
+- In the future, `CLIEngine` get not-supported features such as [RFC42], ES modules, etc because of synchronous API. This difference may be surprising for API users, but we can explain that as "Because `CLIEngine` has been deprecated, we don't add any new features into that class."
 
 ### ■ Out of scope
 
