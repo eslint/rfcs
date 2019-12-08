@@ -20,9 +20,9 @@ This proposal changes the default ignore patterns:
 - (as-is) `.*`
 - (new) `!.eslintrc.js`
 - (change) `/node_modules/*` → `/**/node_modules/*`
-- (as-is) `/bower_components/*`
+- (remove) ~~`/bower_components/*`~~
 
-Therefore, ESLint lints `.eslintrc.js` and ignores `node_modules` in subdirectories.
+Therefore, ESLint ignores `node_modules` in subdirectories, and no longer ignores `.eslintrc.js` and `bower_components`.
 
 ### How about the config files of other tools?
 
@@ -46,6 +46,7 @@ If somebody wants to lint `node_modules` in subdirectories, they have to configu
 This is a breaking change.
 
 - ESLint may report more warnings on `.eslintrc.js`.
+- ESLint may report more warnings in `bower_components`.
 - ESLint may stop with fatal errors (all files are ignored) in the `node_modules` of subdirectories.
 
 ## Alternatives
@@ -57,3 +58,4 @@ We can use the `ignorePatterns` of shareable configs to configure and reuse this
 - https://github.com/eslint/eslint/issues/1163 - ignore node_modules folder by default
 - https://github.com/eslint/eslint/issues/10089 - .babelrc.js should not be ignored by default
 - https://github.com/eslint/eslint/issues/10341 - do not ignore files started with `.` by default
+- https://github.com/eslint/tsc-meetings/blob/master/notes/2019/2019-12-05.md#remove-bower_components-from-default-ignores
