@@ -1,5 +1,5 @@
 - Start Date: 2019-12-09
-- RFC PR: <!-- leave this empty, to be filled in later -->
+- RFC PR: https://github.com/eslint/rfcs/pull/52
 - Authors: @manuth
 
 # Public `ConfigArray` API
