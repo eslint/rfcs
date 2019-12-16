@@ -1,5 +1,5 @@
 - Start Date: 2019-12-16
-- RFC PR:
+- RFC PR: https://github.com/eslint/rfcs/pull/53/
 - Authors: LJ Talbot ([@LJNeon](https://github.com/LJNeon/))
 
 # Files with .mjs or .cjs extensions should override sourceType
