@@ -554,6 +554,14 @@ eslint src/
 
 When evaluating the `files` array in the config, ESLint will end up searching for `src/**/*.js` and `src/**/*.jsx`. (More information about file resolution is included later this proposal.)
 
+Additionally, ESLint can be run without specifying anything on the command line, relying just on what's in `eslint.config.js` to determine what to lint:
+
+```bash
+eslint
+```
+
+This will go into the `eslint.config.js` and use all of the `files` glob patterns to determine which files to lint.
+
 ### Replacing `--rulesdir`
 
 In order to recreate the functionality of `--rulesdir`, a user would need to create a new entry in `plugins` and then specify the rules from a directory. This can be accomplished using the [`requireindex`](https://npmjs.com/package/requireindex) npm package:
@@ -596,10 +604,9 @@ module.exports = (context) => {
 
 The `context` object has the following members:
 
-* `application` - information about the ESLint core that is using the config
-    * `name` - the name of the application being used
-    * `version` - the version of ESLint being used
-    * `hasRule(ruleId)` - determine if the given rule is in the core
+* `name` - the name of the application being used
+* `version` - the version of ESLint being used
+* `hasRule(ruleId)` - determine if the given rule is in the core
 * `cwd` - the current working directory for ESLint (might be different than `process.cwd()` but always matches `CLIEngine.options.cwd`, see https://github.com/eslint/eslint/issues/11218)
 
 This information allows users to make logical decisions about how the config should be constructed.
