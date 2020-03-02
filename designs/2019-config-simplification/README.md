@@ -1,7 +1,7 @@
 - Start Date: 2019-01-20
 - RFC PR: https://github.com/eslint/rfcs/pull/9
 - Authors: Nicholas C. Zakas (@nzakas)
-- Contributors: Teddy Katz (@not-an-ardvaark), Toru Nagashima (@mysticatea)
+- Contributors: Teddy Katz (@not-an-aardvark), Toru Nagashima (@mysticatea)
 
 # Config File Simplification
 
