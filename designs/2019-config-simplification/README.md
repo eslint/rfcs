@@ -50,18 +50,22 @@ Design Summary:
 
 ### The `eslint.config.js` File
 
-The `eslint.config.js` file is a JavaScript file (there is no JSON or YAML equivalent) that exports a `config` object: 
+The `eslint.config.js` file is a JavaScript file (there is no JSON or YAML equivalent) that exports an object: 
 
 ```js
 module.exports = {
     name: "name",
     files: ["*.js"],
     ignores: ["*.test.js"],
-    globals: {},
     settings: {},
+    languageOptions: {
+        ecmaVersion: 2020,
+        sourceType: "module",
+        globals: {},
+        parser: object || "string",
+        parserOptions: {},
+    }
     processor: object || "string",
-    parser: object || "string",
-    parserOptions: {},
     plugins: {}
     rules: {}
 };
@@ -75,18 +79,21 @@ The following keys are new to the `eslint.config.js` format:
 
 The following keys are specified the same as in `.eslintrc` files:
 
-* `globals`
 * `settings`
 * `rules`
-* `parserOptions`
 
 The following keys are specified differently than in `.eslintrc` files:
 
-* `parser` - an object or string in `eslint.config.js` files (a string in `.eslintrc`)
-* `processor` - an object or string in `eslint.config.js` files (a string in `.eslintrc`)
 * `plugins` - an object mapping plugin names to implementations. This replaces the `plugins` key in `.eslintrc` files and the `--rulesdir` option.
+* `processor` - an object or string in `eslint.config.js` files (a string in `.eslintrc`)
+* `languageOptions` - top-level grouping for all options that affect how JavaScript is interpreted by ESLint.
+    * `ecmaVersion` - sets the JavaScript version ESLint should use for these files. This value is copied into `parserOptions` if not already present.
+    * `sourceType` - sets the source type of the JavaScript code to parse. One of `module`, `script`, or `commonjs`.
+    * `parser` - an object or string in `eslint.config.js` files (a string in `.eslintrc`)
+    * `parserOptions` - an object specifying any additional parameters to be passed to the parser.
+    * `globals` - any additional global variables to add.
 
-Each of these keys used to require one or more strings specifying module(s) to load in `.eslintrc`. In `eslint.config.js`, these are all objects, requiring users to manually specify the objects to use.
+Each of these keys used to require one or more strings specifying module(s) to load in `.eslintrc`. In `eslint.config.js`, these are all objects or strings (referencing an object in a plugin), requiring users to manually specify the objects to use.
 
 The following keys are invalid in `eslint.config.js`:
 
@@ -152,8 +159,10 @@ When using a config array, only one config object must have a `files` key (confi
 ```js
 module.exports = [
     {
-        globals: {
-            Foo: true
+        languageOptions: {
+            globals: {
+                Foo: true
+            }
         }
     },
     {
@@ -304,7 +313,7 @@ Rules imported from a plugin must be assigned a namespace using `plugins`, which
 First, a plugin can export a recommended configuration to place in a config array. For example, a plugin called `eslint-plugin-example`, might define a config that looks like this:
 
 ```js
-module.exportss = {
+module.exports = {
     recommended: {
         plugins: {
             example: {
@@ -374,7 +383,9 @@ In `eslint.config.js`, there are two options. First, you can pass references dir
 ```js
 module.exports = {
     files: ["*.js"],
-    parser: require("babel-eslint"),
+    languageOptions: {
+        parser: require("babel-eslint"),
+    },
     processor: require("eslint-plugin-markdown").processors.markdown
 };
 ```
@@ -388,28 +399,60 @@ module.exports = {
         babel: require("eslint-plugin-babel")
     },
     files: ["*.js"],
-    parser: "babel/eslint-parser",
+    languageOptions: {
+        parser: "babel/eslint-parser",
+    },
     processor: "markdown/markdown"
 };
 ```
 
 In this example, `"babel/eslint-parser"` loads the parser defined in the `eslint-plugin-babel` plugin and `"markdown/markdown"` loads the processor from the `eslint-plugin-markdown` plugin. Note that the behavior for `parser` is different than with `.eslintrc` in that the string **must** represent a parser defined in a plugin.
 
-
 The benefit to this approach of specifying parsers and processors is that it uses the builtin Node.js module resolution system or allows users to specify their own. There is never a question of where the modules will be resolved from.
+
+**Note:** This example requires that `eslint-plugin-babel` publishes a `parsers` property, such as:
+
+```js
+module.exports = {
+    parsers: {
+        "eslint-parser": require("./some-file.js")
+    }
+}
+```
+
+This is a new feature of plugins introduced with this RFC.
 
 #### Applying an Environment
 
-Unlike with `.eslintrc` files, there is no `env` key in `eslint.config.js`. Users can mimic the behavior of `env` by assigning directly to the `globals` key:
+Unlike with `.eslintrc` files, there is no `env` key in `eslint.config.js`. For different ECMA versions, ESLint will automatically add in the required globals. For example:
 
 ```js
 const globals = require("globals");
 
 module.exports = {
     files: ["*.js"],
-    globals: {
-        MyGlobal: true,
-        ...globals.browser
+    languageOptions: {
+        ecmaVersion: 2020
+    }
+};
+```
+
+Because the `languageOptions.ecmaVersion` property is now a linter-level option instead of a parser-level option, ESLint will automatically add in all of the globals for ES2020 without requiring the user to do anything else.
+
+Similarly, when `sourceType` is `"commonjs"`, ESLint will automatically add the `require`, `exports`, and `module` global variables (as well as set `parserOptions.ecmaFeatures.globalReturn` to `true`). In this case, ESLint will pass a `sourceType` of `"script"` as part of `parserOptions` because parsers don't support `"commonjs"` for `sourceType`.
+
+For other globals, ssers can mimic the behavior of `env` by assigning directly to the `globals` key:
+
+```js
+const globals = require("globals");
+
+module.exports = {
+    files: ["*.js"],
+    languageOptions: {
+        globals: {
+            MyGlobal: true,
+            ...globals.browser
+        }
     }
 };
 ```
@@ -819,11 +862,7 @@ While there are no alternatives that cover all of the functionality in this RFC,
 
 ### Can a config be an async function?
 
-No. Right now it won't be possible to implement a config with an async function because the rest of ESLint is fully synchronous. Once we look at how to make ESLint more asynchronous, we can revisit and allow configs to be created with async functions.
-
-### Why use `module.exports` instead of `module.exports`?
-
-Using an exported key gives us more flexibility for the future if we decide that config files should be able to output more than one thing. For example, I've been thinking of a `--config-key` option that would allow users to specify which exported key should be used as their config. Users could then export multiple different keys (`config1`, `config2`, etc.) and easily switch between configs on the command line. That option is not part of this proposal because it isn't solving an existing problem and I'd rather focus on existing problems first (this proposal is already big enough).
+Yes. We will be able to implement async config functions once the new async ESLint API has been implemented.
 
 ### How does this affect configuration via `package.json`?
 
