@@ -656,9 +656,9 @@ Each function config in an array will be executed with a `context` object when E
 
 **Note:** If a function config inside of a config array happens to return an array, then those config array items are flattened as with any array-in-array situation.
 
-### The `@eslint/config` Utility
+### The `@eslint/eslintrc` Utility
 
-To allow for backwards compatibility with existing configs and plugins, an `@eslint/config` utility is provided. The package exports the following functions:
+To allow for backwards compatibility with existing configs and plugins, an `@eslint/eslintrc` utility is provided. The package exports the following functions:
 
 * `importESLintRC(eslintrcName)` - allows using `.eslintrc`-style configs
 * `translateESLintRC(config)` - translates an `.eslintrc`-style config object into the correct format
@@ -671,6 +671,8 @@ To allow for backwards compatibility with existing configs and plugins, an `@esl
 The `importESLintRC()` function allows users to specify an existing `.eslintrc` config location in the same format that used in the `.eslintrc` `extends` key. Users can pass in a filename, a shareable config name, or a plugin config name and have it converted automatically into the correct format. For example:
 
 ```js
+const { importESLintRC } = require("@eslint/eslintrc");
+
 module.exports = [
     "eslint:recommended",
   
@@ -691,6 +693,8 @@ module.exports = [
 The `translateESLintRC()` function allows users to pass in a `.eslintrc`-style config and get back a config object that works with `eslint.config.js`. For example:
 
 ```js
+const { translateESLintRC } = require("@eslint/eslintrc");
+
 const config = {
     env: {
         node: true
@@ -710,6 +714,8 @@ module.exports = [
 The `importPlugin()` function allows users to automatically load a plugin's rules and processors without separately assigning a namespace. For example:
 
 ```js
+const { importPlugin } = require("@eslint/eslintrc");
+
 module.exports = [
     "eslint:recommended",
 
