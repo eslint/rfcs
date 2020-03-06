@@ -42,11 +42,12 @@ Design Summary:
 1. All `eslint.config.js` files are treated as if they have `root: true`
 1. There is no automatic merging of config files
 1. The `eslint.config.js` configuration is not serializable and objects such as functions and plugins may be added directly into configuration
-1. An `@eslint/config` utility is provided to aid with backwards compatibility
+1. An `@eslint/eslintrc` utility is provided to aid with backwards compatibility
 1. Remove the concept of environments (`env`)
 1. Remove `.eslintignore` and `--ignore-file` (no longer necessary)
 1. Remove `--rulesdir`
 1. Remove `--ext`
+1. Replace `context.parserPath` with `context.parser` (the path to the parser is no longer valid)
 
 ### The `eslint.config.js` File
 
@@ -827,16 +828,16 @@ The `ConfigArray` class is the primary new class for handling the configuration 
 class ConfigArray extends Array {
 
     // normalize the current ConfigArray
-    normalize(context) {}
+    async normalize(context) {}
 
     // get a single config for the given filename
     getConfig(filename) {}
 
     // get the file patterns to search for
-    getFilePatterns() {}
+    get files() {}
 
     // get the "ignore file" values
-    getIgnorePatterns() {}
+    get ignores() {}
 }
 ```
 
@@ -870,6 +871,7 @@ The intent of this proposal is to replace the current `.eslintrc` format, but ca
 
 In the first phase, I envision this:
 
+1. Extract all current `.eslintrc` functionality into `@eslint/eslintrc` package. Change ESLint to depend on `@eslint/eslintrc` package.
 1. `eslint.config.js` can be implemented alongside `.eslintrc`.
 1. If `eslint.config.js` is found, then:
     1. All `.eslintrc` files are ignored.
@@ -902,9 +904,15 @@ While there are no alternatives that cover all of the functionality in this RFC,
 ## Open Questions
 
 1. Do we need a command line flag to opt-in to `eslint.config.js` instead of trying to do it alongside the existing configuration system?
-1. Should `eslint` run without any directories, globs, or filenames, fall back to using the globs in the config to find files to run?
 
 ## Frequently Asked Questions
+
+### Will the inability to serialize these configs affect any features?
+
+There are two features that non-serializable configs affect directly:
+
+1. **Parallel linting** - we can no longer pass the configs between the main thread and a worker thread. However, we can work around this by passing the config filename to each worker thread to load independently. This may have some overhead but given the speed gains of parallel linting they should be negligible.
+1. **Caching** - we can no longer use the serialized version of the configs as part of the cache key. We can instead read the config file in as a string and use that as part of the cache key.
 
 ### Can a config be an async function?
 
@@ -931,6 +939,7 @@ By using strings as placeholders, we allow the core to fill in the values for th
 ### Should shareable configs also use `module.exports`?
 
 It's really up to the shareable configs. With this design, there is no required format for shareable configs, so we can no longer enforce any such conventions. For simplicity, I think that most shareable configs will use `module.exports`, but it's really up to the shareable config author.
+
 
 ## Related Discussions
 
