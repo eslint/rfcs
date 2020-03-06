@@ -49,6 +49,7 @@ Design Summary:
 1. Remove `--ext`
 1. Remove `--resolve-plugins-relative-to`
 1. Replace `context.parserPath` with `context.parser` (the path to the parser is no longer valid)
+1. Allow plugins to specify a `parsers` key so parsers can be referenced the same as rules and processors in plugins.
 
 ### The `eslint.config.js` File
 
@@ -942,11 +943,6 @@ In the first case, you'd end up with a situation where the config needs to speci
 In the second case, we'd be stuck trying to keep the core ESLint configs in sync with another package, which is maintenance overhead.
 
 By using strings as placeholders, we allow the core to fill in the values for those configs without adding more restrictions onto the config files.
-
-### Should shareable configs also use `module.exports`?
-
-It's really up to the shareable configs. With this design, there is no required format for shareable configs, so we can no longer enforce any such conventions. For simplicity, I think that most shareable configs will use `module.exports`, but it's really up to the shareable config author.
-
 
 ## Related Discussions
 
