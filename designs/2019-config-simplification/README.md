@@ -43,10 +43,11 @@ Design Summary:
 1. There is no automatic merging of config files
 1. The `eslint.config.js` configuration is not serializable and objects such as functions and plugins may be added directly into configuration
 1. An `@eslint/eslintrc` utility is provided to aid with backwards compatibility
-1. Remove the concept of environments (`env`)
+1. Remove the concept of environments (`env`) (including `--env`, `/*eslint-env*/`, and `env` in config files)
 1. Remove `.eslintignore` and `--ignore-file` (no longer necessary)
 1. Remove `--rulesdir`
 1. Remove `--ext`
+1. Remove `--resolve-plugins-relative-to`
 1. Replace `context.parserPath` with `context.parser` (the path to the parser is no longer valid)
 
 ### The `eslint.config.js` File
@@ -914,10 +915,11 @@ While there are no alternatives that cover all of the functionality in this RFC,
 
 ### Will the inability to serialize these configs affect any features?
 
-There are two features that non-serializable configs affect directly:
+There are three features that non-serializable configs affect directly:
 
 1. **Parallel linting** - we can no longer pass the configs between the main thread and a worker thread. However, we can work around this by passing the config filename to each worker thread to load independently. This may have some overhead but given the speed gains of parallel linting they should be negligible.
 1. **Caching** - we can no longer use the serialized version of the configs as part of the cache key. We can instead read the config file in as a string and use that as part of the cache key.
+1. **--print-config** - printing the config to the console will be a bit more confusing because there will be non-serializable objects included. We can look into ways of addressing this issue as we receive feedback on use cases.
 
 ### Can a config be an async function?
 
