@@ -658,76 +658,109 @@ Each function config in an array will be executed with a `context` object when E
 
 ### The `@eslint/eslintrc` Utility
 
-To allow for backwards compatibility with existing configs and plugins, an `@eslint/eslintrc` utility is provided. The package exports the following functions:
+To allow for backwards compatibility with existing configs and plugins, an `@eslint/eslintrc` utility is provided. The package exports the following classes:
 
-* `importESLintRC(eslintrcName)` - allows using `.eslintrc`-style configs
-* `translateESLintRC(config)` - translates an `.eslintrc`-style config object into the correct format
-* `importPlugin(pluginName)` - automatically loads and merges in plugin information like rules and processors
-* `importEnvGlobals(envName)` - imports globals from an environment
-* `importEnvConfig(envName)` - imports an environment with globals and things like `parserOptions` (for `es6` and `node` environments)
+* `ESLintRCCompat` - a class to help convert `.eslintrc`-style configs into the correct format.
 
-#### The `importESLintRC()` function
-
-The `importESLintRC()` function allows users to specify an existing `.eslintrc` config location in the same format that used in the `.eslintrc` `extends` key. Users can pass in a filename, a shareable config name, or a plugin config name and have it converted automatically into the correct format. For example:
 
 ```js
-const { importESLintRC } = require("@eslint/eslintrc");
+class ESLintRCCompat {
+    
+    constructor(baseDir) {}
+    
+    config(configObjct) {}
+    plugins(...pluginNames) {}
+    extends(...sharedConfigNames) {}
+    env(envObject) {}
+
+}
+```
+
+#### Importing existing configs
+
+The `ESLintRCCompat#extends()` function allows users to specify an existing `.eslintrc` config location in the same format that used in the `.eslintrc` `extends` key. Users can pass in a filename, a shareable config name, or a plugin config name and have it converted automatically into the correct format. For example:
+
+```js
+const { ESLintRCCompat } = require("@eslint/eslintrc");
+
+const eslintrc = new ESLintRCCompat(__dirname);
 
 module.exports = [
     "eslint:recommended",
   
     // load a file
-    importESLintRC("./.eslintrc.yml", __dirname),
+    eslintrc.extends("./.eslintrc.yml"),
 
     // load eslint-config-standard
-    importESLintRC("standard", __dirname),
+    eslintrc.extends("standard"),
 
     // load eslint-plugin-vue/recommended
-    importESLintRC("plugin:vue/recommended", __dirname)
+    eslintrc.extends("plugin:vue/recommended"),
+
+    // or multiple at once
+    eslintrc.extends("./.eslintrc.yml", "standard", "plugin:vue/recommended")
 
 ];
 ```
 
-#### The `translateESLintRC()` function
+#### Translating config objects
 
-The `translateESLintRC()` function allows users to pass in a `.eslintrc`-style config and get back a config object that works with `eslint.config.js`. For example:
+The `ESLintRCCompat#config()` methods allows users to pass in a `.eslintrc`-style config and get back a config object that works with `eslint.config.js`. For example:
 
 ```js
-const { translateESLintRC } = require("@eslint/eslintrc");
+const { ESLintRCCompat } = require("@eslint/eslintrc");
 
-const config = {
-    env: {
-        node: true
-    },
-    root: true
-};
+const eslintrc = new ESLintRCCompat(__dirname);
 
 module.exports = [
     "eslint:recommended",
   
-    translateESLintRC(config)
+    eslintrc.config({
+        env: {
+            node: true
+        },
+        root: true
+    });
 ];
 ```
 
-#### The `importPlugin()` function
+#### Including plugins
 
-The `importPlugin()` function allows users to automatically load a plugin's rules and processors without separately assigning a namespace. For example:
+The `ESLintRCCompat#plugins()` method allows users to automatically load a plugin's rules and processors without separately assigning a namespace. For example:
 
 ```js
-const { importPlugin } = require("@eslint/eslintrc");
+const { ESLintRCCompat } = require("@eslint/eslintrc");
+
+const eslintrc = new ESLintRCCompat(__dirname);
 
 module.exports = [
     "eslint:recommended",
 
-    // add in eslint-plugin-vue
-    importPlugin("vue"),
-
-    // add in eslint-plugin-example
-    importPlugin("example")
+    // add in eslint-plugin-vue and eslint-plugin-example
+    eslintrc.plugins("vue", "example")
 ];
 ```
 
 This example includes both `eslint-plugin-vue` and `eslint-plugin-example` so that all of the rules are available with the correct namespace and processors are automatically hooked up to the correct `files` pattern.
+
+#### Applying environments
+
+The `ESLintRCCompat#env()` method allows users to specify an `env` settings as they would in an `.eslintrc`-style config and have globals automatically added. For example:
+
+```js
+const { ESLintRCCompat } = require("@eslint/eslintrc");
+
+const eslintrc = new ESLintRCCompat(__dirname);
+
+module.exports = [
+    "eslint:recommended",
+  
+    // load node environment
+    eslintrc.env({
+        node: true
+    })
+];
+```
 
 ### Configuration Location Resolution
 
