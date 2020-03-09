@@ -318,15 +318,17 @@ Here, it is the `plugins` that assigns the name `react` to the rules from `eslin
 
 Rules imported from a plugin must be assigned a namespace using `plugins`, which puts the responsibility for that namespace on the config file user. Plugins can define their own namespace for rules in two ways. (Note that plugins will not be required to define their own namespaces.)
 
-First, a plugin can export a recommended configuration to place in a config array. For example, a plugin called `eslint-plugin-example`, might define a config that looks like this:
+First, a plugin can export a recommended configuration to place in a config array. For example, a plugin called `eslint-plugin-example`, might define a config like this:
 
 ```js
 module.exports = {
-    recommended: {
-        plugins: {
-            example: {
-                rules: {
-                    rule1: require("./rules/rule1")
+    configs: {
+        recommended: {
+            plugins: {
+                example: {
+                    rules: {
+                        rule1: require("./rules/rule1")
+                    }
                 }
             }
         }
