@@ -616,7 +616,6 @@ The `context` object has the following members:
 
 * `name` - the name of the application being used
 * `version` - the version of ESLint being used
-* `hasRule(ruleId)` - determine if the given rule is in the core
 * `cwd` - the current working directory for ESLint (might be different than `process.cwd()` but always matches `CLIEngine.options.cwd`, see https://github.com/eslint/eslint/issues/11218)
 
 This information allows users to make logical decisions about how the config should be constructed.
@@ -642,10 +641,6 @@ module.exports = (context) => {
             "custom/my-rule": "error"
         }
     };
-
-    if (context.hasRule("some-new-rule")) {
-        myConfig.rules["some-new-rule"] = ["error"];
-    }
 
     return myConfig;
 };
