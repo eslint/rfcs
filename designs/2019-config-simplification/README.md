@@ -16,11 +16,10 @@ The ESLint configuration file format (`.eslintrc`) hasn't changed much since ESL
 Although `.eslintrc` has proven to be a very robust format, it is also limited and unable to easily accommodate feature requests that the community favors, such as:
 
 1. [bundling plugins with configs](https://github.com/eslint/eslint/issues/3458)
-1. [specifying ignore patterns in the config](https://github.com/eslint/eslint/issues/10891)
-1. [specifying `--ext` information in the config](https://github.com/eslint/eslint/issues/11223)
-1. [using `extends` in `overrides`](https://github.com/eslint/eslint/issues/8813) 
 1. [Customize merging of config options](https://github.com/eslint/eslint/issues/9192)
-
+1. [specifying ignore patterns in the config](https://github.com/eslint/eslint/issues/10891) (implemented in `.eslintrc` after this RFC was written)
+1. [specifying `--ext` information in the config](https://github.com/eslint/eslint/issues/11223) (implemented in `.eslintrc` after this RFC was written)
+1. [using `extends` in `overrides`](https://github.com/eslint/eslint/issues/8813) (implemented in `.eslintrc` after this RFC was written)
 
 The only reason that these requests are difficult to implement in ESLint is because of how complex the `.eslintrc` configuration format is. Any changes made to any part of `.eslintrc` processing end up affecting millions of ESLint installations, so we have ended up stuck. The complicated parts of `.eslintrc` include:
 
