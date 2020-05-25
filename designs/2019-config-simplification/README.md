@@ -1,7 +1,8 @@
 - Start Date: 2019-01-20
 - RFC PR: https://github.com/eslint/rfcs/pull/9
 - Authors: Nicholas C. Zakas (@nzakas)
-- Contributors: Teddy Katz (@not-an-aardvark), Toru Nagashima (@mysticatea)
+- repo: eslint/eslint
+- Contributors: Teddy Katz (@not-an-aardvark), Toru Nagashima (@mysticatea), Kai Cataldo (@kaicataldo)
 
 # Config File Simplification
 
@@ -278,7 +279,6 @@ module.exports = [
 ];
 ```
 
-
 #### Referencing Plugin Rules
 
 The `plugins` key in `.eslintrc` was an array of strings indicating the plugins to load, allowing you to specify processors, rules, etc., by referencing the name of the plugin. It's no longer necessary to indicate the plugins to load because that is done directly in the `eslint.config.js` file. For example, consider this `.eslintrc` file:
@@ -508,6 +508,25 @@ module.exports = [
 ```
 
 When ESLint uses this config, it will check each `files` pattern to determine which configs apply. Any config with a `files` pattern matching the file to lint will be extracted and used (if multiple configs match, then those configs are merged to determine the final config to use). In this way, returning an array acts exactly the same as the array in `overrides`.
+
+#### Using AND patterns for files
+
+If any entry in the `files` key is an array, then all of the patterns must match in order for a filename to be considered a match. For example:
+
+```js
+module.exports = [
+    {
+        files: [ ["*.test.*", "*.js"] ],
+        rules: {
+            semi: ["error", "always"]
+        }
+    }
+];
+```
+
+Here, the `files` key specifies two glob patterns. The filename `foo.test.js` would match because it matches both patterns whereas the filename `foo.js` would not match because it only matches one of the glob patterns.
+
+**Note:** This feature is primarily intended for backwards compatibility with eslintrc's ability to specify `extends` in an `overrides` block.
 
 #### Replacing `.eslintignore`
 
