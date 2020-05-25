@@ -67,10 +67,10 @@ module.exports = {
         globals: {},
         parser: object || "string",
         parserOptions: {},
-        linterOptions: {
-            reportUnusedDisableDirectives: "string"
-        }
     }
+    linterOptions: {
+        reportUnusedDisableDirectives: "string"
+    },
     processor: object || "string",
     plugins: {}
     rules: {}
@@ -97,9 +97,9 @@ The following keys are specified differently than in `.eslintrc` files:
     * `sourceType` - sets the source type of the JavaScript code to parse. One of `module`, `script`, or `commonjs`.
     * `parser` - an object or string in `eslint.config.js` files (a string in `.eslintrc`)
     * `parserOptions` - an object specifying any additional parameters to be passed to the parser.
-    * `linterOptions` - an object for linter-specific settings
-        * `reportUnusedDisableDirectives` - new location for the same option name.
     * `globals` - any additional global variables to add.
+* `linterOptions` - an object for linter-specific settings
+    * `reportUnusedDisableDirectives` - new location for the same option name.
 
 Each of these keys used to require one or more strings specifying module(s) to load in `.eslintrc`. In `eslint.config.js`, these are all objects or strings (referencing an object in a plugin), requiring users to manually specify the objects to use.
 
