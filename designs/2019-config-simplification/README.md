@@ -825,7 +825,7 @@ The implementation of this feature requires the following changes:
     1. Check for existence of `eslint.config.js`, and if found, opt-in to new behavior.
     1. Create a `ConfigArray` to hold the configuration information and to determine which files to lint (in conjunction with already-existing `globUtils`)
     1. Rename the private functions `processText()` and `processFiles()` to `legacyProcessText()` and `legacyProcessFiles()`; create new versions with the new functionality named `processText()` and `processFiles()`. Use the appropriate functions based on whether or not the user has opted-in.
-    1. Update `Linter#verify()` to check for objects on keys that now support objects instead of strings (like `parser`).
+    1. Update `Linter#verify()` to check for objects on keys that now support objects instead of strings (like `parser`) and add a `disableEnv` property to the options to indicate that environments should not be honored.
 1. At a later point, we will be able to remove a lot of the existing configuration utilities.
 
 #### The `ConfigArray` Class
