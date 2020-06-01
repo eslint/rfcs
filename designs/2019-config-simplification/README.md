@@ -535,7 +535,6 @@ Because there is only one `eslint.config.js` file to consider, ESLint doesn't ha
 With `eslint.config.js`, there are three ways that files and directories can be ignored:
 
 1. **Defaults** - by default, ESLint will ignore `node_modules` and `.git` directories only. This is different from the current behavior where ESLint ignores `node_modules` and all files/directories beginning with a dot (`.`).
-2. **.gitignore** - any files or directories specified in `.gitignore` will also be ignored. This feature has been requested before ([eslint/eslint#12199](https://github.com/eslint/eslint/issues/12199), [eslint/eslint#9329](https://github.com/eslint/eslint/issues/9329), [eslint/eslint#5848](https://github.com/eslint/eslint/issues/5848)), and would be a nice way to make up for the loss of `.eslintignore`.
 3. **eslint.config.js** - patterns specified in `ignores` keys when `files` is not specified. (See details below.) 
 
 Anytime `ignores` appears in a config object without `files`, then the `ignores` patterns acts like the current `.eslintignore` file in that the patterns are excluded from all searches before any other matching is done. For example:
@@ -560,9 +559,7 @@ module.exports = [
 ];
 ```
 
-The `--no-ignore` flag will disable both `.gitignore` and `eslint.config.js` ignore patterns while leaving the default ignore patterns in place.
-
-The `--ignore-path`, when specified, will prevent `.gitignore` from being read in favor of the path specified.
+The `--no-ignore` flag will disable `eslint.config.js` ignore patterns while leaving the default ignore patterns in place.
 
 ### Replacing `--ext`
 
