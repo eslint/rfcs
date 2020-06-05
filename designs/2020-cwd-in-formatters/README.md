@@ -1,7 +1,7 @@
 - Repo: eslint/eslint
 - Start Date: 2020-06-05
-- RFC PR: (leave this empty, to be filled in later)
-- Authors: Toru Nagashima <https://github.com/mysticatea>
+- RFC PR: https://github.com/eslint/rfcs/pull/57
+- Authors: Toru Nagashima (https://github.com/mysticatea)
 
 # Accessing `cwd` from formatters
 
