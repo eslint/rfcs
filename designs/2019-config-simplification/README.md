@@ -44,7 +44,6 @@ Design Summary:
 1. The `eslint.config.js` configuration is not serializable and objects such as functions and plugins may be added directly into configuration
 1. An `@eslint/eslintrc` utility is provided to aid with backwards compatibility
 1. Remove the concept of environments (`env`) (including `--env`, `/*eslint-env*/`, and `env` in config files)
-1. Remove `.eslintignore` and `--ignore-file` (no longer necessary)
 1. Remove `--rulesdir`
 1. Remove `--ext`
 1. Remove `--resolve-plugins-relative-to`
@@ -81,7 +80,7 @@ The following keys are new to the `eslint.config.js` format:
 
 * `name` - Specifies the name of the config object. This is helpful for printing out debugging information and, while not required, is recommended for that reason.
 * `files` - Determines the glob file patterns that this configuration applies to. These patterns can be negated by prefixing them with `!`, which effectively mimics the behavior of `excludedFiles` in `.eslintrc`.
-* `ignores` - Determines the files that should not be linted using ESLint. This can be used in place of the `.eslintignore` file. The files specified by this array of glob patterns are subtracted from the files specified in `files`. If there is no `files` key, then `ignores` acts the same as `ignorePatterns` in `.eslintrc` files; if there is a `files` key then `ignores` acts like `excludedFiles` in `.eslintrc`.
+* `ignores` - Determines the files that should not be linted using ESLint. The files specified by this array of glob patterns are subtracted from the files specified in `files`. If there is no `files` key, then `ignores` acts the same as `ignorePatterns` in `.eslintrc` files; if there is a `files` key then `ignores` acts like `excludedFiles` in `.eslintrc`.
 
 The following keys are specified the same as in `.eslintrc` files:
 
@@ -528,16 +527,15 @@ Here, the `files` key specifies two glob patterns. The filename `foo.test.js` wo
 
 **Note:** This feature is primarily intended for backwards compatibility with eslintrc's ability to specify `extends` in an `overrides` block.
 
-#### Replacing `.eslintignore`
-
-Because there is only one `eslint.config.js` file to consider, ESLint doesn't have to first search directories to determine its location. That allows `eslint.config.js` to specify files to ignore directly instead of relying on `.eslintignore`.
+#### Ignoring files
 
 With `eslint.config.js`, there are three ways that files and directories can be ignored:
 
 1. **Defaults** - by default, ESLint will ignore `node_modules` and `.git` directories only. This is different from the current behavior where ESLint ignores `node_modules` and all files/directories beginning with a dot (`.`).
+2. **.eslintignore** - the regular ESLint ignore file.
 3. **eslint.config.js** - patterns specified in `ignores` keys when `files` is not specified. (See details below.) 
 
-Anytime `ignores` appears in a config object without `files`, then the `ignores` patterns acts like the current `.eslintignore` file in that the patterns are excluded from all searches before any other matching is done. For example:
+Anytime `ignores` appears in a config object without `files`, then the `ignores` patterns acts like the `ignorePatterns` key in `.eslintrc` in that the patterns are excluded from all searches before any other matching is done. For example:
 
 ```js
 module.exports = [{
@@ -547,19 +545,7 @@ module.exports = [{
 
 Here, the directory `web_modules` will be ignored as if it were defined in an `.eslintignore` file. The `web_modules` directory will be excluded from the glob pattern used to determine which files ESLint will run against.
 
-For backwards compatibility, users could create a config like this:
-
-```js
-const fs = require("fs");
-
-module.exports = [
-    {
-        ignores: fs.readFileSync(".eslintignore", "utf8").split("\n")
-    }
-];
-```
-
-The `--no-ignore` flag will disable `eslint.config.js` ignore patterns while leaving the default ignore patterns in place.
+The `--no-ignore` flag will disable `eslint.config.js` and `.eslintignore` ignore patterns while leaving the default ignore patterns in place.
 
 ### Replacing `--ext`
 
@@ -880,8 +866,6 @@ In the first phase, I envision this:
 1. `eslint.config.js` can be implemented alongside `.eslintrc`.
 1. If `eslint.config.js` is found, then:
     1. All `.eslintrc` files are ignored.
-    1. `.eslintignore` is ignored.
-    1. `--ignore-file` is ignored.
     1. `--rulesdir` is ignored.
     1. `--env` is ignored.
     1. `--ext` is ignored.
@@ -889,8 +873,6 @@ In the first phase, I envision this:
 1. If `eslint.config.js` is not found, then fall back to the current behavior.
 
 This keeps the current behavior for the majority of users while allowing some users to test out the new functionality. Also, `-c` could not be used with `eslint.config.js` in this phase.
-
-For every option that is provided and ignored, ESLint will emit a warning. (For example, if `.eslintignore` is found and not used then a warning will be output.)
 
 In the second phase (and in a major release), ESLint will emit deprecation warnings whenever the original functionality is used but will still honor them so long as `eslint.config.js` is not found.
 
