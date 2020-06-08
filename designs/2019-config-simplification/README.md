@@ -80,8 +80,8 @@ module.exports = {
 The following keys are new to the `eslint.config.js` format:
 
 * `name` - Specifies the name of the config object. This is helpful for printing out debugging information and, while not required, is recommended for that reason.
-* `files` - Determines the glob file patterns that this configuration applies to.
-* `ignores` - Determines the files that should not be linted using ESLint. This can be used in place of the `.eslintignore` file. The files specified by this array of glob patterns are subtracted from the files specified in `files`. If there is no `files` key, then `ignores` acts the same as `ignorePatterns` in `.eslintrc` files.
+* `files` - Determines the glob file patterns that this configuration applies to. These patterns can be negated by prefixing them with `!`, which effectively mimics the behavior of `excludedFiles` in `.eslintrc`.
+* `ignores` - Determines the files that should not be linted using ESLint. This can be used in place of the `.eslintignore` file. The files specified by this array of glob patterns are subtracted from the files specified in `files`. If there is no `files` key, then `ignores` acts the same as `ignorePatterns` in `.eslintrc` files; if there is a `files` key then `ignores` acts like `excludedFiles` in `.eslintrc`.
 
 The following keys are specified the same as in `.eslintrc` files:
 
