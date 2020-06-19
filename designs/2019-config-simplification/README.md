@@ -871,10 +871,11 @@ In the first phase, I envision this:
     1. `--ext` is ignored.
     1. `eslint-env` config comments are ignored.
 1. If `eslint.config.js` is not found, then fall back to the current behavior.
+1. Switch ESLint itself to use `eslint.config.js` as a way to test and ensure compatibility with existing shareable configs in `.eslintrc` format.
 
 This keeps the current behavior for the majority of users while allowing some users to test out the new functionality. Also, `-c` could not be used with `eslint.config.js` in this phase.
 
-In the second phase (and in a major release), ESLint will emit deprecation warnings whenever the original functionality is used but will still honor them so long as `eslint.config.js` is not found.
+In the second phase (and in a major release), ESLint will emit deprecation warnings whenever the original functionality is used but will still honor them so long as `eslint.config.js` is not found. In this phase, we will work with several high-profile plugins and shareable configs to convert their packages into the new format. We will use this to find the remaining compatibility issues.
 
 In the third phase (and in another major release), `eslint.config.js` becomes the official way to configure ESLint. If no `eslint.config.js` file is found, ESLint will still search for a `.eslintrc` file, and if found, print an error message information the user that the configuration file format has changed.
 
