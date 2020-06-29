@@ -1,0 +1,20 @@
+name: Tweet RFC Update
+on:
+  pull_request:
+    types: [labeled]
+
+jobs:
+  tweet:
+    Name: Tweet RFC Update
+    if: contains(github.event.label.name, 'Commenting')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 12
+      - run: 'npx @humanwhocodes/tweet "The RFC ${{ github.event.pull_request.title }} is now in ${{ github.event.label.name }}\n\n${{ github.event.pull_request.html_url }}"'
+        env:
+          TWITTER_API_KEY: ${{ secrets.TWITTER_API_KEY }}
+          TWITTER_API_SECRET: ${{ secrets.TWITTER_API_SECRET }}
+          TWITTER_ACCESS_TOKEN: ${{ secrets.TWITTER_ACCESS_TOKEN }}
+          TWITTER_ACCESS_TOKEN_SECRET: ${{ secrets.TWITTER_ACCESS_TOKEN_SECRET }}
