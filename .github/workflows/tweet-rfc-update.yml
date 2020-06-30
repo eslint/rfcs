@@ -2,12 +2,10 @@ name: Tweet RFC Update
 on:
   pull_request:
     types: [labeled]
-
 jobs:
   tweet:
-    Name: Tweet RFC Update
-    if: contains(github.event.label.name, 'Commenting')
     runs-on: ubuntu-latest
+    if: contains(github.event.label.name, 'Commenting')
     steps:
       - uses: actions/setup-node@v1
         with:
