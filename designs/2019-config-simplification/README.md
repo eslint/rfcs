@@ -760,10 +760,10 @@ When ESLint is executed, the following steps are taken to find the `eslint.confi
 
 1. If the `-c` flag is used then the specified configuration file is used. There is no further search performed.
 1. Otherwise:
-    a. Look for `eslint.config.js` in the current working directory. If found, stop searching and use that file.
-    b. If not found, search up the directory hierarchy looking for `eslint.config.js`.
-    c. If a `eslint.config.js` file is found at any point, stop searching and use that file.
-    d. If `/` is reached without finding `eslint.config.js`, then stop searching and output a "no configuration found" error.
+    1. Look for `eslint.config.js` in the current working directory. If found, stop searching and use that file.
+    1. If not found, search up the directory hierarchy looking for `eslint.config.js`.
+    1. If a `eslint.config.js` file is found at any point, stop searching and use that file.
+    1. If `/` is reached without finding `eslint.config.js`, then stop searching and output a "no configuration found" error.
 
 This approach will allow running ESLint from within a subdirectory of a project and get the same result as when ESLint is run from the project's root directory (the one where `eslint.config.js` is found).
 
