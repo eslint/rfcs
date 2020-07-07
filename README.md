@@ -55,7 +55,7 @@ When an RFC is submitted, it goes through the following process:
 1. **Final commenting period (7 days)** - when all feedback has been addressed, the pull request author requests a final commenting period where ESLint TSC members provide their final feedback and either approve of the pull request or state their disagreement. (A PR in the final commenting period has the **Final Commenting** label applied.) ESLint TSC members are notified through GitHub when an RFC has passed into the final commenting period.
 1. **Approval and Merge** - if the TSC reaches consensus on approving the RFC, the pull request will be merged. If consensus is not reached on the pull request then the RFC will be discussed at the next TSC meeting to determine whether or not to move forward.
 
-**Note:** If two or more RFCs attempt to address the same problem or need, the TSC will consider all of the competing RFCs together to determination which RFC to approve. Alternately, the TSC may request that competing RFCs be merged in order to create a hybrid solution.
+**Note:** If two or more RFCs attempt to address the same problem or need, the TSC will consider all of the competing RFCs together to determine which RFC to approve. Alternately, the TSC may request that competing RFCs be merged in order to create a hybrid solution.
 
 ## The RFC Lifecycle
 
