@@ -31,7 +31,7 @@ submit an RFC first.
 
 Before submitting an RFC, open an issue in the repository where you'd like to make the change (for example, to make a change to ESLint, open an issue in the [eslint/eslint](https://github.com/eslint/eslint) repository). The purpose of opening the issue is to gather feedback from the community and the ESLint team to ensure that there is enough interest to put together an RFC.
 
-Once the ESLint team has indicated that their is enough interest, you'll be asked to create an RFC to describe the change you'd like to make in more detail.
+Once the ESLint team has indicated that there is enough interest, you'll be asked to create an RFC to describe the change you'd like to make in more detail.
 
 **Note:** Please do not submit a pull request with your prototype or proof-of-concept. Instead, include a link to your fork or branch when you submit your RFC (see next section).
 
