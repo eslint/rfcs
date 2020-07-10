@@ -6,6 +6,7 @@
 
 ## Summary
 
+
 This proposal provides a way to explicitly define which processor(s) to use for different files inside of configuration. It also allows the chaining of multiple processors to fully process a file.
 
 ## Motivation
