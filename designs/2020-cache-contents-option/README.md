@@ -2,7 +2,7 @@
 - RFC PR: https://github.com/eslint/rfcs/pull/63
 - Authors: @c-home
 
-# Allow use of file contents for cache
+# Add option to allow use of file contents for cache
 
 ## Summary
 
@@ -16,13 +16,15 @@ ESLint uses [`file-entry-create`](https://github.com/royriojas/file-entry-cache)
 
 ## Detailed Design
 
-This RFC adds a `--cache-strategy` CLI option. Users can specify the option to be:
+This RFC adds a `--cache-strategy` CLI [option](https://github.com/eslint/eslint/blob/e71e2980cd2e319afc70d8c859c7ffd59cf4157b/lib/options.js#L198). Users can specify the option to be:
 - `contents`, for the use of an md5 hash
 - `metadata`, for the use of `mtime` and `fsize`
 
 Modified time and size (`metadata`), does not need to be specified as it will remain the default.
 
 The implementation will be similar to [#11487](https://github.com/eslint/eslint/pull/11487), with differences in the naming of the options. The options were kept general so if the underlying implementation of the comparison method were to change, the usage and documentation can remain the same.
+
+The majority of changes will be made to [`LintResultCache`](https://github.com/eslint/eslint/blob/e71e2980cd2e319afc70d8c859c7ffd59cf4157b/lib/cli-engine/lint-result-cache.js#L47). The `cache-strategy` will be added to the constructor of `LintResultCache`. If `cache-strategy` is set as `contents`, an md5 hash will be used in [fileEntryCache#create](https://github.com/royriojas/file-entry-cache#createcachename-directory-usechecksum).
 
 ## Documentation
 
