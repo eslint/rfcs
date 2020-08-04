@@ -2,7 +2,7 @@ name: Tweet RFC Update
 on:
   # Can't use pull_request because it won't have access to secrets
   pull_request_target:
-    types: [labeled, merged]
+    types: [labeled, closed]
 jobs:
   tweetStateChange:
     runs-on: ubuntu-latest
