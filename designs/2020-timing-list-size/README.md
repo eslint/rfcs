@@ -50,6 +50,7 @@ We propose reusing the existing the `TIMING` environment variable to also specif
 | Command | Behavior |
 | --- | --- |
 | `eslint` | do not show |
+| `TIMING=true eslint` | show the first 10 rules (due to minimum of 10) |
 | `TIMING=0 eslint` | show the first 10 rules (due to minimum of 10) |
 | `TIMING=1 eslint` | show the first 10 rules (due to minimum of 10) |
 | `TIMING=5 eslint` | show the first 10 rules (due to minimum of 10) |
@@ -76,7 +77,7 @@ function getListSize() {
     const MINIMUM_SIZE = 10;
     const TIMING_ENV_VAR_AS_INTEGER = Number.parseInt(process.env.TIMING, 10);
 
-    return Math.max(MINIMUM_SIZE, TIMING_ENV_VAR_AS_INTEGER);
+    return TIMING_ENV_VAR_AS_INTEGER > 10 ? TIMING_ENV_VAR_AS_INTEGER : MINIMUM_SIZE;
 }
 
 function display() {
@@ -84,6 +85,8 @@ function display() {
     .slice(0, getListSize());
 }
 ```
+
+Test cases will also be added to verify the expected behavior.
 
 <!--
    This is the bulk of the RFC.
