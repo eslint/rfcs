@@ -6,13 +6,13 @@
 # Deprecate caching
 
 ## Summary
-Current (eslint caching)[https://eslint.org/docs/user-guide/command-line-interface#options] assumes all rules are independent, which is not correct.
+Current [eslint caching](https://eslint.org/docs/user-guide/command-line-interface#options) assumes all rules are independent, which is not correct.
 
 ## Motivation
-Deprecate `caching` in (options)[https://eslint.org/docs/user-guide/command-line-interface#options].
+Deprecate `caching` in [options](https://eslint.org/docs/user-guide/command-line-interface#options).
 
 The reason for that is the assumption that all rules are independent is not valid.
-For example, (no-extraneous-dependencies)[https://github.com/benmosher/eslint-plugin-import/blob/master/docs/rules/no-extraneous-dependencies.md] has a dependency on `package.json`.
+For example, [no-extraneous-dependencies](https://github.com/benmosher/eslint-plugin-import/blob/master/docs/rules/no-extraneous-dependencies.md) has a dependency on `package.json`.
 In other words, when `package.json` has been touched, all cache regarding this rule should not be used anymore, which is not the case at the moment.
 
 In order to implement the cache properly, what need to be done is either:
@@ -63,7 +63,7 @@ It's super hard to determine a schema that fits all rules. It's the most feasibl
 ## Frequently Asked Questions
 Q: I really need the cache, what should I do?
 
-A: There is (nodejs api)[https://eslint.org/docs/developer-guide/nodejs-api]. It would be better to write your own caching implementation, because you have much more idea on the dependencies.
+A: There is [nodejs api](https://eslint.org/docs/developer-guide/nodejs-api). It would be better to write your own caching implementation, because you have much more idea on the dependencies.
 For example, you can have a branch that pass the tests.
 Linting then can be performed on affected files compare to the commit in that branch.
 The algorithm to find affected files should be implemented by you because you are the only one who has knowledge on that.
@@ -71,7 +71,11 @@ The algorithm to find affected files should be implemented by you because you ar
 
 ## Related Discussions
 https://github.com/eslint/eslint/issues/12828 Dependency: version of the plugins
+
 https://github.com/eslint/eslint/issues/13505 Dependency: cli options
+
 https://github.com/eslint/eslint/issues/12578 Dependency: eslintrc
+
 https://github.com/benmosher/eslint-plugin-import/blob/master/docs/rules/no-extraneous-dependencies.md Dependency: package.json
-https://github.com/benmosher/eslint-plugin-import/blob/master/docs/rules/no-restricted-paths.md Dependency: God knows...
+
+https://github.com/benmosher/eslint-plugin-import/blob/HEAD/docs/rules/no-cycle.md Dependency: All imports (including transitive imports) of a file
