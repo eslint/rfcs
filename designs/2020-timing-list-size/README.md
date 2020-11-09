@@ -1,6 +1,6 @@
 - Repo: eslint/eslint
 - Start Date: 2020-09-11
-- RFC PR: (leave this empty, to be filled in later)
+- RFC PR: <https://github.com/eslint/eslint/pull/13812>
 - Authors: [bmish](https://github.com/bmish)
 
 # Configurable List Size For Per-Rule Performance Metrics
