@@ -1,6 +1,6 @@
 - Repo: eslint/espree
 - Start Date: 2020-12-13
-- RFC PR: `TODO`
+- RFC PR: https://github.com/eslint/rfcs/pull/72
 - Authors: Mike Reinstein (https://github.com/mreinstein)
 
 # Adding es module support
