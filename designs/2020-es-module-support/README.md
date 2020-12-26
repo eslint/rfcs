@@ -63,42 +63,39 @@ today's build process:
 The strategy that probably makes the most sense in this initial work is to do what is known as a "dual package" solution, where
 espree provides an ESM, and a CJS module.
 
-Providing a dual package shouldn't affect any existing espree users, but provies an ESM option for users that want it. 
+Providing a dual package shouldn't affect any existing espree users, but provies an ESM option for users that want it.
 
 
 proposed build process in this RFC:
 ```
-                                  ┌-------------------┐     
-                                  │                   │       
-                                  │  dist/espree.cjs  │     
-                                  │ (CJS entry point) │                package.json: 
-┌-------------------┐             │                   │     
-│                   │             └--▲----------------┘     CJS ---▶   "main": "dist/espress.cjs",  
+                                  ┌-------------------┐
+                                  │                   │
+                                  │  dist/espree.cjs  │
+                                  │ (CJS entry point) │                package.json:
+┌-------------------┐             │                   │
+│                   │             └--▲----------------┘     CJS ---▶   "main": "dist/espress.cjs",
 │     espree.js     │                │                                 "exports": {
-│ (ESM entry point) ├───BUILD_STEP───┤                      ESM ---▶     "import": "espree.js",
-│                   │                │                      CJS ---▶     "require": "./dist/espree.cjs" 
-└-------------------┘                ▼                                 },
-                                  ┌----------------┐                   "type": "module"
-                                  │                │
-                                  │ dist/espree.js │
-                                  │  (UMD bundle)  │
-                                  │                │
-                                  └----------------┘
+│ (ESM entry point) ├───BUILD_STEP───┘                      ESM ---▶     "import": "espree.js",
+│                   │                                       CJS ---▶     "require": "./dist/espree.cjs"
+└-------------------┘                                                  },
+                                                                       "type": "module"
 ```
 
 browserify is specifically oriented around commonjs as the input format, so I also propose replacing it with rollup, which understands and expects ESM as it's input format.
+
+`UMD` is not part of the formal package interface and it's usage is questionable, so I propose we drop it altogether.
 
 
 ## Documentation
 
 The changes should be described in the migration guide for whichever major version of espree this goes into (currently considering the upcoming 8.x line.)
 
-Despite the fact that we don't expect this to break the existing API, it probably makes sense to formally announce this via blog post as well, because it is a somewhat dramatic change.
+Adding an `exports` field to `package.json` will break the existing API, it makes sense to formally announce this via blog post.
 
 
 ## Drawbacks
 
-The javascript build/tooling ecosystem is already monstrously complex, and this change adds another output format, which further complicates things (compare the 2 graphs above to see this additional complexity visualized.) 
+The javascript build/tooling ecosystem is already monstrously complex, and this change adds another output format, which further complicates things (compare the 2 graphs above to see this additional complexity visualized.)
 
 I do believe this is a temporary scenario; as time goes on, the UMD and CJS entry points could be dropped altogether, along with the build step. But that will take months, maybe even years depending on how comfortable the community is with this change and how widely adopted the ESM format becomes.
 
@@ -119,7 +116,7 @@ This would essentially eliminate the build step and make things very simple, but
 
 ## Open Questions
 
-* Do we still care about UMD? Maybe it makes sense to just drop this too if it's not something people are using much.
+None yet.
 
 
 ## Help Needed
