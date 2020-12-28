@@ -11,7 +11,7 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: 12
-      - run: npx @humanwhocodes/tweet "The RFC '${{ github.event.pull_request.title }}' is now in the ${{ github.event.label.name }} phase.\n\n${{ github.event.pull_request.html_url }}"
+      - run: npx @humanwhocodes/tweet 'The RFC "${{ github.event.pull_request.title }}" is now in the ${{ github.event.label.name }} phase.\n\n${{ github.event.pull_request.html_url }}'
         env:
           TWITTER_CONSUMER_KEY: ${{ secrets.TWITTER_CONSUMER_KEY }}
           TWITTER_CONSUMER_SECRET: ${{ secrets.TWITTER_CONSUMER_SECRET }}
@@ -25,7 +25,7 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: 12
-      - run: npx @humanwhocodes/tweet "The RFC '${{ github.event.pull_request.title }}' has been approved and merged!\n\n${{ github.event.pull_request.html_url }}"
+      - run: npx @humanwhocodes/tweet 'The RFC "${{ github.event.pull_request.title }}" has been approved and merged!\n\n${{ github.event.pull_request.html_url }}'
         env:
           TWITTER_CONSUMER_KEY: ${{ secrets.TWITTER_CONSUMER_KEY }}
           TWITTER_CONSUMER_SECRET: ${{ secrets.TWITTER_CONSUMER_SECRET }}
