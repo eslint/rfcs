@@ -46,7 +46,7 @@ To allow using `RuleTester` with a custom test framework other than Mocha, paral
 1. Add an `itOnly` `set` accessor that sets `RuleTester[IT_ONLY]`.
 1. Add an `itOnly` `get` accessor.
    1. If `RuleTester[IT_ONLY]` is set, return it.
-   2. If global `it` and `it.only` are functions, return `it.only`. *TODO: Is `this` necessary? Could return a wrapper instead.*
+   2. If global `it` and `it.only` are functions, return `Function.bind.call(it.only, it)`.
    3. Throw an error:
       1. If either `RuleTester[DESCRIBE]` or `RuleTester[IT]` is customized, recommend setting a custom `RuleTester.itOnly`.
       2. If global `it` is a function, the current test framework does not support `only`.
