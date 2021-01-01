@@ -54,6 +54,8 @@ To allow using `RuleTester` with a custom test framework other than Mocha, paral
 
 At the end of `RuleTester`'s `run()` method, for each valid and invalid item, if `only` is `true`, call `RuleTester.itOnly` instead of `RuleTester.it`.
 
+Add [`--forbid-only`](https://mochajs.org/#-forbid-only) to the [`mocha` target in `Makefile.js`](https://github.com/eslint/eslint/blob/cc4871369645c3409dc56ded7a555af8a9f63d51/Makefile.js#L548) to prevent accidentally merging tests before removing `only`.
+
 ## Documentation
 
 <!--
@@ -64,6 +66,7 @@ At the end of `RuleTester`'s `run()` method, for each valid and invalid item, if
 The [RuleTester section](https://eslint.org/docs/developer-guide/nodejs-api#ruletester) in our Node.js API docs will need to include a description of the `only` property on test case objects.
 
 The [Unit Tests](https://eslint.org/docs/developer-guide/unit-tests) page in the developer guide will also include a note about this next to the [Running Individual Tests](https://eslint.org/docs/developer-guide/unit-tests#running-individual-tests) section.
+This can also recommend enabling [`--forbid-only`](https://mochajs.org/#-forbid-only) to prevent accidentally merging tests before removing `only`.
 
 ## Drawbacks
 
@@ -83,8 +86,7 @@ That is mitigated by the implementation still being a wrapper around Mocha's exi
 
 Deleted or commented-out tests are hard to miss in diffs.
 An extra `only: true` could more easily sneak through, accidentally disabling all other tests.
-We could mitigate this by always exiting with 1 when `only: true` is used even if the test itself passes, though this diverges from Mocha's behavior.
-We could instead write a custom internal rule or add a rule to `eslint-plugin-eslint-plugin` to flag `only` in committed code.
+Calling Mocha with [`--forbid-only`](https://mochajs.org/#-forbid-only) will prevent that on CI runs, but it still requires third-party developers to opt in.
 
 ## Backwards Compatibility Analysis
 
@@ -133,8 +135,9 @@ The status quo has two alternatives:
 Given, for example, a valid string test `"var foo = 42;"`, it is easier to convert to `RuleTester.only("var foo = 42;")`, which is equivalent to `{ code: "var foo = 42;", only: true }`.
 The helper sets `only: true` on a test case argument after converting string cases to objects if necessary.
 For invalid cases that are already objects, adding `only: true` is likely easier than using the helper.
-1. Should using `only` cause the process to exit `1` even if tests pass as described in "Drawbacks"?
-1. In the `RuleTester.itOnly` `get` accessor, if `RuleTester[IT_ONLY]` is not customized and the global `it.only` is not a function, is throwing an error the right choice?
+1. ~~Should using `only` cause the process to exit `1` even if tests pass as described in "Drawbacks"?~~
+Our Makefile can call Mocha with [`--forbid-only`](https://mochajs.org/#-forbid-only) instead.
+3. In the `RuleTester.itOnly` `get` accessor, if `RuleTester[IT_ONLY]` is not customized and the global `it.only` is not a function, is throwing an error the right choice?
 We could instead pass through to `RuleTester.it`, ignoring `only` if it's not supported.
 1. Do we need to support `skip`, the inverse of `only`?
 
