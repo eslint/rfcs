@@ -43,7 +43,8 @@ There are no expected backward compatibility issues. The parameter will be disab
 Do we want to still report all errors or only failed linting errors when `break-on-lint-error` is passed?
 
 Assume that for some files ESLint successfully lints them and reports a rule but for some others it doesnt.
-If ESLint finds a single file that has a parsing error should it report just that file or every rule as well?
+If ESLint finds a single file that has a parsing error should it report just that file or every rule as 
+well?
 
 ## Related Discussions
 https://github.com/eslint/eslint/issues/13711
