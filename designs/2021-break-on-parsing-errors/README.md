@@ -11,8 +11,15 @@ The suggest change is ESLint support a parameter that will break the ESLint run 
 
 ## Motivation
 
-We met with a couple of cases where we assumed a succesfull run of ESLint in CI enviroments. When ESLint wouldn't be able to read the tsconfig.json or had a wrongly configured source type the command would report all errors in each file and also exit with a successfull code.
+We met with a couple of cases where we assumed a succesfull run of ESLint in CI enviroments. When ESLint wouldn't be able to read the tsconfig.json or had a wrongly configured source type the command would report all errors in each file and also exit with a 1 exit code.
 
+According to the eslint docs about exit codes:
+
+- 0: Linting was successful and there are no linting errors. If the --max-warnings flag is set to n, the number of linting warnings is at most n.
+- 1: Linting was successful and there is at least one linting error, or there are more linting warnings than allowed by the --max-warnings option.
+- 2: Linting was unsuccessful due to a configuration problem or an internal error.
+
+Being able to exit with code `2` instead of `1` it will allow for CI pipelines to better understand the results.
 
 ## Detailed Design
 Adding a new option in ESLint called `--break-on-error` which will be  which will report and nonzero exit code on case of parsing errors. The most current similar option is `--max-warning`.
@@ -25,7 +32,7 @@ If this command finds any kind of file which may use ECMAScript modules it will 
 
 Without `--break-on-error` (the current behavior) a user of ESLint would have to look at each and every result to distinquish if there were any kind of missconfiguration/parsing errors as having a normal error in a file is reported the same way as a parsing error. This validation becomes harder for CI pipelines who want to ensure that ESLint reports any rules correctly and was run sucessfully.
 
-The expected behavior of the command should gather be able to read the reported errors that eslint reports. If at least one missconfiguration is found it exits with a non-zero exit code, preferably 2 so we can distinguish it from the exit code 1.
+The expected behavior of the command should gather be able to read the reported errors that eslint reports. If at least one missconfiguration is found it exits with a non-zero exit code, 2 so we can distinguish it from the exit code 1.
 
 ## Documentation
 It may be a good idea on why we are introducing a option that changes the way ESLint behaves. Will leave the choice to the ESLint team.
