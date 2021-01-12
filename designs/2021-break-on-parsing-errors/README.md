@@ -1,13 +1,13 @@
 - Repo: eslint/eslint
 - Start Date: 2021/1/12
-- RFC PR:
+- RFC PR: https://github.com/eslint/rfcs/pull/75
 - Authors: [A-Katopodis](https://github.com/A-Katopodis)
 
 # (Break on parsing errors)
 
 ## Summary
 
-The suggest change is ESLint support a parameter that will break the ESLint run when it finds configuration errors.
+The suggest change is ESLint support a parameter that will break the ESLint run when it finds configuration errors. The option will be an opt-in argument called `--break-on-error`.
 
 ## Motivation
 
