@@ -7,11 +7,11 @@
 
 ## Summary
 
-The suggest change is ESLint support a parameter that will break the ESLint run when it finds configuration errors. The option will be an opt-in argument called `--break-on-error`.
+The suggested change is for ESLint tp support an argument that will make the CLI exit with code 2 if any fatal errors are reported. The option will be an opt-in boolean argument called `--fatal-parse-error`.
 
 ## Motivation
 
-We met with a couple of cases where we assumed a succesfull run of ESLint in CI enviroments. When ESLint wouldn't be able to read the tsconfig.json or had a wrongly configured source type the command would report all errors in each file and also exit with a 1 exit code.
+We met with a couple of cases where we assumed a succesfull run of ESLint in CI enviroments. When ESLint wouldn't be able to read the tsconfig.json or had a wrongly configured source type the error would be a `fatal` one but the exit code would be `1`. There was no distiction between a run with no fatal errors and with fatal errors.
 
 According to the eslint docs about exit codes:
 
@@ -19,23 +19,151 @@ According to the eslint docs about exit codes:
 - 1: Linting was successful and there is at least one linting error, or there are more linting warnings than allowed by the --max-warnings option.
 - 2: Linting was unsuccessful due to a configuration problem or an internal error.
 
-Being able to exit with code `2` instead of `1` it will allow for CI pipelines to better understand the results.
+Being able to exit with code `2` instead of `1` it will allow for some CI pipelines to better understand the results and react differently if ESLint reports any `fatal` errors. 
+
+Altough it is possible to filter out the results it will not allow the user 
 
 ## Detailed Design
-Adding a new option in ESLint called `--break-on-error` which will be  which will report and nonzero exit code on case of parsing errors. The most current similar option is `--max-warning`.
+
+Design Summary:
+
+1. Add a `fatal-parse-error` option.
+2. Gather and report the fatal messages from `cli-engine`.
+3. Return exit code `2` in the case of any fatal errors on `cli`
 
 A command example:
 
-`eslint **.js --break-on-error`
+`eslint **.js --fatal-parse-error`
 
-If this command finds any kind of file which may use ECMAScript modules it will report a non-zero exit code (since the default for `sourceType` is script.)
+With this argument if there is at least one fatal error in the results ESLint produces it will exit with code 2.
 
-Without `--break-on-error` (the current behavior) a user of ESLint would have to look at each and every result to distinquish if there were any kind of missconfiguration/parsing errors as having a normal error in a file is reported the same way as a parsing error. This validation becomes harder for CI pipelines who want to ensure that ESLint reports any rules correctly and was run sucessfully.
+## Add a `fatal-parse-error` option.
+We would require the option in regard to other ones as well.
+```
+// inside of eslint.js
+ ..
+ ..
+ * @property {number} fatalErrorCount Number of fatal errors for the result.
+ ..
+ ..
+```
+```
+// inside of lib/option.js
+..
+..
+{
+    option: "fatal-parse-error",
+    type: "Boolean",
+    default: "false",
+    description: "Trigger exit code 2 on any fatal errors."
+}
+..
+..
+```
+## Gather and report the fatal messages.
 
-The expected behavior of the command should gather be able to read the reported errors that eslint reports. If at least one missconfiguration is found it exits with a non-zero exit code, 2 so we can distinguish it from the exit code 1.
+In order for ESLint to be able to make a choice based on the fact that a `fatal` error has been found or not we must first retrieve this information. Altough we will not be needing the count of the fatal errors using count instead of a boolean and offer more flexibility than a Boolean parameter, keeps the codebase consistent.
+
+The changes for that are on `cli-engine.js`:
+```
+function calculateStatsPerFile(messages) {
+    return messages.reduce((stat, message) => {
+        if (message.fatal || message.severity === 2) {
+            stat.errorCount++;
+            if (message.fatal) {
+                stat.fatalErrorCount++;
+            }
+            if (message.fix) {
+                stat.fixableErrorCount++;
+            }
+        } else {
+            stat.warningCount++;
+            if (message.fix) {
+                stat.fixableWarningCount++;
+            }
+        }
+        return stat;
+    }, {
+        errorCount: 0,
+        fatalError: 0,
+        warningCount: 0,
+        fixableErrorCount: 0,
+        fixableWarningCount: 0
+    });
+}
+```
+```
+function calculateStatsPerRun(results) {
+    return results.reduce((stat, result) => {
+        stat.errorCount += result.errorCount;
+        stat.fatalErrorCount += result.fatalErrorCount;
+        stat.warningCount += result.warningCount;
+        stat.fixableErrorCount += result.fixableErrorCount;
+        stat.fixableWarningCount += result.fixableWarningCount;
+        return stat;
+    }, {
+        errorCount: 0,
+        fatalErrorCount: 0,
+        warningCount: 0,
+        fixableErrorCount: 0,
+        fixableWarningCount: 0
+    });
+}
+```
+
+## Return exit code `2` in the case of any fatal errors on `cli`
+
+Now we can retreve those fatal errors from `cli.js` and act accordingly:
+
+First change the function that retrieves those errors:
+```
+function countErrors(results) {
+    let errorCount = 0;
+    let fatalErrorCount = 0;
+    let warningCount = 0;
+
+    for (const result of results) {
+        errorCount += result.errorCount;
+        fatalErrorCount += result.fatalErrorCount;
+        warningCount += result.warningCount;
+    }
+
+    return { errorCount, warningCount };
+    return { errorCount, fatalErrorCount, warningCount };
+}
+```
+
+Now with the new information this method gives us we can use it:
+```
+// on the execute method
+if (await printResults(engine, results, options.format, options.outputFile)) {
+    const { errorCount, warningCount } = countErrors(results);
+    const { errorCount, fatalErrorCount, warningCount } = countErrors(results);
+    const tooManyWarnings =
+        options.maxWarnings >= 0 && warningCount > options.maxWarnings;
+    const fatalErrorExists =
+        options.fatalParseError && fatalErrorCount > 0;
+
+    if (!errorCount && tooManyWarnings) {
+        log.error(
+            "ESLint found too many warnings (maximum: %s).",
+            options.maxWarnings
+        );
+    }
+
+    if(fatalErrorExists){
+        return 2;
+    }
+
+    return (errorCount || tooManyWarnings) ? 1 : 0;
+}
+return 2;
+```
 
 ## Documentation
-It may be a good idea on why we are introducing a option that changes the way ESLint behaves. Will leave the choice to the ESLint team.
+The section of the documentation requiring the change is the Command Line Interface:
+
+[Command Line Interface](https://eslint.org/docs/user-guide/command-line-interface)
 
 
 ## Drawbacks
