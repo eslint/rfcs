@@ -56,6 +56,24 @@ At the end of `RuleTester`'s `run()` method, for each valid and invalid item, if
 
 Add [`--forbid-only`](https://mochajs.org/#-forbid-only) to the [`mocha` target in `Makefile.js`](https://github.com/eslint/eslint/blob/cc4871369645c3409dc56ded7a555af8a9f63d51/Makefile.js#L548) to prevent accidentally merging tests before removing `only`.
 
+Add a static `only()` convenience method on `RuleTester`.
+This adds `only: true` to a test and automatically converts string tests to objects if necessary.
+
+```js
+/**
+ * Adds the `only` property to a test to run it in isolation.
+ * @param {string | ValidTestCase | InvalidTestCase} item A single test to run by itself.
+ * @returns {ValidTestCase | InvalidTestCase}
+ */
+static only(item) {
+    if (typeof item === "string") {
+        return { code: item, only: true };
+    }
+
+    return { ...item, only: true };
+}
+```
+
 ## Documentation
 
 <!--
@@ -135,6 +153,9 @@ The status quo has two alternatives:
 Given, for example, a valid string test `"var foo = 42;"`, it is easier to convert to `RuleTester.only("var foo = 42;")`, which is equivalent to `{ code: "var foo = 42;", only: true }`.
 The helper sets `only: true` on a test case argument after converting string cases to objects if necessary.
 For invalid cases that are already objects, adding `only: true` is likely easier than using the helper.
+
+    A: The convenience is worth the simple implementation, so I've added this to the detailed design.
+
 1. ~~Should using `only` cause the process to exit `1` even if tests pass as described in "Drawbacks"?~~
 Our Makefile can call Mocha with [`--forbid-only`](https://mochajs.org/#-forbid-only) instead.
 3. In the `RuleTester.itOnly` `get` accessor, if `RuleTester[IT_ONLY]` is not customized and the global `it.only` is not a function, is throwing an error the right choice?
