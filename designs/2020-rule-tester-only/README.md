@@ -160,7 +160,13 @@ For invalid cases that are already objects, adding `only: true` is likely easier
 Our Makefile can call Mocha with [`--forbid-only`](https://mochajs.org/#-forbid-only) instead.
 3. In the `RuleTester.itOnly` `get` accessor, if `RuleTester[IT_ONLY]` is not customized and the global `it.only` is not a function, is throwing an error the right choice?
 We could instead pass through to `RuleTester.it`, ignoring `only` if it's not supported.
+
+    A: There's [agreement](https://github.com/eslint/rfcs/pull/73#discussion_r557789067) that not throwing would be more surprising, so throwing an error is the right choice.
+
 1. Do we need to support `skip`, the inverse of `only`?
+
+    A: Not right now.
+    We can ship `only` and evaluate adding `skip` later if we get feedback requesting it.
 
 ## Help Needed
 
