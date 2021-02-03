@@ -136,6 +136,11 @@ It's a proposal by the node community on how a module may go about adopting ESM 
 acorn is producing a dual module, and has been the inspiration for my own work around the forthcoming espree PR https://github.com/acornjs/acorn/blob/master/acorn/package.json#L5-L11
 
 
+> does this mean local development now requires a build step?
+
+no. Tests should be written to run against the ESM source in `lib/`. The pre-release tests should be run against the CJS bundle as part of the pre-publish step.
+
+
 > npm modules reference each other via commonjs, and the browser's loader expects URLs, so why are we concerned with making npm modules work in a browser?
 
 that's true, you can't simply do `import espree from 'https://github/eslint/espree.js'` naively because it's referencing other npm modules in it, such as `acorn`.
