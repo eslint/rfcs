@@ -83,7 +83,7 @@ proposed build process in this RFC:
 
 browserify is specifically oriented around commonjs as the input format, so I also propose replacing it with rollup, which understands and expects ESM as it's input format.
 
-`UMD` is not part of the formal package interface and it's usage is questionable, so I propose we drop it altogether.
+`UMD` is not part of the formal package interface and will be dropped altogether.
 
 
 ## Documentation
