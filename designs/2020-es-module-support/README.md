@@ -141,6 +141,15 @@ acorn is producing a dual module, and has been the inspiration for my own work a
 no. Tests should be written to run against the ESM source in `lib/`. The pre-release tests should be run against the CJS bundle as part of the pre-publish step.
 
 
+> how would one import espree now that it's providing an esm interface?
+
+There will be named exports. i.e.,
+
+```javascript
+import { parse, tokenize /*, ... */ } from 'espree';
+```
+
+
 > npm modules reference each other via commonjs, and the browser's loader expects URLs, so why are we concerned with making npm modules work in a browser?
 
 that's true, you can't simply do `import espree from 'https://github/eslint/espree.js'` naively because it's referencing other npm modules in it, such as `acorn`.
