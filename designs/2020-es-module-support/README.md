@@ -54,7 +54,7 @@ today's build process:
 ┌-------------------┐               ┌-----------------┐
 │                   │               │                 │                package.json:
 │     espree.js     |               │ build/espree.js │
-│ (CJS entry point) ├──BUILD_STEP──▶│   (UMD bundle)  │     CJS ---▶   "main": "espress.js",
+│ (CJS entry point) ├──BUILD_STEP──▶│   (UMD bundle)  │     CJS ---▶   "main": "espree.js",
 │                   │               │                 │
 └-------------------┘               └-----------------┘
 ```
@@ -73,7 +73,7 @@ proposed build process in this RFC:
                                   │  dist/espree.cjs  │
                                   │ (CJS entry point) │                package.json:
 ┌-------------------┐             │                   │
-│                   │             └--▲----------------┘     CJS ---▶   "main": "dist/espress.cjs",
+│                   │             └--▲----------------┘     CJS ---▶   "main": "dist/espree.cjs",
 │     espree.js     │                │                                 "exports": {
 │ (ESM entry point) ├───BUILD_STEP───┘                      ESM ---▶     "import": "espree.js",
 │                   │                                       CJS ---▶     "require": "./dist/espree.cjs"
