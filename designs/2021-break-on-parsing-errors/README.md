@@ -11,7 +11,9 @@ The suggested change is for ESLint tp support an argument that will make the CLI
 
 ## Motivation
 
-We met with a couple of cases where we assumed a succesfull run of ESLint in CI enviroments. When ESLint wouldn't be able to read the tsconfig.json or had a wrongly configured source type the error would be a `fatal` one but the exit code would be `1`. There was no distiction between a run with no fatal errors and with fatal errors.
+We met with a couple of cases where we assumed a succesfull run of ESLint in CI enviroments. When ESLint wouldn't be able to read the tsconfig.json, or had a wrongly configured source type the error would be a `fatal` one but the exit code would be `1`. There was no distiction between a run with no fatal errors and with fatal errors.
+
+More specifically the tsconfig.json invalid read is a error from `@typescript-eslint parser`, the parser correctly indicates a fatal parsing failure like it should so it falls under the same category as the incorrectly configured `sourceType` as in both cases we can't actually run any rules in the file.
 
 According to the eslint docs about exit codes:
 
@@ -19,9 +21,7 @@ According to the eslint docs about exit codes:
 - 1: Linting was successful and there is at least one linting error, or there are more linting warnings than allowed by the --max-warnings option.
 - 2: Linting was unsuccessful due to a configuration problem or an internal error.
 
-Being able to exit with code `2` instead of `1` it will allow for some CI pipelines to better understand the results and react differently if ESLint reports any `fatal` errors. 
-
-Altough it is possible to filter out the results it will not allow the user 
+Being able to exit with code `2` instead of `1` it will allow for some CI pipelines to better understand the results and react differently if ESLint reports any `fatal` errors. For example, an Azure DevOps build task that is responsible for running ESLint and output a SARIF would fail on exit code `2` but not 1 indicating there is a configuration and not all of the files where scanned properly for rules.  
 
 ## Detailed Design
 
@@ -180,6 +180,15 @@ Do we want to still report all errors or only failed linting errors when `break-
 Assume that for some files ESLint successfully lints them and reports a rule but for some others it doesnt.
 If ESLint finds a single file that has a parsing error should it report just that file or every rule as 
 well?
+
+## Alternatives
+There 2 alternatives which we may want to consider, they were already discussed on the related issue:
+
+## Use a new exit code 3
+The proposal remains the same but with exit code `3` instead of `2`
+
+## Max Fatal Errors
+Another tweak to the proposal would be for the argument to be an integer similar to `--max-warnings`. Instead of reporting a different exit code than `1` we would 
 
 ## Related Discussions
 https://github.com/eslint/eslint/issues/13711
