@@ -175,11 +175,20 @@ There are no expected backward compatibility issues. The parameter will be disab
 
 
 ## Open Questions
+
+### Question:
 Do we want to still report all errors or only failed linting errors when `break-on-lint-error` is passed?
 
+### Answer:
+After discussions we will be reporting all errors.
+
+----
+### Question:
 Assume that for some files ESLint successfully lints them and reports a rule but for some others it doesnt.
 If ESLint finds a single file that has a parsing error should it report just that file or every rule as 
 well?
+### Answer:
+The choice is that we will be returing all of the found linting errors as discussed in these [comments](https://github.com/eslint/rfcs/pull/76#discussion_r572924056)
 
 ## Alternatives
 There 2 alternatives which we may want to consider, they were already discussed on the related issue:
