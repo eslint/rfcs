@@ -85,7 +85,7 @@ function calculateStatsPerFile(messages) {
         return stat;
     }, {
         errorCount: 0,
-        fatalError: 0,
+        fatalErrorCount: 0,
         warningCount: 0,
         fixableErrorCount: 0,
         fixableWarningCount: 0
