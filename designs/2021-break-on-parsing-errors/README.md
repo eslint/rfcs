@@ -7,7 +7,7 @@
 
 ## Summary
 
-The suggested change is for ESLint tp support an argument that will make the CLI exit with code 2 if any fatal errors are reported. The option will be an opt-in boolean argument called `--fatal-parse-error`.
+The suggested change is for ESLint tp support an argument that will make the CLI exit with code 2 if any fatal errors are reported. The option will be an opt-in boolean argument called `--exit-on-fatal-error`.
 
 ## Motivation
 
@@ -27,17 +27,17 @@ Being able to exit with code `2` instead of `1` it will allow for some CI pipeli
 
 Design Summary:
 
-1. Add a `fatal-parse-error` option.
+1. Add a `exit-on-fatal-error` option.
 2. Gather and report the fatal messages from `cli-engine`.
 3. Return exit code `2` in the case of any fatal errors on `cli`
 
 A command example:
 
-`eslint **.js --fatal-parse-error`
+`eslint **.js ----exit-on-fatal-error`
 
 With this argument if there is at least one fatal error in the results ESLint produces it will exit with code 2.
 
-## Add a `fatal-parse-error` option.
+## Add a `exit-on-fatal-error` option.
 We would require the option in regard to other ones as well.
 ```
 // inside of eslint.js
@@ -52,7 +52,7 @@ We would require the option in regard to other ones as well.
 ..
 ..
 {
-    option: "fatal-parse-error",
+    option: "exit-on-fatal-error",
     type: "Boolean",
     default: "false",
     description: "Trigger exit code 2 on any fatal errors."
