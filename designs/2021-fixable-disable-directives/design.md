@@ -95,7 +95,15 @@ I'm looking forward to implementing this if approved! 🙌
 
 ## Frequently Asked Questions
 
-You tell me!
+> Will these be autofixed by default?
+
+Yes: problems reported by directive usage checking are joined with remaining rule violation problems in a single array.
+This should allow directive fixing to seamlessly act similarly to rule fixing.
+
+> Can I opt out?
+
+Yes.
+If you are in the peculiar situation of needing to enable `--fix` and `--report-unused-disable-directives` _without_ fixing those directives _(why?)_, you can use `--fix-type` with all types except `meta`.
 
 ## Related Discussions
 
