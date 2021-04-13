@@ -28,11 +28,18 @@ This RFC proposes making three changes:
 
 - In the patched `options.fix`, consider a problem's meta type to be `"directive"` if its `ruleId` is `null`
 - Pass the `SourceCode` being linted as a parameter to `applyDisableDirectives`
-- Add a `fix` method to the unused directive problems returned by `applyDirectives` that uses the `SourceCode` to compute:
-  - For comments that are the only non-whitespace on their line, delete that line
-  - Otherwise, delete just the comment and any now-unnecessary surrounding whitespace
+- Add a `fix` method to the unused directive problems returned by `applyDirectives` that uses the `SourceCode`
 
-### Fix Behavior Examples
+### Fix Behavior
+
+Directives where at least one rule is still used will have only the unused rule names removed from their source text.
+
+Directives where all >=1 rules are unused will use the `SourceCode` to compute:
+
+- If they are the only non-whitespace on their line, delete that line
+- Otherwise, delete just the comment and any now-unnecessary surrounding whitespace -->
+
+#### Fix Behavior Examples
 
 ```diff
 - /* eslint-disable */
@@ -40,6 +47,11 @@ This RFC proposes making three changes:
 
 ```diff
 - // eslint-disable-next-line -- related explanation
+```
+
+```diff
+- // eslint-disable-next-line unused, used
++ // eslint-disable-next-line used
 ```
 
 ```diff
