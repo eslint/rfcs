@@ -8,7 +8,7 @@
 ## Summary
 
 Inline disable directives such as `/* eslint-disable */` that do not suppress any violations may be detected with the `--report-unused-disable-directives` CLI option, but there is no way to automatically remove those comments.
-This RFC proposes adding removal of those directives to the `--fix` CLI option as a new [`--fix-type`](https://eslint.org/docs/user-guide/command-line-interface#-fix-type): _**`meta`**_.
+This RFC proposes adding removal of those directives to the `--fix` CLI option as a new [`--fix-type`](https://eslint.org/docs/user-guide/command-line-interface#-fix-type): _**`directive`**_.
 
 ## Motivation
 
@@ -26,7 +26,7 @@ Recapping the existing flow of code:
 
 This RFC proposes making three changes:
 
-- In the patched `options.fix`, consider a problem's meta type to be `"meta"` if its `ruleId` is `null`
+- In the patched `options.fix`, consider a problem's meta type to be `"directive"` if its `ruleId` is `null`
 - Pass the `SourceCode` being linted as a parameter to `applyDisableDirectives`
 - Add a `fix` method to the unused directive problems returned by `applyDirectives` that uses the `SourceCode` to compute:
   - For comments that are the only non-whitespace on their line, delete that line
@@ -86,8 +86,9 @@ Otherwise, this change is additive in behavior.
 
 ## Open Questions
 
-- Is `"meta"` a good name for the fix type?
-  - I'd considered `"directive"`, but that felt like it could be too specific to be extended for other meta/configuration in the future.
+- Is `"directive"` a good name for the fix type?
+  - It feels like it could be too specific to be extended for other meta/configuration in the future.
+  - This RFC originally proposed `"meta"` but that goes too far in being overly vague.
 
 ## Help Needed
 
@@ -97,13 +98,24 @@ I'm looking forward to implementing this if approved! 🙌
 
 > Will these be autofixed by default?
 
-Yes: problems reported by directive usage checking are joined with remaining rule violation problems in a single array.
-This should allow directive fixing to seamlessly act similarly to rule fixing.
+If `--fix` and `--report-unused-disable-directives` are both true, then yes.
+There is no additional configuration that would need to be provided.
+
+If `--fix` is true but `--report-unused-disable-directives` is not, there will be no behavior change from this RFC.
+Unused directives would not add to reported problems and thus no new fixers would be added to them.
+
+If `--fix` is not true but `--report-unused-disable-directives` is, there will be no observable change from this RFC for CLI clients.
+Problems for unused directives will have a `fix` property attached but it will not be used without `--fix`.
 
 > Can I opt out?
 
 Yes.
-If you are in the peculiar situation of needing to enable `--fix` and `--report-unused-disable-directives` _without_ fixing those directives _(why?)_, you can use `--fix-type` with all types except `meta`.
+If you are in the peculiar situation of needing to enable `--fix` and `--report-unused-disable-directives` _without_ fixing those directives _(why?)_, you can use `--fix-type` with all types except `directive`.
+
+> How do the generated fixes compare to fixes from rules?
+
+Problems reported by directive usage checking are joined with remaining rule violation problems in a single array.
+This should allow directive fixing to seamlessly act similarly to rule fixing.
 
 ## Related Discussions
 
