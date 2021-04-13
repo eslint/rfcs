@@ -37,7 +37,7 @@ Directives where at least one rule is still used will have only the unused rule 
 Directives where all >=1 rules are unused will use the `SourceCode` to compute:
 
 - If they are the only non-whitespace on their line, delete that line
-- Otherwise, delete just the comment and any now-unnecessary surrounding whitespace -->
+- Otherwise, delete just the comment and any now-unnecessary surrounding whitespace
 
 #### Fix Behavior Examples
 
