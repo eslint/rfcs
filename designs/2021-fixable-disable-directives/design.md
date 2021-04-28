@@ -1,6 +1,6 @@
 - Repo: eslint/eslint
 - Start Date: 2021-04-11
-- RFC PR: (leave this empty, to be filled in later)
+- RFC PR: https://github.com/eslint/rfcs/pull/78
 - Authors: [Josh Goldberg](https://github.com/JoshuaKGoldberg)
 
 # Fixable Disable Directives
