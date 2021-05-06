@@ -77,8 +77,7 @@ I will transfer the repo to the eslint group later.
 
 - Documentation for `@eslint/create` will be created with proper usage and each prompt's details. In the main documentation, a link to `@eslint/create` will be given [here](https://github.com/eslint/eslint/blob/master/docs/user-guide/command-line-interface.md#--init) and basic usage and the package details will be documented.
   Also in the cli command options, [here](https://github.com/eslint/eslint/blob/master/docs/user-guide/command-line-interface.md#options), for `--init` we need to change the description.
-- It seems a breaking change to remove auto-config, a formal announcement needed?
-  This is a semver-minor change.
+- It is not a breaking change, so a formal announcement in not needed.
 
 ## Drawbacks
 
