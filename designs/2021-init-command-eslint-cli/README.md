@@ -47,7 +47,7 @@ The approach would be following these steps
   - `espree` (to be removed)
 
 - for all those modules coming inside `../**/*`, it would be replaced using `eslint/**/*`
-- For `tests`, move the `tests/lib/init` to new repo's `tests/init`
+- For `tests`, move the `tests/lib/init` to new repo's `tests/lib/`
 - Add the following `devDependencies` in `package.json`
 
   - `chai`
