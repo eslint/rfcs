@@ -1,6 +1,6 @@
 - Repo: [eslint/eslint](https://github.com/eslint/eslint)
 - Start Date: 2020-06-29
-- RFC PR:
+- RFC PR: https://github.com/eslint/rfcs/pull/79
 - Authors: Aniketh Saha ([anikethsaha](https://github.com/anikethsaha)) aladdin-add(weiran.zsd@outlook.com)
 
 # Move --init flag into a separate utility
@@ -26,7 +26,7 @@ We will make use of tools like `npx` to simply run `npx @eslint/create` or using
    used. Be sure to define any new terms in this section.
 -->
 
-The implementation is mainly migrating the code from main repo to `@eslint/create`. As far as the modules are concerned, all shared modules are being shipped currently with the eslint so we can use those modules through eslint itself.
+The implementation is mainly migrating the code from main repo to `@eslint/create`.
 
 The approach would be following these steps
 
