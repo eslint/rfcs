@@ -7,13 +7,13 @@
 
 ## Summary
 
-- Move the `init` command from main repo ([eslint](https://github.com/eslint/eslint)) to a new repo named `@eslint/create`.
+- Move the `init` command from main repo ([eslint](https://github.com/eslint/eslint)) to a new repo named `@eslint/create-config`.
 - Remove the auto-config.
 
 ## Motivation
 
 Currently the whole `init` command is being shipped with the cli in the main repo. Though its not that much of size (roughly ~0.6MB for the [eslint/lib/init](https://github.com/eslint/eslint/tree/master/lib/init)), this command is not a type of command that we need everyday or everytime running eslint. It is mainly used when creating a new project or adding eslint to a project for the first time. So if we move this to a separate package that is meant to use in the command line,
-We will make use of tools like `npx` to simply run `npx @eslint/create` or using `npm` to run `npm init @eslint` or using `yarn` to run `yarn create @eslint` single time for a project instead of having it in the core project.
+We will make use of tools like `npx` to simply run `npm init @eslint/config` or using `npm` to run `npx  @eslint/create-config` or using `yarn` to run `yarn create @eslint/config` single time for a project instead of having it in the core project.
 
 ## Detailed Design
 
@@ -26,7 +26,7 @@ We will make use of tools like `npx` to simply run `npx @eslint/create` or using
    used. Be sure to define any new terms in this section.
 -->
 
-The implementation is mainly migrating the code from main repo to `@eslint/create`.
+The implementation is mainly migrating the code from main repo to `@eslint/create-config`.
 
 The approach would be following these steps
 
@@ -57,7 +57,7 @@ The approach would be following these steps
   - `shelljs`
 
 It was almost done: [aladdin-add/eslint-create](https://github.com/aladdin-add/eslint-create).
-I will transfer the repo to the eslint group later.
+I will make a PR once the official repo is created later.
 
 ### Remove eslint auto-config
 
@@ -65,7 +65,7 @@ I will transfer the repo to the eslint group later.
 
 ### Update eslint cli usage
 
-- Whenever `--init` command is being used, show a warning(e.g. "You can also run this command directly using 'npm init @eslint'") and run `npx @eslint/create` using `child_process` of the native node modules.
+- Whenever `--init` command is being used, show a warning(e.g. "You can also run this command directly using 'npm init @eslint/config'") and run `npm init @eslint/config` using `child_process` of the native node modules.
 
 
 ## Documentation
@@ -75,7 +75,7 @@ I will transfer the repo to the eslint group later.
     on the ESLint blog to explain the motivation?
 -->
 
-- Documentation for `@eslint/create` will be created with proper usage and each prompt's details. In the main documentation, a link to `@eslint/create` will be given [here](https://github.com/eslint/eslint/blob/master/docs/user-guide/command-line-interface.md#--init) and basic usage and the package details will be documented.
+- Documentation for `@eslint/create-config` will be created with proper usage and each prompt's details. In the main documentation, a link to `@eslint/create-config` will be given [here](https://github.com/eslint/eslint/blob/master/docs/user-guide/command-line-interface.md#--init) and basic usage and the package details will be documented.
   Also in the cli command options, [here](https://github.com/eslint/eslint/blob/master/docs/user-guide/command-line-interface.md#options), for `--init` we need to change the description.
 - It is not a breaking change, so a formal announcement in not needed.
 
@@ -93,7 +93,7 @@ I will transfer the repo to the eslint group later.
 -->
 
 - This might increase the maintenance burden as this will add one more repo in the organization.
-- We may need to face challenges like re-directing of issues from `@eslint/create` repo to `eslint` and vice-versa.
+- We may need to face challenges like re-directing of issues from `@eslint/create-config` repo to `eslint` and vice-versa.
 
 ## Backwards Compatibility Analysis
 
@@ -130,10 +130,7 @@ The current implementation in `eslint` repo is the alternative. No changes neede
     you can remove this section.
 -->
 
-- Do we want to implement this as monorepo under `eslint` repo or a separate repo `@eslint/create` but github will make it as `eslint-create` or similar ?
+- Do we want to implement this as monorepo under `eslint` repo or a separate repo `@eslint/create-config` but github will make it as `create-config` or similar ?
 
   We decided not to go in the monorepo direction for this.
 
-- What should be the name of the package/repo?
-
-  We got a consensus on @eslint/create and eslint-create.
