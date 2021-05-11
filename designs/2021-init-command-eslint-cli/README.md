@@ -33,7 +33,7 @@ The approach would be following these steps
 ### Move `eslint --init` related files to a separate repo
 
 - Move the `eslint/lib/init/*` to the new repo's `lib/*` directory
-- Add the following `dependencies` in `package.json`(the last 3 dependencies will be removed in next step)
+- Add the following `dependencies` in `package.json`(the last 2 dependencies will be removed in next step)
 
   - `enquirer`
   - `progress`
@@ -42,7 +42,7 @@ The approach would be following these steps
   - `json-stable-stringify-without-jsonify`
   - `cross-spawn`
   - `debug`
-  - `@eslint/eslintrc` (to be removed)
+  - `@eslint/eslintrc`
   - `eslint` (to be removed)
   - `espree` (to be removed)
 
