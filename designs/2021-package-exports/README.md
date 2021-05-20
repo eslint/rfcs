@@ -28,13 +28,16 @@ These steps will lock down the external API for the `eslint` package.
 
 ### An an `exports` field to `package.json`
 
-Currently, ESLint defines [`api.js`](https://github.com/eslint/eslint/blob/master/lib/api.js), which is intended to define the public-facing API of the `eslint` module. This design assumes we keep `api.js` as the source of truth for the public-facing API and just add an `exports` field in `package.json` that points to `api.js`:
+Currently, ESLint defines [`api.js`](https://github.com/eslint/eslint/blob/master/lib/api.js), which is intended to define the public-facing API of the `eslint` module. This design assumes we keep `api.js` as the source of truth for the public-facing API and just add an `exports` field in `package.json` that points to `api.js`. Additionally, we will create a new `unsupported-api.js` file that lists APIs that we provide, but with no guarantees about the stability or availability of those APIs. Here's what the `package.json` file will look like:
 
 ```json
 {
     "name": "eslint",
     "main": "./lib/api.js",
-    "exports": "./lib/api.js"
+    "exports": {
+        ".": "./lib/api.js",
+        "use-at-your-own-risk": "./lib/unsupported-api.js"
+    }
 }
 ```
 
@@ -65,6 +68,10 @@ The remaining public API after all of these changes are:
 
 Nothing outside of these classes will be accessible from outside of the `eslint` package.
 
+The `use-at-your-own-risk` entrypoint will support the following APIs:
+
+* `rules` - an instance of [`LazyLoadingRuleMap`](https://github.com/eslint/eslint/blob/master/lib/rules/utils/lazy-loading-rule-map.js) that contains all of the core rules. This object maps rule IDs to rule implementations. (ESLint does not formally allow or encourage people to extend the core rules, but given that there are utilities that already do so with the understanding that the APIs are not guaranteed, we will continue to allow access to them.)
+
 ## Documentation
 
 Most of the documentation changes will take place on the [Node.js API page](https://eslint.org/docs/developer-guide/nodejs-api). We will also need to announce this change in a blog post ahead of time to give developers a heads-up.
@@ -80,6 +87,8 @@ The primary concern with regards to backwards compatibility is to ensure that th
 ### `CLIEngine#getRules()`
 
 The most import consumer of the `CLIEngine#getRules()` method is the [VS Code ESLint extension](https://github.com/microsoft/vscode-eslint), which is one of the most popular extensions for the editor. Currently, the extension [uses `CLIEngine#getRules()`](https://github.com/microsoft/vscode-eslint/blob/e4b2738e713b7523824e0c72166f5cdd44f47052/server/src/eslintServer.ts#L1395) after running ESLint on a file in order to display additional information about the rule. In this case, it should be easy to switch to the new `ESLint#getRulesForResult()` method to maintain current functionality.
+
+[eslint-rule-finder](https://github.com/jnmorse/eslint-rule-finder) also uses [`CLIEngine#getRules()`](https://github.com/jnmorse/eslint-rule-finder/blob/master/src/load-config.ts#L34). Because the call is made without performing any linting, this instance can be replaced by using the `rules` API in the `use-at-your-own-risk` entrypoint.
 
 ### `linter` Object
 
@@ -103,8 +112,26 @@ One of the more common cases of accessing undocumented API is when plugins acces
 
 The most common case is to use the existing rule as a base upon which to create a modified rule for the specific parser. This is a use case we never intended to support, and maintainers have acknowledged that seemingly small changes to core rules can introduce breaking changes to their derived rules. 
 
-Going forward, these `require()` calls will no longer work. The recommended way for plugin to adapt to this change is to copy the rules they are interested in into their own repository where they will have completely control over their functionality and can always re-sync with the ESLint repository on their own schedule.
+Going forward, these `require()` calls will no longer work. The recommended way for plugin to adapt to this change is to use the `rules` API:
 
+```js
+const { rules } = require("eslint/use-at-your-own-risk");
+
+// check if a rule exists
+if (rules.has("eqeqeq")) {
+    // do something
+}
+
+// get rule definition
+const eqeqeq = rules.get("eqeqeq");
+
+// iterate over all rules
+for (const [ruleId, rule] of rules) {
+    // do something
+}
+```
+
+This is a safer alternative than reaching into the ESLint package file structure to access rules, as the location of rules in the source code is not guaranteed. 
 
 ## Alternatives
 
@@ -112,7 +139,6 @@ The primary alternative is to "bless" some of the currently undocumented APIs as
 
 ## Open Questions
 
-1. Do we need both `main` and `exports`? Or can we just do `exports`?
 1. Is there another use case of `CLIEngine#getRules()` that hasn't been discussed?
 
 ## Help Needed
