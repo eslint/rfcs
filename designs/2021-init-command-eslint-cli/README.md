@@ -7,8 +7,8 @@
 
 ## Summary
 
-- Move the `init` command from main repo ([eslint](https://github.com/eslint/eslint)) to a new repo named `@eslint/create-config`.
 - Remove the auto-config.
+- Move the `init` command from main repo ([eslint](https://github.com/eslint/eslint)) to a new repo named `@eslint/create-config`.
 
 ## Motivation
 
@@ -30,10 +30,15 @@ The implementation is mainly migrating the code from main repo to `@eslint/creat
 
 The approach would be following these steps
 
-### Move `eslint --init` related files to a separate repo
+### 1. Remove eslint auto-config
+
+- Remove auto-config(`eslint/lib/init/autoconfig.js`), and its tests(`eslint/tests/lib/init/autoconfig.js`).
+- Remove dependency `progress`, as it's no longer used in production.
+
+### 2. Move `eslint --init` related files to a separate repo
 
 - Move the `eslint/lib/init/*` to the new repo's `lib/*` directory
-- Add the following `dependencies` in `package.json`(the last 2 dependencies will be removed in next step)
+- Add the following `dependencies` in `package.json`
 
   - `enquirer`
   - `progress`
@@ -59,14 +64,27 @@ The approach would be following these steps
 It was almost done: [aladdin-add/eslint-create](https://github.com/aladdin-add/eslint-create).
 I will make a PR once the official repo is created later.
 
-### Remove eslint auto-config
+### 3. Remove the usage of eslint & espree
 
-- Remove auto-config(`eslint/lib/init/autoconfig.js`), and its tests(`eslint/tests/lib/init/autoconfig.js`)
+eslint was used:
+https://github.com/aladdin-add/eslint-create/blob/c27509cbbaea7c846fd9d7a373feece5254ac8d8/lib/config-file.js#L86
 
-### Update eslint cli usage
+It can be removed by using the local installed eslint, and switch to the new `Linter` api.
 
+espree was used:
+https://github.com/aladdin-add/eslint-create/blob/c27509cbbaea7c846fd9d7a373feece5254ac8d8/lib/config-initializer.js#L161
+
+It can be removed after https://github.com/eslint/espree/issues/495 get landed.
+
+### 4. Rlease the new package
+
+### 5. Update eslint repo
+
+- Remove `eslint --init` related files.
+- the following dependencies can be removed in eslint repo:
+  - enquirer
+  - semver
 - Whenever `--init` command is being used, show a warning(e.g. "You can also run this command directly using 'npm init @eslint/config'") and run `npm init @eslint/config` using `child_process` of the native node modules.
-
 
 ## Documentation
 
@@ -74,10 +92,10 @@ I will make a PR once the official repo is created later.
     How will this RFC be documented? Does it need a formal announcement
     on the ESLint blog to explain the motivation?
 -->
-
+- [get-started](https://eslint.org/docs/user-guide/getting-started).
 - Documentation for `@eslint/create-config` will be created with proper usage and each prompt's details. In the main documentation, a link to `@eslint/create-config` will be given [here](https://github.com/eslint/eslint/blob/master/docs/user-guide/command-line-interface.md#--init) and basic usage and the package details will be documented.
   Also in the cli command options, [here](https://github.com/eslint/eslint/blob/master/docs/user-guide/command-line-interface.md#options), for `--init` we need to change the description.
-- It is not a breaking change, so a formal announcement in not needed.
+- A formal announcement in not needed, as it is not a breaking change.
 
 ## Drawbacks
 
