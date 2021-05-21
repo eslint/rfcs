@@ -76,7 +76,7 @@ https://github.com/aladdin-add/eslint-create/blob/c27509cbbaea7c846fd9d7a373feec
 
 It can be removed after https://github.com/eslint/espree/issues/495 get landed.
 
-### 4. Rlease the new package
+### 4. Release the new package
 
 ### 5. Update eslint repo
 
@@ -151,4 +151,3 @@ The current implementation in `eslint` repo is the alternative. No changes neede
 - Do we want to implement this as monorepo under `eslint` repo or a separate repo `@eslint/create-config` but github will make it as `create-config` or similar ?
 
   We decided not to go in the monorepo direction for this.
-
