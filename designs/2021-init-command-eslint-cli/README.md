@@ -13,7 +13,7 @@
 ## Motivation
 
 Currently the whole `init` command is being shipped with the cli in the main repo. Though its not that much of size (roughly ~0.6MB for the [eslint/lib/init](https://github.com/eslint/eslint/tree/master/lib/init)), this command is not a type of command that we need everyday or everytime running eslint. It is mainly used when creating a new project or adding eslint to a project for the first time. So if we move this to a separate package that is meant to use in the command line,
-We will make use of tools like `npx` to simply run `npm init @eslint/config` or using `npm` to run `npx  @eslint/create-config` or using `yarn` to run `yarn create @eslint/config` single time for a project instead of having it in the core project.
+We will make use of tools like `npm` to simply run `npm init @eslint/config` or using `npx` to run `npx  @eslint/create-config` or using `yarn` to run `yarn create @eslint/config` single time for a project instead of having it in the core project.
 
 ## Detailed Design
 
