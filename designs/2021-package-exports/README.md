@@ -36,7 +36,8 @@ Currently, ESLint defines [`api.js`](https://github.com/eslint/eslint/blob/maste
     "main": "./lib/api.js",
     "exports": {
         ".": "./lib/api.js",
-        "use-at-your-own-risk": "./lib/unsupported-api.js"
+        "use-at-your-own-risk": "./lib/unsupported-api.js",
+        "./package.json": "./package.json"
     }
 }
 ```
@@ -51,7 +52,7 @@ The `CLIEngine` class is the old public interface for ESLint functionality that 
 
 In order to facilitate removing `CLIEngine`, we need to implement a replacement for the `CLIEngine#getRules()` method, which was [missing](https://github.com/eslint/eslint/issues/13454#issuecomment-653362104) when the `ESLint` class was introduced. The `CLIEngine#getRules()` method itself produced unexpected results frequently because it's return value was based on the previous `CLIEngine#executeOnFiles()` or `CLIEngine#executeOnText()` calls, meaning it could return different results depending on when it was called.
 
-Instead of duplicating how `CLIEngine#getRules()` works, we will add a new `ESLint#getRulesForReport(report)` method that accepts a single argument, the report object returned from `ESLint#lintFiles()` or `ESLint#lintText()`, and return a map of ruleIds to rule meta data for every rule represented in the report.
+Instead of duplicating how `CLIEngine#getRules()` works, we will add a new `ESLint#getRulesMetaForReport(report)` method that accepts a single argument, the report object returned from `ESLint#lintFiles()` or `ESLint#lintText()`, and return a map of ruleIds to rule meta data for every rule represented in the report.
 
 ### Remove the `linter` object
 
@@ -70,7 +71,8 @@ Nothing outside of these classes will be accessible from outside of the `eslint`
 
 The `use-at-your-own-risk` entrypoint will support the following APIs:
 
-* `rules` - an instance of [`LazyLoadingRuleMap`](https://github.com/eslint/eslint/blob/master/lib/rules/utils/lazy-loading-rule-map.js) that contains all of the core rules. This object maps rule IDs to rule implementations. (ESLint does not formally allow or encourage people to extend the core rules, but given that there are utilities that already do so with the understanding that the APIs are not guaranteed, we will continue to allow access to them.)
+* `builtinRules` - an instance of [`LazyLoadingRuleMap`](https://github.com/eslint/eslint/blob/master/lib/rules/utils/lazy-loading-rule-map.js) that contains all of the core rules. This object maps rule IDs to rule implementations. (ESLint does not formally allow or encourage people to extend the core rules, but given that there are utilities that already do so with the understanding that the APIs are not guaranteed, we will continue to allow access to them.)
+* `FileEnumerator` - the internal [`FileEnumerator` class](https://github.com/eslint/eslint/blob/master/lib/cli-engine/file-enumerator.js). Some plugins rely on this class for searching for files (such as [`eslint-plugin-import`](https://github.com/benmosher/eslint-plugin-import/blob/ab0181d79c6959e6c5cfe25343d8648c1b275bf6/src/rules/no-unused-modules.js#L20)).
 
 ## Documentation
 
@@ -88,7 +90,7 @@ The primary concern with regards to backwards compatibility is to ensure that th
 
 The most import consumer of the `CLIEngine#getRules()` method is the [VS Code ESLint extension](https://github.com/microsoft/vscode-eslint), which is one of the most popular extensions for the editor. Currently, the extension [uses `CLIEngine#getRules()`](https://github.com/microsoft/vscode-eslint/blob/e4b2738e713b7523824e0c72166f5cdd44f47052/server/src/eslintServer.ts#L1395) after running ESLint on a file in order to display additional information about the rule. In this case, it should be easy to switch to the new `ESLint#getRulesForResult()` method to maintain current functionality.
 
-[eslint-rule-finder](https://github.com/jnmorse/eslint-rule-finder) also uses [`CLIEngine#getRules()`](https://github.com/jnmorse/eslint-rule-finder/blob/master/src/load-config.ts#L34). Because the call is made without performing any linting, this instance can be replaced by using the `rules` API in the `use-at-your-own-risk` entrypoint.
+[eslint-rule-finder](https://github.com/jnmorse/eslint-rule-finder) also uses [`CLIEngine#getRules()`](https://github.com/jnmorse/eslint-rule-finder/blob/master/src/load-config.ts#L34). Because the call is made without performing any linting, this instance can be replaced by using the `builtinRules` API in the `use-at-your-own-risk` entrypoint.
 
 ### `linter` Object
 
@@ -112,21 +114,21 @@ One of the more common cases of accessing undocumented API is when plugins acces
 
 The most common case is to use the existing rule as a base upon which to create a modified rule for the specific parser. This is a use case we never intended to support, and maintainers have acknowledged that seemingly small changes to core rules can introduce breaking changes to their derived rules. 
 
-Going forward, these `require()` calls will no longer work. The recommended way for plugin to adapt to this change is to use the `rules` API:
+Going forward, these `require()` calls will no longer work. The recommended way for plugin to adapt to this change is to use the `builtinRules` API:
 
 ```js
-const { rules } = require("eslint/use-at-your-own-risk");
+const { builtinRules } = require("eslint/use-at-your-own-risk");
 
 // check if a rule exists
-if (rules.has("eqeqeq")) {
+if (builtinRules.has("eqeqeq")) {
     // do something
 }
 
 // get rule definition
-const eqeqeq = rules.get("eqeqeq");
+const eqeqeq = builtinRules.get("eqeqeq");
 
 // iterate over all rules
-for (const [ruleId, rule] of rules) {
+for (const [ruleId, rule] of builtinRules) {
     // do something
 }
 ```
