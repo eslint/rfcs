@@ -69,7 +69,7 @@ I will make a PR once the official repo is created later.
 eslint was used:
 https://github.com/aladdin-add/eslint-create/blob/c27509cbbaea7c846fd9d7a373feece5254ac8d8/lib/config-file.js#L86
 
-It can be removed by using the local installed eslint, and switch to the new `Linter` api.
+It can be removed by using the local installed eslint, and switch to the new `ESLint` api.
 
 espree was used:
 https://github.com/aladdin-add/eslint-create/blob/c27509cbbaea7c846fd9d7a373feece5254ac8d8/lib/config-initializer.js#L161
