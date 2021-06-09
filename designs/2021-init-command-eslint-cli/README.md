@@ -41,9 +41,7 @@ The approach would be following these steps
 - Add the following `dependencies` in `package.json`
 
   - `enquirer`
-  - `progress`
   - `semver`
-  - `lodash`
   - `json-stable-stringify-without-jsonify`
   - `cross-spawn`
   - `debug`
