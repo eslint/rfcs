@@ -9,9 +9,78 @@
 
 Violations can be suppressed by inline directive comments. We propose to add an `--output-suppression` CLI option for adding suppression information, including its kind and justification, in the output of ESLint.
 
-The figure below shows the example in the format of SARIF:
+The code below shows the example in the format of SARIF and JSON:
 
-![Suppression example](suppression_example.png)
+```json
+SARIF format
+{
+  ... Some other info ...
+  =======================
+  "results": [
+    {
+      "level": "error",
+      "message": {
+        "text": "'a' is not defined."
+      },
+      "locations": [
+        {
+          "physicalLocation": {
+            "artifactLocation": {
+              "uri": "file:///C:/Users/yiweiding/Documents/projects/test/1.js",
+              "index": 0
+            },
+            "region": {
+              "startLine": 1,
+              "startColumn": 1
+            }
+          }
+        }
+      ],
+      "suppressions": [
+        {
+          "kind": "inSource",
+          "justification": "Sample justification message."
+        }
+      ],
+      "ruleId": "no-undef",
+      "ruleIndex": 0
+    }
+  ]
+}
+```
+
+```json
+JSON format
+[
+  {
+    "filePath":"C:\\Users\\yiweiding\\Documents\\projects\\test\\1.js",
+    "messages":[
+      {
+        "ruleId":"no-undef",
+        "severity":2,
+        "message":"'a' is not defined.",
+        "line":1,
+        "column":1,
+        "nodeType":"Identifier",
+        "suppressions":[
+          {
+            "kind":"inSource",
+            "justification":"Sample justification message."
+          }
+        ],
+        "messageId":"undef",
+        "endLine":1,
+        "endColumn":2
+      }
+    ],
+    "errorCount":0,
+    "warningCount":0,
+    "fixableErrorCount":0,
+    "fixableWarningCount":0,
+    "usedDeprecatedRules":[]
+  }
+]
+```
 
 ## Motivation
 
@@ -44,7 +113,7 @@ In our scenarios, when violations are suppressed, Security Development Lifecycle
   {
     "ruleId":"no-undef",
     "severity":2,
-    "message":"'b' is not defined.",
+    "message":"'a' is not defined.",
     "line":2,
     "column":1,
     "nodeType":"Identifier",
@@ -54,7 +123,7 @@ In our scenarios, when violations are suppressed, Security Development Lifecycle
     "suppressions": [
       {
         "kind":"inSource",
-        "justification":"Justification example"
+        "justification":"Sample justification message."
       }
     ]
   }
@@ -111,7 +180,70 @@ Currently, ESLint cannot dump these output messages into the SARIF format. A too
 .\node_modules\.bin\eslint.cmd 1.js -f @microsoft/eslint-formatter-sarif -o 1.sarif
 ```
 
-![SARIF](sarif.png)
+```json
+SARIF format
+{
+  ... Some other info ...
+  =======================
+  "results": [
+    {
+      "level": "error",
+      "message": {
+        "text": "'a' is not defined."
+      },
+      "locations": [
+        {
+          "physicalLocation": {
+            "artifactLocation": {
+              "uri": "file:///C:/Users/yiweiding/Documents/projects/test/1.js",
+              "index": 0
+            },
+            "region": {
+              "startLine": 1,
+              "startColumn": 1
+            }
+          }
+        }
+      ],
+      "ruleId": "no-undef",
+      "ruleIndex": 0
+    }
+  ]
+}
+```
+
+JSON is a more popular format for the users of ESLint:
+
+```
+.\node_modules\.bin\eslint.cmd 1.js -f json -o 1.json
+```
+
+```json
+JSON format
+[
+  {
+    "filePath":"C:\\Users\\yiweiding\\Documents\\projects\\test\\1.js",
+    "messages":[
+      {
+        "ruleId":"no-undef",
+        "severity":2,
+        "message":"'a' is not defined.",
+        "line":1,
+        "column":1,
+        "nodeType":"Identifier",
+        "messageId":"undef",
+        "endLine":1,
+        "endColumn":2
+      }
+    ],
+    "errorCount":0,
+    "warningCount":0,
+    "fixableErrorCount":0,
+    "fixableWarningCount":0,
+    "usedDeprecatedRules":[]
+  }
+]
+```
 
 Figure Data Flow below is a high-level understanding of the current design.
 
@@ -183,7 +315,7 @@ suppressions: [
 ### Goal
 
 1.	Keep the current behavior of ESLint, i.e., errors/warnings will not be shown on the command line if the related rules are disabled, unless `--no-inline-config` is used.
-2.	When the flag `--output-suppression` is used, the violations (problems) that disabled by inline comments will not be removed.
+2.	When the new CLI option `--output-suppression` is used, the violations (problems) that disabled by inline comments will not be removed.
 3.	Add suppression info in the output of ESLint
     1. For inSource suppressions, we generate suppression info where `kind` is `inSource` and `justification` is the description in the directive comments (words after two or more consecutive dashes mentioned above).
     
@@ -208,7 +340,7 @@ suppressions: [
         {"kind": "inSource", "justification": "Justification example"}
         ```
     
-    2. For external suppressions, we generate suppression info where `kind` is `external` and `justification` is a certain sentence such as "Globally disabled".
+    2. For external suppressions (or disabling rules inside of configuration files in ESLint), we generate suppression info where `kind` is `external` and `justification` is a certain sentence such as "Globally disabled".
 
         For example:
 
@@ -238,7 +370,84 @@ Input:
 
 Output:
 
-![Suppression example](suppression_example.png)
+```json
+SARIF format
+{
+  ... Some other info ...
+  =======================
+  "results": [
+    {
+      "level": "error",
+      "message": {
+        "text": "'a' is not defined."
+      },
+      "locations": [
+        {
+          "physicalLocation": {
+            "artifactLocation": {
+              "uri": "file:///C:/Users/yiweiding/Documents/projects/test/1.js",
+              "index": 0
+            },
+            "region": {
+              "startLine": 1,
+              "startColumn": 1
+            }
+          }
+        }
+      ],
+      "suppressions": [
+        {
+          "kind": "inSource",
+          "justification": "Sample justification message."
+        }
+      ],
+      "ruleId": "no-undef",
+      "ruleIndex": 0
+    }
+  ]
+}
+```
+
+Input:
+
+```
+.\node_modules\.bin\eslint.cmd 1.js --output-suppression -f json -o 1.json
+```
+
+Output:
+
+```json
+JSON format
+[
+  {
+    "filePath":"C:\\Users\\yiweiding\\Documents\\projects\\test\\1.js",
+    "messages":[
+      {
+        "ruleId":"no-undef",
+        "severity":2,
+        "message":"'a' is not defined.",
+        "line":1,
+        "column":1,
+        "nodeType":"Identifier",
+        "suppressions":[
+          {
+            "kind":"inSource",
+            "justification":"Sample justification message."
+          }
+        ],
+        "messageId":"undef",
+        "endLine":1,
+        "endColumn":2
+      }
+    ],
+    "errorCount":0,
+    "warningCount":0,
+    "fixableErrorCount":0,
+    "fixableWarningCount":0,
+    "usedDeprecatedRules":[]
+  }
+]
+```
 
 ### Add new CLI option `--output-suppression`
 
@@ -250,27 +459,27 @@ We propose not to ignore the text after two or more dashes in comments and consi
 
 ### Add suppressions attribute in `LintMessage`
 
-`LintMessage` is the type that finally output to the formatter. Currently it contains `ruleId`, `severity`, `message`, etc. What we desire is a `suppressions` attribute in `LintMessage`. It should be a list that contains a suppression entry (`{kind: "inSource", justification: "Fake justification message."}`).
+`LintMessage` is the type that finally output to the formatter. Currently it contains `ruleId`, `severity`, `message`, etc. What we desire is a `suppressions` attribute in `LintMessage` when the CLI option `--output-suppression` used. It should be a list that contains a suppression entry (`{kind: "inSource", justification: "Fake justification message."}`).
 
 ### Reserve external suppression
 
-In the step of apply external suppression, ESLint will not skip rules disabled in configuration files if it gets the `--output-suppression` flag. Violations (or problems in ESLint) will be created with `{kind: "external", justification: "Globally disabled"}` if the related rules are switched to `off`.
+In the step of apply external suppression (or disabling rules inside of configuration files), ESLint will not skip rules disabled in configuration files if it gets the `--output-suppression` option. Violations (or problems in ESLint) will be created with `{kind: "external", justification: "Globally disabled"}` if the related rules are switched to `off`.
 
-More specifically, after getting `severity` in `runRules`, ESLint will not return if `severity === 0 && includeSuppression`. A dictionary `{kind: "external", justification: ""}` will be put into `createReportTranslator` and `createProblem`. These problems will go to the next step.
+More specifically, when traversing `configuredRules` in `runRules`, ESLint will not [skip disabled rules](https://github.com/eslint/eslint/blob/81c60f4a8725738f191580646562d1dca7eee933/lib/linter/linter.js#L893) if the `--output-suppression` option used. Then the suppression info `{kind: "external", justification: "Globally disabled"}` will be put into [`createReportTranslator`](https://github.com/eslint/eslint/blob/81c60f4a8725738f191580646562d1dca7eee933/lib/linter/linter.js#L924) and [`createProblem`](https://github.com/eslint/eslint/blob/81c60f4a8725738f191580646562d1dca7eee933/lib/linter/report-translator.js#L357) to create reports with suppressions for disabled rules.
 
 NOTE that globally disabled rules could be enabled in applying disable directives. In that case we should remove the corresponding suppression info.
 
 ### Reserve inSource suppression
 
-In the step of apply inSource suppression, ESLint will not remove the problems that should be disabled by directive comments if it gets the `--output-suppression` flag. These problems will be reserved and added `{kind: "inSource", justification: "Justification message example."}`.
+In the step of apply inSource suppression, ESLint will not remove the problems that should be disabled by directive comments if it gets the `--output-suppression` option. These problems will be reserved and added `{kind: "inSource", justification: "Justification message example."}`.
 
 ### Modify `CLIEngine` and related formatters
 
-As mentioned, we are not going to change the current behavior of ESLint. Without `--no-inline-config`, ESLint should not report errors/warnings in CMD whether with `--output-suppression` flag or not. In `CLIEngine`, when `suppressions` of a message is not null or empty (which means this message should be suppressed and not be reported), this message would be skipped or ignored. Additionally, the related formatters, such as stylish, should also be modified.
+As mentioned, we are not going to change the current behavior of ESLint. Without `--no-inline-config`, ESLint should not report errors/warnings in CMD whether with `--output-suppression` option or not. In `CLIEngine`, when `suppressions` of a message is not null or empty (which means this message should be suppressed and not be reported), this message would be skipped or ignored. Additionally, the related formatters, such as stylish, should also be modified.
 
 ## Documentation
 
-Add examples and explanations of the options `--output-suppression` to _User guide – Command Line Interface_.
+Add examples and explanations of the option `--output-suppression` to _User guide – Command Line Interface_.
 
 ## Drawbacks
 
