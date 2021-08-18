@@ -467,7 +467,7 @@ In the step of apply external suppression (or disabling rules inside of configur
 
 More specifically, when traversing `configuredRules` in `runRules`, ESLint will not [skip disabled rules](https://github.com/eslint/eslint/blob/81c60f4a8725738f191580646562d1dca7eee933/lib/linter/linter.js#L893) if the `--output-suppression` option used. Then the suppression info `{kind: "external", justification: "Globally disabled"}` will be put into [`createReportTranslator`](https://github.com/eslint/eslint/blob/81c60f4a8725738f191580646562d1dca7eee933/lib/linter/linter.js#L924) and [`createProblem`](https://github.com/eslint/eslint/blob/81c60f4a8725738f191580646562d1dca7eee933/lib/linter/report-translator.js#L357) to create reports with suppressions for disabled rules.
 
-NOTE that globally disabled rules could be enabled in applying disable directives. In that case we should remove the corresponding suppression info.
+NOTE that rules disabled inside of configuration files could not be enabled by inline directive comments (e.g., `/* eslint-enable no-undef */`). But the disabling directive comments for disabled rules will still be recorded as an entry of `suppressions`, as described in [What we need](#What%20we%20need).
 
 ### Reserve inSource suppression
 
