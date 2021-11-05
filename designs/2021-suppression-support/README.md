@@ -17,6 +17,7 @@ SARIF format
   ... Some other info ...
   =======================
   "results": [
+    { ... another record ... },
     {
       "level": "error",
       "message": {
@@ -55,6 +56,9 @@ JSON format
   {
     "filePath":"C:\\Users\\yiweiding\\Documents\\projects\\test\\1.js",
     "messages":[
+      { ... another record ... }
+    ],
+    "suppressedMessages":[
       {
         "ruleId":"no-undef",
         "severity":2,
@@ -158,6 +162,8 @@ a = 1; // eslint-disable-line no-undef -- Justification example 2
 ```
 
 In that case, the first suppression will work while the rest of them will be treated as `unusedDisableDirectives`.
+
+NOTE that external disabling rules is not considered in this RFC.
 
 When an error or warning is suppressed, it will not be output. Particularly, an option `--no-inline-config` can disable all inline suppressions, where all errors and warnings not disabled by configuration files will be output.
 
@@ -265,7 +271,7 @@ Then we may get:
 {"kind": "directive", "justification": "Justification example"}
 ```
 
-If a violation is inline-suppressed multiple times, all suppression entries will be recorded, according to [suppressions property](https://docs.oasis-open.org/sarif/sarif/v2.0/csprd02/sarif-v2.0-csprd02.html#_Toc10127852). So `unusedDisableDirectives` might always be empty. A suppression list would be preferred to gather all suppression information of a violation:
+If a violation is inline-suppressed multiple times, all suppression entries will be recorded, according to [suppressions property](https://docs.oasis-open.org/sarif/sarif/v2.0/csprd02/sarif-v2.0-csprd02.html#_Toc10127852). Meanwhile, only the first suppression will be tagged as "used" as ESLint does currently, and the rest of the suppressions should be in `unusedDisableDirectives` so that the behavior of `--report-unused-disable-directives` will not be changed. A suppression list would be preferred to gather all suppression information of a violation:
 
 ```json
 suppressions: [
@@ -323,6 +329,7 @@ SARIF format
   ... Some other info ...
   =======================
   "results": [
+    { ... another record ... },
     {
       "level": "error",
       "message": {
@@ -369,6 +376,9 @@ JSON format
   {
     "filePath":"C:\\Users\\yiweiding\\Documents\\projects\\test\\1.js",
     "messages":[
+      { ... another record ... }
+    ],
+    "suppressedMessages":[
       {
         "ruleId":"no-undef",
         "severity":2,
@@ -404,9 +414,9 @@ We propose to add a new CLI option `--track-suppressions` for the new feature. W
 
 We propose not to ignore the text after two or more dashes in comments and considered it as the justification of a suppression. The modification should be in `getDirectiveComments`.
 
-### Add suppressions attribute in `LintMessage`
+### Add `SuppressedLintMessage` inheriting from `LintMessage`
 
-`LintMessage` is the type that finally output to the formatter. Currently it contains `ruleId`, `severity`, `message`, etc. What we desire is a `suppressions` attribute in `LintMessage` when the CLI option `--track-suppressions` used. It should be a list that contains a suppression entry (`{kind: "directive", justification: "Fake justification message."}`).
+According to this [comment](https://github.com/eslint/rfcs/pull/82#discussion_r733584774), we are going to have a `suppressedMessages` distinguished from `messages` in the output of ESLint. Items in `suppressedMessages` should have the property `suppressions`, a list of suppressions (`{kind: "directive", justification: "Justification message example."}`).
 
 ### Reserve directive suppression
 
@@ -441,7 +451,7 @@ Currently no.
 
 ## Help Needed
 
-No.
+We will implement the output of suppressions and help update finish first-party formatters if needed. We will drive to update SARIF formatter to process suppression info.
 
 ## Frequently Asked Questions
 
