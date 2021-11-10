@@ -1,13 +1,13 @@
 - Repo: eslint/eslint
 - Start Date: 2021-07-28
-- RFC PR: (leave this empty, to be filled in later)
+- RFC PR: https://github.com/eslint/rfcs/pull/82
 - Authors: Yiwei Ding
 
 # Add suppression information in the output of ESLint
 
 ## Summary
 
-Violations can be suppressed by inline directive comments. We propose to add a `--track-suppressions` CLI option for adding suppression information, including its kind and justification, in the output of ESLint.
+Violations can be suppressed by inline directive comments. We propose to add suppression information, including its kind and justification, in the output of ESLint.
 
 The code below shows the example in the format of SARIF and JSON:
 
@@ -285,7 +285,7 @@ suppressions: [
 ### Goal
 
 1. Keep the current behavior of ESLint, i.e., errors/warnings will not be shown on the command line if the related rules are disabled, unless `--no-inline-config` is used.
-2. When the new CLI option `--track-suppressions` is used, the violations (problems) that disabled by inline comments will not be removed.
+2. The violations (problems) that disabled by inline comments will not be removed.
 3. Add suppression info in the output of ESLint. For directive suppressions, we generate suppression info where `kind` is `directive` and `justification` is the description in the directive comments (words after two or more consecutive dashes mentioned above).
     
     For example:
@@ -311,14 +311,14 @@ suppressions: [
 
 ### General Design
 
-We are proposing to add a new CLI option `--track-suppressions` to output suppressions without prompting disabled errors/warnings.
+We are proposing to output suppressions without prompting disabled errors/warnings.
 
 ![Design diagram](design_diagram.png)
 
 Input:
 
 ```
-.\node_modules\.bin\eslint.cmd 1.js --track-suppressions -f @microsoft/eslint-formatter-sarif -o 1.sarif
+.\node_modules\.bin\eslint.cmd 1.js -f @microsoft/eslint-formatter-sarif -o 1.sarif
 ```
 
 Output:
@@ -365,7 +365,7 @@ SARIF format
 Input:
 
 ```
-.\node_modules\.bin\eslint.cmd 1.js --track-suppressions -f json -o 1.json
+.\node_modules\.bin\eslint.cmd 1.js -f json -o 1.json
 ```
 
 Output:
@@ -406,10 +406,6 @@ JSON format
 ]
 ```
 
-### Add new CLI option `--track-suppressions`
-
-We propose to add a new CLI option `--track-suppressions` for the new feature. Without the option, ESLint will work as it is currently, and `suppressions` property should not exist in the output. With this option, ESLint is expected to export all violations, including suppressed ones. `suppressions` should be _empty_ for non-suppressed violations, while `suppressions` should be a list for suppressed ones, according to [suppressions property](https://docs.oasis-open.org/sarif/sarif/v2.0/csprd02/sarif-v2.0-csprd02.html#_Toc10127852).
-
 ### Parse description in comments as `Justification`
 
 We propose not to ignore the text after two or more dashes in comments and considered it as the justification of a suppression. The modification should be in `getDirectiveComments`.
@@ -420,26 +416,25 @@ According to this [comment](https://github.com/eslint/rfcs/pull/82#discussion_r7
 
 ### Reserve directive suppression
 
-In the step of apply directive suppression, ESLint will not remove the problems that should be disabled by directive comments if it gets the `--track-suppressions` option. These problems will be reserved and added `{kind: "directive", justification: "Justification message example."}`.
+In the step of apply directive suppression, ESLint will not remove the problems that should be disabled by directive comments. These problems will be reserved and added `{kind: "directive", justification: "Justification message example."}`.
 
 NOTE that the kind `directive` should be converted to `inSource` for SARIF according to [kind property](https://docs.oasis-open.org/sarif/sarif/v2.1.0/os/sarif-v2.1.0-os.html#_Toc34317735).
 
 ### Modify `CLIEngine` and related formatters
 
-As mentioned, we are not going to change the current behavior of ESLint. Without `--no-inline-config`, ESLint should not report errors/warnings in CMD whether with `--track-suppressions` option or not. In `CLIEngine`, when `suppressions` of a message is not null or empty (which means this message should be suppressed and not be reported), this message would be skipped or ignored. Additionally, the related formatters, such as stylish, should also be modified.
+As mentioned, we are not going to change the current behavior of ESLint. Without `--no-inline-config`, ESLint should not report errors/warnings in CLI. In `CLIEngine`, when `suppressions` of a message is not null or empty (which means this message should be suppressed and not be reported), this message would be skipped or ignored. Additionally, the related formatters, such as stylish, should also be modified.
 
 ## Documentation
 
-Add examples and explanations of the option `--track-suppressions` to _User guide – Command Line Interface_.
+Add entries for the new added/modified types, `SuppressedLintMessage` and `LintResult`, to _Developer Guide – Node.js API_.
 
 ## Drawbacks
 
-- Additional contexts must be transferred across modules, such as `justification` in `directives` and `suppressions` in `LintMessage`.
-- Related formatters, such as stylish, should be modified to keep the current behavior.
+Related formatters, such as stylish, should be modified to keep the current behavior.
 
 ## Backwards Compatibility Analysis
 
-Basically, current users would not feel any difference, since the proposed feature would only work with the new option. Without the option `--track-suppressions`, any current behaviors would not be changed.
+All suppressed messages will be gathered into `SuppressedLintMessage`. Any other current behaviors would not be changed.
 
 ## Alternatives
 
@@ -455,7 +450,9 @@ We will implement the output of suppressions and help update finish first-party 
 
 ## Frequently Asked Questions
 
-TBD.
+Q: What would be in `"suppressions"` with the new feature and `--report-unused-disable-directives`?
+
+A: The new feature and `--report-unused-disable-directives` are independent. `--report-unused-disable-directives` will still report the error if there are unused directives. Meanwhile, the new feature will track all suppressions (regardless they are used or not).
 
 ## Related Discussions
 
