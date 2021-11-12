@@ -420,21 +420,24 @@ In the step of apply directive suppression, ESLint will not remove the problems 
 
 NOTE that the kind `directive` should be converted to `inSource` for SARIF according to [kind property](https://docs.oasis-open.org/sarif/sarif/v2.1.0/os/sarif-v2.1.0-os.html#_Toc34317735).
 
-### Modify `CLIEngine` and related formatters
+### Return `SuppressedLintMessage` in `Linter#verify` and `Linter#verifyAndFix`
 
-As mentioned, we are not going to change the current behavior of ESLint. Without `--no-inline-config`, ESLint should not report errors/warnings in CLI. In `CLIEngine`, when `suppressions` of a message is not null or empty (which means this message should be suppressed and not be reported), this message would be skipped or ignored. Additionally, the related formatters, such as stylish, should also be modified.
+Since we have a new property `suppressedMessages` in `LintResult`, the output of `Linter#verify` and `Linter#verifyAndFix` will also have `suppressedMessages`.
+
+`Linter#verifyAndFix` and the option `--fix` will keep the current behavior, i.e., suppressed violations will not be fixed.
 
 ## Documentation
 
-Add entries for the new added/modified types, `SuppressedLintMessage` and `LintResult`, to _Developer Guide – Node.js API_.
+- Add entries for the new added/modified types, `SuppressedLintMessage` and `LintResult`, to _Developer Guide – Node.js API_.
+- Update `Linter#verify` and `Linter#verifyAndFix` in _Developer Guide – Node.js API_.
 
 ## Drawbacks
 
-Related formatters, such as stylish, should be modified to keep the current behavior.
+No.
 
 ## Backwards Compatibility Analysis
 
-All suppressed messages will be gathered into `SuppressedLintMessage`. Any other current behaviors would not be changed.
+All suppressed messages will be gathered into `SuppressedLintMessage`, which is the new property of `LintResult`. Thus, the output of `Linter#verify` and `Linter#verifyAndFix` will also have `suppressedMessages`. Any other current behaviors would not be changed.
 
 ## Alternatives
 
@@ -446,7 +449,7 @@ Currently no.
 
 ## Help Needed
 
-We will implement the output of suppressions and help update finish first-party formatters if needed. We will drive to update SARIF formatter to process suppression info.
+We will implement the output of suppressions and drive to update SARIF formatter to process suppression info.
 
 ## Frequently Asked Questions
 
