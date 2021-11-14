@@ -422,7 +422,7 @@ NOTE that the kind `directive` should be converted to `inSource` for SARIF accor
 
 ### Return `SuppressedLintMessage` in `Linter#verify` and `Linter#verifyAndFix`
 
-Since we have a new property `suppressedMessages` in `LintResult`, the output of `Linter#verify` and `Linter#verifyAndFix` will also have `suppressedMessages`.
+Since we have a new property `suppressedMessages` in `LintResult`, the output of `Linter#verify` and `Linter#verifyAndFix` will also have `suppressedMessages`. That is, `Linter#verify` will return `{messages: LintMessage[], suppressedMessages: SuppressedLintMessage[]}`, and `Linter#verifyAndFix` will return `{fixed: boolean, messages: LintMessage[], output: string, suppressedMessages: SuppressedLintMessage[]}`.
 
 `Linter#verifyAndFix` and the option `--fix` will keep the current behavior, i.e., suppressed violations will not be fixed.
 
