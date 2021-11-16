@@ -420,16 +420,14 @@ In the step of apply directive suppression, ESLint will not remove the problems 
 
 NOTE that the kind `directive` should be converted to `inSource` for SARIF according to [kind property](https://docs.oasis-open.org/sarif/sarif/v2.1.0/os/sarif-v2.1.0-os.html#_Toc34317735).
 
-### Return `SuppressedLintMessage` in `Linter#verify` and `Linter#verifyAndFix`
+### Add `Linter#getSuppressedMessages`
 
-Since we have a new property `suppressedMessages` in `LintResult`, the output of `Linter#verify` and `Linter#verifyAndFix` will also have `suppressedMessages`. That is, `Linter#verify` will return `{messages: LintMessage[], suppressedMessages: SuppressedLintMessage[]}`, and `Linter#verifyAndFix` will return `{fixed: boolean, messages: LintMessage[], output: string, suppressedMessages: SuppressedLintMessage[]}`.
-
-`Linter#verifyAndFix` and the option `--fix` will keep the current behavior, i.e., suppressed violations will not be fixed.
+Add a `Linter#getSuppressedMessages` method to `Linter` that can retrieve the suppressed messages from the previous run so that `Linter#verify` and `Linter#verifyAndFix` will not be changed. It would be used in `verifyText` in `CLIEngine` and other scenarios that need suppressed messages.
 
 ## Documentation
 
 - Add entries for the new added/modified types, `SuppressedLintMessage` and `LintResult`, to _Developer Guide – Node.js API_.
-- Update `Linter#verify` and `Linter#verifyAndFix` in _Developer Guide – Node.js API_.
+- Add `Linter#getSuppressedMessages` in _Developer Guide – Node.js API_.
 
 ## Drawbacks
 
@@ -437,7 +435,7 @@ No.
 
 ## Backwards Compatibility Analysis
 
-All suppressed messages will be gathered into `SuppressedLintMessage`, which is the new property of `LintResult`. Thus, the output of `Linter#verify` and `Linter#verifyAndFix` will also have `suppressedMessages`. Any other current behaviors would not be changed.
+All suppressed messages will be gathered into `SuppressedLintMessage`, which is the new property of `LintResult`. Any other current behaviors would not be changed.
 
 ## Alternatives
 
