@@ -8,9 +8,9 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.action == 'labeled' && contains(github.event.label.name, 'Commenting')
     steps:
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v2
         with:
-          node-version: 12
+          node-version: 16
       - run: npx @humanwhocodes/tweet 'The RFC "${{ github.event.pull_request.title }}" is now in the ${{ github.event.label.name }} phase.\n\n${{ github.event.pull_request.html_url }}'
         env:
           TWITTER_CONSUMER_KEY: ${{ secrets.TWITTER_CONSUMER_KEY }}
@@ -22,9 +22,9 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.action == 'closed' && github.event.pull_request.merged
     steps:
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v2
         with:
-          node-version: 12
+          node-version: 16
       - run: npx @humanwhocodes/tweet 'The RFC "${{ github.event.pull_request.title }}" has been approved and merged!\n\n${{ github.event.pull_request.html_url }}'
         env:
           TWITTER_CONSUMER_KEY: ${{ secrets.TWITTER_CONSUMER_KEY }}
