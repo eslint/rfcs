@@ -15,11 +15,16 @@ Assertions added to invalid test case error objects:
 
 - Must contain `suggestions` if the test case produces suggestions
 - Must contain the violation message (`message` or `messageId`, but not both)
+- Cannot repeat the test case `code` as `output` for non-fixable test cases
 
 Assertions added to invalid test case suggestion objects:
 
 - Must contain the suggestion code `output`
 - Must contain the suggestion message (`messageId` or `desc`, but not both)
+
+Assertions added to all test cases:
+
+- Cannot have identical test cases
 
 ## Motivation
 
@@ -101,6 +106,53 @@ In addition to the message provided by the suggestion, the actual code output is
 AssertionError [ERR_ASSERTION]: Test suggestion object is missing 'output`.
 ```
 
+### Disallow repeating the test case `code` as `output` for non-fixable test cases
+
+Today, a non-fixable invalid test case can be written like this:
+
+```js
+{
+    code: 'console.log("foo");',
+    output: 'console.log("foo");',
+    // ...
+}
+```
+
+This is not ideal, especially when the code is longer and multi-line:
+
+- It's not immediately clear whether the `code` differs from the `output`, making it difficult to determine whether or not the test case produces an autofix
+- The maintenance burden is higher as changes to the test case need to be replicated in both `code` and `output`
+- The test case is less concise, needlessly increasing the size/length of the test file
+
+So we will disallow repeating the test case `code` as `output` for non-fixable test cases using a new assertion:
+
+```pt
+AssertionError [ERR_ASSERTION]: Test error object 'output' matches 'code'. Omit 'output' for non-fixable test cases.
+```
+
+To clearly and concisely indicate that a test case produces no autofix, it is recommended to omit the `output` property entirely. Note that we will also allow `output: null` or `output: undefined` which can be useful when dynamically generating test cases (e.g. `output: hasAutofix ? bar : null`), and because many existing test cases are written with `output: null` as that used to be necessary to assert that the test case had no autofix (it isn't necessary anymore as of [ESLint v7](https://eslint.org/docs/user-guide/migrating-to-7.0.0#additional-validation-added-to-the-ruletester-class)).
+
+An existing lint rule [eslint-plugin/prefer-output-null](https://github.com/not-an-aardvark/eslint-plugin-eslint-plugin/blob/master/docs/rules/prefer-output-null.md) enforces the desired behavior and is autofixable which should help with migration.
+
+### Disallow identical test cases
+
+Duplicate test cases can cause confusion, can be hard to detect manually in a long file, and serve no purpose.
+
+We will add an assertion when a duplicate test case is detected:
+
+```pt
+AssertionError [ERR_ASSERTION]: Detected duplicate test case.
+```
+
+As test cases end up represented as objects, the problem here is essentially to detect duplicate objects in an array. To handle this, here's one efficient algorithm (also mentioned in this [article](https://medium.com/programming-essentials/how-to-know-if-an-array-has-duplicates-in-javascript-27d99ab9a0d2)):
+
+1. Maintain a set of the test cases we have seen so far.
+2. For each test case, use `JSON.stringify()` to get a string representation of the test case object.
+3. If the string is in the set already, assert.
+4. If the string is not in the set, add it.
+
+An existing lint rule [eslint-plugin/no-identical-tests](https://github.com/not-an-aardvark/eslint-plugin-eslint-plugin/blob/master/docs/rules/no-identical-tests.md) enforces the desired behavior and is autofixable which should help with migration.
+
 ## Documentation
 
 <!--
@@ -160,11 +212,6 @@ I also considered whether we could make validation even stricter than what's pro
     you've received the answers and updated the design to reflect them,
     you can remove this section.
 -->
-
-There are two more potential ideas that I have left out of the RFC body because they could be considered more stylistic in nature. I am in favor of them, so if people are interested, I could elevate them to the RFC body (or they could be considered in a separate RFC).
-
-1. Disallow repeating the test case `code` as `output` for non-fixable test cases. Instead, either use `output: null` or omit `output` to clearly and concisely indicate that a test case produces no autofix. This is based on the [eslint-plugin/prefer-output-null](https://github.com/not-an-aardvark/eslint-plugin-eslint-plugin/blob/master/docs/rules/prefer-output-null.md) lint rule.
-2. Disallow identical test cases. This is based on the [eslint-plugin/no-identical-tests](https://github.com/not-an-aardvark/eslint-plugin-eslint-plugin/blob/master/docs/rules/no-identical-tests.md) lint rule.
 
 ## Help Needed
 
