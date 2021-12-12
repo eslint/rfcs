@@ -37,12 +37,6 @@ Poor rule test coverage can lead to:
 - Increased burden on rule authors and rule reviewers to manually detect issues that better tests could have caught
 - Reduced quality of the ESLint plugin ecosystem
 
-In addition, there are a few issues particularly around testing rule suggestions:
-
-- It's easy to forget to assert what suggestions a test case produces, or that a test case produces no assertions
-- It's inconvenient to have to add `suggestions: []` to every single invalid test case that does not produce suggestions, in order to assert that they don't produce suggestions
-- Suggestions are a newer feature, and many existing test cases may not have been updated to test newly-added suggestions
-
 To address these issues, we should automatically detect critical areas of missing test coverage from the rule test runner itself, and enforce that rule tests cover these areas.
 
 The new assertions will fill in gaps and address inconsistencies in the existing rule test runner assertions.
@@ -62,7 +56,10 @@ This continues a trend in which `RuleTester` validation has become stricter with
 
 This section contains a sub-section for each new category of assertion.
 
-The assertions will be added in the `lib/rule-tester/rule-tester.js` file in the `testInvalidTemplate()` function. Tests will be added for each assertion in `tests/lib/rule-tester/rule-tester.js`.
+Code changes:
+
+- Assertions will be added in the `lib/rule-tester/rule-tester.js` file in the `testInvalidTemplate()` function
+- Tests will be added for each assertion in `tests/lib/rule-tester/rule-tester.js`
 
 ### Invalid test case error objects must contain `suggestions` if the test case produces suggestions
 
@@ -77,6 +74,12 @@ This change has precedent in the existing behavior today where invalid test case
 ```pt
 AssertionError [ERR_ASSERTION]: The rule fixed the code. Please add 'output' property.
 ```
+
+More about motivation:
+
+- It's easy to forget to assert what suggestions a test case produces, or that a test case produces no assertions
+- It's inconvenient to have to add `suggestions: []` to every single invalid test case that does not produce suggestions, in order to assert that they don't produce suggestions
+- Suggestions are a newer feature, and many existing test cases may not have been updated to test newly-added suggestions
 
 ### Invalid test case error and suggestion objects must include the message
 
@@ -130,7 +133,7 @@ So we will disallow repeating the test case `code` as `output` for non-fixable t
 AssertionError [ERR_ASSERTION]: Test error object 'output' matches 'code'. Omit 'output' for non-fixable test cases.
 ```
 
-To clearly and concisely indicate that a test case produces no autofix, it is recommended to omit the `output` property entirely. Note that we will also allow `output: null` or `output: undefined` which can be useful when dynamically generating test cases (e.g. `output: hasAutofix ? bar : null`), and because many existing test cases are written with `output: null` as that used to be necessary to assert that the test case had no autofix (it isn't necessary anymore as of [ESLint v7](https://eslint.org/docs/user-guide/migrating-to-7.0.0#additional-validation-added-to-the-ruletester-class)).
+To clearly and concisely indicate that a test case produces no autofix, it is recommended to omit the `output` property entirely. Note that we will also allow `output: null` or `output: undefined` which can be useful when dynamically generating test cases (e.g. `output: hasAutofix ? autofixedCode : null`), and because many existing test cases are written with `output: null` as that used to be necessary to assert that the test case had no autofix (it isn't necessary anymore as of [ESLint v7](https://eslint.org/docs/user-guide/migrating-to-7.0.0#additional-validation-added-to-the-ruletester-class)).
 
 An existing lint rule [eslint-plugin/prefer-output-null](https://github.com/not-an-aardvark/eslint-plugin-eslint-plugin/blob/master/docs/rules/prefer-output-null.md) enforces the desired behavior and is autofixable which should help with migration.
 
