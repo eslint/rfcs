@@ -25,6 +25,8 @@ Assertions added to invalid test case suggestion objects:
 Assertions added to all test cases:
 
 - Cannot have identical test cases
+- The optional `filename` property must be a string
+- The optional `only` property must be a boolean
 
 ## Motivation
 
@@ -155,6 +157,23 @@ As test cases end up represented as objects, the problem here is essentially to 
 4. If the string is not in the set, add it.
 
 An existing lint rule [eslint-plugin/no-identical-tests](https://github.com/not-an-aardvark/eslint-plugin-eslint-plugin/blob/master/docs/rules/no-identical-tests.md) enforces the desired behavior and is autofixable which should help with migration.
+
+### Type checks
+
+Most test properties already have asserts to type-check their values, or they will cause a test to fail if they are provided with the wrong type. But there are two properties that are missing type-checking and for which an invalid type won't cause tests to fail:
+
+- `filename: 123`
+- `only: 123`
+
+So we will add assertions:
+
+```pt
+AssertionError [ERR_ASSERTION]: Optional test case property 'filename' must be a string
+```
+
+```pt
+AssertionError [ERR_ASSERTION]: Optional test case property 'only' must be a boolean
+```
 
 ## Documentation
 
