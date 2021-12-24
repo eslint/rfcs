@@ -170,10 +170,20 @@ These results indicate that the vast majority of the ecosystem is already ready 
 While the current numbers are already supportive of making these changes, we have a number of means available to further prepare plugins for these changes, which we could optionally employ:
 
 - Communicating about these upcoming changes in blog posts leading up to the major release
-- Adding deprecation notices inside ESLint in a minor version release, showing a warning when executing linting or running tests for an offending rule:
-  > DEPRECATION WARNING: This rule is missing `meta.schema` and will stop working in ESLint v9.
+- Adding deprecation notices inside ESLint in a minor version release, showing a warning when executing linting for an offending rule:
+  > DEPRECATION WARNING: This rule has options but is missing `meta.schema` and will stop working in ESLint v9.
+  > The maintainer of this rule needs to release an updated version.
   >
   > DEPRECATION WARNING: This rule is using the deprecated function-style format and will stop working in ESLint v9.
+  > The maintainer of this rule needs to release an updated version.
+- Adding deprecation notices inside ESLint in a minor version release, showing a warning when running tests for an offending rule:
+  > DEPRECATION WARNING: This rule has options but is missing `meta.schema` and will stop working in ESLint v9.
+  > Please add `meta.schema`: <https://eslint.org/docs/developer-guide/working-with-rules#options-schemas>
+  > This lint rule can assist with the conversion: <https://github.com/not-an-aardvark/eslint-plugin-eslint-plugin/blob/main/docs/rules/require-meta-schema.md>
+  >
+  > DEPRECATION WARNING: This rule is using the deprecated function-style format and will stop working in ESLint v9.
+  > Please convert to object-style rules: <https://eslint.org/docs/developer-guide/working-with-rules>
+  > This lint rule can assist with the conversion: <https://github.com/not-an-aardvark/eslint-plugin-eslint-plugin/blob/main/docs/rules/prefer-object-rule.md>
 - Directly notifying or helping out any top plugins that still need to adopt these changes ([eslint-ecosystem-analyzer](https://github.com/bmish/eslint-ecosystem-analyzer) can help identify the top candidates to reach out to)
 - Encouraging further adoption of [eslint-plugin-eslint-plugin](https://github.com/not-an-aardvark/eslint-plugin-eslint-plugin) which has two rules that can detect and even autofix offending rules
 
