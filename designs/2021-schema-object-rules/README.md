@@ -172,10 +172,10 @@ While the current numbers are already supportive of making these changes, we hav
 - Communicating about these upcoming changes in blog posts leading up to the major release
 - Adding deprecation notices inside ESLint in a minor version release, showing a warning when executing linting for an offending rule:
   > DEPRECATION WARNING: This rule has options but is missing `meta.schema` and will stop working in ESLint v9.
-  > The maintainer of this rule needs to release an updated version.
+  > The maintainer of this rule needs to release an updated version with a schema added.
   >
   > DEPRECATION WARNING: This rule is using the deprecated function-style format and will stop working in ESLint v9.
-  > The maintainer of this rule needs to release an updated version.
+  > The maintainer of this rule needs to release an updated version using object-style format.
 - Adding deprecation notices inside ESLint in a minor version release, showing a warning when running tests for an offending rule:
   > DEPRECATION WARNING: This rule has options but is missing `meta.schema` and will stop working in ESLint v9.
   > Please add `meta.schema`: <https://eslint.org/docs/developer-guide/working-with-rules#options-schemas>
