@@ -38,7 +38,7 @@ Making ESLint's default behavior more strict like this goes along with many rece
 And in addition to the obvious benefits of increased rule schema usage such as reduced chance of silent mistakes/bugs, being able to rely on having rule schemas available could unlock new features/improvements:
 
 - Improved/auto-generated documentation regarding rule options
-- TypeScript-style auto-complete/IntelliSense when configuring a rule
+- TypeScript-style auto-complete/code-completion when configuring a rule
 
 There is an existing, third-party lint rule [eslint-plugin/require-meta-schema](https://github.com/not-an-aardvark/eslint-plugin-eslint-plugin/blob/master/docs/rules/require-meta-schema.md) to enforce that rules have schemas.
 
@@ -46,7 +46,7 @@ There is an existing, third-party lint rule [eslint-plugin/require-meta-schema](
 
 Supporting two rule formats requires increased complexity and maintenance burden inside ESLint, as well as in third-party tools like [eslint-plugin-eslint-plugin](https://github.com/not-an-aardvark/eslint-plugin-eslint-plugin) that need to be able to handle both rule formats.
 
-Object-style rules were introduced and function-style rules were deprecated in early 2016 (?). Over five years has elapsed since then, and we don't want to support both formats forever.
+Object-style rules were introduced and function-style rules were deprecated sometime around early 2016. Over five years has elapsed since then, and we don't want to support both formats forever.
 
 Object-style rules are clearly superior in terms of configuration thanks to the `meta` object they include. Function-style rules are also blocked from accessing valuable features like [autofixing](https://eslint.org/docs/8.0.0/user-guide/migrating-to-8.0.0#rules-require-metafixable-to-provide-fixes) and suggestions.
 
@@ -139,13 +139,15 @@ We can finally delete `docs/developer-guide/working-with-rules-deprecated.md`, a
 
 ### Drawbacks of requiring schemas
 
-Plugin authors who left out schemas will need to take the time to add them.
+Plugin authors who left out schemas will need to take the time to add them (typically a quick, easy task).
+
+Plugin authors who are lazy or don't see the value of a schema for their use case could workaround this requirement by adding a minimal / incomplete schema. This is inevitable as we can't easily / automatically determine that schemas are 100% complete. We won't advertise nor encourage this workaround, and it will hopefully be rare as it's obviously a poor practice. Note that we also considered providing an explicit opt-out like `schema: false` but decided against it to avoid encouraging this as an acceptable / go-to solution for satisfying the new requirement.
 
 Users of old/unmaintained plugins/rules which are missing schemas will not be able to use them until they are updated.
 
 ### Drawbacks of requiring object-style rules
 
-Plugin authors who still have function-style rules will need to convert them to object-style rules.
+Plugin authors who still have function-style rules will need to trivially convert them to object-style rules.
 
 Users of old/unmaintained plugins/rules which still have function-style rules will not be able to use them until they are updated.
 
@@ -157,7 +159,10 @@ Users of old/unmaintained plugins/rules which still have function-style rules wi
     to existing users?
 -->
 
-This RFC describes a set of breaking changes that can be released in the next major version of ESLint. Both ESLint plugin authors and ESLint users will be affected and will be unable to use offending rules until they are updated. This will mostly affect a small number of older ESLint plugins that haven't been updated nor maintained in years.
+This RFC describes a set of breaking changes that can be released in the next major version of ESLint:
+
+- Both ESLint plugin authors and ESLint users will be affected and will be unable to use offending rules until they are updated. This will mostly affect a small number of older ESLint plugins that haven't been updated nor maintained in years.
+- ESLint users who have rules configured incorrectly will need to fix their configurations when these rules add schemas.
 
 I did an analysis of the ESLint plugin ecosystem by writing a tool called [eslint-ecosystem-analyzer](https://github.com/bmish/eslint-ecosystem-analyzer) to find out how much of the ecosystem will be affected by these changes.
 
@@ -170,13 +175,7 @@ These results indicate that the vast majority of the ecosystem is already ready 
 While the current numbers are already supportive of making these changes, we have a number of means available to further prepare plugins for these changes, which we could optionally employ:
 
 - Communicating about these upcoming changes in blog posts leading up to the major release
-- Adding deprecation notices inside ESLint in a minor version release, showing a warning when executing linting for an offending rule:
-  > DEPRECATION WARNING: This rule has options but is missing `meta.schema` and will stop working in ESLint v9.
-  > The maintainer of this rule needs to release an updated version with a schema added.
-  >
-  > DEPRECATION WARNING: This rule is using the deprecated function-style format and will stop working in ESLint v9.
-  > The maintainer of this rule needs to release an updated version using object-style format.
-- Adding deprecation notices inside ESLint in a minor version release, showing a warning when running tests for an offending rule:
+- Adding deprecation notices inside ESLint in a minor version release, showing a warning when running tests for an offending rule (these will change to fatal assertions in pre-release versions of ESLint v9):
   > DEPRECATION WARNING: This rule has options but is missing `meta.schema` and will stop working in ESLint v9.
   > Please add `meta.schema`: <https://eslint.org/docs/developer-guide/working-with-rules#options-schemas>
   > This lint rule can assist with the conversion: <https://github.com/not-an-aardvark/eslint-plugin-eslint-plugin/blob/main/docs/rules/require-meta-schema.md>
@@ -232,7 +231,7 @@ Full results of the analysis below:
 
 ### Alternatives to requiring schemas
 
-We could continue to allow rules that are missing schemas. But this would prevent us from raising rule quality standards and could slow down improvements or features that depend on schemas being present.
+We could continue to allow rules that are missing schemas. But this would prevent us from raising rule quality / testing standards and could slow down improvements or features that depend on schemas being present.
 
 ### Alternatives to requiring object-style rules
 
