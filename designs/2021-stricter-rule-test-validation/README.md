@@ -152,11 +152,15 @@ AssertionError [ERR_ASSERTION]: Detected duplicate test case.
 As test cases end up represented as objects, the problem here is essentially to detect duplicate objects in an array. To handle this, here's one efficient algorithm (also mentioned in this [article](https://medium.com/programming-essentials/how-to-know-if-an-array-has-duplicates-in-javascript-27d99ab9a0d2)):
 
 1. Maintain a set of the test cases we have seen so far.
-2. For each test case, use `JSON.stringify()` to get a string representation of the test case object. Note that the object keys should be sorted before serializing.
+2. For each test case, use our existing dependency [json-stable-stringify-without-jsonify](https://www.npmjs.com/package/json-stable-stringify-without-jsonify) to get a string representation of the test case object.
+   - This library handles deep-sorting of object keys, unlike `JSON.stringify()`.
+   - We need to skip test cases that contain non-serializable properties like functions or RegExp objects. Since rule options can contain any number of non-serializable properties, we will just skip all test cases with rule options. Detecting duplicates isn't critical, so it's okay that we will skip some test cases, but we could potentially make this smarter later.
 3. If the string is in the set already, assert.
 4. If the string is not in the set, add it.
 
 Here's an example [implementation](https://github.com/ember-template-lint/ember-template-lint/pull/2279) in a similar linter called [ember-template-lint](https://github.com/ember-template-lint/ember-template-lint).
+
+An alternative implementation would be checking each test case against every other test case with our existing dependency [fast-deep-equal](https://www.npmjs.com/package/fast-deep-equal), but this could have potentially worse performance (`O(n^2)`) with large numbers of test cases.
 
 An existing lint rule [eslint-plugin/no-identical-tests](https://github.com/not-an-aardvark/eslint-plugin-eslint-plugin/blob/master/docs/rules/no-identical-tests.md) enforces the desired behavior and is autofixable which should help with migration.
 
