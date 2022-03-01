@@ -26,8 +26,6 @@ Is a much worse rule to disable than
 
 ## Detailed Design
 
-in `linter.js` I will adjust the `getDirectiveComments` function so that I reference a list of forbidden rules. If someone is disabling a rule that is forbidden. I will add an error similar to `warnInlineConfig`
-
 In `eslintrc` I will add another option for rules. The new state can be
 ```
 "warn"
@@ -36,9 +34,15 @@ In `eslintrc` I will add another option for rules. The new state can be
 ```
 where forbid is always an error and cannot be overridden by a directive
 
-I will add a new array called `forbiddenRules` that will be processed on initialization of the linter.js. This will happen in the Constructor. Then in `getDirectiveComments` I will reference the rule being disabled in the directive. If that rule matches a rule in `forbiddenRules` then I will not accept that directive. And I will declare an error on that string
+EG `// eslint-disable semi` will have ~~semi~~ as an error, as well as the violation also having an error.
 
-EG `// eslint-disable semi` will have ~~semi~~ as an error
+Both errors will have a severity of 2. See [LintMessage#severity](https://eslint.org/docs/developer-guide/nodejs-api#-lintmessage-type)
+
+I will add a new array to the linter called `forbiddenRules` that will be processed on initialization of the linter.js. This will happen in the Constructor. Then in `getDirectiveComments` I will reference the rule being disabled in the directive. If that rule matches a rule in `forbiddenRules` then I will not accept that directive. And I will declare an error on that string. Note that this same logic applies to configuration comments as well.
+
+in `linter.js` I will adjust the `getDirectiveComments` function so that I reference a list of forbidden rules. If someone is disabling a rule that is forbidden. I will add an error similar to `warnInlineConfig`
+
+note that when disabling all rules such as `/* eslint-disable */` the directive object will have `ruleId: null`. This will need a workaround. 
 
 This error will **not** have a quick fix available
 
@@ -96,7 +100,8 @@ Another alternative that requires 0 code is to encourage users to set up a secon
     Are you able to implement this RFC on your own? If not, what kind
     of help would you need from the team?
 -->
-I can implement this independently
+- I can implement this independently
+- Will the RFC still need to be open for 21 days if the main contributors all chime in?
 
 ## Frequently Asked Questions
 
