@@ -7,7 +7,7 @@
 
 ## Summary
 
-Allow users to forbid users from disabling certain rules. This is similar to `noInlineConfig` where the primary difference is that `noInlineConfig` is set for all rules
+Allow users to forbid users from disabling certain rules. This is similar to `noInlineConfig` where the primary difference is that `noInlineConfig` is set for all rules.
 
 ## Motivation
 
@@ -26,67 +26,50 @@ Is a much worse rule to disable than
 
 ## Detailed Design
 
-<!--
-   This is the bulk of the RFC.
-
-   Explain the design with enough detail that someone familiar with ESLint
-   can implement it by reading this document. Please get into specifics
-   of your approach, corner cases, and examples of how the change will be
-   used. Be sure to define any new terms in this section.
--->
-in `linter.js` I will adjust the `getDirectiveComments` function so that I reference a list of forbidden rules. If someone is disabling a rule that is forbidden. I will add a warning (error?) similar to `warnInlineConfig`
+in `linter.js` I will adjust the `getDirectiveComments` function so that I reference a list of forbidden rules. If someone is disabling a rule that is forbidden. I will add an error similar to `warnInlineConfig`
 
 In `eslintrc` I will add another option for rules. The new state can be
 ```
-warn
-error
-forbid
+"warn"
+"error"
+"forbid"
 ```
 where forbid is always an error and cannot be overridden by a directive
+
+I will add a new array called `forbiddenRules` that will be processed on initialization of the linter.js. This will happen in the Constructor. Then in `getDirectiveComments` I will reference the rule being disabled in the directive. If that rule matches a rule in `forbiddenRules` then I will not accept that directive. And I will declare an error on that string
+
+EG `// eslint-disable semi` will have ~~semi~~ as an error
+
+This error will **not** have a quick fix available
 
 
 ## Documentation
 
-<!--
-    How will this RFC be documented? Does it need a formal announcement
-    on the ESLint blog to explain the motivation?
--->
-We will want to update the documentation to reflect the new changes
+We will want to update the documentation to reflect the new changes. The announcement can be integrated into the eslintrc update announcement.
 
 ## Drawbacks
 
-<!--
-    Why should we *not* do this? Consider why adding this into ESLint
-    might not benefit the project or the community. Attempt to think 
-    about any opposing viewpoints that reviewers might bring up. 
+this adds complexity to the already complex eslintrc experience. Users could be confused by the interaction with `forbid` and `noInlineConfig`.
 
-    Any change has potential downsides, including increased maintenance
-    burden, incompatibility with other tools, breaking existing user
-    experience, etc. Try to identify as many potential problems with
-    implementing this RFC as possible.
--->
-
-this adds complexity to the already complex eslintrc experience
+This will have a very minor impact on perf.
 
 ## Backwards Compatibility Analysis
 
-<!--
-    How does this change affect existing ESLint users? Will any behavior
-    change for them? If so, how are you going to minimize the disruption
-    to existing users?
--->
-This should integrate into the planned eslintrc changes and therefore will not be backwards compatible.
+This should integrate into the planned eslintrc changes and therefore will not be backwards compatible. However, this is acceptable since that will be a breaking change that is already approved and planned.
 
 ## Alternatives
 
-<!--
-    What other designs did you consider? Why did you decide against those?
-
-    This section should also include prior art, such as whether similar
-    projects have already implemented a similar feature.
--->
-
 instead of adding a state to `error/warn` we could instead add another optional field to the rule config. This would enable a rule to be `warn` and have directives disabled. However, I believe that this actually adds more bloat to eslintrc which is why I chose the above design
+
+There are plugins such as [eslint-comments/no-restricted-disable](https://mysticatea.github.io/eslint-plugin-eslint-comments/rules/no-restricted-disable.html) that implement this concept. However, since these are just other rules, one can easily disable them. This results in scenarios such as
+
+```
+// eslint-disable-next-line eslint-comments/no-restricted-disable
+// eslint-disable no-undef
+```
+In large PRs, reviewers often miss these comments. In a large repo that I work on these scenario has happened over 30 times
+
+Another alternative that requires 0 code is to encourage users to set up a second eslintrc and run lint twice. Once normally with regular rules, and once with `no-inline-config` with just the rules that are restricted. However, **this will not integrate into vscode error reporting**. Which will result in users pushing code to PR phase only to fail a gate that checks for restricted disables. This solution also results in a lot of bloat and configuration overhead for anyone who wants this functionality.
 
 ## Open Questions
 
@@ -101,7 +84,9 @@ instead of adding a state to `error/warn` we could instead add another optional 
     you can remove this section.
 -->
 
-- How Can I gracefully integrate into the eslintrc updates
+- How can I gracefully integrate into the eslintrc updates?
+- How can I test runtime to ensure that this doesn't affect perf?
+- What is the testing strategy that ESLint community prefers?
 
 ## Help Needed
 
@@ -111,6 +96,7 @@ instead of adding a state to `error/warn` we could instead add another optional 
     Are you able to implement this RFC on your own? If not, what kind
     of help would you need from the team?
 -->
+I can implement this independently
 
 ## Frequently Asked Questions
 
@@ -121,7 +107,8 @@ instead of adding a state to `error/warn` we could instead add another optional 
     the people reviewing this RFC. Include those questions and answers
     in this section.
 -->
-
+- Why do PR approvers approve PRs with `no-eslint-disable` rule?
+    - because PR reviewers are lazy.
 ## Related Discussions
 
 <!--
@@ -130,3 +117,4 @@ instead of adding a state to `error/warn` we could instead add another optional 
     If there is an issue, pull request, or other URL that provides useful
     context for this proposal, please include those links here.
 -->
+- [Initial issues conversation](https://github.com/eslint/eslint/issues/15631)
