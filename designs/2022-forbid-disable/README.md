@@ -35,7 +35,7 @@ noInlineConfig: { type: ["boolean", "array"] },
 
 EG `// eslint-disable semi` will have ~~semi~~ as an error, as well as the violation that it is attempting to disable also having an error.
 
-Both errors will have a severity of 2. See [LintMessage#severity](https://eslint.org/docs/developer-guide/nodejs-api#-lintmessage-type)
+The error on the inline config will have a severity of 2. See [LintMessage#severity](https://eslint.org/docs/developer-guide/nodejs-api#-lintmessage-type)
 
 first in `getDirectiveComments` I will match any directives that affect a rule listed in the array `noInlineConfig`. If there is a match, I will create a problem on that line to alert the user that they are attempting to disable a rule that will not be affected by the inline config.
 
