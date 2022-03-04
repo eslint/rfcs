@@ -54,7 +54,7 @@ this adds complexity to the already complex config experience.
 
 This will have a very minor impact on perf.
 
-This design does not alert users in the case where they user `// eslint-disable` because that directive has `ruleId: null`. However, the design will still appropriately enforce the proper rules as desired.
+This design does not alert users in the case where they use `// eslint-disable` because that directive has `ruleId: null`. However, the design will still appropriately enforce the proper rules as desired.
 
 ## Backwards Compatibility Analysis
 
