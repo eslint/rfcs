@@ -1,6 +1,6 @@
 - Repo: eslint/eslint
 - Start Date: 2022-02-28
-- RFC PR:
+- RFC PR: <https://github.com/eslint/rfcs/pull/86>
 - Authors: Brian Bartels
 
 # ESLintRC Option To Enable noInlineConfig For Specific Rules
