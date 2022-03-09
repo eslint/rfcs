@@ -3,11 +3,11 @@
 - RFC PR: <https://github.com/eslint/rfcs/pull/86>
 - Authors: Brian Bartels
 
-# ESLintRC Option To Enable noInlineConfig For Specific Rules
+# Config Option To Enable noInlineConfig For Specific Rules
 
 ## Summary
 
-Allow users to forbid users from configuring certain rules inline. This is an extension to `noInlineConfig` where the primary difference is that `noInlineConfig` currently is set for all rules.
+Allow users to forbid users from configuring certain rules inline. This is very similar to `noInlineConfig` where the primary difference is that `noInlineConfig` currently is set for all rules.
 
 ## Motivation
 
@@ -26,27 +26,33 @@ Is a much worse rule to disable than
 
 ## Detailed Design
 
-I will add the option to pass `noInlineConfig` an array of rule names. This is in addition to the already supported boolean setting. This will result in those rules having inline configuration disabled.
-
-This means that I will need to modify `config-schema.js`
+In `eslintrc` I will add another option for rules. The new state can be
 ```
-noInlineConfig: { type: ["boolean", "array"] },
+"warn"
+"error"
+"enforce"
 ```
+where enforce is always an error and cannot be overridden by inline configuration
 
 EG `// eslint-disable semi` will have ~~semi~~ as an error, as well as the violation that it is attempting to disable also having an error.
 
 The error on the inline config will have a severity of 2. See [LintMessage#severity](https://eslint.org/docs/developer-guide/nodejs-api#-lintmessage-type)
 
-first in `getDirectiveComments` I will match any directives that affect a rule listed in the array `noInlineConfig`. If there is a match, I will create a problem on that line to alert the user that they are attempting to disable a rule that will not be affected by the inline config.
+When the linter first parses the rules I will make an array called `enforcedRules`
+
+first in `getDirectiveComments` I will match any directives that affect a rule listed in the array `enforcedRules`. If there is a match, I will create a problem on that line to alert the user that they are attempting to disable a rule that will not be affected by the inline config.
 
 This error will **not** have a quick fix available
 
-
-In `applyDirectives` (`apply-disable-directives.js`) I will reference the problem. If that problem matches a name in the array `noInlineConfig` I will not apply any directives. This will ensure that `problems.push(problem)` gets run. Note that this same logic applies to configuration comments as well.
+In `applyDirectives` (`apply-disable-directives.js`) I will reference the problem. If that problem matches a name in the array `noInlineConfig` I will not apply any directives. This will ensure that `problems.push(problem)` gets run. Note that this same logic applies to configuration comments as well. During this step, I will also ensure that the rule does not offer `disable` as a quick fix.
 
 ## Documentation
 
-We will want to update the documentation ([here](https://eslint.org/docs/user-guide/configuring/rules#disabling-inline-comments)) to reflect the new changes. The announcement can be integrated into the config update announcement.
+The main documentation [here](https://eslint.org/docs/user-guide/getting-started#configuration) will need to be updated with
+
+`"enforce" or 3 - turn the rule on as an error and do not allow inline configuration (exit code will be 1)`
+
+We will want to update the documentation for `noInlineConfig` to reference the similarities ([here](https://eslint.org/docs/user-guide/configuring/rules#disabling-inline-comments)).
 
 ## Drawbacks
 
@@ -62,7 +68,7 @@ This should integrate into the planned config changes and therefore will not be 
 
 ## Alternatives
 
-instead of extending `noInlineConfig` we could instead add a state called `enforce` to `error/warn`. This would be a superset of `error` where the rules cannot be disabled by inline config. However, it is hard to convey to the user succinctly what this accomplishes. And it allows users to disable the rules more easily in config files
+instead of adding a state called `enforce`. We could extend `noInlineConfig` to accept an array of rule names. This however, would add extra confusion as to where the rule is really configured.
 
 There are plugins such as [eslint-comments/no-restricted-disable](https://mysticatea.github.io/eslint-plugin-eslint-comments/rules/no-restricted-disable.html) that implement this concept. However, since these are just other rules, one can easily disable them. This results in scenarios such as
 
@@ -88,6 +94,8 @@ Another alternative that requires 0 code is to encourage users to set up a secon
 
 - Why do PR approvers approve PRs with `no-eslint-disable` rule?
     - because PR reviewers are lazy.
+- Why can't users just change the config to get around this?
+    - Most repos large enough where this is an issue have the config guarded behind a set of required reviewers that understand the config.
 ## Related Discussions
 
 - [Initial issues conversation](https://github.com/eslint/eslint/issues/15631)
