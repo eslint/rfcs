@@ -95,6 +95,12 @@ Value [{"foo-option":"foo-value"}] should NOT have more than 0 items.
 
 We'll then add tests in `eslint/tests/lib/shared/config-validator.js` and `@eslint/eslintrc/tests/lib/cascading-config-array-factory.js` that this error is correctly thrown.
 
+#### Opt-out
+
+In (hopefully) rare situations (e.g. bare-bones internal/private rules), we will allow users to opt-out from specifying a schema using `schema: false`. This clearly indicates that the user has chosen to forgo a schema. And a lint rule called `eslint-plugin/no-schema-opt-out` or `eslint-plugin/no-schema-false` could be created to discourage overuse/abuse of this opt-out.
+
+We believe this explicit opt-out is preferred over users resorting to hacky workarounds such as providing no-opt/fake/minimal/incomplete schemas like `schema: {}` or `schema: { type: "array" }`. No-opt schemas like these could confuse automated analysis or tooling built around schemas. And at some point, we could separately try to disallow such no-opt schemas.
+
 ### Detailed design for requiring object-style rules
 
 Code changes:
@@ -140,8 +146,6 @@ We can finally delete `docs/developer-guide/working-with-rules-deprecated.md`, a
 ### Drawbacks of requiring schemas
 
 Plugin authors who left out schemas will need to take the time to add them (typically a quick, easy task).
-
-Plugin authors who are lazy or don't see the value of a schema for their use case could workaround this requirement by adding a minimal / incomplete schema. This is inevitable as we can't easily / automatically determine that schemas are 100% complete. We won't advertise nor encourage this workaround, and it will hopefully be rare as it's obviously a poor practice. Note that we also considered providing an explicit opt-out like `schema: false` but decided against it to avoid encouraging this as an acceptable / go-to solution for satisfying the new requirement.
 
 Users of old/unmaintained plugins/rules which are missing schemas will not be able to use them until they are updated.
 
