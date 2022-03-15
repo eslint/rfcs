@@ -180,7 +180,7 @@ While the current numbers are already supportive of making these changes, we hav
 
 - Communicating about these upcoming changes in blog posts leading up to the major release
 - Adding deprecation notices inside ESLint in a minor version release, showing a warning when running tests for an offending rule (these will change to fatal assertions in pre-release versions of ESLint v9):
-  > DEPRECATION WARNING: This rule has options but is missing `meta.schema` and will stop working in ESLint v9.
+  > DEPRECATION WARNING: This test case specifies `options` but the rule is missing `meta.schema` and will stop working in ESLint v9.
   > Please add `meta.schema`: <https://eslint.org/docs/developer-guide/working-with-rules#options-schemas>
   > This lint rule can assist with the conversion: <https://github.com/not-an-aardvark/eslint-plugin-eslint-plugin/blob/main/docs/rules/require-meta-schema.md>
   >
