@@ -99,7 +99,11 @@ We'll then add tests in `eslint/tests/lib/shared/config-validator.js` and `@esli
 
 In (hopefully) rare situations (e.g. bare-bones internal/private rules), we will allow users to opt-out from specifying a schema using `schema: false`. This clearly indicates that the user has chosen to forgo a schema. And a lint rule called `eslint-plugin/no-schema-opt-out` or `eslint-plugin/no-schema-false` could be created to discourage overuse/abuse of this opt-out.
 
-We believe this explicit opt-out is preferred over users resorting to hacky workarounds such as providing no-opt/fake/minimal/incomplete schemas like `schema: {}` or `schema: { type: "array" }`. No-opt schemas like these could confuse automated analysis or tooling built around schemas. And at some point, we could separately try to disallow such no-opt schemas.
+We believe this explicit opt-out is preferred over users resorting to hacky workarounds such as providing no-op/fake/minimal/incomplete schemas like `schema: {}` or `schema: { type: "array" }`. No-op schemas like these can confuse both humans (who might mistake it with `schema: []` which is not a no-op) and automated analysis/tooling built around schemas. So we will throw an error when encountering a few common versions of these no-op schemas:
+
+```pt
+`schema: {}` is a no-op. For rules with options, please fill in a complete schema. For rules without options, please omit `schema` or use `schema: []`.
+```
 
 ### Detailed design for requiring object-style rules
 
