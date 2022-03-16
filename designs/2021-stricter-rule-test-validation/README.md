@@ -15,7 +15,6 @@ Assertions added to invalid test case error objects:
 
 - Must contain `suggestions` if the test case produces suggestions
 - Must contain the violation message (`message` or `messageId`, but not both)
-- Cannot repeat the test case `code` as `output` for non-fixable test cases
 
 Assertions added to invalid test case suggestion objects:
 
@@ -24,6 +23,7 @@ Assertions added to invalid test case suggestion objects:
 
 Assertions added to all test cases:
 
+- Cannot repeat the test case `code` as `output` for non-fixable test cases
 - Cannot have identical test cases
 - The optional `filename` property must be a string
 - The optional `only` property must be a boolean
