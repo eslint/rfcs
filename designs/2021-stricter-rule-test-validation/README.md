@@ -132,7 +132,7 @@ This is not ideal, especially when the code is longer and multi-line:
 So we will disallow repeating the test case `code` as `output` for non-fixable test cases using a new assertion:
 
 ```pt
-AssertionError [ERR_ASSERTION]: Test error object 'output' matches 'code'. Omit 'output' for non-fixable test cases.
+AssertionError [ERR_ASSERTION]: Test error object 'output' matches 'code'. Omit 'output' or use `output: null` for non-fixable test cases.
 ```
 
 To clearly and concisely indicate that a test case produces no autofix, it is recommended to omit the `output` property entirely. Note that we will also allow `output: null` or `output: undefined` which can be useful when dynamically generating test cases (e.g. `output: hasAutofix ? autofixedCode : null`), and because many existing test cases are written with `output: null` as that used to be necessary to assert that the test case had no autofix (it isn't necessary anymore as of [ESLint v7](https://eslint.org/docs/user-guide/migrating-to-7.0.0#additional-validation-added-to-the-ruletester-class)).
