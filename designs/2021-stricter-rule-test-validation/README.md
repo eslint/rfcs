@@ -20,10 +20,11 @@ Assertions added to invalid test case suggestion objects:
 
 - Must contain the suggestion code `output`
 - Must contain the suggestion message (`messageId` or `desc`, but not both)
+- The suggestion code `output` must differ from the test case `code`
 
 Assertions added to all test cases:
 
-- Cannot repeat the test case `code` as `output` for non-fixable test cases
+- Any autofix `output` must differ from the test case `code`
 - Cannot have identical test cases
 - The optional `filename` property must be a string
 - The optional `only` property must be a boolean
@@ -111,7 +112,7 @@ In addition to the message provided by the suggestion, the actual code output is
 AssertionError [ERR_ASSERTION]: Test suggestion object is missing 'output`.
 ```
 
-### Disallow repeating the test case `code` as `output` for non-fixable test cases
+### Autofix and suggestion `output` must differ from the test case `code`
 
 Today, a non-fixable invalid test case can be written like this:
 
@@ -133,6 +134,12 @@ So we will disallow repeating the test case `code` as `output` for non-fixable t
 
 ```pt
 AssertionError [ERR_ASSERTION]: Test error object 'output' matches 'code'. Omit 'output' or use `output: null` for non-fixable test cases.
+```
+
+And similarly, suggestions must actually produce a change:
+
+```pt
+AssertionError [ERR_ASSERTION]: Test suggestion object 'output' matches 'code' and is thus a no-op.
 ```
 
 To clearly and concisely indicate that a test case produces no autofix, it is recommended to omit the `output` property entirely. Note that we will also allow `output: null` or `output: undefined` which can be useful when dynamically generating test cases (e.g. `output: hasAutofix ? autofixedCode : null`), and because many existing test cases are written with `output: null` as that used to be necessary to assert that the test case had no autofix (it isn't necessary anymore as of [ESLint v7](https://eslint.org/docs/user-guide/migrating-to-7.0.0#additional-validation-added-to-the-ruletester-class)).
