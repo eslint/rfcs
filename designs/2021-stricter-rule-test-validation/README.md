@@ -79,7 +79,7 @@ AssertionError [ERR_ASSERTION]: The rule fixed the code. Please add 'output' pro
 
 More about motivation:
 
-- It's easy to forget to assert what suggestions a test case produces, or that a test case produces no assertions
+- It's easy to forget to assert what suggestions a test case produces, or that a test case produces no suggestions
 - It's inconvenient to have to add `suggestions: []` to every single invalid test case that does not produce suggestions, in order to assert that they don't produce suggestions
 - Suggestions are a newer feature, and many existing test cases may not have been updated to test newly-added suggestions
 
