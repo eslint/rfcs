@@ -46,7 +46,7 @@ There is an existing, third-party lint rule [eslint-plugin/require-meta-schema](
 
 Supporting two rule formats requires increased complexity and maintenance burden inside ESLint, as well as in third-party tools like [eslint-plugin-eslint-plugin](https://github.com/not-an-aardvark/eslint-plugin-eslint-plugin) that need to be able to handle both rule formats.
 
-Object-style rules were introduced and function-style rules were deprecated sometime around early 2016. Over five years has elapsed since then, and we don't want to support both formats forever.
+Object-style rules were introduced in [ESLint v2](https://eslint.org/blog/2016/02/eslint-v2.0.0-released) and function-style rules were deprecated in early 2016. Over six years has elapsed since then, and we don't want to support both formats forever.
 
 Object-style rules are clearly superior in terms of configuration thanks to the `meta` object they include. Function-style rules are also blocked from accessing valuable features like [autofixing](https://eslint.org/docs/8.0.0/user-guide/migrating-to-8.0.0#rules-require-metafixable-to-provide-fixes) and suggestions.
 
