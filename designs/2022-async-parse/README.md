@@ -3,7 +3,7 @@
 - RFC PR: (leave this empty, to be filled in later)
 - Authors: Milos Djermanovic
 
-# Support `async parse()` / `async parseForESLint()`
+# Support async parsing
 
 ## Summary
 
@@ -204,7 +204,27 @@ Projects that run tests directly or use a testing framework that doesn't support
 
 ### Alternatives to `async parse()` / `async parseForESLint()`
 
-If the use of compiled parsers with ESLint is the only use case for `async parse` / `async parseForESLint` we are aware of, then the question is - is `async parse` / `async parseForESLint` the only way to enable it? In particular, if the parser only needs a one-time async initialization step (I believe that would be the case with Wasm), then the async initialization can be performed in `eslint.config.js` on loading, since the new flat config system supports [async function configs](https://github.com/eslint/rfcs/tree/main/designs/2019-config-simplification#can-a-config-be-an-async-function).
+If the use of compiled parsers with ESLint is the only use case for `async parse` / `async parseForESLint` we are aware of, then the question is - is `async parse` / `async parseForESLint` the only way to enable it?
+
+In particular, if the parser only needs a one-time async initialization step (I believe that would be the case with Wasm), then it could be performed on loading the parser:
+
+* In a preprocessing step that we could add to the `ESLint` class.
+* In an async function inside `eslint.config.js`, if the new flat config system supports [async function configs](https://github.com/eslint/rfcs/tree/main/designs/2019-config-simplification#can-a-config-be-an-async-function).
+* With top-level `await` in `eslint.config.js`, if the new flat config system supports ESM configs.
+
+```js
+//----------- eslint.config.js (ESM) ---------------
+
+import * as parser from "my-parser";
+
+await parser.initialize();
+
+export default [{
+    languageOptions: {
+        parser
+    }
+}];
+```
 
 ### Alternatives to async-only `Linter`
 
@@ -214,7 +234,7 @@ This would add a lot of complexity as we would have to maintain both sync and as
 
 ### Alternatives to requiring a testing framework
 
-Instead of throwing an error if custom/global `it` was not found, `RuleTester#run` could run all test directly and return a Promise, but that could make the behavior of this method quite confusing for users.
+Instead of throwing an error if custom/global `it` was not found, `RuleTester#run` could run all tests directly and return a Promise, but that could make the behavior of this method quite confusing for users.
 
 We could add a separate method `RuleTester#runDirectly` that always runs the tests directly and always returns a Promise, but the question is whether anyone needs it.
 
