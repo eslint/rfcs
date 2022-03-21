@@ -8,13 +8,17 @@
 ## Summary
 
 <!-- One-paragraph explanation of the feature. -->
-Converting eslint codebase to esm.
-
+Convert the ESLint codebase to ESM and publish the ESM version.
 ## Motivation
 
 <!-- Why are we doing this? What use cases does it support? What is the expected
 outcome? -->
-TBF.
+The Node.js community has been written commonjs for a long time, the same goes for ESLint. But with ESM introduced in ES6 and officially supported by Node.js V12, more and more projects are moving to ESM. Not long ago, we had converted a few repos under the ESLint organization to ESM:
+* @eslint/eslintrc
+* espree
+* eslint-scope
+* eslint-visitor-keys
+* @eslint/create-config
 
 ## Detailed Design
 
@@ -26,7 +30,74 @@ TBF.
    of your approach, corner cases, and examples of how the change will be
    used. Be sure to define any new terms in this section.
 -->
+There are two main ways to achieve this:
+1. esm-only: write esm, publish esm
+```js
+{
+    "type": "module",
+    "exports": {
+        "./package.json": "./package.json",
+        ".": "./lib/api.js",
+        "./use-at-your-own-risk": "./lib/unsupported-api.js"
+    }
+}
+```
+2. dual-mode: compile esm to cjs, publish esm+cjs
+```js
+    "type": "module",
+    "exports": {
+        "./package.json": "./package.json",
+        ".": {
+            "import": "./lib/api.js",
+            "require": "./dist/api.cjs"
+        },
+        "./use-at-your-own-risk": {
+            "import": "./lib/unsupported-api.js",
+            "require": "./dist/unsupported-api.cjs",
+        }
+    }
+```
 
+Node.js ESM has a limitation: ESM cannot be required. Approach 2 provides a good compatibility for existing projects that rely on ESLint without requiring users to adopt ESM as well. In previous repos, dual-mode was mostly used (except for '@eslint/create-config').
+
+However, dual-mode also has a few disadvantages:
+1. dependencies. Some ESLint's dependencies have been (or will be) ESM-only, which means we won't be able to upgrade them if we continue to support CJS. For new dependencies, we cannot use them if they are ESM-only.
+2. Slower installation & larger installation volume, even though most users only use ESM, they still need to download CJS modules.
+3. Higher maintenance costs. You need to add build processes, test and publish ESM/CJS code.
+4. The CLIs do not support dual-mode.
+
+Therefore, I would suggest that we eventually go with ESM-Only, but to give users more time to upgrade, as an intermediate state, we could use dual-mode in ESLint V9:
+
+* eslint v9:
+    - ESLint CLI: esm only
+    - Node.js API: dual mode, 
+* eslint v10:
+    - ESLint CLI: esm only
+    - Node.js API: esm only 
+
+## Toolings esm supports
+
+* mocha ✅
+* proxyquire ❌
+* nyc ❌
+* eslint-plugin-node ❌(Not fully supported, but we could use a fork: eslint-plugin-n)
+
+## Implementations
+1. ESLint v9
+* package.json + "type": "module"
+* package.json exports
+* package.json engines >= Node.js v12
+* update docs to use esm
+* remove 'use strict'
+* convert './xxx' to './xxx/index.js'
+* convert './xxx' to './xxx.js'
+* esm toolings(nyc -> c8, proxyquire -> esmock)
+* cjs supports(build dist/api.js using rollup)
+
+2. ESLint v10
+* remove package.json exports.cjs (use esm-only)
+* remove build process
+* upgrade blocked deps.
 
 ## Documentation
 
@@ -34,6 +105,7 @@ TBF.
     How will this RFC be documented? Does it need a formal announcement
     on the ESLint blog to explain the motivation?
 -->
+Yes. When ESLint V9 is released, it is recommended that users upgrade to ESM, CJS will no longer be supported in V10.
 
 ## Drawbacks
 
@@ -47,6 +119,7 @@ TBF.
     experience, etc. Try to identify as many potential problems with
     implementing this RFC as possible.
 -->
+1. Compatibility issues, see below.
 
 ## Backwards Compatibility Analysis
 
@@ -56,6 +129,27 @@ TBF.
     to existing users?
 -->
 
+1. For users of the ESLint CLI: there is no impact and users can write configuration files using ESM/CJS.
+2. For users of node.js API:
+* ESLint V9: Will support ESM/CJS, so there will be no compatibility issues for users.
+* ESLint V10: CJS will no longer be supported for users of the ESLint Node.js API. At this point developers can:
+
+a. convert to esm.
+```diff
+- var { ESLint } = require("eslint");
++ import { ESLint } from "eslint";
+```
+
+b. move to async.
+```diff
+- var { ESLint } = require("eslint");
++ var { ESLint } = await import("eslint");
+```
+
+c. compile ESLint to CJS.
+
+d. stay eslint v9 util they can convert to esm.
+
 ## Alternatives
 
 <!--
@@ -64,6 +158,9 @@ TBF.
     This section should also include prior art, such as whether similar
     projects have already implemented a similar feature.
 -->
+1. esm-only in eslint v9？
+
+2. dual-mode??
 
 ## Open Questions
 
@@ -77,6 +174,9 @@ TBF.
     you've received the answers and updated the design to reflect them, 
     you can remove this section.
 -->
+1. Do we want to bundle ESM/CJS, or just compile ESM => CJS?
+
+To be consistent with other eslint repos, cjs will be bundled to `dist/`, while esm will not.
 
 ## Help Needed
 
@@ -105,3 +205,5 @@ TBF.
     If there is an issue, pull request, or other URL that provides useful
     context for this proposal, please include those links here.
 -->
+* https://github.com/eslint/eslint/issues/15560
+* https://github.com/eslint/rfcs/pull/72
