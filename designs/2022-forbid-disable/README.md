@@ -44,7 +44,7 @@ first in `getDirectiveComments` I will match any directives that affect a rule l
 
 This error will **not** have a quick fix available
 
-In `applyDirectives` (`apply-disable-directives.js`) I will reference the problem. If that problem matches a name in the array `noInlineConfig` I will not apply any directives. This will ensure that `problems.push(problem)` gets run. Note that this same logic applies to configuration comments as well. During this step, I will also ensure that the rule does not offer `disable` as a quick fix.
+In `applyDirectives` (`apply-disable-directives.js`) I will reference the problem. If that problem matches a name in the array `noInlineConfig` I will not apply any directives. This will ensure that `problems.push(problem)` gets run. Note that this same logic applies to configuration comments as well.
 
 ## Documentation
 
@@ -55,6 +55,8 @@ The main documentation [here](https://eslint.org/docs/user-guide/getting-started
 We will want to update the documentation for `noInlineConfig` to reference the similarities ([here](https://eslint.org/docs/user-guide/configuring/rules#disabling-inline-comments)).
 
 ## Drawbacks
+
+**Important:** This design will prevent a rule from being disabled. Which when applied to rules that have many edge cases, will mean that that rule cannot be disabled even when edge cases are found that Cannot be worked around. The only solution for those rules will be to change their severity back to error (losing out on the purpose of this RFC).
 
 this adds complexity to the already complex config experience.
 
@@ -96,6 +98,8 @@ Another alternative that requires 0 code is to encourage users to set up a secon
     - because PR reviewers are lazy.
 - Why can't users just change the config to get around this?
     - Most repos large enough where this is an issue have the config guarded behind a set of required reviewers that understand the config.
+- What will we do about VSCode suggesting disable as a workaround?
+    - the eslint vscode extension handles suggesting disable. So this would just be a known error until someone changes that behavior to match this RFC from the vscode extension side.
 ## Related Discussions
 
 - [Initial issues conversation](https://github.com/eslint/eslint/issues/15631)
