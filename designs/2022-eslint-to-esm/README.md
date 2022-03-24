@@ -49,7 +49,8 @@ There are two main ways to achieve this:
         "./package.json": "./package.json",
         ".": {
             "import": "./lib/api.js",
-            "require": "./dist/api.cjs"
+            "require": "./dist/api.cjs",
+            "default": "./dist/api.cjs"
         },
         "./use-at-your-own-risk": {
             "import": "./lib/unsupported-api.js",
