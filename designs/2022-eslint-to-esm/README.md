@@ -184,6 +184,12 @@ TBD.
 
 To be consistent with other eslint repos, cjs will be bundled to `dist/`, while esm will not.
 
+2. Do we want to use rollup directly, or using some higher level toolings like `microbundle`?
+
+3. Do we want to use `*.mjs`, or adding `"type": "module"` to package.json?
+
+4. One thing to be mindful of is that this ESM conversion PR is likely to be massive, touching almost every one of hundreds of file, subject to repeated merge conflicts, and taking weeks or likely even months to assemble and get the tests all working again. So, we need a careful way to keep the PRs small and focused.
+
 ## Help Needed
 
 <!--
