@@ -61,22 +61,22 @@ There are two main ways to achieve this:
 
 Node.js ESM has a limitation: ESM cannot be required. Approach 2 provides a good compatibility for existing projects that rely on ESLint without requiring users to adopt ESM as well. In previous repos, dual-mode was mostly used (except for '@eslint/create-config').
 
-However, dual-mode also has a few disadvantages:
+However, dual-mode also has a few downsides:
 1. dependencies. Some ESLint's dependencies have been (or will be) esm-only, which means we won't be able to upgrade them if we continue to support CJS. For new dependencies, we cannot use them if they are esm-only.
 2. Slower installation & larger volume usage, even though most users only use ESM, they still need to download CJS modules.
 3. Higher maintenance costs. You need to add a build process, test and publish ESM/CJS code.
-4. The CLIs do not support dual-mode.
+4. The CLIs do not support dual-mode. If the eslint bin is esm, it has no use compiling to cjs - as no one would require it.
 
 In the (very) long run, I would suggest that we eventually go with esm-only, but to give users more time to upgrade, as an intermediate state, we could use dual-mode in ESLint v9:
 
 * eslint v9:
-    - ESLint CLI: esm-only
+    - ESLint CLI: esm-only(`./bin/eslint.js` will be esm, and won't be compiled to cjs.)
     - Node.js API: dual mode
 * eslint 1x (at the point when the majority of the ecosystem is ready to support it, likely to be v10/v11/...):
     - ESLint CLI: esm-only
     - Node.js API: esm-only
 
-## Toolings esm supports
+## Toolings esm supports(ESLint's dependencies)
 
 * mocha ✅
 * proxyquire ❌
@@ -87,11 +87,13 @@ In the (very) long run, I would suggest that we eventually go with esm-only, but
 1. ESLint v9
 * package.json + `"type": "module"`
 * package.json exports
-* package.json engines >= Node.js v12
+* package.json engines >= Node.js v12 (has been shipped in ESLint v8.0)
 * remove `"use strict"`
 * convert `"./foo"` to `"./foo/index.js"`
 * convert `"./foo"` to `"./foo.js"`
-* convert `require/module.exports` => `import/export`
+* convert top-level `require/module.exports` => `import/export`
+* convert non-top-level `require/module.exports` => `import()` (TODO: it requires the wrapping functions to be async, need to check if any public APIs need to be changed).
+* convert `__dirname/__filename` => `import.meta.url`. There are ~75 usages of __dirname that will need to be dealt with. [#what-do-i-use-instead-of-__dirname-and-__filename](https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c#what-do-i-use-instead-of-__dirname-and-__filename)
 * esm toolings(`nyc` -> `c8`, `proxyquire` -> `esmock`)
 * cjs supports(build `dist/api.cjs` and `dist/use-at-your-own-risk.cjs` using rollup)
 * update docs to use esm
@@ -200,7 +202,13 @@ To be consistent with other eslint repos, cjs will be bundled to `dist/`, while 
     the people reviewing this RFC. Include those questions and answers
     in this section.
 -->
+1. helpful toolings for the converting:
+* `'import/extensions': ['error', 'always']`, (enforce file extensions) https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/extensions.md
+* `'unicorn/prefer-module': 'error'` (enforces a lot of ESM syntax / disallows CJS syntax) https://github.com/sindresorhus/eslint-plugin-unicorn/blob/main/docs/rules/prefer-module.md
 
+
+2. helpful (but opinionated) definitive guides for converting to esm-only:
+* https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c
 ## Related Discussions
 
 <!--
