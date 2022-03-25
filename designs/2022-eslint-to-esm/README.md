@@ -65,7 +65,6 @@ However, dual-mode also has a few downsides:
 1. dependencies. Some ESLint's dependencies have been (or will be) esm-only, which means we won't be able to upgrade them if we continue to support CJS. For new dependencies, we cannot use them if they are esm-only.
 2. Slower installation & larger volume usage, even though most users only use ESM, they still need to download CJS modules.
 3. Higher maintenance costs. You need to add a build process, test and publish ESM/CJS code.
-4. The CLIs do not support dual-mode. If the eslint bin is esm, it has no use compiling to cjs - as no one would require it.
 
 In the (very) long run, I would suggest that we eventually go with esm-only, but to give users more time to upgrade, as an intermediate state, we could use dual-mode in ESLint v9:
 
@@ -150,10 +149,9 @@ b. move to async.
 + var { ESLint } = await import("eslint");
 ```
 
-c. compile ESLint to CJS.
+c. stay previous version util they can convert to esm.
 
-d. stay previous version util they can convert to esm.
-
+d. compile ESLint to CJS. 
 ## Alternatives
 
 <!--
