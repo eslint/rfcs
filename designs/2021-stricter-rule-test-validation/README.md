@@ -84,6 +84,8 @@ More about motivation:
 - It's inconvenient to have to add `suggestions: []` to every single invalid test case that does not produce suggestions, in order to assert that they don't produce suggestions
 - Suggestions are a newer feature, and many existing test cases may not have been updated to test newly-added suggestions
 
+In addition, we will add a new shorthand `suggestions: <number>` that can be used to avoid testing the details of the suggestions, similar to the existing shorthand for errors `errors: <number>` which will continue to be allowed in all situations.
+
 ### Invalid test case error and suggestion objects must include the message
 
 This would enforce:
