@@ -161,7 +161,7 @@ As test cases end up represented as objects, the problem here is essentially to 
 1. Maintain a set of the test cases we have seen so far.
 2. For each test case, use our existing dependency [json-stable-stringify-without-jsonify](https://www.npmjs.com/package/json-stable-stringify-without-jsonify) to get a string representation of the test case object.
    - This library handles deep-sorting of object keys, unlike `JSON.stringify()`.
-   - We need to skip test cases that contain non-serializable properties like functions or RegExp objects. Since rule options can contain any number of non-serializable properties, we will just skip all test cases with rule options. Detecting duplicates isn't critical, so it's okay that we will skip some test cases, but we could potentially make this smarter later.
+   - We need to skip test cases that contain non-serializable properties like functions or RegExp objects. Since rule options can contain any number of non-serializable properties, we will just skip all test cases with rule options (same goes for `settings` and `parserOptions`, or for flat config: `settings`, `languageOptions`, and `plugins`). Detecting duplicates isn't critical, so it's okay that we will skip some test cases, but we could potentially make this smarter later.
 3. If the string is in the set already, assert.
 4. If the string is not in the set, add it.
 
