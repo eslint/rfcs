@@ -41,17 +41,25 @@ back.
 ### How do you envision `@eslint-community`?
 
 Just like the [@jest-community](https://github.com/jest-community) org, the
-`@eslint-community` org would be a collection of widely depended upon ESLint
-related packages that aren't maintained anymore and are given back to the
-community.
+`@eslint-community` org would be a centralized home for ESLint related packages
+that don't belong in the main org or that are widely depended upon, aren't
+maintained anymore and are given back to the community.
 
 > Community repos for ESLint related projects
 
-The benefit of having the org in place would be that we _could_ create a
-structure to streamline the packages more. We _could_ for instance decide things
-like using the same tools, supporting the same Node/ESLint versions, if we want
-to release all "rescued" packages under the `@eslint-community` npm scope or
-not, ...
+The benefit of having the org in place would be that the community isn't
+dependent on one person's GitHub/npm account.  
+The added benefit is that we _could_ create a structure to streamline the
+packages more. We _could_ for instance decide things like using the same tools,
+supporting the same Node/ESLint versions, if we want to release all "rescued"
+packages under the `@eslint-community` npm scope or not, ...
+
+As a reference, `@jest-community` has the following goal & intention:
+
+> The goal of `@jest-community` is to have a loose but centralized home for
+> stuff `jest` core thinks is neat and worth having but doesn't belong in the
+> core itself. The org is a way to help ensure that these projects are not
+> dependent on one person's GitHub account in case they move on.
 
 ### Which projects should be involved?
 
@@ -157,14 +165,14 @@ main ESLint repo. Examples of these kind of repos are:
   <https://eslint.org/docs/user-guide/migrating-to-7.0.0#deprecate-node-rules>
 - `eslint-formatter-codeframe` & `eslint-formatter-table`  
   These were both in the main ESLint repo but were removed in v8 and are
-  currently maintained by [@fregante](https://github.com/fregante)
+  currently maintained by [@fregante](https://github.com/fregante)  
   <https://eslint.org/docs/8.0.0/user-guide/migrating-to-8.0.0#-removed-codeframe-and-table-formatters>
 - `eslint-plugin-eslint-plugin`  
   This plugin is (together with `eslint-plugin-node`) a recommended plugin for
-  linting custom plugins.
+  linting custom plugins.  
   <https://eslint.org/docs/developer-guide/working-with-plugins#linting>
 - `eslint-utils` & `regexpp` These packages are both used by the main ESLint
-  repo & currently maintained by `@mysticatea`
+  repo & currently maintained by `@mysticatea`  
   <https://github.com/eslint/eslint/blob/ce035e5fac632ba8d4f1860f92465f22d6b44d42/package.json#L66>
   <https://github.com/eslint/eslint/blob/ce035e5fac632ba8d4f1860f92465f22d6b44d42/package.json#L87>
 
