@@ -48,12 +48,12 @@ maintained anymore and are given back to the community.
 > Community repos for ESLint related projects
 
 The benefit of having the org in place would be that the community isn't
-dependent on one person's GitHub/npm account.  
+dependent on one person's GitHub/`npm` account.  
 The added benefit is that the people maintaining the packages in the new org
 _could_ create a structure to streamline the packages more. They _could_ for
 instance decide things like using the same tools, supporting the same
 Node/ESLint versions, if we want to release all "rescued" packages under the
-`@eslint-community` npm scope or not, ...
+`@eslint-community` `npm` scope or not, ...
 
 As a reference, `@jest-community` has the following goal & intention:
 
@@ -63,7 +63,7 @@ As a reference, `@jest-community` has the following goal & intention:
 > dependent on one person's GitHub account in case they move on.
 
 The beauty of having a shared org is that the release process is centralised, so
-no need to talk to npm about an ownership transfer and no need to fork and
+no need to talk to `npm` about an ownership transfer and no need to fork and
 republish under a new name. Just appoint new maintainers on GitHub and they can
 work to restore continuity of service - a process which would be invisible to
 users (i.e. users might see a pause in updates but not have to make changes -
@@ -123,7 +123,7 @@ I personally think that the acceptance criteria for a package to go under the
 
 - It didn't receive an update in the last 12(?) months  
   I think we can make an exception for packages that did get a PR merged which
-  was created by a member of the new org's "core" team (mostly for updating
+  was created by a member of the community core team (mostly for updating
   compatibility with newer versions of ESLint).
 
   We can also make an exception for packages that meet the other criteria, but
@@ -135,41 +135,56 @@ I personally think that the acceptance criteria for a package to go under the
   if they would feel it would be better maintained by the community instead of
   putting all workload on their shoulders.
 
+- It should agree to the code of conduct of the org
+- It should have an OSI-approved license
+- `eslintbot` should be added as an owner to the original npm package
+
 If a package is meeting these criteria, but we can't get into contact with the
 owner of the repo to transfer ownership over to the new org, we could
-temporarily fork the repo & publish the package as
-`@eslint-community-fork/<package name>` or so.
+temporarily fork the repo into the new org. However, the ultimate goal would
+always be to transfer the original repo to the new org.  
+If we had a temporary fork, we should create PRs to the original repo to bring
+it up to date with the fork before continuing with other tasks.
 
 ### What permissions should maintainers have?
 
-I think it would be best to have some sort of a "core" team (of at least 3(?)
-people) that's making the decisions in terms of acceptance to the repo, which
-would (in addition to ESLint TSC) all be admin of the org.
+I think it would be best to have some sort of a community core team (of at least
+3(?) people) that's making the decisions in terms of acceptance to the repo,
+which would (in addition to ESLint TSC) all be admins of the org.
 
-We can make a team (with sub-teams if we want) for each package, where we give
-admin rights on the repo for that specific package.
+We can make a team (with sub-teams, if we want) for each package, where we give
+maintainer rights on the repo for that specific package, but keep admin rights
+to ESLint TSC & the community core team. This way we prevent that the repo would
+be destroyed from the org.
 
-The "core" team would help maintain all repos, whereas people in specific teams
-would only help maintain these repositories.
+We'll create a setup where we publish new versions of the package with
+`eslintbot`. That way we can keep publishing new versions if someone would
+dissapear.
 
-The "core" team would also be responsible to contact package maintainers
+The community core team would help maintain all repos, whereas people in
+specific teams would only help maintain these repositories.
+
+The community core team would be responsible of administer the Code of Conduct
+of the organization.
+
+The community core team would also be responsible to contact package maintainers
 (outside of GitHub) if they appear inactive. If the package maintainers don't
 respond in a reasonable time frame (npm gives you 14(?) days to respond to a
-transfer request email), they could be considered non-responsive and the "core"
-team can step in to appoint a new maintainer for the repository.
+transfer request email), they could be considered non-responsive and the
+community core team can step in to appoint a new maintainer for the repository.
 
 **Bonus:** I think having our own place in the Discord server where we can
 discuss some things would be a good idea as well.  
-This way the "core" team has an open place to discuss some common things like
-extracting common functionality into a separate package, minimum Node & ESLint
-target, how to handle disputes between maintainers, ...  
+This way the community core team has an open place to discuss some common things
+like extracting common functionality into a separate package, minimum Node &
+ESLint target, how to handle disputes between maintainers, ...  
 Having a channel for each separate package would maybe be a good idea as well,
 so the community has a change to ask questions to the maintainers as well.
 
 ### What should be the role of the ESLint team?
 
 The idea is that the ESLint team is the ultimate caretakers, they assign a
-"core" team of people to take care of the effort the new org makes and let them
+community core team to take care of the effort the new org makes and let them
 ran the day to day business so that the ESLint team rarely has to involve
 themselves.
 
@@ -177,9 +192,9 @@ Next to that, I think most important role would be to facilitate at least the
 contact with `@mysticatea`, so we can transfer his packages over to the
 `@eslint-community` org & gain `npm` publish rights for the packages.
 
-I can also see the ESLint team talk to the "core" team of the new org regarding
-creating new community maintained packages that are split out from the main
-ESLint repo. Examples of these kind of repos are:
+I can also see the ESLint team talk to the community core team of the new org
+regarding creating new community maintained packages that are split out from the
+main ESLint repo. Examples of these kind of repos are:
 
 - `eslint-plugin-node`  
   This plugin was recommended because of the deprecation of some rules in v7  
@@ -288,7 +303,8 @@ package), people could still use the old package without any extra problems
 -->
 
 - What exact acceptance criteria do we want to use?
-- What's the main place of communication for the "core" team?
+- What's the main place of communication for the community core team?
+- Would projects be allowed to accept sponsorships?
 - How does this relate to stuff in eg. `@standard`?  
   Would there be an expectency from the wider community or the
   `@eslint-community` org itself to transfer some stuff from these places?
