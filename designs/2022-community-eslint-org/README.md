@@ -49,10 +49,11 @@ maintained anymore and are given back to the community.
 
 The benefit of having the org in place would be that the community isn't
 dependent on one person's GitHub/npm account.  
-The added benefit is that we _could_ create a structure to streamline the
-packages more. We _could_ for instance decide things like using the same tools,
-supporting the same Node/ESLint versions, if we want to release all "rescued"
-packages under the `@eslint-community` npm scope or not, ...
+The added benefit is that the people maintaining the packages in the new org
+_could_ create a structure to streamline the packages more. They _could_ for
+instance decide things like using the same tools, supporting the same
+Node/ESLint versions, if we want to release all "rescued" packages under the
+`@eslint-community` npm scope or not, ...
 
 As a reference, `@jest-community` has the following goal & intention:
 
@@ -60,6 +61,13 @@ As a reference, `@jest-community` has the following goal & intention:
 > stuff `jest` core thinks is neat and worth having but doesn't belong in the
 > core itself. The org is a way to help ensure that these projects are not
 > dependent on one person's GitHub account in case they move on.
+
+The beauty of having a shared org is that the release process is centralised, so
+no need to talk to npm about an ownership transfer and no need to fork and
+republish under a new name. Just appoint new maintainers on GitHub and they can
+work to restore continuity of service - a process which would be invisible to
+users (i.e. users might see a pause in updates but not have to make changes -
+the updates would just resume).
 
 ### Which projects should be involved?
 
@@ -73,10 +81,15 @@ maintain at least the following packages:
 [`eslint-plugin-node`](https://github.com/mysticatea/eslint-plugin-node),
 [`eslint-utils`](https://github.com/mysticatea/eslint-utils) &
 [`regexpp`](https://github.com/mysticatea/regexpp) (all from
-[@mysticatea](https://github.com/mysticatea)) &
+[@mysticatea](https://github.com/mysticatea)),
+[`eslint-plugin-eslint-plugin`](https://github.com/not-an-aardvark/eslint-plugin-eslint-plugin)
+(which is a recommended plugin for linting custom plugins & was already
+mentioned by [@not-an-aardvark](https://github.com/not-an-aardvark) —the current
+maintainer— to `@aladdin-add` that he wanted to transfer the repo to a better
+home) &
 [`eslint-plugin-promise`](https://github.com/xjamundx/eslint-plugin-promise)
 (which is used a lot as well and was mentioned by the current maintainer
-([@xjamundx](https://github.com/xjamundx)) that he would like to transfer it to
+—[@xjamundx](https://github.com/xjamundx)— that he would like to transfer it to
 the community org if one was going to exist).
 
 ### What would be the acceptance criteria?
@@ -95,7 +108,11 @@ I personally think that the acceptance criteria for a package to go under the
   used by the main repo (like
   [`eslint-utils`](https://github.com/mysticatea/eslint-utils) &
   [`regexpp`](https://github.com/mysticatea/regexpp)) to be in the
-  `@eslint-community` org as well.
+  `@eslint-community` org as well.  
+  It also shouldn't matter if the package is purely TypeScript-related or not,
+  as refusing these packages and having a separate
+  `@typescript-eslint-community` org would only fragmentize the ESLint community
+  more without any real benefit.
 
 - Is it widely depended upon throughout the community?  
   Don't have an exact number in mind, but all mentioned packages have at least
@@ -111,19 +128,12 @@ I personally think that the acceptance criteria for a package to go under the
 
   We can also make an exception for packages that meet the other criteria, but
   where the owner want to transfer ownership to the new org.  
-  I can for instance imagine that
-  [@not-an-aardvark](https://github.com/not-an-aardvark) would want to transfer
-  ownership of
-  [`eslint-plugin-eslint-plugin`](https://github.com/not-an-aardvark/eslint-plugin-eslint-plugin)
-  to the new org as well, as it's a recommended plugin for linting custom
-  plugins.  
-  <https://eslint.org/docs/developer-guide/working-with-plugins#linting>  
-  I can also imagine that people like [@gajus](https://github.com/gajus) at some
-  point wanting to transfer ownership of
-  [`eslint-plugin-flowtype`](https://github.com/gajus/eslint-plugin-flowtype) or
-  [`eslint-plugin-jsdoc`](https://github.com/gajus/eslint-plugin-jsdoc) if they
-  would feel it would be better maintained by the community instead of putting
-  all workload on their shoulders.
+  I can for instance imagine that people like [@gajus](https://github.com/gajus)
+  at some point would want to transfer ownership of plugins like
+  [`eslint-plugin-flowtype`](https://github.com/gajus/eslint-plugin-flowtype)
+  and/or [`eslint-plugin-jsdoc`](https://github.com/gajus/eslint-plugin-jsdoc)
+  if they would feel it would be better maintained by the community instead of
+  putting all workload on their shoulders.
 
 If a package is meeting these criteria, but we can't get into contact with the
 owner of the repo to transfer ownership over to the new org, we could
@@ -134,13 +144,19 @@ temporarily fork the repo & publish the package as
 
 I think it would be best to have some sort of a "core" team (of at least 3(?)
 people) that's making the decisions in terms of acceptance to the repo, which
-would all be admin of the org.
+would (in addition to ESLint TSC) all be admin of the org.
 
 We can make a team (with sub-teams if we want) for each package, where we give
 admin rights on the repo for that specific package.
 
-The core team would help maintain all repos, whereas people in specific teams
+The "core" team would help maintain all repos, whereas people in specific teams
 would only help maintain these repositories.
+
+The "core" team would also be responsible to contact package maintainers
+(outside of GitHub) if they appear inactive. If the package maintainers don't
+respond in a reasonable time frame (npm gives you 14(?) days to respond to a
+transfer request email), they could be considered non-responsive and the "core"
+team can step in to appoint a new maintainer for the repository.
 
 **Bonus:** I think having our own place in the Discord server where we can
 discuss some things would be a good idea as well.  
@@ -152,16 +168,21 @@ so the community has a change to ask questions to the maintainers as well.
 
 ### What should be the role of the ESLint team?
 
-I think most important role would be to facilitate at least the contact with
-`@mysticatea`, so we can transfer his packages over to the `@eslint-community`
-org & gain `npm` publish rights for the packages.
+The idea is that the ESLint team is the ultimate caretakers, they assign a
+"core" team of people to take care of the effort the new org makes and let them
+ran the day to day business so that the ESLint team rarely has to involve
+themselves.
 
-Next to that, I can see the ESLint team talk to the "core" team of the new org
-regarding creating new community maintained packages that are split out from the
-main ESLint repo. Examples of these kind of repos are:
+Next to that, I think most important role would be to facilitate at least the
+contact with `@mysticatea`, so we can transfer his packages over to the
+`@eslint-community` org & gain `npm` publish rights for the packages.
+
+I can also see the ESLint team talk to the "core" team of the new org regarding
+creating new community maintained packages that are split out from the main
+ESLint repo. Examples of these kind of repos are:
 
 - `eslint-plugin-node`  
-  This plugin was recommended because of the deprecation of some rules in v7
+  This plugin was recommended because of the deprecation of some rules in v7  
   <https://eslint.org/docs/user-guide/migrating-to-7.0.0#deprecate-node-rules>
 - `eslint-formatter-codeframe` & `eslint-formatter-table`  
   These were both in the main ESLint repo but were removed in v8 and are
@@ -268,11 +289,6 @@ package), people could still use the old package without any extra problems
 
 - What exact acceptance criteria do we want to use?
 - What's the main place of communication for the "core" team?
-- Will there be a single team collectively maintaining all modules within the
-  project? Or will each module possibly have their own maintainers?
-- What maintenance principles will be enforced?  
-  Will each module have their own standards, release flows, dependency update
-  checks etc or will it be streamlined across all modules?
 - How does this relate to stuff in eg. `@standard`?  
   Would there be an expectency from the wider community or the
   `@eslint-community` org itself to transfer some stuff from these places?
