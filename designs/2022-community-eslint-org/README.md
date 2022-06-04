@@ -133,7 +133,10 @@ I personally think that the acceptance criteria for a package to go under the
   [`eslint-plugin-flowtype`](https://github.com/gajus/eslint-plugin-flowtype)
   and/or [`eslint-plugin-jsdoc`](https://github.com/gajus/eslint-plugin-jsdoc)
   if they would feel it would be better maintained by the community instead of
-  putting all workload on their shoulders.
+  putting all workload on their shoulders. I can see the same happening for
+  [`eslint-plugin-security`](https://github.com/nodesecurity/eslint-plugin-security),
+  which is currently maintained by the
+  [@nodesecurity](https://github.com/nodesecurity) team.
 
 - It should agree to the code of conduct of the org
 - It should have an OSI-approved license
@@ -179,7 +182,7 @@ This way the community core team has an open place to discuss some common things
 like extracting common functionality into a separate package, minimum Node &
 ESLint target, how to handle disputes between maintainers, ...  
 Having a channel for each separate package would maybe be a good idea as well,
-so the community has a change to ask questions to the maintainers as well.
+so the community has a chance to ask questions to the maintainers as well.
 
 ### What should be the role of the ESLint team?
 
@@ -268,7 +271,7 @@ package), people could still use the old package without any extra problems
 -->
 
 - Private persons could create a fork of the above mentioned packages.  
-  This could however create ceveral well maintained forks, which would cause
+  This could however create several well maintained forks, which would cause
   fragmentation in the community.
 
   More importantly, this could cause the "problem" of the fork being reliant on
@@ -306,7 +309,7 @@ package), people could still use the old package without any extra problems
 - What's the main place of communication for the community core team?
 - Would projects be allowed to accept sponsorships?
 - How does this relate to stuff in eg. `@standard`?  
-  Would there be an expectency from the wider community or the
+  Would there be an expectancy from the wider community or the
   `@eslint-community` org itself to transfer some stuff from these places?
 - What about projects like
   [`eslint-plugin-unicorn`](https://github.com/sindresorhus/eslint-plugin-unicorn)?  
