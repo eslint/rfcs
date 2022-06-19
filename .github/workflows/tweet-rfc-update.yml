@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.action == 'labeled' && contains(github.event.label.name, 'Commenting')
     steps:
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: '16.x'
       - run: npx @humanwhocodes/tweet 'The RFC "${{ github.event.pull_request.title }}" is now in the ${{ github.event.label.name }} phase.\n\n${{ github.event.pull_request.html_url }}'
@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.action == 'closed' && github.event.pull_request.merged
     steps:
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: '16.x'
       - run: npx @humanwhocodes/tweet 'The RFC "${{ github.event.pull_request.title }}" has been approved and merged!\n\n${{ github.event.pull_request.html_url }}'
