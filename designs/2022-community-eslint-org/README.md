@@ -349,6 +349,7 @@ package), people could still use the old package without any extra problems
 
 - What exact acceptance criteria do we want to use?
 - What's the main place of communication for the community core team?
+- Will the community core team be compensated out of the main ESLint budget?
 
 ## Help Needed
 
