@@ -13,12 +13,12 @@ Convert the ESLint codebase to ESM and publish the ESM version.
 
 <!-- Why are we doing this? What use cases does it support? What is the expected
 outcome? -->
-The Node.js community has been written commonjs for a long time, the same goes for ESLint. But with ESM introduced in ES6 and officially supported by Node.js v12, more and more projects are moving to ESM. Not long ago, we had converted a few repos under the ESLint organization to ESM:
-* @eslint/eslintrc
-* espree
-* eslint-scope
-* eslint-visitor-keys
-* @eslint/create-config
+The Node.js community has been writing commonjs for a long time, the same goes for ESLint. But with ESM introduced in ES6 and officially supported by Node.js v12, more and more projects are moving to ESM. Not long ago, we had converted a few repos under the ESLint organization to ESM:
+* eslint/eslintrc
+* eslint/espree
+* eslint/eslint-scope
+* eslint/eslint-visitor-keys
+* eslint/create-config
 
 ## Detailed Design
 
@@ -83,17 +83,31 @@ In the (very) long run, I would suggest that we eventually go with esm-only, but
 * eslint-plugin-node ❗️(Not fully supported, but we could use a fork: `eslint-plugin-n`)
 
 ## Implementations
+
+0. esm toolings for better esm supports
+* eslint-plugin-node => eslint-plugin-n
+* nyc => c8
+
 1. ESLint v9
-* package.json + `"type": "module"`
+* ~~package.json + `"type": "module"`~~renaming `*.js` => `*.mjs`
 * package.json exports
 * package.json engines >= Node.js v12 (has been shipped in ESLint v8.0)
 * remove `"use strict"`
 * convert `"./foo"` to `"./foo/index.js"`
 * convert `"./foo"` to `"./foo.js"`
-* convert top-level `require/module.exports` => `import/export`
-* convert non-top-level `require/module.exports` => `import()` (TODO: it requires the wrapping functions to be async, need to check if any public APIs need to be changed).
-* convert `__dirname/__filename` => `import.meta.url`. There are ~75 usages of __dirname that will need to be dealt with. [#what-do-i-use-instead-of-__dirname-and-__filename](https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c#what-do-i-use-instead-of-__dirname-and-__filename)
+* top-level `require/module.exports` => `import/export`
+* non-top-level `require/module.exports`
+    a). convert to `import("mod")`
+    b). or use `createRequire`
+```js
+    import {createRequire} from "module";
+    const require = createRequire(import.meta.url);
+````
+
+* convert `__dirname/__filename` => `import.meta.url`.
+[#what-do-i-use-instead-of-__dirname-and-__filename](https:\/\/gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c#what-do-i-use-instead-of-__dirname-and-__filename)
 * esm toolings(`nyc` -> `c8`, `proxyquire` -> `esmock`)
+
 * cjs supports(build `dist/api.cjs` and `dist/use-at-your-own-risk.cjs` using rollup)
 * update docs to use esm
 
@@ -151,7 +165,7 @@ b. move to async.
 
 c. stay previous version util they can convert to esm.
 
-d. compile ESLint to CJS. 
+d. compile ESLint to CJS, but it's simply not tenable or safe to transpile code one didn't author.
 ## Alternatives
 
 <!--
@@ -161,10 +175,8 @@ d. compile ESLint to CJS.
     projects have already implemented a similar feature.
 -->
 1. esm-only in eslint v9？
-TBD.
 
-2. cjs only??
-TBD.
+While some popular Node.js packages like `chalk`, `vite`, have been ESM-only, the eslint community hasn't shifted significantly enough to warrant a change to ESM-only quite yet.
 
 ## Open Questions
 
@@ -182,11 +194,17 @@ TBD.
 
 To be consistent with other eslint repos, cjs will be bundled to `dist/`, while esm will not.
 
-2. Do we want to use rollup directly, or using some higher level toolings like `microbundle`?
+2. Do we want to use `*.mjs`, or adding `"type": "module"` to package.json?
 
-3. Do we want to use `*.mjs`, or adding `"type": "module"` to package.json?
+I'm supportive to `*.mjs` - it allows us to gradually migration, without touching the cjs files.
 
-4. One thing to be mindful of is that this ESM conversion PR is likely to be massive, touching almost every one of hundreds of file, subject to repeated merge conflicts, and taking weeks or likely even months to assemble and get the tests all working again. So, we need a careful way to keep the PRs small and focused.
+3. How to keep the PRs small and focused?
+One thing to be mindful of is that this ESM conversion PR is likely to be massive, touching almost every one of hundreds of file, subject to repeated merge conflicts, and taking weeks or likely even months to assemble and get the tests all working again. So, we need a careful way to keep the PRs small and focused.
+
+We could make the conversion from top to bottom, as it's allowed to import cjs in esm. The main steps:
+a). convert `bin/eslint.js` to esm;
+b). convert `lib/api.js` to esm;
+c). others.
 
 ## Help Needed
 
@@ -196,6 +214,7 @@ To be consistent with other eslint repos, cjs will be bundled to `dist/`, while 
     Are you able to implement this RFC on your own? If not, what kind
     of help would you need from the team?
 -->
+I can implement it.
 
 ## Frequently Asked Questions
 
