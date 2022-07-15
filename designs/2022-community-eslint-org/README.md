@@ -71,10 +71,10 @@ the updates would just resume).
 
 Packages that are living under the new community org would be allowed to (keep)
 accept(ing) sponsorship for the maintainers of that package.  
-If the community core team at some point decides to setup its own sponsorship
-collective (like the core ESLint org has its
-[Open Collective](https://opencollective.com/eslint)), packages could also
-include this collective & the community org in their `FUNDING.yml`.
+The community core team will also setup its own sponsorship collective (like the
+core ESLint org has its [Open Collective](https://opencollective.com/eslint)),
+so packages should also include this collective & the community org in their
+`FUNDING.yml`.
 
 ### Which projects should be involved?
 
@@ -257,6 +257,10 @@ Examples of these kind of repos are:
   live in the new org  
   <https://github.com/eslint/eslint-plugin-markdown>
 
+As discussed in
+[the ESLint TSC Meeting of July 14th, 2022](https://github.com/eslint/tsc-meetings/blob/main/notes/2022/2022-07-14-transcript.md),
+the community core team will also be compensated out of the main ESLint budget.
+
 ## Documentation
 
 <!--
@@ -349,7 +353,6 @@ package), people could still use the old package without any extra problems
 
 - What exact acceptance criteria do we want to use?
 - What's the main place of communication for the community core team?
-- Will the community core team be compensated out of the main ESLint budget?
 
 ## Help Needed
 
@@ -363,16 +366,6 @@ package), people could still use the old package without any extra problems
 We would need to get access to the `@eslint-community` org & be brought in
 contact with `@mysticatea` to transfer his repos to the new org & get `npm`
 publish rights on these repos.
-
-## Frequently Asked Questions
-
-<!--
-    This section is optional but suggested.
-
-    Try to anticipate points of clarification that might be needed by
-    the people reviewing this RFC. Include those questions and answers
-    in this section.
--->
 
 ## Related Discussions
 
