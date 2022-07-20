@@ -201,10 +201,10 @@ I'm supportive to `*.mjs` - it allows us to gradually migration, without touchin
 3. How to keep the PRs small and focused?
 One thing to be mindful of is that this ESM conversion PR is likely to be massive, touching almost every one of hundreds of file, subject to repeated merge conflicts, and taking weeks or likely even months to assemble and get the tests all working again. So, we need a careful way to keep the PRs small and focused.
 
-We could make the conversion from top to bottom, as it's allowed to import cjs in esm. The main steps:
-a). convert `bin/eslint.js` to esm;
-b). convert `lib/api.js` to esm;
-c). others.
+As cjs can be imported in esm, we can migrate the package entry first. The main steps:
+a). convert `bin/eslint.js` => `bin/eslint.mjs` (non-breaking change)
+b). convert `lib/api.js` => `lib/api.mjs`, `lib/unsupported-api.js` => `lib/unsupported-api.mjs`; (breaking change)
+c). others. (non-breaking change)
 
 ## Help Needed
 
