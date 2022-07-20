@@ -78,8 +78,8 @@ In the (very) long run, I would suggest that we eventually go with esm-only, but
 ## Toolings esm supports(ESLint's dependencies)
 
 * mocha ✅
-* proxyquire ❌
-* nyc ❌
+* proxyquire ❌ (not supported, an alternative is [esmock](https://github.com/iambumblehead/esmock), which provide a similar API)
+* nyc ❌ (not supported, an alternative is [c8](https://github.com/bcoe/c8) - same author with nyc)
 * eslint-plugin-node ❗️(Not fully supported, but we could use a fork: `eslint-plugin-n`)
 
 ## Implementations
