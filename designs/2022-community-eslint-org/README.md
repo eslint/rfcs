@@ -69,12 +69,11 @@ work to restore continuity of service - a process which would be invisible to
 users (i.e. users might see a pause in updates but not have to make changes -
 the updates would just resume).
 
-Packages that are living under the new community org would be allowed to (keep)
-accept(ing) sponsorship for the maintainers of that package.  
-The community core team will also setup its own sponsorship collective (like the
-core ESLint org has its [Open Collective](https://opencollective.com/eslint)),
-so packages should also include this collective & the community org in their
-`FUNDING.yml`.
+Although packages that are living under the new community org would be allowed
+to (keep) accept(ing) sponsorship for the maintainer(s) of that package, they
+should also include the
+[ESLint Open Collective](https://opencollective.com/eslint) & the
+[ESLint org](https://github.com/eslint) in their `FUNDING.yml`.
 
 ### Which projects should be involved?
 
@@ -100,7 +99,7 @@ home) &
 the community org if one was going to exist).
 
 The goal of the new community org isn't to take over all widely depended upon
-ESLint related packages that are currently maintained by community memebers.  
+ESLint related packages that are currently maintained by community members.  
 Packages like
 [`eslint-plugin-unicorn`](https://github.com/sindresorhus/eslint-plugin-unicorn)
 (which is currently maintained by
@@ -108,9 +107,9 @@ Packages like
 like [@typescript-eslint](https://github.com/typescript-eslint) or
 [@standard](https://github.com/standard) could perfectly stay at their current
 home.  
-If the maintainers of such packages would want to transfer these packages to the
-new community org, they could of course be accepted if they meet the acceptance
-criteria.
+If the maintainer(s) of such packages would want to transfer these packages to
+the new community org, they could of course be accepted if they meet the
+acceptance criteria.
 
 ### What would be the acceptance criteria?
 
@@ -147,8 +146,8 @@ would be:
 - Is it widely depended upon throughout the community?  
   All mentioned packages have at least 3M downloads/week.  
   Only exceptions are `eslint-plugin-eslint-comments` (1M downloads/week) &
-  `@mysticatea/eslint-plugin` (1.3K downloads/week), which is used as a
-  devDependency for all other mentioned packages by `@mysticatea`.
+  `@mysticatea/eslint-plugin` (1.3K downloads/week), which is listed in
+  `devDependencies` of all other mentioned packages by `@mysticatea`.
 
 - It didn't receive an update in the last 6 months  
   We can make an exception for packages that did get a PR merged which was
@@ -156,9 +155,9 @@ would be:
   compatibility with newer versions of ESLint).
 
   We can also make an exception for packages that meet the other criteria, but
-  where the owner want to transfer ownership to the new org.  
-  For instance people like [@gajus](https://github.com/gajus) at some point
-  could want to transfer ownership of plugins like
+  where the owner wants to transfer ownership to the new org.  
+  For instance people like [@gajus](https://github.com/gajus) could at some
+  point want to transfer ownership of plugins like
   [`eslint-plugin-flowtype`](https://github.com/gajus/eslint-plugin-flowtype)
   and/or [`eslint-plugin-jsdoc`](https://github.com/gajus/eslint-plugin-jsdoc)
   if they would feel it would be better maintained by the community instead of
@@ -175,8 +174,9 @@ If a package is meeting these criteria, but we can't get into contact with the
 owner of the repo to transfer ownership over to the new org, we could
 temporarily fork the repo into the new org. However, the ultimate goal would
 always be to transfer the original repo to the new org.  
-If we had a temporary fork, we should create PRs to the original repo to bring
-it up to date with the fork before continuing with other tasks.
+If we had a temporary fork and are able to transfer the original repo to the new
+org, we should first create PRs to the original repo to bring it up to date with
+the fork before continuing with other tasks.
 
 ### What permissions should maintainers have?
 
@@ -200,19 +200,19 @@ dissapear.
 The community core team would help maintain all repos, whereas people in
 specific teams would only help maintain these repositories.
 
-The community core team would be responsible of administer the Code of Conduct
-of the organization.
+The community core team would be responsible for administering the Code of
+Conduct of the organization.
 
-The community core team would also be responsible to contact package maintainers
-(outside of GitHub) if they appear inactive.  
+The community core team would also be responsible for contacting package
+maintainers (outside of GitHub) if they appear inactive.  
 Package maintainers will be seen as inactive if they didn't create a (necessary)
 release in the last 6 month _or_ if they haven't responded (properly) to any
 issue/PR/discussion in the last 3 months.  
 If the package maintainers don't respond in a reasonable time frame of 30 days,
-they will be considered non-responsive & the community core team can step in to
+they will be considered non-responsive & the community core team will step in to
 appoint a new maintainer for the repository.
 
-**Bonus:** I think having our own place in the Discord server where we can
+**Bonus:** Having our own place in the ESLint Discord server where we can
 discuss some things would be a good idea as well.  
 This way the community core team has an open place to discuss some common things
 like extracting common functionality into a separate package, minimum Node &
@@ -258,7 +258,7 @@ Examples of these kind of repos are:
   <https://github.com/eslint/eslint-plugin-markdown>
 
 As discussed in
-[the ESLint TSC Meeting of July 14th, 2022](https://github.com/eslint/tsc-meetings/blob/main/notes/2022/2022-07-14-transcript.md),
+[the ESLint TSC Meeting of July 14th, 2022](https://github.com/eslint/tsc-meetings/blob/main/notes/2022/2022-07-14.md#feat-create-eslint-community-github-organization-rfc),
 the community core team will also be compensated out of the main ESLint budget.
 
 ## Documentation
@@ -286,7 +286,7 @@ know about this new org and about which forks we're maintaining.
 
 One of the drawbacks could be that this new `@eslint-community` org could give
 the impression that the packages owned by this new org are recommended by the
-core team.
+ESLint TSC.
 
 Secondly, It could also put pressure on packages from other ESLint related
 organizations/maintainers to transfer their project to this new org, as it could
