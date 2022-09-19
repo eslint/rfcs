@@ -194,8 +194,8 @@ team.
 This way we prevent that a repo can be destroyed from the org.
 
 We'll create a setup where we publish new versions of the package with
-`eslintbot`. That way we can keep publishing new versions if someone would
-dissapear.
+`eslint-community-bot`. That way we can keep publishing new versions if someone
+would dissapear.
 
 The community core team would help maintain all repos, whereas people in
 specific teams would only help maintain these repositories.
