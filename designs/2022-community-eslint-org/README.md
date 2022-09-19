@@ -168,7 +168,7 @@ would be:
 
 - It should agree to the code of conduct of the org
 - It should have an OSI-approved license
-- `eslintbot` should be added as an owner to the original npm package
+- `eslint-community-bot` should be added as an owner to the original npm package
 
 If a package is meeting these criteria, but we can't get into contact with the
 owner of the repo to transfer ownership over to the new org, we could
