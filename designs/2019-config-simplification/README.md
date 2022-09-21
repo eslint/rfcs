@@ -917,7 +917,7 @@ That is completely up to the shareable config. For simplicity sake, I think we s
 
 ### Why are "eslint:recommended" and "eslint:all" strings instead of objects?
 
-In order to use objects for these two configs, we'd need to somehow pass those objects to the config file. That would mean either exposing something on the ESLint package itself (i.e., `require("eslint").configs.recommended`) or publishing a separate package to do the same (i.e., `require("@eslint/configs).recommended`). 
+In order to use objects for these two configs, we'd need to somehow pass those objects to the config file. That would mean either exposing something on the ESLint package itself (i.e., `require("eslint").configs.recommended`) or publishing a separate package to do the same (i.e., `require("@eslint/configs").recommended`). 
 
 In the first case, you'd end up with a situation where the config needs to specify a particular version of ESLint as its dependency, and that could mean a config could force an ESLint upgrade unnecessarily (especially when shareable configs depend on `"eslint:recommended"`).
 
