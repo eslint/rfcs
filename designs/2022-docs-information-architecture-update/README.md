@@ -7,9 +7,9 @@
 
 ## Summary
 
-This document contains proposed changes to the information architecture in the ESLint documentation website, <https://eslint.org/docs>.
+This document contains proposed changes to the information architecture (IA) in the ESLint documentation website, <https://eslint.org/docs>.
 
-On a high level, the proposed information architecture breaks the content into the following sections:
+On a high level, the proposed IA breaks the content into the following sections:
 
 - Use ESLint in Your Project: A refactor of the current [User Guide](https://eslint.org/docs/latest/user-guide/)
 - Extend ESLint: A refactor of the current [Developer Guide](https://eslint.org/docs/latest/developer-guide/), with some content moved to the section Maintain ESLint and Community Contributions
@@ -18,30 +18,31 @@ On a high level, the proposed information architecture breaks the content into t
 
 ## Motivation
 
-TODO: need to think on this one more than 'cuz nicholas said so'
+The motivation of this proposed change to the ESLint documentation IA is to reorient it around the core personas of the ESLint community.
+
+These personas are:
+
+- **The User**: Someone who wants to use ESLint as it currently exists, including plugins.
+- **The Extender**: Someone who wants to extend the functionality of ESLint by creating a plugin, custom formatter, custom parser, sharable configuration, etc.
+- **The Maintainer**: Someone who wants to contribute to the core ESLint project.
+- **The Community Contributor**: Someone who wants to make a small change to the core ESLint project, add a small change to the docs, or raise a Github issue.
+  - Note: We haven't previously talked about this persona. However, after reading through   all the docs and considering the ESLint ecosystem, I think it makes sense to break this out as a separate persona.
+
+While making broad IA changes to reorient the documentation around these personas, I also propose smaller, more cosmetic changes to the documentation website's information architecture to better align it with technical documentation best practices, like making page titles verb phrases and avoiding gerunds.
+
+While I believe that the ESLint documentation currently serves these personas relatively well, TODO: but blah blah why there's an issue w the current state of things.
+
 <!-- Why are we doing this? What use cases does it support? What is the expected
 outcome? -->
 
 ## Detailed Design
 
-TODO: note abt how this isn't bulk of RFC. more like technical considerations
-<!--
-   This is the bulk of the RFC.
-
-   Explain the design with enough detail that someone familiar with ESLint
-   can implement it by reading this document. Please get into specifics
-   of your approach, corner cases, and examples of how the change will be
-   used. Be sure to define any new terms in this section.
--->
+N/A. All changes documentation related.
 
 ## Documentation
 
 The newly proposed information architecture should consist of the following sections and pages:
 
-<!--
-    How will this RFC be documented? Does it need a formal announcement
-    on the ESLint blog to explain the motivation?
--->
 ### [REFACTOR SECTION]  Use ESLint in Your Project
 
 - [RENAME SECTION] Use ESLint in Your Project
@@ -108,7 +109,7 @@ The newly proposed information architecture should consist of the following sect
   - Also the Directory Structure section on the [Getting the Source Code](https://eslint.org/docs/latest/developer-guide/source-code#directory-structure) page should be moved toward the bottom of the new Set up a Development Environment page.
 - [NEW PAGE(S)] Any other technical pages for maintainers
   - I don’t have any thoughts on what these should be right now. I would defer to the core maintainers on what they think other maintainers should know.
-  - I think that these additional technical pages would make sense to include in **Phase 5: “Maintain ESLint” documentation updates**of [the documentation update project](https://github.com/eslint/eslint/issues/16365).  
+  - I think that these additional technical pages would make sense to include in **Phase 5: “Maintain ESLint” documentation updates**of [the documentation update project](https://github.com/eslint/eslint/issues/16365).
   - NOTE: Maybe should be added, but not part of the initial IA project.
 - [MOVE PAGE] Run the Tests
   - Current page: [Unit Tests](https://eslint.org/docs/latest/developer-guide/unit-tests)
@@ -146,11 +147,16 @@ New top-level section of the docs based on the [Contributing](https://eslint.org
 
 ## Drawbacks
 
-TODO: breaking user experience
+Potential drawbacks of this documentation update include:
+
+- Breaking user experience from the current documentation
+- Users potentially do not find the new information architecture more clear
+- Opportunity cost. Time spent on the information architecture updates could be spent on more impactful documentation tasks.
+
 <!--
     Why should we *not* do this? Consider why adding this into ESLint
-    might not benefit the project or the community. Attempt to think 
-    about any opposing viewpoints that reviewers might bring up. 
+    might not benefit the project or the community. Attempt to think
+    about any opposing viewpoints that reviewers might bring up.
 
     Any change has potential downsides, including increased maintenance
     burden, incompatibility with other tools, breaking existing user
@@ -170,6 +176,8 @@ HTTP redirects from existing content URL paths to the new content URL paths must
 
 ## Alternatives
 
+- Do not change the information architecture, but only
+
 <!--
     What other designs did you consider? Why did you decide against those?
 
@@ -180,7 +188,9 @@ HTTP redirects from existing content URL paths to the new content URL paths must
 ## Open Questions
 
 1. Is it possible to have an always-opened folder named ‘Reference’ in which we put all these pages under? I.e similar to the “User Guide” folder, but as a subsection of the “User Guide” folder.
-2. TODO: more about if containers can not be pages as well.
+2. Is there a way to automatically change all the internal links that'll be broken by these updates?
+3. Can you create a side navigation folder that is not also a page?
+
 <!--
     This section is optional, but is suggested for a first draft.
 
@@ -197,6 +207,7 @@ HTTP redirects from existing content URL paths to the new content URL paths must
 I would likely need help with the following tasks:
 
 - Technical implementation details of how to handle redirects
+- I may need some help with updating the side navigation.
 - Investigation of if there's a way to automate changing the internal link paths
 
 <!--
@@ -227,6 +238,7 @@ No. Additional content is to be created in Phases 3+ of the [documentation updat
 ## Related Discussions
 
 This work corresponds to **Phase 2: High-level information architecture update** of the [documentation update project](https://github.com/eslint/eslint/issues/16365).
+
 <!--
     This section is optional but suggested.
 
