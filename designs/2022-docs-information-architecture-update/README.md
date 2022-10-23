@@ -30,7 +30,7 @@ These personas are:
 
 While making broad IA changes to reorient the documentation around these personas, I also propose smaller, more cosmetic changes to the documentation website's information architecture to better align it with technical documentation best practices, like making page titles verb phrases and avoiding gerunds.
 
-While I believe that the ESLint documentation currently serves these personas relatively well, TODO: but blah blah why there's an issue w the current state of things.
+As a result of these changes, the ESLint documentation all personas will be able to better navigate the documentation and better complete the tasks that they're using ESLint for.
 
 <!-- Why are we doing this? What use cases does it support? What is the expected
 outcome? -->
