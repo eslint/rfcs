@@ -22,15 +22,15 @@ The motivation of this proposed change to the ESLint documentation IA is to reor
 
 These personas are:
 
-- **The User**: Someone who wants to use ESLint as it currently exists, including plugins.
-- **The Extender**: Someone who wants to extend the functionality of ESLint by creating a plugin, custom formatter, custom parser, sharable configuration, etc.
-- **The Maintainer**: Someone who wants to contribute to the core ESLint project.
-- **The Community Contributor**: Someone who wants to make a small change to the core ESLint project, add a small change to the docs, or raise a Github issue.
+- **The User**: Someone who wants to use ESLint as it currently exists, including plugins. The proposed 'Use ESLint in Your Project' section addresses this persona's needs.
+- **The Extender**: Someone who wants to extend the functionality of ESLint by creating a plugin, custom formatter, custom parser, sharable configuration, etc. The proposed 'Extend ESLint' section addresses this persona's needs.
+- **The Maintainer**: Someone who wants to contribute to the core ESLint project. The proposed 'Maintain ESLint' section addresses this persona's needs.
+- **The Community Contributor**: Someone who wants to make a small change to the core ESLint project, add a small change to the docs, or raise a Github issue. The proposed 'Community Contributions' section addresses this persona's needs.
   - Note: We haven't previously talked about this persona. However, after reading through   all the docs and considering the ESLint ecosystem, I think it makes sense to break this out as a separate persona.
 
-While making broad IA changes to reorient the documentation around these personas, I also propose smaller, more cosmetic changes to the documentation website's information architecture to better align it with technical documentation best practices, like making page titles verb phrases and avoiding gerunds.
+While making broad IA changes to reorient the documentation around these personas, I also propose smaller, more cosmetic changes to the documentation website's IA to better align it with technical documentation best practices, like making page titles verb phrases and avoiding gerunds.
 
-As a result of these changes, the ESLint documentation all personas will be able to better navigate the documentation and better complete the tasks that they're using ESLint for.
+As a result of these changes, all personas will be able to better navigate the ESLint documentation and better complete the tasks that they're using ESLint for.
 
 <!-- Why are we doing this? What use cases does it support? What is the expected
 outcome? -->
@@ -47,9 +47,14 @@ The newly proposed information architecture should consist of the following sect
 
 - [RENAME SECTION] Use ESLint in Your Project
   - Rename of current section User Guide
-- [NO-PAGE CHANGE] Getting Started
+- [EXPOSE IN IA] Use ESLint in Your Project landing page
+  - Current page: [User Guide landing page](https://eslint.org/docs/latest/user-guide/)
+  - Make accessible by clicking "Use ESLint in Your Project" in the side table of contents. Currently can only navigate to this page by accessing the URL.
+- [NO CHANGE] Getting Started
   - Current page: [Getting Started](https://eslint.org/docs/latest/user-guide/getting-started)
   - NOTE: I think there’s further work that can be done to improve the getting started experience, but do not want to touch the subject as part of the information architecture changes project. Investigate further in **Phase 3: “Use ESLint in Your Project” documentation update** of the documentation update project.
+- [NO CHANGE] Core Concepts
+  - Current page: [Core Concepts](https://eslint.org/docs/latest/user-guide/core-concepts)
 - [DO NOTHING TO SUBSECTION] Configuring
   - Current page: [Configuring](https://eslint.org/docs/latest/user-guide/configuring/)
   - Do not change the “Configuring” page and its children pages. Nicholas mentioned that there’s some major revamping to how configuration files work in ESLint, so let’s leave this subsection alone for now.
@@ -66,15 +71,15 @@ The newly proposed information architecture should consist of the following sect
 
 ### [REFACTOR SECTION]  Extend ESLint
 
-- [NEW PAGE] Overview
-  - NOTE: Should be added, but not part of the initial IA project. Add in **Phase 4: “Extend ESLint” documentation update** of the documentation update project.
+- [EXPOSE IN IA] Extend ESLint landing page
+  - Repurpose the current section landing page [Developer Guide](https://eslint.org/docs/latest/developer-guide/) to be exposed in the side navigation and with the below content.
   - Contain overview type content explaining the various ways that you can extend ESLint:
     - Create Plugins
     - Create Custom Rules
     - Create Custom Formatters
     - Create Custom Parsers
     - Shareable Configs
-  - Alternatively, repurpose the current section landing page[Developer Guide](https://eslint.org/docs/latest/developer-guide/) to be exposed in the side navigation and with the above content.
+  - NOTE: Should be added, but not part of the initial IA project. Add in **Phase 4: “Extend ESLint” documentation update** of the documentation update project.
 - [RENAME & REFACTOR PAGE] Create Plugins
   - Current page: [Working with Plugins](https://eslint.org/docs/latest/developer-guide/working-with-plugins)
   - As noted below, convert the “Processors in Plugins” section into separate page “Custom Processors
@@ -95,9 +100,9 @@ The newly proposed information architecture should consist of the following sect
 
 ### [REFACTOR SECTION] Maintain ESLint
 
-- [NEW PAGE] Overview
+- [EXPOSE IN IA] Maintain ESLint section landing page
+  - Repurpose the current section landing page [Maintainer Guide](https://eslint.org/docs/latest/maintainer-guide) to be exposed in the side navigation and with the above content.
   - NOTE: Should be added, but not part of the initial IA project. Add in **Phase 5: “Maintain ESLint” documentation update** of the documentation update project.
-  - Alternatively, repurpose the current section landing page[Maintainer Guide](https://eslint.org/docs/latest/maintainer-guide) to be exposed in the side navigation and with the above content.
 - [MOVE PAGE] Architecture
   - Current page: [Architecture](https://eslint.org/docs/latest/developer-guide/architecture/)
   - Note: in a previous conversation with Nicholas, he mentioned to me that this page is pretty out-of date.
@@ -127,7 +132,7 @@ The newly proposed information architecture should consist of the following sect
 
 New top-level section of the docs based on the [Contributing](https://eslint.org/docs/latest/developer-guide/contributing/) section. Breaking this out as a separate section because I think the “casual community contributor” is a fairly separate persona from the “extender” and “maintainer”, so it should be treated as such in the information architecture.
 
-- [MOVE & RENAME PAGE] section landing page
+- [MOVE & RENAME PAGE] Community Contributions section landing page
   - Current page: [Contributing](https://eslint.org/docs/latest/developer-guide/contributing/)
 - [MOVE & RENAME PAGE] Report Bugs
   - Current page: [Bug Reporting](https://eslint.org/docs/latest/developer-guide/contributing/reporting-bugs)
@@ -176,7 +181,7 @@ HTTP redirects from existing content URL paths to the new content URL paths must
 
 ## Alternatives
 
-- Do not change the information architecture, but only
+- Do not change the IA. Only update documentation within the existing IA as part of the [documentation update project](https://github.com/eslint/eslint/issues/16365).
 
 <!--
     What other designs did you consider? Why did you decide against those?
@@ -187,9 +192,9 @@ HTTP redirects from existing content URL paths to the new content URL paths must
 
 ## Open Questions
 
-1. Is it possible to have an always-opened folder named ‘Reference’ in which we put all these pages under? I.e similar to the “User Guide” folder, but as a subsection of the “User Guide” folder.
-2. Is there a way to automatically change all the internal links that'll be broken by these updates?
-3. Can you create a side navigation folder that is not also a page?
+1. Is there a way to automatically change all the internal links that'll be broken by these updates?
+1. Can you create a side navigation folder that is not also a page?
+1. How to make section landing pages navigable from the side table of contents? (For example, the proposed page "Use ESLint in Your Project landing page")
 
 <!--
     This section is optional, but is suggested for a first draft.
@@ -208,7 +213,7 @@ I would likely need help with the following tasks:
 
 - Technical implementation details of how to handle redirects
 - I may need some help with updating the side navigation.
-- Investigation of if there's a way to automate changing the internal link paths
+- Investigate if there's a way to automate changing the internal link paths.
 
 <!--
     This section is optional.
