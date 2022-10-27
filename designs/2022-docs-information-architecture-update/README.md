@@ -55,8 +55,15 @@ The newly proposed information architecture should consist of the following sect
   - NOTE: I think there’s further work that can be done to improve the getting started experience, but do not want to touch the subject as part of the information architecture changes project. Investigate further in **Phase 3: “Use ESLint in Your Project” documentation update** of the documentation update project.
 - [NO CHANGE] Core Concepts
   - Current page: [Core Concepts](https://eslint.org/docs/latest/user-guide/core-concepts)
-- [DO NOTHING TO SUBSECTION] Configuring
+- [RENAME PAGE] Configure
   - Current page: [Configuring](https://eslint.org/docs/latest/user-guide/configuring/)
+  - [RENAME PAGES] Rename the child pages of Configuring as follows:
+    - [NO CHANGE] Configuration Files (New)
+    - [NO CHANGE] Configuration Files
+    - [RENAME PAGE] Configuring Language Options -> Configure Language Options
+    - [RENAME PAGE] Configuring Rules -> Configure Rules
+    - [RENAME PAGE] Configuring Plugins -> Configure Plugins
+    - [RENAME PAGE] Ignoring Rules -> Ignore Rules
   - Do not change the “Configuring” page and its children pages. Nicholas mentioned that there’s some major revamping to how configuration files work in ESLint, so let’s leave this subsection alone for now.
 - [RENAME PAGE] Command Line Interface Reference
   - Current page: [Command Line Interface](https://eslint.org/docs/latest/user-guide/command-line-interface)
@@ -95,8 +102,32 @@ The newly proposed information architecture should consist of the following sect
   - Take most of content from the section [Processors in Plugins section on Work with Plugins Page](https://eslint.org/docs/latest/developer-guide/working-with-plugins#processors-in-plugins)
 - [RENAME PAGE] Share Configurations
   - Current page: [Shareable Configs](https://eslint.org/docs/latest/developer-guide/shareable-configs)
-- [NO CHANGE TO PAGE] Node.js API
+- [NO CHANGE TO PAGE] Node.js API Reference
   - Current page: [Node.js API](https://eslint.org/docs/latest/developer-guide/nodejs-api)
+
+### [NEW SECTION] Contribute to ESLint
+
+New top-level section of the docs based on the [Contributing](https://eslint.org/docs/latest/developer-guide/contributing/) section. Breaking this out as a separate section because I think the “casual community contributor” is a fairly separate persona from the “extender” and “maintainer”, so it should be treated as such in the information architecture.
+
+- [MOVE & RENAME PAGE] Community Contributions section landing page
+  - Current page: [Contributing](https://eslint.org/docs/latest/developer-guide/contributing/)
+- [MOVE & RENAME PAGE] Report Bugs
+  - Current page: [Bug Reporting](https://eslint.org/docs/latest/developer-guide/contributing/reporting-bugs)
+- [MOVE & RENAME PAGE] Propose a New Rule
+  - Current page: [Proposing a New Rule](https://eslint.org/docs/latest/developer-guide/contributing/new-rules)
+- [MOVE & RENAME PAGE] Propose a Rule Change
+  - Current page: [Proposing a Rule Change](https://eslint.org/docs/latest/developer-guide/contributing/#:~:text=Proposing%20a-,Rule%20Change,-Want%20to%20make)
+- [MOVE & RENAME PAGE] Request a Change
+  - Current page: [Change Requests](https://eslint.org/docs/latest/developer-guide/contributing/changes)
+- [MOVE & RENAME PAGE] Work on Issues
+  - Current page: [Working on Issues](https://eslint.org/docs/latest/developer-guide/contributing/working-on-issues)
+- [NEW PAGE] Report Security Vulnerabilities
+  - Tales current content from the [Reporting a Security Vulnerability section on the Contributing page](https://eslint.org/docs/latest/developer-guide/contributing/#reporting-a-security-vulnerability). Worth breaking out into its own page for discoverability and SEO for an important subject.
+  - NOTE: Should be added, but not part of the initial IA project. Probably can be done as a one-off task or group in with one of the project phases.
+- [MOVE & RENAME PAGE] Submit a Pull Request
+  - Current page: [Pull Requests](https://eslint.org/docs/latest/developer-guide/contributing/pull-requests)
+- [MOVE PAGE] Governance
+  - Current page: [Governance](https://eslint.org/docs/latest/maintainer-guide/governance)
 
 ### [REFACTOR SECTION] Maintain ESLint
 
@@ -125,30 +156,94 @@ The newly proposed information architecture should consist of the following sect
     - Current page: [Reviewing Pull Requests](https://eslint.org/docs/latest/maintainer-guide/pullrequests)
   - [MOVE & RENAME PAGE] Manage Releases
     - Current page: [Managing Releases](https://eslint.org/docs/latest/maintainer-guide/releases)
-  - [MOVE PAGE] Governance
-    - Current page: [Governance](https://eslint.org/docs/latest/maintainer-guide/governance)
 
-### [NEW SECTION] Community Contributions
+### New Sidebar (summary)
 
-New top-level section of the docs based on the [Contributing](https://eslint.org/docs/latest/developer-guide/contributing/) section. Breaking this out as a separate section because I think the “casual community contributor” is a fairly separate persona from the “extender” and “maintainer”, so it should be treated as such in the information architecture.
+With the above changes, the left-hand side navigation will look like:
 
-- [MOVE & RENAME PAGE] Community Contributions section landing page
-  - Current page: [Contributing](https://eslint.org/docs/latest/developer-guide/contributing/)
-- [MOVE & RENAME PAGE] Report Bugs
-  - Current page: [Bug Reporting](https://eslint.org/docs/latest/developer-guide/contributing/reporting-bugs)
-- [MOVE & RENAME PAGE] Propose a New Rule
-  - Current page: [Proposing a New Rule](https://eslint.org/docs/latest/developer-guide/contributing/new-rules)
-- [MOVE & RENAME PAGE] Propose a Rule Change
-  - Current page: [Proposing a Rule Change](https://eslint.org/docs/latest/developer-guide/contributing/#:~:text=Proposing%20a-,Rule%20Change,-Want%20to%20make)
-- [MOVE & RENAME PAGE] Request a Change
-  - Current page: [Change Requests](https://eslint.org/docs/latest/developer-guide/contributing/changes)
-- [MOVE & RENAME PAGE] Work on Issues
-  - Current page: [Working on Issues](https://eslint.org/docs/latest/developer-guide/contributing/working-on-issues)
-- [NEW PAGE] Report Security Vulnerabilities
-  - Tales current content from the [Reporting a Security Vulnerability section on the Contributing page](https://eslint.org/docs/latest/developer-guide/contributing/#reporting-a-security-vulnerability). Worth breaking out into its own page for discoverability and SEO for an important subject.
-  - NOTE: Should be added, but not part of the initial IA project. Probably can be done as a one-off task or group in with one of the project phases.
-- [MOVE & RENAME PAGE] Submit a Pull Request
-  - Current page: [Pull Requests](https://eslint.org/docs/latest/developer-guide/contributing/pull-requests)
+- Use ESLint in Your Project (landing page)
+  - Getting Started
+  - Core Concepts
+  - Configure
+    - Configuration Files (New)
+    - Configuration Files
+    - Configure Language Options
+    - Configure Rules
+    - Configure Plugins
+    - Ignore Code
+  - Command Line Interface Reference
+  - Rules Reference
+  - Integrations
+  - Migrate to v8.x
+- Extend ESLint (landing page)
+  - Create Plugins
+  - Custom Rules
+  - Custom Formatters
+  - Custom Parsers
+  - Custom Processors
+  - Share Configurations
+  - Node.js API Reference
+- Contribute to ESLint (landing page)
+  - Report Bugs
+  - Propose a New Rule
+  - Propose a Rule Change
+  - Request a Change
+  - Work on Issues
+  - Report Security Vulnerabilities
+  - Submit a Pull Request
+  - Governance
+- Maintain ESLint (landing page)
+  - Architecture
+  - Set up a Development Environment
+  - Run the Tests
+  - Project Management
+    - Manage Issues
+    - Review Pull Requests
+    - Manage Releases
+
+### HTTP Redirects
+
+The proposed changes would include the following HTTP redirects from current content locations to the locations proposed in the above outline.
+
+| Current URL | Proposed URL |
+| :---: | :---: |
+| <https://eslint.org/docs/latest/users/> | <https://eslint.org/docs/latest/users/> |
+| <https://eslint.org/docs/latest/users/core-concepts> | <https://eslint.org/docs/latest/users/core-concepts> |
+| <https://eslint.org/docs/latest/user-guide/configuring/> | <https://eslint.org/docs/latest/user/configuring/> |
+| <https://eslint.org/docs/latest/user-guide/configuring/configuration-files-new> | <https://eslint.org/docs/latest/user/configure/configuration-files-new> |
+| <https://eslint.org/docs/latest/user-guide/configuring/configuration-files> | <https://eslint.org/docs/latest/users/configure/configuration-files> |
+| <https://eslint.org/docs/latest/user-guide/configuring/language-options> | <https://eslint.org/docs/latest/users/configure/language-options> |
+| <https://eslint.org/docs/latest/user-guide/configuring/rules> | <https://eslint.org/docs/latest/users/configure/rules> |
+| <https://eslint.org/docs/latest/user-guide/configuring/plugins> | <https://eslint.org/docs/latest/users/configure/plugins> |
+| <https://eslint.org/docs/latest/user-guide/configuring/ignoring-code> | <https://eslint.org/docs/latest/users/configure/ignore> |
+| <https://eslint.org/docs/latest/user-guide/command-line-interface> | <https://eslint.org/docs/latest/users/command-line-interface> |
+| <https://eslint.org/docs/latest/user-guide/formatters/> | <https://eslint.org/docs/latest/users/formatters/> |
+| <https://eslint.org/docs/latest/user-guide/integrations> | <https://eslint.org/docs/latest/users/integrations> |
+| <https://eslint.org/docs/latest/user-guide/migrating-to-8.0.0> | <https://eslint.org/docs/latest/user/migrate-to-8.0.0> |
+| <https://eslint.org/docs/latest/user-guide/**> (any other pages not in sidebar) | <https://eslint.org/docs/latest/users/> |
+| <https://eslint.org/docs/latest/developer-guide/architecture/> | <https://eslint.org/docs/latest/maintain/architecture/> |
+| <https://eslint.org/docs/latest/developer-guide/source-code> |  <https://eslint.org/docs/latest/maintain/development-environment> |
+| <https://eslint.org/docs/latest/developer-guide/development-environment> |  <https://eslint.org/docs/latest/maintain/development-environment> |
+| <https://eslint.org/docs/latest/developer-guide/unit-tests> | <https://eslint.org/docs/latest/maintain/tests> |
+| <https://eslint.org/docs/latest/extend/working-with-rules> | <https://eslint.org/docs/latest/extend/custom-rules> |
+| <https://eslint.org/docs/latest/developer-guide/working-with-plugins> | <https://eslint.org/docs/latest/extend/plugins> |
+| <https://eslint.org/docs/latest/developer-guide/working-with-custom-formatters> | <https://eslint.org/docs/latest/extend/custom-formatters> |
+| <https://eslint.org/docs/latest/developer-guide/working-with-custom-parsers> | <https://eslint.org/docs/latest/custom-parsers> |
+| <https://eslint.org/docs/latest/developer-guide/nodejs-api> | <https://eslint.org/docs/latest/extend/nodejs-api> |
+| <https://eslint.org/docs/latest/developer-guide/contributing/> | <https://eslint.org/docs/latest/contribute/> |
+| <https://eslint.org/docs/latest/developer-guide/contributing/reporting-bugs> | <https://eslint.org/docs/latest/contribute/report-bugs> |
+| <https://eslint.org/docs/latest/developer-guide/contributing/new-rules> | <https://eslint.org/docs/latest/contribute/new-rule> |
+| <https://eslint.org/docs/latest/developer-guide/contributing/rule-changes> | <https://eslint.org/docs/latest/contribute/rule-change> |
+| <https://eslint.org/docs/latest/developer-guide/contributing/changes> | <https://eslint.org/docs/latest/contribute/change> |
+| <https://eslint.org/docs/latest/developer-guide/contributing/working-on-issues> | <https://eslint.org/docs/latest/contribute/work-on-issue> |
+| <https://eslint.org/docs/latest/developer-guide/contributing/pull-requests> | <https://eslint.org/docs/latest/contribute/pull-requests> |
+| <https://eslint.org/docs/latest/developer-guide/**> (any other pages not in sidebar) | <https://eslint.org/docs/latest/extend/**> |
+| <https://eslint.org/docs/latest/maintainer-guide/> | <https://eslint.org/docs/latest/maintain/> |
+| <https://eslint.org/docs/latest/maintainer-guide/issues> | <https://eslint.org/docs/latest/maintain/manage-issues> |
+| <https://eslint.org/docs/latest/maintainer-guide/pullrequests> |  <https://eslint.org/docs/latest/maintain/review-pull-requests> |
+| <https://eslint.org/docs/latest/maintainer-guide/releases> | <https://eslint.org/docs/latest/maintain/manage-releases> |
+| <https://eslint.org/docs/latest/maintainer-guide/governance> | <https://eslint.org/docs/latest/contribute/governance> |
+| <https://eslint.org/docs/latest/maintainer-guide/**> (any other pages not in sidebar) | <https://eslint.org/docs/latest/maintain/**> |
 
 ## Drawbacks
 
@@ -193,6 +288,7 @@ HTTP redirects from existing content URL paths to the new content URL paths must
 ## Open Questions
 
 1. Is there a way to automatically change all the internal links that'll be broken by these updates?
+   - A: [No (link with explanation)](https://github.com/eslint/rfcs/pull/97#discussion_r1003895871)
 1. Can you create a side navigation folder that is not also a page?
 1. How to make section landing pages navigable from the side table of contents? (For example, the proposed page "Use ESLint in Your Project landing page")
 
@@ -226,7 +322,7 @@ I would likely need help with the following tasks:
 
 ### Why Rename Pages with Active Verb Phrases?
 
-This outline proposes renaming various titles to use active verb phrases instead of the current  gerund-based page name structure (ex. changing a page title from “Managing Issues” → “Manage Issues”). This is following a general technical writing best practice of avoiding gerunds in titles. For more information, refer to [this blog post about the subject](https://www.google.com/url?q=https://www.writethedocs.org/blog/newsletter-october-2022/%23gerunds-in-headings&sa=D&source=docs&ust=1665539063991039&usg=AOvVaw2HTT7RUQYPCcUenwVv0-Zt).
+This outline proposes renaming various titles to use active verb phrases instead of the current gerund-based page name structure (ex. changing a page title from “Managing Issues” → “Manage Issues”). This is following a general technical writing best practice of avoiding gerunds in titles. For more information, refer to [this blog post about the subject](https://www.google.com/url?q=https://www.writethedocs.org/blog/newsletter-october-2022/%23gerunds-in-headings&sa=D&source=docs&ust=1665539063991039&usg=AOvVaw2HTT7RUQYPCcUenwVv0-Zt).
 
 ### Will This Information Architecture Update Include Creating New Content?
 
