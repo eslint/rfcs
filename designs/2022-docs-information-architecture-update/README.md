@@ -47,9 +47,9 @@ The newly proposed information architecture should consist of the following sect
 
 - [RENAME SECTION] Use ESLint in Your Project
   - Rename of current section User Guide
-- [EXPOSE IN IA] Use ESLint in Your Project landing page
+- [NO CHANGE] Use ESLint in Your Project landing page
   - Current page: [User Guide landing page](https://eslint.org/docs/latest/user-guide/)
-  - Make accessible by clicking "Use ESLint in Your Project" in the side table of contents. Currently can only navigate to this page by accessing the URL.
+  - Hidden in sidebar
 - [NO CHANGE] Getting Started
   - Current page: [Getting Started](https://eslint.org/docs/latest/user-guide/getting-started)
   - NOTE: I think there’s further work that can be done to improve the getting started experience, but do not want to touch the subject as part of the information architecture changes project. Investigate further in **Phase 3: “Use ESLint in Your Project” documentation update** of the documentation update project.
@@ -78,8 +78,10 @@ The newly proposed information architecture should consist of the following sect
 
 ### [REFACTOR SECTION]  Extend ESLint
 
-- [EXPOSE IN IA] Extend ESLint landing page
-  - Repurpose the current section landing page [Developer Guide](https://eslint.org/docs/latest/developer-guide/) to be exposed in the side navigation and with the below content.
+- [NO CHANGE] Extend ESLint landing page
+  - Current page:  [Developer Guide](https://eslint.org/docs/latest/developer-guide/)
+  - Hidden in sidebar
+- [NEW PAGE] Ways to Extend ESLint
   - Contain overview type content explaining the various ways that you can extend ESLint:
     - Create Plugins
     - Create Custom Rules
@@ -111,6 +113,7 @@ New top-level section of the docs based on the [Contributing](https://eslint.org
 
 - [MOVE & RENAME PAGE] Community Contributions section landing page
   - Current page: [Contributing](https://eslint.org/docs/latest/developer-guide/contributing/)
+  - Hidden in sidebar
 - [MOVE & RENAME PAGE] Report Bugs
   - Current page: [Bug Reporting](https://eslint.org/docs/latest/developer-guide/contributing/reporting-bugs)
 - [MOVE & RENAME PAGE] Propose a New Rule
@@ -131,9 +134,9 @@ New top-level section of the docs based on the [Contributing](https://eslint.org
 
 ### [REFACTOR SECTION] Maintain ESLint
 
-- [EXPOSE IN IA] Maintain ESLint section landing page
-  - Repurpose the current section landing page [Maintainer Guide](https://eslint.org/docs/latest/maintainer-guide) to be exposed in the side navigation and with the above content.
-  - NOTE: Should be added, but not part of the initial IA project. Add in **Phase 5: “Maintain ESLint” documentation update** of the documentation update project.
+- [NO CHANGE] Maintain ESLint section landing page
+  - Current page: [Maintainer Guide](https://eslint.org/docs/latest/maintainer-guide)
+  - Hidden in sidebar
 - [MOVE PAGE] Architecture
   - Current page: [Architecture](https://eslint.org/docs/latest/developer-guide/architecture/)
   - Note: in a previous conversation with Nicholas, he mentioned to me that this page is pretty out-of date.
@@ -149,13 +152,12 @@ New top-level section of the docs based on the [Contributing](https://eslint.org
   - NOTE: Maybe should be added, but not part of the initial IA project.
 - [MOVE PAGE] Run the Tests
   - Current page: [Unit Tests](https://eslint.org/docs/latest/developer-guide/unit-tests)
-- [NEW SECTION] Project Management
-  - [MOVE & RENAME PAGE] Manage Issues
-    - Current page: [Managing Issues](https://eslint.org/docs/latest/maintainer-guide/issues)
-  - [MOVE & RENAME PAGE] Review Pull Requests
-    - Current page: [Reviewing Pull Requests](https://eslint.org/docs/latest/maintainer-guide/pullrequests)
-  - [MOVE & RENAME PAGE] Manage Releases
-    - Current page: [Managing Releases](https://eslint.org/docs/latest/maintainer-guide/releases)
+- [MOVE & RENAME PAGE] Manage Issues
+  - Current page: [Managing Issues](https://eslint.org/docs/latest/maintainer-guide/issues)
+- [MOVE & RENAME PAGE] Review Pull Requests
+  - Current page: [Reviewing Pull Requests](https://eslint.org/docs/latest/maintainer-guide/pullrequests)
+- [MOVE & RENAME PAGE] Manage Releases
+  - Current page: [Managing Releases](https://eslint.org/docs/latest/maintainer-guide/releases)
 
 ### New Sidebar (summary)
 
@@ -196,10 +198,9 @@ With the above changes, the left-hand side navigation will look like:
   - Architecture
   - Set up a Development Environment
   - Run the Tests
-  - Project Management
-    - Manage Issues
-    - Review Pull Requests
-    - Manage Releases
+  - Manage Issues
+  - Review Pull Requests
+  - Manage Releases
 
 ### HTTP Redirects
 
@@ -290,7 +291,9 @@ HTTP redirects from existing content URL paths to the new content URL paths must
 1. Is there a way to automatically change all the internal links that'll be broken by these updates?
    - A: [No (link with explanation)](https://github.com/eslint/rfcs/pull/97#discussion_r1003895871)
 1. Can you create a side navigation folder that is not also a page?
+   - A: [No (link with explanation)](https://github.com/eslint/rfcs/pull/97#discussion_r1003896032)
 1. How to make section landing pages navigable from the side table of contents? (For example, the proposed page "Use ESLint in Your Project landing page")
+   - [Cannot for top level landing pages for design decision reasons (link with explanation)](https://github.com/eslint/rfcs/pull/97#discussion_r1007459580)
 
 <!--
     This section is optional, but is suggested for a first draft.
