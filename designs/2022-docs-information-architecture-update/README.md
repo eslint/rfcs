@@ -124,11 +124,11 @@ New top-level section of the docs based on the [Contributing](https://eslint.org
   - Current page: [Change Requests](https://eslint.org/docs/latest/developer-guide/contributing/changes)
 - [MOVE & RENAME PAGE] Work on Issues
   - Current page: [Working on Issues](https://eslint.org/docs/latest/developer-guide/contributing/working-on-issues)
+- [MOVE & RENAME PAGE] Submit a Pull Request
+  - Current page: [Pull Requests](https://eslint.org/docs/latest/developer-guide/contributing/pull-requests)
 - [NEW PAGE] Report Security Vulnerabilities
   - Tales current content from the [Reporting a Security Vulnerability section on the Contributing page](https://eslint.org/docs/latest/developer-guide/contributing/#reporting-a-security-vulnerability). Worth breaking out into its own page for discoverability and SEO for an important subject.
   - NOTE: Should be added, but not part of the initial IA project. Probably can be done as a one-off task or group in with one of the project phases.
-- [MOVE & RENAME PAGE] Submit a Pull Request
-  - Current page: [Pull Requests](https://eslint.org/docs/latest/developer-guide/contributing/pull-requests)
 - [MOVE PAGE] Governance
   - Current page: [Governance](https://eslint.org/docs/latest/maintainer-guide/governance)
 
@@ -191,8 +191,8 @@ With the above changes, the left-hand side navigation will look like:
   - Propose a Rule Change
   - Request a Change
   - Work on Issues
-  - Report Security Vulnerabilities
   - Submit a Pull Request
+  - Report Security Vulnerabilities
   - Governance
 - Maintain ESLint (landing page)
   - Architecture
