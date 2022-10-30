@@ -95,6 +95,7 @@ The newly proposed information architecture should consist of the following sect
   - Add overview-style content at the top of the page explaining that this page explains how to bundle together the various parts of a plugin, and then publish it.
 - [RENAME PAGE] Custom Rules
   - Current page: [Working with Rules](https://eslint.org/docs/latest/developer-guide/working-with-rules)
+  - NOTE: As fast follow, move some of the contents of this page focused on creating a core rule to the "Contribute to ESLint" section. Exact details TBD.
 - [RENAME PAGE] Custom Formatters
   - Current page: [Working with Custom Formatters](https://eslint.org/docs/latest/developer-guide/working-with-custom-formatters)
 - [RENAME PAGE] Custom Parsers
