@@ -122,6 +122,12 @@ New top-level section of the docs based on the [Contributing](https://eslint.org
   - Current page: [Proposing a Rule Change](https://eslint.org/docs/latest/developer-guide/contributing/#:~:text=Proposing%20a-,Rule%20Change,-Want%20to%20make)
 - [MOVE & RENAME PAGE] Request a Change
   - Current page: [Change Requests](https://eslint.org/docs/latest/developer-guide/contributing/changes)
+- [MOVE & RENAME PAGE] Manage Issues
+  - Current page: [Managing Issues](https://eslint.org/docs/latest/maintainer-guide/issues)
+- [MOVE & RENAME PAGE] Review Pull Requests
+  - Current page: [Reviewing Pull Requests](https://eslint.org/docs/latest/maintainer-guide/pullrequests)
+- [MOVE & RENAME PAGE] Manage Releases
+  - Current page: [Managing Releases](https://eslint.org/docs/latest/maintainer-guide/releases)
 - [MOVE & RENAME PAGE] Work on Issues
   - Current page: [Working on Issues](https://eslint.org/docs/latest/developer-guide/contributing/working-on-issues)
 - [MOVE & RENAME PAGE] Submit a Pull Request
@@ -152,12 +158,6 @@ New top-level section of the docs based on the [Contributing](https://eslint.org
   - NOTE: Maybe should be added, but not part of the initial IA project.
 - [MOVE PAGE] Run the Tests
   - Current page: [Unit Tests](https://eslint.org/docs/latest/developer-guide/unit-tests)
-- [MOVE & RENAME PAGE] Manage Issues
-  - Current page: [Managing Issues](https://eslint.org/docs/latest/maintainer-guide/issues)
-- [MOVE & RENAME PAGE] Review Pull Requests
-  - Current page: [Reviewing Pull Requests](https://eslint.org/docs/latest/maintainer-guide/pullrequests)
-- [MOVE & RENAME PAGE] Manage Releases
-  - Current page: [Managing Releases](https://eslint.org/docs/latest/maintainer-guide/releases)
 
 ### New Sidebar (summary)
 
@@ -190,14 +190,14 @@ With the above changes, the left-hand side navigation will look like:
   - Propose a New Rule
   - Propose a Rule Change
   - Request a Change
+  - Architecture
+  - Set up a Development Environment
+  - Run the Tests
   - Work on Issues
   - Submit a Pull Request
   - Report Security Vulnerabilities
   - Governance
 - Maintain ESLint (landing page)
-  - Architecture
-  - Set up a Development Environment
-  - Run the Tests
   - Manage Issues
   - Review Pull Requests
   - Manage Releases
@@ -222,10 +222,10 @@ The proposed changes would include the following HTTP redirects from current con
 | <https://eslint.org/docs/latest/user-guide/integrations> | <https://eslint.org/docs/latest/users/integrations> |
 | <https://eslint.org/docs/latest/user-guide/migrating-to-8.0.0> | <https://eslint.org/docs/latest/user/migrate-to-8.0.0> |
 | <https://eslint.org/docs/latest/user-guide/**> (any other pages not in sidebar) | <https://eslint.org/docs/latest/users/> |
-| <https://eslint.org/docs/latest/developer-guide/architecture/> | <https://eslint.org/docs/latest/maintain/architecture/> |
-| <https://eslint.org/docs/latest/developer-guide/source-code> |  <https://eslint.org/docs/latest/maintain/development-environment> |
-| <https://eslint.org/docs/latest/developer-guide/development-environment> |  <https://eslint.org/docs/latest/maintain/development-environment> |
-| <https://eslint.org/docs/latest/developer-guide/unit-tests> | <https://eslint.org/docs/latest/maintain/tests> |
+| <https://eslint.org/docs/latest/developer-guide/architecture/> | <https://eslint.org/docs/latest/contribute/architecture/> |
+| <https://eslint.org/docs/latest/developer-guide/source-code> |  <https://eslint.org/docs/latest/contribute/development-environment> |
+| <https://eslint.org/docs/latest/developer-guide/development-environment> |  <https://eslint.org/docs/latest/contribute/development-environment> |
+| <https://eslint.org/docs/latest/developer-guide/unit-tests> | <https://eslint.org/docs/latest/contribute/tests> |
 | <https://eslint.org/docs/latest/extend/working-with-rules> | <https://eslint.org/docs/latest/extend/custom-rules> |
 | <https://eslint.org/docs/latest/developer-guide/working-with-plugins> | <https://eslint.org/docs/latest/extend/plugins> |
 | <https://eslint.org/docs/latest/developer-guide/working-with-custom-formatters> | <https://eslint.org/docs/latest/extend/custom-formatters> |
