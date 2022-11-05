@@ -123,12 +123,15 @@ New top-level section of the docs based on the [Contributing](https://eslint.org
   - Current page: [Proposing a Rule Change](https://eslint.org/docs/latest/developer-guide/contributing/#:~:text=Proposing%20a-,Rule%20Change,-Want%20to%20make)
 - [MOVE & RENAME PAGE] Request a Change
   - Current page: [Change Requests](https://eslint.org/docs/latest/developer-guide/contributing/changes)
-- [MOVE & RENAME PAGE] Manage Issues
-  - Current page: [Managing Issues](https://eslint.org/docs/latest/maintainer-guide/issues)
-- [MOVE & RENAME PAGE] Review Pull Requests
-  - Current page: [Reviewing Pull Requests](https://eslint.org/docs/latest/maintainer-guide/pullrequests)
-- [MOVE & RENAME PAGE] Manage Releases
-  - Current page: [Managing Releases](https://eslint.org/docs/latest/maintainer-guide/releases)
+- [MOVE PAGE] Architecture
+  - Current page: [Architecture](https://eslint.org/docs/latest/developer-guide/architecture/)
+  - Note: in a previous conversation with Nicholas, he mentioned to me that this page is pretty out-of date.
+  - There should probably be a future unit of work to refactor this page.
+  - However, it’s not included in the information architecture updates.
+- [MOVE & REFACTOR PAGE] Set up Development Environment
+  - Consolidate the pages [Getting the Source Code](https://eslint.org/docs/latest/developer-guide/source-code) and [Set up a Development Environment](https://eslint.org/docs/latest/developer-guide/development-environment)
+  - Getting the source code is basically just a step in the process of setting up the development environment. Therefore, these two pages should be consolidated
+  - Also the Directory Structure section on the [Getting the Source Code](https://eslint.org/docs/latest/developer-guide/source-code#directory-structure) page should be moved toward the bottom of the new Set up a Development Environment page.
 - [MOVE & RENAME PAGE] Work on Issues
   - Current page: [Working on Issues](https://eslint.org/docs/latest/developer-guide/contributing/working-on-issues)
 - [MOVE & RENAME PAGE] Submit a Pull Request
@@ -144,15 +147,12 @@ New top-level section of the docs based on the [Contributing](https://eslint.org
 - [NO CHANGE] Maintain ESLint section landing page
   - Current page: [Maintainer Guide](https://eslint.org/docs/latest/maintainer-guide)
   - Hidden in sidebar
-- [MOVE PAGE] Architecture
-  - Current page: [Architecture](https://eslint.org/docs/latest/developer-guide/architecture/)
-  - Note: in a previous conversation with Nicholas, he mentioned to me that this page is pretty out-of date.
-  - There should probably be a future unit of work to refactor this page.
-  - However, it’s not included in the information architecture updates.
-- [MOVE & REFACTOR PAGE] Set up Development Environment
-  - Consolidate the pages [Getting the Source Code](https://eslint.org/docs/latest/developer-guide/source-code) and [Set up a Development Environment](https://eslint.org/docs/latest/developer-guide/development-environment)
-  - Getting the source code is basically just a step in the process of setting up the development environment. Therefore, these two pages should be consolidated
-  - Also the Directory Structure section on the [Getting the Source Code](https://eslint.org/docs/latest/developer-guide/source-code#directory-structure) page should be moved toward the bottom of the new Set up a Development Environment page.
+- [MOVE & RENAME PAGE] Manage Issues
+  - Current page: [Managing Issues](https://eslint.org/docs/latest/maintainer-guide/issues)
+- [MOVE & RENAME PAGE] Review Pull Requests
+  - Current page: [Reviewing Pull Requests](https://eslint.org/docs/latest/maintainer-guide/pullrequests)
+- [MOVE & RENAME PAGE] Manage Releases
+  - Current page: [Managing Releases](https://eslint.org/docs/latest/maintainer-guide/releases)
 - [NEW PAGE(S)] Any other technical pages for maintainers
   - I don’t have any thoughts on what these should be right now. I would defer to the core maintainers on what they think other maintainers should know.
   - I think that these additional technical pages would make sense to include in **Phase 5: “Maintain ESLint” documentation updates**of [the documentation update project](https://github.com/eslint/eslint/issues/16365).
