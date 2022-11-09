@@ -136,8 +136,10 @@ New top-level section of the docs based on the [Contributing](https://eslint.org
   - Current page: [Working on Issues](https://eslint.org/docs/latest/developer-guide/contributing/working-on-issues)
 - [MOVE & RENAME PAGE] Submit a Pull Request
   - Current page: [Pull Requests](https://eslint.org/docs/latest/developer-guide/contributing/pull-requests)
+- [NEW PAGE] Code of Conduct
+  - Takes current content from the [Read the Code of Conduct section on the Contributing page](https://eslint.org/docs/latest/developer-guide/contributing/#read-the-code-of-conduct). Worth breaking out into its own page so content not only on the hidden landing page.
 - [NEW PAGE] Report Security Vulnerabilities
-  - Tales current content from the [Reporting a Security Vulnerability section on the Contributing page](https://eslint.org/docs/latest/developer-guide/contributing/#reporting-a-security-vulnerability). Worth breaking out into its own page for discoverability and SEO for an important subject.
+  - Takes current content from the [Reporting a Security Vulnerability section on the Contributing page](https://eslint.org/docs/latest/developer-guide/contributing/#reporting-a-security-vulnerability). Worth breaking out into its own page so that content not only on the hidden landing page and for discoverability and SEO for an important subject.
   - NOTE: Should be added, but not part of the initial IA project. Probably can be done as a one-off task or group in with one of the project phases.
 - [MOVE PAGE] Governance
   - Current page: [Governance](https://eslint.org/docs/latest/maintainer-guide/governance)
@@ -196,6 +198,7 @@ With the above changes, the left-hand side navigation will look like:
   - Run the Tests
   - Work on Issues
   - Submit a Pull Request
+  - Code of Conduct
   - Report Security Vulnerabilities
   - Governance
 - Maintain ESLint (landing page)
