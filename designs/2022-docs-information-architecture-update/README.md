@@ -134,8 +134,10 @@ New top-level section of the docs based on the [Contributing](https://eslint.org
   - Also the Directory Structure section on the [Getting the Source Code](https://eslint.org/docs/latest/developer-guide/source-code#directory-structure) page should be moved toward the bottom of the new Set up a Development Environment page.
 - [MOVE & RENAME PAGE] Work on Issues
   - Current page: [Working on Issues](https://eslint.org/docs/latest/developer-guide/contributing/working-on-issues)
-- [MOVE & RENAME PAGE] Submit a Pull Request
+- [MOVE, EXPAND & RENAME PAGE] Submit a Pull Request
   - Current page: [Pull Requests](https://eslint.org/docs/latest/developer-guide/contributing/pull-requests)
+  - Add the content from [Signing the CLA section](https://eslint.org/docs/latest/developer-guide/contributing/#signing-the-cla) from the Contributing overview page.
+  Expand the content in [Step 7: send the pull request](https://eslint.org/docs/latest/developer-guide/contributing/#signing-the-cla) with this content.
 - [NEW PAGE] Code of Conduct
   - Takes current content from the [Read the Code of Conduct section on the Contributing page](https://eslint.org/docs/latest/developer-guide/contributing/#read-the-code-of-conduct). Worth breaking out into its own page so content not only on the hidden landing page.
 - [NEW PAGE] Report Security Vulnerabilities
