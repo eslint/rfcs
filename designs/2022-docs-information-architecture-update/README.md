@@ -335,7 +335,8 @@ This outline proposes renaming various titles to use active verb phrases instead
 
 ### Will This Information Architecture Update Include Creating New Content?
 
-No. Additional content is to be created in Phases 3+ of the [documentation update project](https://github.com/eslint/eslint/issues/16365).
+No. Additional content is to be created in Phases 3+ of the [documentation update project](https://github.com/eslint/eslint/issues/16365). This includes documentation for the [newly proposed "Integrator" persona](https://github.com/eslint/rfcs/pull/97#discussion_r1012138932),
+to be completed in phase 6 of the documentation update project.
 
 <!--
     This section is optional but suggested.
