@@ -63,7 +63,7 @@ The newly proposed information architecture should consist of the following sect
     - [RENAME PAGE] Configuring Language Options -> Configure Language Options
     - [RENAME PAGE] Configuring Rules -> Configure Rules
     - [RENAME PAGE] Configuring Plugins -> Configure Plugins
-    - [RENAME PAGE] Ignoring Rules -> Ignore Rules
+    - [RENAME PAGE] Ignoring Code -> Ignore Code
   - Do not change the “Configuring” page and its children pages. Nicholas mentioned that there’s some major revamping to how configuration files work in ESLint, so let’s leave this subsection alone for now.
 - [RENAME PAGE] Command Line Interface Reference
   - Current page: [Command Line Interface](https://eslint.org/docs/latest/user-guide/command-line-interface)
@@ -137,7 +137,7 @@ New top-level section of the docs based on the [Contributing](https://eslint.org
 - [MOVE, EXPAND & RENAME PAGE] Submit a Pull Request
   - Current page: [Pull Requests](https://eslint.org/docs/latest/developer-guide/contributing/pull-requests)
   - Add the content from [Signing the CLA section](https://eslint.org/docs/latest/developer-guide/contributing/#signing-the-cla) from the Contributing overview page.
-  Expand the content in [Step 7: send the pull request](https://eslint.org/docs/latest/developer-guide/contributing/#signing-the-cla) with this content.
+  Expand the content in [Step 7: send the pull request](https://eslint.org/docs/latest/developer-guide/contributing/pull-requests#step-7-send-the-pull-request) with this content.
 - [NEW PAGE] Code of Conduct
   - Takes current content from the [Read the Code of Conduct section on the Contributing page](https://eslint.org/docs/latest/developer-guide/contributing/#read-the-code-of-conduct). Worth breaking out into its own page so content not only on the hidden landing page.
 - [NEW PAGE] Report Security Vulnerabilities
@@ -180,6 +180,7 @@ With the above changes, the left-hand side navigation will look like:
     - Ignore Code
   - Command Line Interface Reference
   - Rules Reference
+  - Formatters Reference
   - Integrations
   - Migrate to v8.x
 - Extend ESLint (landing page)
