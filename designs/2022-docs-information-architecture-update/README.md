@@ -115,6 +115,8 @@ New top-level section of the docs based on the [Contributing](https://eslint.org
 - [MOVE & RENAME PAGE] Community Contributions section landing page
   - Current page: [Contributing](https://eslint.org/docs/latest/developer-guide/contributing/)
   - Hidden in sidebar
+- [NEW PAGE] Code of Conduct
+  - Takes current content from the [Read the Code of Conduct section on the Contributing page](https://eslint.org/docs/latest/developer-guide/contributing/#read-the-code-of-conduct). Worth breaking out into its own page so content not only on the hidden landing page.
 - [MOVE & RENAME PAGE] Report Bugs
   - Current page: [Bug Reporting](https://eslint.org/docs/latest/developer-guide/contributing/reporting-bugs)
 - [MOVE & RENAME PAGE] Propose a New Rule
@@ -138,8 +140,6 @@ New top-level section of the docs based on the [Contributing](https://eslint.org
   - Current page: [Pull Requests](https://eslint.org/docs/latest/developer-guide/contributing/pull-requests)
   - Add the content from [Signing the CLA section](https://eslint.org/docs/latest/developer-guide/contributing/#signing-the-cla) from the Contributing overview page.
   Expand the content in [Step 7: send the pull request](https://eslint.org/docs/latest/developer-guide/contributing/pull-requests#step-7-send-the-pull-request) with this content.
-- [NEW PAGE] Code of Conduct
-  - Takes current content from the [Read the Code of Conduct section on the Contributing page](https://eslint.org/docs/latest/developer-guide/contributing/#read-the-code-of-conduct). Worth breaking out into its own page so content not only on the hidden landing page.
 - [NEW PAGE] Report Security Vulnerabilities
   - Takes current content from the [Reporting a Security Vulnerability section on the Contributing page](https://eslint.org/docs/latest/developer-guide/contributing/#reporting-a-security-vulnerability). Worth breaking out into its own page so that content not only on the hidden landing page and for discoverability and SEO for an important subject.
   - NOTE: Should be added, but not part of the initial IA project. Probably can be done as a one-off task or group in with one of the project phases.
@@ -192,6 +192,7 @@ With the above changes, the left-hand side navigation will look like:
   - Share Configurations
   - Node.js API Reference
 - Contribute to ESLint (landing page)
+  - Code of Conduct
   - Report Bugs
   - Propose a New Rule
   - Propose a Rule Change
@@ -201,7 +202,6 @@ With the above changes, the left-hand side navigation will look like:
   - Run the Tests
   - Work on Issues
   - Submit a Pull Request
-  - Code of Conduct
   - Report Security Vulnerabilities
   - Governance
 - Maintain ESLint (landing page)
