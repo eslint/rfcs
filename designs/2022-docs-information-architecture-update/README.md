@@ -215,20 +215,20 @@ The proposed changes would include the following HTTP redirects from current con
 
 | Current URL | Proposed URL |
 | :---: | :---: |
-| <https://eslint.org/docs/latest/users/> | <https://eslint.org/docs/latest/users/> |
-| <https://eslint.org/docs/latest/users/core-concepts> | <https://eslint.org/docs/latest/users/core-concepts> |
-| <https://eslint.org/docs/latest/user-guide/configuring/> | <https://eslint.org/docs/latest/user/configuring/> |
-| <https://eslint.org/docs/latest/user-guide/configuring/configuration-files-new> | <https://eslint.org/docs/latest/user/configure/configuration-files-new> |
-| <https://eslint.org/docs/latest/user-guide/configuring/configuration-files> | <https://eslint.org/docs/latest/users/configure/configuration-files> |
-| <https://eslint.org/docs/latest/user-guide/configuring/language-options> | <https://eslint.org/docs/latest/users/configure/language-options> |
-| <https://eslint.org/docs/latest/user-guide/configuring/rules> | <https://eslint.org/docs/latest/users/configure/rules> |
-| <https://eslint.org/docs/latest/user-guide/configuring/plugins> | <https://eslint.org/docs/latest/users/configure/plugins> |
-| <https://eslint.org/docs/latest/user-guide/configuring/ignoring-code> | <https://eslint.org/docs/latest/users/configure/ignore> |
-| <https://eslint.org/docs/latest/user-guide/command-line-interface> | <https://eslint.org/docs/latest/users/command-line-interface> |
-| <https://eslint.org/docs/latest/user-guide/formatters/> | <https://eslint.org/docs/latest/users/formatters/> |
-| <https://eslint.org/docs/latest/user-guide/integrations> | <https://eslint.org/docs/latest/users/integrations> |
-| <https://eslint.org/docs/latest/user-guide/migrating-to-8.0.0> | <https://eslint.org/docs/latest/user/migrate-to-8.0.0> |
-| <https://eslint.org/docs/latest/user-guide/**> (any other pages not in sidebar) | <https://eslint.org/docs/latest/users/> |
+| <https://eslint.org/docs/latest/user-guide/> | <https://eslint.org/docs/latest/use/core-concepts> |
+| <https://eslint.org/docs/latest/user-guide/core-concepts> | <https://eslint.org/docs/latest/use/core-concepts> |
+| <https://eslint.org/docs/latest/user-guide/configuring/> | <https://eslint.org/docs/latest/use/configure/> |
+| <https://eslint.org/docs/latest/user-guide/configuring/configuration-files-new> | <https://eslint.org/docs/latest/use/configure/configuration-files-new> |
+| <https://eslint.org/docs/latest/user-guide/configuring/configuration-files> | <https://eslint.org/docs/latest/use/configure/configuration-files> |
+| <https://eslint.org/docs/latest/user-guide/configuring/language-options> | <https://eslint.org/docs/latest/use/configure/language-options> |
+| <https://eslint.org/docs/latest/user-guide/configuring/rules> | <https://eslint.org/docs/latest/use/configure/rules> |
+| <https://eslint.org/docs/latest/user-guide/configuring/plugins> | <https://eslint.org/docs/latest/use/configure/plugins> |
+| <https://eslint.org/docs/latest/user-guide/configuring/ignoring-code> | <https://eslint.org/docs/latest/use/configure/ignore> |
+| <https://eslint.org/docs/latest/user-guide/command-line-interface> | <https://eslint.org/docs/latest/use/command-line-interface> |
+| <https://eslint.org/docs/latest/user-guide/formatters/> | <https://eslint.org/docs/latest/use/formatters/> |
+| <https://eslint.org/docs/latest/user-guide/integrations> | <https://eslint.org/docs/latest/use/integrations> |
+| <https://eslint.org/docs/latest/user-guide/migrating-to-8.0.0> | <https://eslint.org/docs/latest/use/migrate-to-8.0.0> |
+| <https://eslint.org/docs/latest/user-guide/**> (any other pages not in sidebar) | <https://eslint.org/docs/latest/use/**> |
 | <https://eslint.org/docs/latest/developer-guide/architecture/> | <https://eslint.org/docs/latest/contribute/architecture/> |
 | <https://eslint.org/docs/latest/developer-guide/source-code> |  <https://eslint.org/docs/latest/contribute/development-environment> |
 | <https://eslint.org/docs/latest/developer-guide/development-environment> |  <https://eslint.org/docs/latest/contribute/development-environment> |
