@@ -13,8 +13,8 @@ On a high level, the proposed IA breaks the content into the following sections:
 
 - Use ESLint in Your Project: A refactor of the current [User Guide](https://eslint.org/docs/latest/user-guide/)
 - Extend ESLint: A refactor of the current [Developer Guide](https://eslint.org/docs/latest/developer-guide/), with some content moved to the section Maintain ESLint and Community Contributions
-- Maintain ESLint: Expansion of current [Maintainer Guide](https://eslint.org/docs/latest/maintainer-guide/), with some content taken from the current ‘Developer Guide’.
-- Community Contributions: Expansion of the current [Contributing section](https://eslint.org/docs/latest/developer-guide/contributing/) of the Developer Guide.
+- Maintain ESLint: Expansion of current [Maintainer Guide](https://eslint.org/docs/latest/maintainer-guide/), with some content taken from the current Developer Guide.
+- Contribute to ESLint: Expansion of the current [Contributing section](https://eslint.org/docs/latest/developer-guide/contributing/) of the Developer Guide.
 
 ## Motivation
 
@@ -24,9 +24,9 @@ These personas are:
 
 - **The User**: Someone who wants to use ESLint as it currently exists, including plugins. The proposed 'Use ESLint in Your Project' section addresses this persona's needs.
 - **The Extender**: Someone who wants to extend the functionality of ESLint by creating a plugin, custom formatter, custom parser, sharable configuration, etc. The proposed 'Extend ESLint' section addresses this persona's needs.
-- **The Maintainer**: Someone who wants to contribute to the core ESLint project. The proposed 'Maintain ESLint' section addresses this persona's needs.
 - **The Community Contributor**: Someone who wants to make a small change to the core ESLint project, add a small change to the docs, or raise a Github issue. The proposed 'Community Contributions' section addresses this persona's needs.
   - Note: We haven't previously talked about this persona. However, after reading through   all the docs and considering the ESLint ecosystem, I think it makes sense to break this out as a separate persona.
+- **The Maintainer**: Someone who wants to maintain to the core ESLint project. The proposed 'Maintain ESLint' section addresses this persona's needs.
 
 While making broad IA changes to reorient the documentation around these personas, I also propose smaller, more cosmetic changes to the documentation website's IA to better align it with technical documentation best practices, like making page titles verb phrases and avoiding gerunds.
 
@@ -52,7 +52,7 @@ The newly proposed information architecture should consist of the following sect
   - Hidden in sidebar
 - [NO CHANGE] Getting Started
   - Current page: [Getting Started](https://eslint.org/docs/latest/user-guide/getting-started)
-  - NOTE: I think there’s further work that can be done to improve the getting started experience, but do not want to touch the subject as part of the information architecture changes project. Investigate further in **Phase 3: “Use ESLint in Your Project” documentation update** of the documentation update project.
+  - NOTE: I think there’s further work that can be done to improve the getting started experience, but do not want to touch the subject as part of the information architecture changes project. Investigate further in **Phase 3: "Use ESLint in Your Project" documentation update** of the documentation update project.
 - [NO CHANGE] Core Concepts
   - Current page: [Core Concepts](https://eslint.org/docs/latest/user-guide/core-concepts)
 - [RENAME PAGE] Configure
@@ -64,7 +64,7 @@ The newly proposed information architecture should consist of the following sect
     - [RENAME PAGE] Configuring Rules -> Configure Rules
     - [RENAME PAGE] Configuring Plugins -> Configure Plugins
     - [RENAME PAGE] Ignoring Code -> Ignore Code
-  - Do not change the “Configuring” page and its children pages. Nicholas mentioned that there’s some major revamping to how configuration files work in ESLint, so let’s leave this subsection alone for now.
+  - Do not change the "Configuring" page and its children pages. Nicholas mentioned that there’s some major revamping to how configuration files work in ESLint, so let’s leave this subsection alone for now.
 - [RENAME PAGE] Command Line Interface Reference
   - Current page: [Command Line Interface](https://eslint.org/docs/latest/user-guide/command-line-interface)
 - [RENAME PAGE] Rules Reference
@@ -88,10 +88,10 @@ The newly proposed information architecture should consist of the following sect
     - Create Custom Formatters
     - Create Custom Parsers
     - Shareable Configs
-  - NOTE: Should be added, but not part of the initial IA project. Add in **Phase 4: “Extend ESLint” documentation update** of the documentation update project.
+  - NOTE: Should be added, but not part of the initial IA project. Add in **Phase 4: "Extend ESLint" documentation update** of the documentation update project.
 - [RENAME & REFACTOR PAGE] Create Plugins
   - Current page: [Working with Plugins](https://eslint.org/docs/latest/developer-guide/working-with-plugins)
-  - As noted below, convert the “Processors in Plugins” section into separate page “Custom Processors
+  - As noted below, convert the "Processors in Plugins" section into separate page "Custom Processors
   - Add overview-style content at the top of the page explaining that this page explains how to bundle together the various parts of a plugin, and then publish it.
 - [RENAME PAGE] Custom Rules
   - Current page: [Working with Rules](https://eslint.org/docs/latest/developer-guide/working-with-rules)
@@ -100,7 +100,7 @@ The newly proposed information architecture should consist of the following sect
   - Current page: [Working with Custom Formatters](https://eslint.org/docs/latest/developer-guide/working-with-custom-formatters)
 - [RENAME PAGE] Custom Parsers
   - Current page: [Working with Custom Parsers](https://eslint.org/docs/latest/developer-guide/working-with-custom-parsers)
-  - Rename of “Working with Custom Parsers”
+  - Rename of "Working with Custom Parsers"
 - [NEW PAGE] Custom Processors
   - Take most of content from the section [Processors in Plugins section on Work with Plugins Page](https://eslint.org/docs/latest/developer-guide/working-with-plugins#processors-in-plugins)
 - [RENAME PAGE] Share Configurations
@@ -110,7 +110,7 @@ The newly proposed information architecture should consist of the following sect
 
 ### [NEW SECTION] Contribute to ESLint
 
-New top-level section of the docs based on the [Contributing](https://eslint.org/docs/latest/developer-guide/contributing/) section. Breaking this out as a separate section because I think the “casual community contributor” is a fairly separate persona from the “extender” and “maintainer”, so it should be treated as such in the information architecture.
+New top-level section of the docs based on the [Contributing](https://eslint.org/docs/latest/developer-guide/contributing/) section. Breaking this out as a separate section because I think the "casual community contributor" is a fairly separate persona from the "extender" and "maintainer", so it should be treated as such in the information architecture.
 
 - [MOVE & RENAME PAGE] Community Contributions section landing page
   - Current page: [Contributing](https://eslint.org/docs/latest/developer-guide/contributing/)
@@ -132,7 +132,7 @@ New top-level section of the docs based on the [Contributing](https://eslint.org
   - However, it’s not included in the information architecture updates.
 - [MOVE & REFACTOR PAGE] Set up Development Environment
   - Consolidate the pages [Getting the Source Code](https://eslint.org/docs/latest/developer-guide/source-code) and [Set up a Development Environment](https://eslint.org/docs/latest/developer-guide/development-environment)
-  - Getting the source code is basically just a step in the process of setting up the development environment. Therefore, these two pages should be consolidated
+  - Getting the source code is basically just a step in the process of setting up the development environment. Therefore, these two pages should be consolidated.
   - Also the Directory Structure section on the [Getting the Source Code](https://eslint.org/docs/latest/developer-guide/source-code#directory-structure) page should be moved toward the bottom of the new Set up a Development Environment page.
 - [MOVE & RENAME PAGE] Work on Issues
   - Current page: [Working on Issues](https://eslint.org/docs/latest/developer-guide/contributing/working-on-issues)
@@ -159,8 +159,7 @@ New top-level section of the docs based on the [Contributing](https://eslint.org
   - Current page: [Managing Releases](https://eslint.org/docs/latest/maintainer-guide/releases)
 - [NEW PAGE(S)] Any other technical pages for maintainers
   - I don’t have any thoughts on what these should be right now. I would defer to the core maintainers on what they think other maintainers should know.
-  - I think that these additional technical pages would make sense to include in **Phase 5: “Maintain ESLint” documentation updates**of [the documentation update project](https://github.com/eslint/eslint/issues/16365).
-  - NOTE: Maybe should be added, but not part of the initial IA project.
+  - I think that these additional technical pages would make sense to include in **Phase 5: "Maintain ESLint" documentation updates**of [the documentation update project](https://github.com/eslint/eslint/issues/16365).
 - [MOVE PAGE] Run the Tests
   - Current page: [Unit Tests](https://eslint.org/docs/latest/developer-guide/unit-tests)
 
@@ -332,7 +331,7 @@ I would likely need help with the following tasks:
 
 ### Why Rename Pages with Active Verb Phrases?
 
-This outline proposes renaming various titles to use active verb phrases instead of the current gerund-based page name structure (ex. changing a page title from “Managing Issues” → “Manage Issues”). This is following a general technical writing best practice of avoiding gerunds in titles. For more information, refer to [this blog post about the subject](https://www.google.com/url?q=https://www.writethedocs.org/blog/newsletter-october-2022/%23gerunds-in-headings&sa=D&source=docs&ust=1665539063991039&usg=AOvVaw2HTT7RUQYPCcUenwVv0-Zt).
+This outline proposes renaming various titles to use active verb phrases instead of the current gerund-based page name structure (ex. changing a page title from "Managing Issues" → "Manage Issues"). This is following a general technical writing best practice of avoiding gerunds in titles. For more information, refer to [this blog post about the subject](https://www.google.com/url?q=https://www.writethedocs.org/blog/newsletter-october-2022/%23gerunds-in-headings&sa=D&source=docs&ust=1665539063991039&usg=AOvVaw2HTT7RUQYPCcUenwVv0-Zt).
 
 ### Will This Information Architecture Update Include Creating New Content?
 
