@@ -20,7 +20,7 @@ jobs:
 
   tweetMerge:
     runs-on: ubuntu-latest
-    if: github.event.action == 'closed' && github.event.pull_request.merged
+    if: github.event.action == 'closed' && github.event.pull_request.merged && contains(github.event.pull_request.labels.*.name, 'Final Commenting')
     steps:
       - uses: actions/setup-node@v3
         with:
