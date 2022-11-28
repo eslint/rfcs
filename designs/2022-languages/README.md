@@ -3,7 +3,7 @@
 - RFC PR: (leave this empty, to be filled in later)
 - Authors: Nicholas C. Zakas
 
-# ESLint Language Plugins
+# ESLint X Language Plugins
 
 ## Summary
 
@@ -110,7 +110,7 @@ interface ESLintLanguage {
     /**
      * Creates SourceCode object that ESLint uses to work with a file.
      */
-    createSourceCode(input: ParseResult, env: LanguageContext): SourceCode | Promise<SourceCode>;
+    createSourceCode(file: File, input: ParseResult, env: LanguageContext): SourceCode | Promise<SourceCode>;
 
 }
 
@@ -121,7 +121,29 @@ interface LanguageOptions {
 }
 
 interface File {
+
+    /**
+     * The path that ESLint uses for this file. May be a virtual path
+     * if it was returned by a processor.
+     */
     path: string;
+
+    /**
+     * The path to the file on disk. This always maps directly to a file
+     * regardless of whether it was returned from a processor.
+     */
+    physicalPath: string;
+
+    /**
+     * Indicates if the original source contained a byte-order marker.
+     * ESLint strips the BOM from the `body`, but this info is needed
+     * to correctly apply autofixing.
+     */
+    bom: boolean;
+
+    /**
+     * The body of the file to parse.
+     */
     body: string | ArrayBuffer
 }
 
@@ -142,10 +164,9 @@ At a high-level, ESLint uses the methods on a language object in the following w
 * After reading a file, ESLint passes the file information to `parse()` to create a raw parse result.
 * The raw parse result is then passed into `createSourceCode()` to create the `SourceCode` object that ESLint will use to interact with the code.
 
-
 ### The `validateOptions()` Method
 
-The intent of this method is to validate the `languageOptions` object as specified in a config. With flat config, all of the options in `languageOptions` are related to JavaScript and are currently validated [inside of `FlatConfigArray`](https://github.com/eslint/eslint/blob/f89403553b31d24f4fc841424cc7dcb8c3ef689f/lib/config/flat-config-array.js#L180). With this proposal, that validation will instead need to be based on the `language` specified in the config, which will require retrieving the associated language object and calling the `validateOptions()` method.
+The intent of this method is to validate the `languageOptions` object as specified in a config. With flat config, all of the options in `languageOptions` are related to JavaScript and are currently validated [inside of the schema](https://github.com/eslint/eslint/blob/6380c87c563be5dc78ce0ddd5c7409aaf71692bb/lib/config/flat-config-schema.js#L445). With this proposal, that validation will instead need to be based on the `language` specified in the config, which will require retrieving the associated language object and calling the `validateOptions()` method [inside of `FlatConfigArray`](https://github.com/eslint/eslint/blob/f89403553b31d24f4fc841424cc7dcb8c3ef689f/lib/config/flat-config-array.js#L180).
 
 The `validateOptions()` method must throw an error if any part of the `languageOptions` object is invalid.
 
@@ -157,11 +178,17 @@ The `parse()` method receives the file information and information about the ESL
 
 The `parse()` method is expected to return an object with at least `ast` and `body` properties; the object may also have other properties as necessary for the language to properly create a `SourceCode` object later. The return value from `parse()` is passed directly into `createSourceCode()`.
 
+This method will be called [inside of `Linter`](https://github.com/eslint/eslint/blob/28d190264017dbaa29f2ab218f73b623143cd1af/lib/linter/linter.js#L805) and will require that the language object be passed into the private `parse()` function.
+
 **Async:** For use with current ESLint, `parse()` must be synchronous; ESLint X will allow this method to be asynchronous.
 
 #### The `createSourceCode()` Method
 
-The `createSourceCode()` method is intended to create an instance of `SourceCode` suitable for ESLint and rule developers to use to work with the file. As such, it may perform postprocessing of a parse result in order to get it into a format that is easier to use. 
+The `createSourceCode()` method is intended to create an instance of `SourceCode` suitable for ESLint and rule developers to use to work with the file. As such, it may perform postprocessing of a parse result in order to get it into a format that is easier to use.
+
+This method will be called [inside of `Linter`](https://github.com/eslint/eslint/blob/28d190264017dbaa29f2ab218f73b623143cd1af/lib/linter/linter.js#L828) and will require that the language object be passed into the private `parse()` function.
+
+**Async:** For use with current ESLint, `createSourceCode()` must be synchronous; ESLint X will allow this method to be asynchronous.
 
 ### The `SourceCode` Object
 
@@ -181,25 +208,164 @@ interface SourceCode {
     body: string | ArrayBuffer;
 
     /**
-     * Traversal of AST.
-     */
-    traverse(): Iterable<TraversalStep>;
-
-    /**
      * Determines if a node matches a given selector.
      */
     match(node: ASTNode, selector: string): boolean;
+
+    /**
+     * Traversal of AST.
+     */
+    traverse(): Iterable<TraversalStep>;
 }
 
-interface TraversalStep {
-    type: "call" | "visit";
-    target: string | ASTNode;
-    args: object;
+type TraversalStep = VisitTraversalStep | CallTraversalStep;
+
+interface VisitTraversalStep {
+    type: "visit";
+    target: ASTNode;
+    phase: "enter" | "exit";
+    args: Array<any>;
+}
+
+interface CallTraversalStep {
+    type: "call";
+    target: string;
+    phase: string | null | undefined;
+    args: Array<any>;
 }
 ```
 
-Other than these three members of the interface, languages define any additional methods or properties that they need to provide to rule developers. For instance, 
-the JavaScript `SourceCode` object currently has methods allowing retrieval of tokens, comments, and lines. It is up to the individual language object implementations to determine what additional properties and methods may be required inside of rules.
+Other than these interface members, languages may define any additional methods or properties that they need to provide to rule developers. For instance, 
+the JavaScript `SourceCode` object currently has methods allowing retrieval of tokens, comments, and lines. It is up to the individual language object implementations to determine what additional properties and methods may be required inside of rules. (We may want to provide some best practices for other methods, but they won't be required.)
+
+#### The `SourceCode#match()` Method
+
+ESLint currently uses [`esquery`](https://npmjs.com/package/esquery) to match visitor patterns to nodes. `esquery` is defined for use specifically with ESTree-compatible AST structures, which means that it cannot work for other structures without modification. We need a generic way to ensure that a given pattern in a visitor matches a given node, and that is the purpose of the `SourceCode#match()` method.
+
+For JavaScript, `SourceCode#match()` will simply use `esquery`; for other languages, they will be able to either implement their own CSS-query utilities or else just stick with node names to get started. (ESLint initially only matched the `type` property; `esquery` was added several years later.)
+
+We will need to update the [`NodeEventGenerator`](https://github.com/eslint/eslint/blob/90a5b6b4aeff7343783f85418c683f2c9901ab07/lib/linter/node-event-generator.js#L296) to use `SourceCode#match()` instead of `esquery`.
+
+#### The `SoureCode#traverse()` Method
+
+Today, ESLint uses a [custom traverser](https://github.com/eslint/eslint/blob/b3a08376cfb61275a7557d6d166b6116f36e5ac2/lib/shared/traverser.js) based on data from [`eslint-visitor-keys`](https://npmjs.com/package/eslint-visitor-keys). All of this is specific to an ESTree-compatible AST structure. There are two problems with this:
+
+1. We cannot traverse anything other than ESTree structures.
+1. Because this traversal is synchronous, rules must always be synchronous.
+
+The `SourceCode#traverse()` method solves these problems by allowing each `SourceCode` instance to specify the traversal order through an iterable. Returning an iterable means several things:
+
+1. The method can be a generator or just return an array. This gives maximum flexibility to language authors.
+1. The ESLint core can move step by step through the traversal, waiting for asynchronous calls to return before moving to the next node. This will ultimately enable async rules in ESLint X.
+1. It's possible to add method calls into the traversal, such as the current `onCodePathStart()` method for JavaScript, in a standard way that is available to other languages.
+1. If the `SourceCode` object ends up doing more than one traversal of the same AST (which is how ESLint currently work), it can cache the traversal steps in an array to reuse multiple times, saving compute time.
+
+As an example, the [current traversal](https://github.com/eslint/eslint/blob/b3a08376cfb61275a7557d6d166b6116f36e5ac2/lib/shared/traverser.js#L127) can be rewritten to look like this:
+
+```js
+class Traverser {
+
+    // methods skipped
+
+    *_traverse(node, parent) {
+        if (!isNode(node)) {
+            return;
+        }
+
+        this._current = node;
+        this._skipped = false;
+        yield {
+            type: "visit",
+            target: node,
+            phase: "enter",
+            args: [node, parent]
+        }
+
+        if (!this._skipped && !this._broken) {
+            const keys = getVisitorKeys(this._visitorKeys, node);
+
+            if (keys.length >= 1) {
+                this._parents.push(node);
+                for (let i = 0; i < keys.length && !this._broken; ++i) {
+                    const child = node[keys[i]];
+
+                    if (Array.isArray(child)) {
+                        for (let j = 0; j < child.length && !this._broken; ++j) {
+                            yield *this._traverse(child[j], node);
+                        }
+                    } else {
+                        yield *this._traverse(child, node);
+                    }
+                }
+                this._parents.pop();
+            }
+        }
+
+        if (!this._broken) {
+            yield {
+                type: "visit",
+                target: node,
+                phase: "exit",
+                args: [node, parent]
+            }
+        }
+
+        this._current = parent;
+    }
+
+}
+```
+
+Note that we use this data inside of [`NodeEventGenerator`](https://github.com/eslint/eslint/blob/90a5b6b4aeff7343783f85418c683f2c9901ab07/lib/linter/node-event-generator.js) to make the calls into the visitor objects.
+
+Using `SourceCode#traverse()`, we will be able to traverse an AST like this:
+
+```js
+// Example only -- not intended to be the final implementation
+for (const step of sourceCode.traverse()) {
+
+    switch (step.type) {
+
+        // visit a node
+        case "node": {
+            rules.forEach(rule => {
+                Object.keys(rule).forEach(key => {
+
+                    // match the selector
+                    if (sourceCode.match(step.target, key)) {
+
+                        // account for enter and exit phases
+                        if (key.endsWith(":exit")) {
+                            if (step.phase === "exit") {
+                                rule[key](...step.args)
+                            }
+                        } else {
+                            rule[key](...step.args)
+                        }
+                    }
+                });
+            });
+            break;
+        }
+
+        // call a method
+        case "call": {
+            rules.forEach(rule => {
+                Object.keys(rule).forEach(key => {
+                    if (step.target === key) {
+                        rule[key](...step.args)
+                    }
+                });
+            });
+            break;
+        }
+        default:
+            throw new Error(`Invalid step type "${ step.type }" found.`);
+    }
+}
+```
+
+In ESLint X, we can swith the `for-of` loop for a `for await-of` loop in order to allow asynchronous traversal, as well.
 
 
 ### Core Changes
@@ -208,6 +374,31 @@ TODO
 
 The functionality in `context.getScope()` will need to move to `SourceCode#getScope(node)`, where `node` must be passed in to retrieve the scope. We will need to map `context.getScope()` to call `SourceCode#getScope(node)` during the transition period.
 
+#### Rule Context
+
+The rule context object, which is passed into rules as `context`, will need to be significantly altered to support other languages. All of the methods that relate specifically to language features will need to move into `SourceCode`, leaving us with a rule context object that follows this interface:
+
+```ts
+interface RuleContext {
+
+    languageOptions: LanguageOptions;
+    settings: object;
+
+    getCwd(): string;
+    getFilename(): string;
+    getPhysicalFilename(): string;
+    getSourceCode(): string;
+}
+```
+
+We should strictly use this interface for all non-JavaScript languages from the start. For JavaScript, we will need to deprecate the following methods and redirect them to the `SourceCode` object:
+
+* `getAncestors()`
+* `getDeclaredVariables()`,
+* `getScope()`
+* `parserOptions`
+* `parserPath`
+* `parserServices`
 
 ## Documentation
 
@@ -248,16 +439,44 @@ The functionality in `context.getScope()` will need to move to `SourceCode#getSc
 
 ## Open Questions
 
-<!--
-    This section is optional, but is suggested for a first draft.
+**Should `RuleContext` just have properties instead of a mix of properties and methods?**
 
-    What parts of this proposal are you unclear about? What do you
-    need to know before you can finalize this RFC?
+With the proposal as-is, `RuleContext` will have to properties and four methods, but all of the methods just return a value. If we are looking at a larger rewrite, should we create a cleaner interface with just properties? Such as:
 
-    List the questions that you'd like reviewers to focus on. When
-    you've received the answers and updated the design to reflect them, 
-    you can remove this section.
--->
+```ts
+interface RuleContext {
+
+    languageOptions: LanguageOptions;
+    settings: object;
+
+    // method replacements
+    cwd: string;
+    filename: string;
+    physicalFilename: string
+    sourceCode: SourceCode;
+}
+```
+
+**Should we eliminate `:exit` from selectors?**
+
+The `:exit` was left over from before we used `esquery` and is a bit of an outlier from how selectors generally work. We could eliminate it and ask people to write their rule visitors like this:
+
+```js
+{
+    "FunctionExpression": {
+        enter(node, parent) {
+            // ...
+        },
+        exit(node, parent) {
+            // ...
+        }
+    }
+}
+```
+
+This would allow the visitor keys to stay strictly as selectors while still allowing both enter and exit phases of traversal to be hit.
+
+
 
 ## Help Needed
 
