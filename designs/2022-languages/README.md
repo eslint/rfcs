@@ -216,6 +216,11 @@ interface SourceCode {
      * Traversal of AST.
      */
     traverse(): Iterable<TraversalStep>;
+
+    /**
+     * Return all of the inline areas where ESLint should be disabled/enabled.
+     */
+    getDisableDirectives(): Array<DisableDirective>;
 }
 
 type TraversalStep = VisitTraversalStep | CallTraversalStep;
@@ -232,6 +237,31 @@ interface CallTraversalStep {
     target: string;
     phase: string | null | undefined;
     args: Array<any>;
+}
+
+interface DisableDirective {
+    type: "enable" | "disable";
+    ruleId: string;
+
+    /**
+     * The point from which the directive should be applied.
+     */
+    from: Location;
+
+    /**
+     * Location of the comment.
+     */
+    loc: LocationRange;
+}
+
+interface LocationRange {
+    start: Location;
+    end: Location;
+}
+
+interface Location {
+    line: number;
+    column: number;
 }
 ```
 
@@ -321,7 +351,7 @@ Note that we use this data inside of [`NodeEventGenerator`](https://github.com/e
 Using `SourceCode#traverse()`, we will be able to traverse an AST like this:
 
 ```js
-// Example only -- not intended to be the final implementation
+// Example only!! -- not intended to be the final implementation
 for (const step of sourceCode.traverse()) {
 
     switch (step.type) {
@@ -337,10 +367,12 @@ for (const step of sourceCode.traverse()) {
                         // account for enter and exit phases
                         if (key.endsWith(":exit")) {
                             if (step.phase === "exit") {
-                                rule[key](...step.args)
+
+                                // async visitor methods!!
+                                await rule[key](...step.args)
                             }
                         } else {
-                            rule[key](...step.args)
+                            await rule[key](...step.args)
                         }
                     }
                 });
@@ -353,7 +385,7 @@ for (const step of sourceCode.traverse()) {
             rules.forEach(rule => {
                 Object.keys(rule).forEach(key => {
                     if (step.target === key) {
-                        rule[key](...step.args)
+                        await rule[key](...step.args)
                     }
                 });
             });
@@ -367,12 +399,20 @@ for (const step of sourceCode.traverse()) {
 
 In ESLint X, we can swith the `for-of` loop for a `for await-of` loop in order to allow asynchronous traversal, as well.
 
+#### The `SoureCode#getDisableDirectives()` Method
+
+ESLint has all kinds of disable directives to use inside of JavaScript. It's impossible for the ESLint core to know how disable directives might be formatted or used in other languages, so we need to abstract this out and delegate it to the `SourceCode` object. The `SourceCode#getDisableDirectives()` method returns an array of disable directive objects indicating when each rule is disabled and enabled.
+
+The ESLint core will then use the disable directive information to:
+
+* Filter out violations appropriately.
+* Report any unused disable directives.
+
+This functionality currently lives in [`apply-disable-directives.js`](https://github.com/eslint/eslint/blob/0311d81834d675b8ae7cc92a460b37115edc4018/lib/linter/apply-disable-directives.js).
 
 ### Core Changes
 
 TODO
-
-The functionality in `context.getScope()` will need to move to `SourceCode#getScope(node)`, where `node` must be passed in to retrieve the scope. We will need to map `context.getScope()` to call `SourceCode#getScope(node)` during the transition period.
 
 #### Rule Context
 
@@ -383,11 +423,27 @@ interface RuleContext {
 
     languageOptions: LanguageOptions;
     settings: object;
+    options: Array<any>;
+    id: string;
 
     getCwd(): string;
     getFilename(): string;
     getPhysicalFilename(): string;
-    getSourceCode(): string;
+    getSourceCode(): SourceCode;
+    report(violation: Violation): void;
+}
+
+interface Violation {
+    messageId: string;
+    data: object;
+    loc: LocationRange;
+    suggest: Array<Suggestion>;
+    fix(fixer: Fixer): Iterable<FixOp>;
+}
+
+interface Suggestion {
+    desc: string;
+    fix(fixer: Fixer): Iterable<FixOp>;
 }
 ```
 
@@ -396,9 +452,15 @@ We should strictly use this interface for all non-JavaScript languages from the 
 * `getAncestors()`
 * `getDeclaredVariables()`,
 * `getScope()`
+
+These properties we can remove once we remove the eslintrc config system, so they will still show up for JavaScript but won't be included for non-JavaScript:
+
 * `parserOptions`
 * `parserPath`
-* `parserServices`
+
+The `parserServices` property will need to remain for JavaScript linting until we deprecate the `parseForESLint()` method at some point in the future.
+
+**Note:** I have purposely removed the `message` property from the `Violation` interface. I'd like to move to just one way of supplying messages inside of rules and have that be `messageId`. This will also reduce the complexity of processing the violations.
 
 ## Documentation
 
