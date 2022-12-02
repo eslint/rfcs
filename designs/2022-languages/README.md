@@ -85,7 +85,7 @@ exports default [
 
 Here, `"lang/lang1"` refers to the `lang1` language as exported from `eslint-plugin-lang`. Anything inside of `languageOptions` is then handled by `lang1` rather than by ESLint itself. 
 
-### Language Definition Objects
+### Language Definition Object
 
 Each language definition object must implement the following interface:
 
@@ -164,7 +164,7 @@ At a high-level, ESLint uses the methods on a language object in the following w
 * After reading a file, ESLint passes the file information to `parse()` to create a raw parse result.
 * The raw parse result is then passed into `createSourceCode()` to create the `SourceCode` object that ESLint will use to interact with the code.
 
-### The `validateOptions()` Method
+#### The `validateOptions()` Method
 
 The intent of this method is to validate the `languageOptions` object as specified in a config. With flat config, all of the options in `languageOptions` are related to JavaScript and are currently validated [inside of the schema](https://github.com/eslint/eslint/blob/6380c87c563be5dc78ce0ddd5c7409aaf71692bb/lib/config/flat-config-schema.js#L445). With this proposal, that validation will instead need to be based on the `language` specified in the config, which will require retrieving the associated language object and calling the `validateOptions()` method [inside of `FlatConfigArray`](https://github.com/eslint/eslint/blob/f89403553b31d24f4fc841424cc7dcb8c3ef689f/lib/config/flat-config-array.js#L180).
 
@@ -410,11 +410,57 @@ The ESLint core will then use the disable directive information to:
 
 This functionality currently lives in [`apply-disable-directives.js`](https://github.com/eslint/eslint/blob/0311d81834d675b8ae7cc92a460b37115edc4018/lib/linter/apply-disable-directives.js).
 
-### Core Changes
+### Extracting JavaScript Functionality
+
+An important part of this process will be extracting all of the JavaScript functionality for the ESLint core and placing it in a language object. As a first step, that language object will live in the main ESLint repository so we can easily test and make changes to ensure backwards compatibility. Eventually, though, I'd like to move this functionality into its own `eslint/js` repo.
+
+#### Update Default Config
 
 TODO
 
-#### Rule Context
+#### Move Traversal into `SourceCode`
+
+TODO
+
+#### Split Disable Directive Functionality
+
+Between `SourceCode` and `Linter`.
+
+TODO
+
+#### Move Rule Context Methods to `SourceCode`
+
+TODO
+
+For JavaScript, we will need to deprecate the following methods and redirect them to the `SourceCode` object:
+
+* `getAncestors()`
+* `getDeclaredVariables()`,
+* `getScope()`
+
+The following properties we can remove once we remove the eslintrc config system, so they will still show up for JavaScript but won't be included for non-JavaScript:
+
+* `parserOptions`
+* `parserPath`
+
+The `parserServices` property will need to remain for JavaScript linting until we deprecate the `parseForESLint()` method at some point in the future.
+
+#### Update Rules to New APIs
+
+TODO
+
+
+### Core Changes
+
+In order to make all of this work, we'll need to make the following changes in the core:
+
+1. `NodeEventGenerator` will need to be updated to call `SourceCode#traverse()`.
+1. `FlatConfigArray` will need to be updated to define the `language` key and to delegate validation of `languageOptions` to the language.
+1. `Linter` will need to be updated to honor the `language` key and to use JS-specific functionality where we need to provide backwards compatibility for existing JS rules. There will be a lot of code removed and delegated to the language being used, including filtering of violation via disable directives, traversing the AST, and formulating the final violation list.
+1. The `context` object passed to rules will need to be updated so it works for all languages.
+1. `RuleTester` will need to be updated to support passing in `language`.
+
+#### Updating Rule Context
 
 The rule context object, which is passed into rules as `context`, will need to be significantly altered to support other languages. All of the methods that relate specifically to language features will need to move into `SourceCode`, leaving us with a rule context object that follows this interface:
 
@@ -447,18 +493,7 @@ interface Suggestion {
 }
 ```
 
-We should strictly use this interface for all non-JavaScript languages from the start. For JavaScript, we will need to deprecate the following methods and redirect them to the `SourceCode` object:
-
-* `getAncestors()`
-* `getDeclaredVariables()`,
-* `getScope()`
-
-These properties we can remove once we remove the eslintrc config system, so they will still show up for JavaScript but won't be included for non-JavaScript:
-
-* `parserOptions`
-* `parserPath`
-
-The `parserServices` property will need to remain for JavaScript linting until we deprecate the `parseForESLint()` method at some point in the future.
+We should strictly use this interface for all non-JavaScript languages from the start.
 
 **Note:** I have purposely removed the `message` property from the `Violation` interface. I'd like to move to just one way of supplying messages inside of rules and have that be `messageId`. This will also reduce the complexity of processing the violations.
 
