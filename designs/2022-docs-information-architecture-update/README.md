@@ -214,7 +214,7 @@ The proposed changes would include the following HTTP redirects from current con
 
 | Current URL | Proposed URL |
 | :---: | :---: |
-| <https://eslint.org/docs/latest/user-guide/> | <https://eslint.org/docs/latest/use/core-concepts> |
+| <https://eslint.org/docs/latest/user-guide/> | <https://eslint.org/docs/latest/use/> |
 | <https://eslint.org/docs/latest/user-guide/core-concepts> | <https://eslint.org/docs/latest/use/core-concepts> |
 | <https://eslint.org/docs/latest/user-guide/configuring/> | <https://eslint.org/docs/latest/use/configure/> |
 | <https://eslint.org/docs/latest/user-guide/configuring/configuration-files-new> | <https://eslint.org/docs/latest/use/configure/configuration-files-new> |
