@@ -51,7 +51,6 @@ The newly proposed information architecture should consist of the following sect
   - Hidden in sidebar
 - [NO CHANGE] Getting Started
   - Current page: [Getting Started](https://eslint.org/docs/latest/user-guide/getting-started)
-  - NOTE: I think there’s further work that can be done to improve the getting started experience, but do not want to touch the subject as part of the information architecture changes project. Investigate further in **Phase 3: "Use ESLint in Your Project" documentation update** of the documentation update project.
 - [NO CHANGE] Core Concepts
   - Current page: [Core Concepts](https://eslint.org/docs/latest/user-guide/core-concepts)
 - [RENAME PAGE] Configure
@@ -90,7 +89,7 @@ The newly proposed information architecture should consist of the following sect
   - NOTE: Should be added, but not part of the initial IA project. Add in **Phase 4: "Extend ESLint" documentation update** of the documentation update project.
 - [RENAME & REFACTOR PAGE] Create Plugins
   - Current page: [Working with Plugins](https://eslint.org/docs/latest/developer-guide/working-with-plugins)
-  - As noted below, convert the "Processors in Plugins" section into separate page "Custom Processors
+  - As noted below, convert the "Processors in Plugins" section into separate page "Custom Processors"
   - Add overview-style content at the top of the page explaining that this page explains how to bundle together the various parts of a plugin, and then publish it.
 - [RENAME PAGE] Custom Rules
   - Current page: [Working with Rules](https://eslint.org/docs/latest/developer-guide/working-with-rules)
@@ -161,7 +160,7 @@ New top-level section of the docs based on the [Contributing](https://eslint.org
   - Current page: [Managing Releases](https://eslint.org/docs/latest/maintainer-guide/releases)
 - [NEW PAGE(S)] Any other technical pages for maintainers
   - I don’t have any thoughts on what these should be right now. I would defer to the core maintainers on what they think other maintainers should know.
-  - I think that these additional technical pages would make sense to include in **Phase 5: "Maintain ESLint" documentation updates**of [the documentation update project](https://github.com/eslint/eslint/issues/16365).
+  - I think that these additional technical pages would make sense to include in **Phase 5: "Maintain ESLint" documentation updates** of [the documentation update project](https://github.com/eslint/eslint/issues/16365).
 
 ### New Sidebar (summary)
 
