@@ -232,16 +232,16 @@ The proposed changes would include the following HTTP redirects from current con
 | <https://eslint.org/docs/latest/developer-guide/source-code> |  <https://eslint.org/docs/latest/contribute/development-environment> |
 | <https://eslint.org/docs/latest/developer-guide/development-environment> |  <https://eslint.org/docs/latest/contribute/development-environment> |
 | <https://eslint.org/docs/latest/developer-guide/unit-tests> | <https://eslint.org/docs/latest/contribute/tests> |
-| <https://eslint.org/docs/latest/extend/working-with-rules> | <https://eslint.org/docs/latest/extend/custom-rules> |
+| <https://eslint.org/docs/latest/developer-guide/working-with-rules> | <https://eslint.org/docs/latest/extend/custom-rules> |
 | <https://eslint.org/docs/latest/developer-guide/working-with-plugins> | <https://eslint.org/docs/latest/extend/plugins> |
 | <https://eslint.org/docs/latest/developer-guide/working-with-custom-formatters> | <https://eslint.org/docs/latest/extend/custom-formatters> |
-| <https://eslint.org/docs/latest/developer-guide/working-with-custom-parsers> | <https://eslint.org/docs/latest/custom-parsers> |
-| <https://eslint.org/docs/latest/developer-guide/nodejs-api> | <https://eslint.org/docs/latest/extend/nodejs-api> |
+| <https://eslint.org/docs/latest/developer-guide/working-with-custom-parsers> | <https://eslint.org/docs/latest/extend/custom-parsers> |
+| <https://eslint.org/docs/latest/developer-guide/nodejs-api> | <https://eslint.org/docs/latest/integrate/nodejs-api> |
 | <https://eslint.org/docs/latest/developer-guide/contributing/> | <https://eslint.org/docs/latest/contribute/> |
 | <https://eslint.org/docs/latest/developer-guide/contributing/reporting-bugs> | <https://eslint.org/docs/latest/contribute/report-bugs> |
-| <https://eslint.org/docs/latest/developer-guide/contributing/new-rules> | <https://eslint.org/docs/latest/contribute/new-rule> |
-| <https://eslint.org/docs/latest/developer-guide/contributing/rule-changes> | <https://eslint.org/docs/latest/contribute/rule-change> |
-| <https://eslint.org/docs/latest/developer-guide/contributing/changes> | <https://eslint.org/docs/latest/contribute/change> |
+| <https://eslint.org/docs/latest/developer-guide/contributing/new-rules> | <https://eslint.org/docs/latest/contribute/propose-new-rule> |
+| <https://eslint.org/docs/latest/developer-guide/contributing/rule-changes> | <https://eslint.org/docs/latest/contribute/propose-rule-change> |
+| <https://eslint.org/docs/latest/developer-guide/contributing/changes> | <https://eslint.org/docs/latest/contribute/request-change> |
 | <https://eslint.org/docs/latest/developer-guide/contributing/working-on-issues> | <https://eslint.org/docs/latest/contribute/work-on-issue> |
 | <https://eslint.org/docs/latest/developer-guide/contributing/pull-requests> | <https://eslint.org/docs/latest/contribute/pull-requests> |
 | <https://eslint.org/docs/latest/developer-guide/**> (any other pages not in sidebar) | <https://eslint.org/docs/latest/extend/**> |
