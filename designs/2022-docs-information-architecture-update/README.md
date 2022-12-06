@@ -12,7 +12,7 @@ This document contains proposed changes to the information architecture (IA) in 
 On a high level, the proposed IA breaks the content into the following sections:
 
 - Use ESLint in Your Project: A refactor of the current [User Guide](https://eslint.org/docs/latest/user-guide/)
-- Extend ESLint: A refactor of the current [Developer Guide](https://eslint.org/docs/latest/developer-guide/), with some content moved to the section Maintain ESLint and Community Contributions
+- Extend ESLint: A refactor of the current [Developer Guide](https://eslint.org/docs/latest/developer-guide/), with some content moved to the sections Maintain ESLint and Contribute to ESLint
 - Maintain ESLint: Expansion of current [Maintainer Guide](https://eslint.org/docs/latest/maintainer-guide/), with some content taken from the current Developer Guide.
 - Contribute to ESLint: Expansion of the current [Contributing section](https://eslint.org/docs/latest/developer-guide/contributing/) of the Developer Guide.
 
@@ -24,8 +24,7 @@ These personas are:
 
 - **The User**: Someone who wants to use ESLint as it currently exists, including plugins. The proposed 'Use ESLint in Your Project' section addresses this persona's needs.
 - **The Extender**: Someone who wants to extend the functionality of ESLint by creating a plugin, custom formatter, custom parser, sharable configuration, etc. The proposed 'Extend ESLint' section addresses this persona's needs.
-- **The Community Contributor**: Someone who wants to make a small change to the core ESLint project, add a small change to the docs, or raise a Github issue. The proposed 'Community Contributions' section addresses this persona's needs.
-  - Note: We haven't previously talked about this persona. However, after reading through   all the docs and considering the ESLint ecosystem, I think it makes sense to break this out as a separate persona.
+- **The Community Contributor**: Someone who wants to make a small change to the core ESLint project, add a small change to the docs, or raise a Github issue. The proposed 'Contribute to ESLint' section addresses this persona's needs.
 - **The Maintainer**: Someone who wants to maintain to the core ESLint project. The proposed 'Maintain ESLint' section addresses this persona's needs.
 
 While making broad IA changes to reorient the documentation around these personas, I also propose smaller, more cosmetic changes to the documentation website's IA to better align it with technical documentation best practices, like making page titles verb phrases and avoiding gerunds.
@@ -112,7 +111,7 @@ The newly proposed information architecture should consist of the following sect
 
 New top-level section of the docs based on the [Contributing](https://eslint.org/docs/latest/developer-guide/contributing/) section. Breaking this out as a separate section because I think the "casual community contributor" is a fairly separate persona from the "extender" and "maintainer", so it should be treated as such in the information architecture.
 
-- [MOVE & RENAME PAGE] Community Contributions section landing page
+- [MOVE & RENAME PAGE] Contribute to ESLint section landing page
   - Current page: [Contributing](https://eslint.org/docs/latest/developer-guide/contributing/)
   - Take relevant content from page [Developer Guide](https://eslint.org/docs/latest/developer-guide/)
   - Hidden in sidebar
