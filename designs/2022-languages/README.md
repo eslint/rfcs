@@ -3,7 +3,7 @@
 - RFC PR: (leave this empty, to be filled in later)
 - Authors: Nicholas C. Zakas
 
-# ESLint X Language Plugins
+# ESLint Language Plugins
 
 ## Summary
 
@@ -274,7 +274,7 @@ ESLint currently uses [`esquery`](https://npmjs.com/package/esquery) to match vi
 
 For JavaScript, `SourceCode#match()` will simply use `esquery`; for other languages, they will be able to either implement their own CSS-query utilities or else just stick with node names to get started. (ESLint initially only matched the `type` property; `esquery` was added several years later.)
 
-We will need to update the [`NodeEventGenerator`](https://github.com/eslint/eslint/blob/90a5b6b4aeff7343783f85418c683f2c9901ab07/lib/linter/node-event-generator.js#L296) to use `SourceCode#match()` instead of `esquery`.
+We will need to update the [`NodeEventGenerator`](https://github.com/eslint/eslint/blob/90a5b6b4aeff7343783f85418c683f2c9901ab07/lib/linter/node-event-generator.js#L296) to use `SourceCode#match()` instead of `esquery`. This will require significant refactoring.
 
 #### The `SoureCode#traverse()` Method
 
@@ -351,7 +351,7 @@ Note that we use this data inside of [`NodeEventGenerator`](https://github.com/e
 Using `SourceCode#traverse()`, we will be able to traverse an AST like this:
 
 ```js
-// Example only!! -- not intended to be the final implementation
+// Simplified example only!! -- not intended to be the final implementation
 for (const step of sourceCode.traverse()) {
 
     switch (step.type) {
@@ -408,57 +408,53 @@ The ESLint core will then use the disable directive information to:
 * Filter out violations appropriately.
 * Report any unused disable directives.
 
-This functionality currently lives in [`apply-disable-directives.js`](https://github.com/eslint/eslint/blob/0311d81834d675b8ae7cc92a460b37115edc4018/lib/linter/apply-disable-directives.js).
+This functionality currently lives in [`apply-disable-directives.js`](https://github.com/eslint/eslint/blob/0311d81834d675b8ae7cc92a460b37115edc4018/lib/linter/apply-disable-directives.js) and will have to be updated to call `SourceCode#getDisableDirectives()`.
 
 ### Extracting JavaScript Functionality
 
 An important part of this process will be extracting all of the JavaScript functionality for the ESLint core and placing it in a language object. As a first step, that language object will live in the main ESLint repository so we can easily test and make changes to ensure backwards compatibility. Eventually, though, I'd like to move this functionality into its own `eslint/js` repo.
 
-#### Update Default Config
+#### Update Default Flat Config
 
-TODO
+The default flat config will need to be updated to specify a default `language` to use. We would need to hardcode the language for eslintrc configs as there won't be a way to set that in the config itself. (Likely, `config.language || defaultLanguage` in `Linter`.)
 
 #### Move Traversal into `SourceCode`
 
-TODO
+The JavaScript-specific traversal functionality that currently lives in [`linter.js`](https://github.com/eslint/eslint/blob/dfc7ec11b11b56daaa10e8e6d08c5cddfc8c2c59/lib/linter/linter.js#L1140-L1158) will need to move into `SourceCode#traverse()`.
 
 #### Split Disable Directive Functionality
 
-Between `SourceCode` and `Linter`.
+The [`applyDisableDirectives()`](https://github.com/eslint/eslint/blob/dfc7ec11b11b56daaa10e8e6d08c5cddfc8c2c59/lib/linter/linter.js#L1427-L1434) method is called inside of `Linter`, and if `Linter` calls `SourceCode#getDisableDirectives()`, we can likely reuse a lot of the existing functionality with some minor tweaks.
 
-TODO
+The [`getDirectiveComments()`](https://github.com/eslint/eslint/blob/dfc7ec11b11b56daaa10e8e6d08c5cddfc8c2c59/lib/linter/linter.js#L367) function will move into `SourceCode` to postprocess the AST with all directive comments and then expose just the disable comments through `SourceCode#getDisableDirectives()`.
 
-#### Move Rule Context Methods to `SourceCode`
+#### Move Rule Context Methods and Properties to `SourceCode`
 
-TODO
-
-For JavaScript, we will need to deprecate the following methods and redirect them to the `SourceCode` object:
+For JavaScript, we will need to deprecate the following methods and properties and redirect them to the `SourceCode` object:
 
 * `getAncestors()`
 * `getDeclaredVariables()`,
 * `getScope()`
+* `parserServices`
 
 The following properties we can remove once we remove the eslintrc config system, so they will still show up for JavaScript but won't be included for non-JavaScript:
 
 * `parserOptions`
 * `parserPath`
 
-The `parserServices` property will need to remain for JavaScript linting until we deprecate the `parseForESLint()` method at some point in the future.
-
 #### Update Rules to New APIs
 
-TODO
-
+With a new Rule Context, we should also start converting existing rules over to the new APIs as they move from `context` onto `SourceCode`.
 
 ### Core Changes
 
 In order to make all of this work, we'll need to make the following changes in the core:
 
-1. `NodeEventGenerator` will need to be updated to call `SourceCode#traverse()`.
+1. [`linter.js`](https://github.com/eslint/eslint/blob/dfc7ec11b11b56daaa10e8e6d08c5cddfc8c2c59/lib/linter/linter.js#L1140-L1158) will need to be updated to call `SourceCode#traverse()`.
 1. `FlatConfigArray` will need to be updated to define the `language` key and to delegate validation of `languageOptions` to the language.
 1. `Linter` will need to be updated to honor the `language` key and to use JS-specific functionality where we need to provide backwards compatibility for existing JS rules. There will be a lot of code removed and delegated to the language being used, including filtering of violation via disable directives, traversing the AST, and formulating the final violation list.
 1. The `context` object passed to rules will need to be updated so it works for all languages.
-1. `RuleTester` will need to be updated to support passing in `language`.
+1. `RuleTester` will need to be updated to support passing in `language`. We should also updated `RuleTester` to warn about the newly-deprecated `context` methods and properties.
 
 #### Updating Rule Context
 
@@ -499,62 +495,54 @@ We should strictly use this interface for all non-JavaScript languages from the 
 
 ## Documentation
 
-<!--
-    How will this RFC be documented? Does it need a formal announcement
-    on the ESLint blog to explain the motivation?
--->
+Most existing end-user facing documentation will remain unchanged.
+
+Plugin developer documentation will need to be updated:
+* The documentation on writing new rules needs to be updated to include API changes.
+* A new page on writing languages for ESLint will need to be written. This will need to be quite extensive.
 
 ## Drawbacks
 
-<!--
-    Why should we *not* do this? Consider why adding this into ESLint
-    might not benefit the project or the community. Attempt to think 
-    about any opposing viewpoints that reviewers might bring up. 
-
-    Any change has potential downsides, including increased maintenance
-    burden, incompatibility with other tools, breaking existing user
-    experience, etc. Try to identify as many potential problems with
-    implementing this RFC as possible.
--->
+1. **Performance.** There will likely be a small performance penalty from this refactoring. Moving to iterators from standard loops seems to incur a slowdown. My hope is that we can mitigate the effects of this performance hit by refactoring code in other ways.
+1. **eslintrc Compatibility.** Unfortunately, there's no easy way to make this functionality available to eslintrc config users. When implemented, eslintrc users will be left without the ability to use other languages.
 
 ## Backwards Compatibility Analysis
 
-<!--
-    How does this change affect existing ESLint users? Will any behavior
-    change for them? If so, how are you going to minimize the disruption
-    to existing users?
--->
+This proposal is 100% backwards compatible in the short-term, and all breaking changes are optional and can be phased in over time to avoid disrupting the ecosystem.
+
+This proposal does not require any changes from end-users.
 
 ## Alternatives
 
-<!--
-    What other designs did you consider? Why did you decide against those?
-
-    This section should also include prior art, such as whether similar
-    projects have already implemented a similar feature.
--->
+1. We could continue using the `parserForESLint()` approach to support other languages.
+1. We could choose to not support languages other than JavaScript.
 
 ## Open Questions
 
-**Should `RuleContext` just have properties instead of a mix of properties and methods?**
+### Should `RuleContext` have mostly properties instead of a mix of properties and methods?
 
-With the proposal as-is, `RuleContext` will have to properties and four methods, but all of the methods just return a value. If we are looking at a larger rewrite, should we create a cleaner interface with just properties? Such as:
+With the proposal as-is, `RuleContext` will have four properties and five methods, but four of the five methods just return a value. If we are looking at a larger rewrite, should we create a cleaner interface with just properties? Such as:
 
 ```ts
 interface RuleContext {
 
     languageOptions: LanguageOptions;
     settings: object;
+    options: Array<any>;
+    id: string;
 
     // method replacements
     cwd: string;
     filename: string;
     physicalFilename: string
     sourceCode: SourceCode;
+
+    report(violation: Violation): void;
+
 }
 ```
 
-**Should we eliminate `:exit` from selectors?**
+### Should we eliminate `:exit` from selectors?
 
 The `:exit` was left over from before we used `esquery` and is a bit of an outlier from how selectors generally work. We could eliminate it and ask people to write their rule visitors like this:
 
@@ -571,26 +559,45 @@ The `:exit` was left over from before we used `esquery` and is a bit of an outli
 }
 ```
 
+And if they just wanted to use `:exit`, we could ask them to write this:
+
+```js
+{
+    "FunctionExpression": {
+        exit(node, parent) {
+            // ...
+        }
+    }
+}
+```
+
 This would allow the visitor keys to stay strictly as selectors while still allowing both enter and exit phases of traversal to be hit.
 
+### Does the ESLint team want to create and maintain additional languages?
 
+The next logical step after this refactoring would be to create an additional language to ensure that other languages can be supported. JSON seems like a logical one (as many people seem to think ESLint validates JSON already).
+
+Does the ESLint team want to create an official JSON language plugin? Or any other language plugin? Or do we want to leave additional languages to the community?
+
+I think there is some benefit to having a few officially-supported language plugins that people will likely want, but that also brings additional maintenance burden.
 
 ## Help Needed
 
-<!--
-    This section is optional.
-
-    Are you able to implement this RFC on your own? If not, what kind
-    of help would you need from the team?
--->
+N/A
 
 ## Frequently Asked Questions
 
-**Why allow binary files?**
+### Why allow binary files?
 
 I think there may be a use in validating non-text files such as images, videos, and WebAssembly files. I may be wrong, but by allowing languages to specify that they'd prefer to receive the file in binary, it at least opens up the possibility that people may create plugins that can validate binary files in some way.
 
-**Why not have `parse()` return a `SourceCode` instead of needing to call another method?**
+### Will the JavaScript language live in the main eslint repo?
+
+As a first step, yes, the JavaScript language object will still live in the main eslint repo. This will allow us to iterate faster and keep an eye on backwards compatibility issues.
+
+In the future, I anticipate moving all JavaScript-specific functionality, including rules, into a separate repository (`eslint/js`) and publishing it as a separate package (`@eslint/js`). That would require some thought around how the website should change and be built as rule documentation would also move into a new repo.
+
+### Why not have `parse()` return a `SourceCode` instead of needing to call another method?
 
 It's important that we are able to determine the amount of time it takes to parse a file in order to optimize performance. Combining the parsing with creating a `SourceCode` object, which may require additional processing of the parse result, means obscuring this important number.
 
@@ -598,9 +605,6 @@ Additionally, `createSourceCode()` allows integrators to do their own parsing an
 
 ## Related Discussions
 
-<!--
-    This section is optional but suggested.
-
-    If there is an issue, pull request, or other URL that provides useful
-    context for this proposal, please include those links here.
--->
+* [#6974 Proposal for parser services](https://github.com/eslint/eslint/issues/6974)
+* [#8392 Allow parsers to supply their visitor keys](https://github.com/eslint/eslint/issues/8392)
+* [#15475 Change Request: Allow async parser](https://github.com/eslint/eslint/issues/15475)
