@@ -79,7 +79,7 @@ The newly proposed information architecture should consist of the following sect
 ### [REFACTOR SECTION]  Extend ESLint
 
 - [NO CHANGE] Extend ESLint landing page
-  - Current page:  [Developer Guide](https://eslint.org/docs/latest/developer-guide/)
+  - Take relevant content from page [Developer Guide](https://eslint.org/docs/latest/developer-guide/)
   - Hidden in sidebar
 - [NEW PAGE] Ways to Extend ESLint
   - Contain overview type content explaining the various ways that you can extend ESLint:
@@ -114,6 +114,7 @@ New top-level section of the docs based on the [Contributing](https://eslint.org
 
 - [MOVE & RENAME PAGE] Community Contributions section landing page
   - Current page: [Contributing](https://eslint.org/docs/latest/developer-guide/contributing/)
+  - Take relevant content from page [Developer Guide](https://eslint.org/docs/latest/developer-guide/)
   - Hidden in sidebar
 - [NEW PAGE] Code of Conduct
   - Takes current content from the [Read the Code of Conduct section on the Contributing page](https://eslint.org/docs/latest/developer-guide/contributing/#read-the-code-of-conduct). Worth breaking out into its own page so content not only on the hidden landing page.
@@ -134,6 +135,8 @@ New top-level section of the docs based on the [Contributing](https://eslint.org
   - Consolidate the pages [Getting the Source Code](https://eslint.org/docs/latest/developer-guide/source-code) and [Set up a Development Environment](https://eslint.org/docs/latest/developer-guide/development-environment)
   - Getting the source code is basically just a step in the process of setting up the development environment. Therefore, these two pages should be consolidated.
   - Also the Directory Structure section on the [Getting the Source Code](https://eslint.org/docs/latest/developer-guide/source-code#directory-structure) page should be moved toward the bottom of the new Set up a Development Environment page.
+- [MOVE PAGE] Run the Tests
+  - Current page: [Unit Tests](https://eslint.org/docs/latest/developer-guide/unit-tests)
 - [MOVE & RENAME PAGE] Work on Issues
   - Current page: [Working on Issues](https://eslint.org/docs/latest/developer-guide/contributing/working-on-issues)
 - [MOVE, EXPAND & RENAME PAGE] Submit a Pull Request
@@ -160,8 +163,6 @@ New top-level section of the docs based on the [Contributing](https://eslint.org
 - [NEW PAGE(S)] Any other technical pages for maintainers
   - I don’t have any thoughts on what these should be right now. I would defer to the core maintainers on what they think other maintainers should know.
   - I think that these additional technical pages would make sense to include in **Phase 5: "Maintain ESLint" documentation updates**of [the documentation update project](https://github.com/eslint/eslint/issues/16365).
-- [MOVE PAGE] Run the Tests
-  - Current page: [Unit Tests](https://eslint.org/docs/latest/developer-guide/unit-tests)
 
 ### New Sidebar (summary)
 
