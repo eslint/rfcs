@@ -24,6 +24,8 @@ In addition, there are numerous projects that hack around other languages to mak
 
 Instead of forcing others to rewrite what is core linting functionality, or asking people to produce an ESTree format AST for some language other than JavaScript, we can make everyone's lives easier by providing formal language support such that languages can be plugged in to ESLint easily.
 
+We did also previously accept [#56](https://github.com/eslint/rfcs/pull/56) as an extension to `parseForESLint()` to support more languages.
+
 ## Detailed Design
 
 This proposal consists of the following changes:
@@ -514,7 +516,7 @@ This proposal does not require any changes from end-users.
 
 ## Alternatives
 
-1. We could continue using the `parserForESLint()` approach to support other languages.
+1. We could continue using the `parserForESLint()` approach to support other languages. This was proposed and accepted in [#56](https://github.com/eslint/rfcs/pull/56).
 1. We could choose to not support languages other than JavaScript.
 
 ## Open Questions
