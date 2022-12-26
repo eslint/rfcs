@@ -1,6 +1,6 @@
 - Repo: eslint/eslint
 - Start Date: 2022-11-25
-- RFC PR: (leave this empty, to be filled in later)
+- RFC PR: https://github.com/eslint/rfcs/pull/99
 - Authors: Nicholas C. Zakas
 
 # ESLint Language Plugins
