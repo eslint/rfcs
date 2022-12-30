@@ -23,8 +23,14 @@ From knowing session classification, parsers can then make more informed decisio
 
 As discussed in https://github.com/eslint/eslint/discussions/16557#discussioncomment-4160219, at least two major ecosystem plugins would benefit from understanding session information at _parse_ time:
 
-- [`eslint-plugin-import`](https://github.com/import-js/eslint-plugin-import)'s imports analysis
+- [`eslint-plugin-import`](https://github.com/import-js/eslint-plugin-import)'s out-of-band parsing (imports analysis)
 - [`@typescript-eslint/parser`](https://typescript-eslint.io)'s [typed linting mode](https://typescript-eslint.io/linting/typed-linting)
+
+### Benefits to Out-of-Band Parsing
+
+Having an unchanged object reference provided to parsers for the duration of a lint run -and whose identity is guaranteed to change across runs- allows parsers to use objects as a `WeakMap` key for caches.
+That way, out-of-band analyses such as imports analysis can be kept persistently for each file within a run.
+The caches won't go stale in a long-running eslint process.
 
 ### Benefits to Typed Linting
 
