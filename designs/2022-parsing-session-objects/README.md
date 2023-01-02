@@ -220,6 +220,8 @@ However:
 The term `"single"` for the CLI use case is a bit of a misnomer, as the CLI can repeat up to 10 times when `--fix` is enabled.
 Is there a better antonym for `"persistent"`?
 
+Another definition for `"single"` is: any way that ESLint is _triggered once_ to the end-user, such as by the CLI.
+
 ## Help Needed
 
 I'm not confident I understand the ESLint Node API well enough to have not missed some use cases.
