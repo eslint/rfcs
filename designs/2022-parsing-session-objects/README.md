@@ -59,6 +59,9 @@ Parsers would then receive the session in their [`parseForESLint`](https://eslin
 parser.parseForESLint(textToParse, parserOptions, lintSession);
 ```
 
+If a mode isn't provided, consumers should assume `"persistent"`.
+That's what parsers today have to assume, and doesn't remove any functionality the way `"single"` does.
+
 ### Code Flow
 
 Consumers of ESLint today use up to four classes from ESLint:
