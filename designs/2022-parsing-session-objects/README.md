@@ -52,7 +52,7 @@ interface LintSession {
 }
 ```
 
-The expectation for this session object is that consumers may provide a `mode` _if_ they know it.
+The expectation for this session object is that consumers (programs running ESLint, such as ESLint's CLI or an editor extension) may provide a `mode` _if_ they know it.
 Parsers would then receive the session in their [`parseForESLint`](https://eslint.org/docs/latest/developer-guide/working-with-custom-parsers) as a third parameter.
 
 ```js
