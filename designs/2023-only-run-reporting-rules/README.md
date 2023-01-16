@@ -1,6 +1,6 @@
 - Repo: eslint/eslint
 - Start Date: 2023-01-16
-- RFC PR: (leave this empty, to be filled in later)
+- RFC PR: <https://github.com/eslint/rfcs/pull/104>
 - Authors: Maddy Miller
 
 # Only run reporting lint rules
