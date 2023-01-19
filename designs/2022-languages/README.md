@@ -71,7 +71,7 @@ Here, `lang1` and `lang2` are languages defined by the plugin. End users can spe
 // inside eslint.config.js
 import lang from "eslint-plugin-lang";
 
-exports default [
+export default [
     {
         plugins: {
             lang
