@@ -45,7 +45,7 @@ Languages can be defined in plugins by using the `languages` key and giving the 
 
 ```js
 // inside a plugin called eslint-plugin-lang
-exports default {
+export default {
 
     languages: {
         lang1: {
