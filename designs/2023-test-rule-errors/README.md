@@ -77,10 +77,10 @@ Example with a schema validation error because a non-existent option is passed:
 
 To test a custom exception thrown by a rule, simply use the exception text as the message: `"message": "Some custom exception message from the rule."`.
 
-A convenience feature to go along with this is to allow an alternative property `source: 'SCHEMA_VALIDATION' | 'RULE_IMPLEMENTATION'` to be specified indicating the type of exception without indicating the exception text.
+A convenience feature to go along with this is to allow an alternative property `errorType: 'schema' | 'rule'` to be specified indicating the type of exception without indicating the exception text.
 This would be useful since most of the time, the user may not care about the exact text of the exception, but only that the particular type of exception was thrown.
 This also makes it easier to update the exception text without having to update the messages in all the test cases.
-Alternate names for this property to consider: `messageType`, `errorType`.
+Alternate names for this property to consider: `messageErrorType`, `messageType`, `messageId`, `source`.
 
 Differences between fatal test cases and invalid test cases:
 
@@ -206,7 +206,7 @@ Ideally, we can also draw attention to it with a paragraph and example usage in 
 
 - A user testing that their rule schema catches invalid options may end up including the message from JSON Schema in their test case (e.g. `Value "bar" should be boolean.`). This could make it more difficult for ESLint to upgrade its version of ajv / JSON Schema in the future, as an upgraded version could tweak messages and necessitate updating any test cases that include the message. This is a relatively minor concern, as it's unlikely that messages will change often, and it's easy to update test cases if they do. Two factors that could mitigate this:
   - If [snapshot testing](https://github.com/eslint/eslint/issues/14936) is implemented in the future, it would become possible to fix test cases with a single command.
-  - We can encourage the use of `source` property (discussed in [Detailed Design](#detailed-design)) for the majority of cases that don't care about including the exact exception text.
+  - We can encourage the use of `errorType` property (discussed in [Detailed Design](#detailed-design)) for the majority of cases that don't care about including the exact exception text.
 
 ## Backwards Compatibility Analysis
 
