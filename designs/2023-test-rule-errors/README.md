@@ -69,23 +69,29 @@ Example with a schema validation error because a non-existent option is passed:
         {
             "code": "foo();",
             "options": [{ "checkFoo": true, "nonExistentOption": true }],
-            "message": "Value {\"checkFoo\":true,\"nonExistentOption\":true} should NOT have additional properties."
+            "error": {
+                "message": "Value {\"checkFoo\":true,\"nonExistentOption\":true} should NOT have additional properties.",
+                "name": "SchemaValidationError"
+            }
         }
     ]
 }
 ```
 
-To test a custom exception thrown by a rule, simply use the exception text as the message: `"message": "Some custom exception message from the rule."`.
+To test a custom exception thrown by a rule, simply use the exception text as the message: `"message": "Some custom exception message from the rule."` and/or the name of the exception class as the `name`.
 
-A convenience feature to go along with this is to allow an alternative property `errorType: 'schema' | 'rule'` to be specified indicating the type of exception without indicating the exception text.
-This would be useful since most of the time, the user may not care about the exact text of the exception, but only that the particular type of exception was thrown.
-This also makes it easier to update the exception text without having to update the messages in all the test cases.
-Alternate names for this property to consider: `messageErrorType`, `messageType`, `messageId`, `source`.
+The `error` object in the test case uses the `name` and `message` properties directly from the original exception object, while grouping them nicely together in the same structure as the original exception.  Similar to `message` and `messageId` in `invalid` test cases, only one of `message` and `name` is required. If the user doesn't care to test the full exception `message` text, the exception class `name` can be used instead.
 
-Differences between fatal test cases and invalid test cases:
+Examples of how exceptions would be thrown with different exception classes that could be distinguished by `name`:
+
+- `throw new SchemaValidationError('...should NOT have additional properties.')` (custom error type thrown by schema validation)
+- `throw new SomeCustomRuleError('...')` (custom error type thrown by the rule implementation)
+- `throw new Error('...')` (basic error thrown by the rule implementation)
+
+Differences between `fatal` test cases and `invalid` test cases:
 
 - `code` is not required (the code may be irrelevant when testing options)
-- There's a required `message` property instead of an `errors` property
+- There's a required `error` object instead of an `errors` array
 
 This feature can only be used for testing the following user-facing exceptions:
 
@@ -95,16 +101,6 @@ This feature can only be used for testing the following user-facing exceptions:
 Note that this feature cannot be used for testing exceptions thrown by the rule tester itself, nor for testing syntax/parsing errors.
 
 This design is similar to the [API](https://github.com/ember-template-lint/ember-template-lint/blob/master/docs/plugins.md#rule-tests) that the linter [ember-template-lint](https://github.com/ember-template-lint/ember-template-lint) uses for testing rule exceptions, which could be referred to as prior art.
-
-Pros of this design vs. the [reuse `invalid` test cases](#reuse-invalid-test-cases) alternative:
-
-- Avoid overloading existing invalid test cases to serve additional purposes which could complicate the usage, documentation, and implementation logic
-- Avoid confusing third-party tooling that may be analyzing (e.g. linting in the case of [eslint-plugin-eslint-plugin](https://github.com/eslint-community/eslint-plugin-eslint-plugin)) or running invalid test cases with the assumption that they all report violations
-
-Cons vs. the [reusing `invalid` test cases](#reuse-invalid-test-cases) alternative:
-
-- Not able to share as much code with invalid test cases
-- Large change / addition to the API of rule tester, as opposed to just adding a single `error: true` property
 
 ### Implementation
 
@@ -146,7 +142,7 @@ Approach #2 is promising, but there are still a number of issues to solve with i
 
 A few ways we could solve these issues with approach #2:
 
-1. Fix #1: Do string matching on the ESLint helper text in the exception message to determine if it's one of the relevant exceptions to convert and return as a message. It could help to prefix the exception message with an error code for easier and less-brittle string matching. Note that this fix requires manually stripping the ESLint helper text, which is also brittle, but workable. The code would be similar to Fix #2 but with string matching instead of relying on `err.messageForTest`.
+1. Fix #1: Do string matching on the ESLint helper text in the exception message, or possibly the exception class name, to determine if it's one of the relevant exceptions to convert and return as a message. It could help to prefix the exception message with an error code for easier and less-brittle string matching. Note that this fix requires manually stripping the ESLint helper text, which is also brittle, but workable. The code would be similar to Fix #2 but with string matching instead of relying on `err.messageForTest`.
 
 2. Fix #2: Add a property to the relevant exceptions `err.messageForTest = '...';` at their source and then use this property to determine if it's one of the relevant exceptions to convert to a message and what the message should be. This is more robust than string matching, but the downside is we have to add a custom property to some exception objects, and it requires the source of these exceptions to have awareness of the rule tester, which is not ideal. Example code:
 
@@ -206,7 +202,7 @@ Ideally, we can also draw attention to it with a paragraph and example usage in 
 
 - A user testing that their rule schema catches invalid options may end up including the message from JSON Schema in their test case (e.g. `Value "bar" should be boolean.`). This could make it more difficult for ESLint to upgrade its version of ajv / JSON Schema in the future, as an upgraded version could tweak messages and necessitate updating any test cases that include the message. This is a relatively minor concern, as it's unlikely that messages will change often, and it's easy to update test cases if they do. Two factors that could mitigate this:
   - If [snapshot testing](https://github.com/eslint/eslint/issues/14936) is implemented in the future, it would become possible to fix test cases with a single command.
-  - We can encourage the use of `errorType` property (discussed in [Detailed Design](#detailed-design)) for the majority of cases that don't care about including the exact exception text.
+  - We can encourage the use of `error.name` property (discussed in [Detailed Design](#detailed-design)) for the majority of cases that don't care about including the exact exception text.
 
 ## Backwards Compatibility Analysis
 
@@ -228,6 +224,8 @@ This new feature is a non-breaking change and has no impact unless a user choose
 -->
 
 ### Reuse `invalid` test cases
+
+> f**Note:** During the RFC discussion, we decided against this alternative because fatal test cases are sufficiently-different from invalid test cases that they deserve to have their own separate array to avoid confusion.
 
 Augment the error objects of invalid test cases to support a `fatal: true` property. This will indicate that the test case triggered an exception with the given message.
 
@@ -257,7 +255,15 @@ New constraints on test cases with a fatal error:
 - Cannot have `output` in the top-level object (no violation/autofix can result from a fatal error)
 - Cannot have `suggestions` in the error object (suggestions are only for violations)
 
-During the RFC discussion, we decided against this alternative because fatal test cases are sufficiently-different from invalid test cases that they deserve to have their own separate array to avoid confusion.
+Pros of a separate `fatal` error vs. reusing the `invalid` array:
+
+- Avoid overloading existing invalid test cases to serve additional purposes which could complicate the usage, documentation, and implementation logic
+- Avoid confusing third-party tooling that may be analyzing (e.g. linting in the case of [eslint-plugin-eslint-plugin](https://github.com/eslint-community/eslint-plugin-eslint-plugin)) or running invalid test cases with the assumption that they all report violations
+
+Cons of a separate `fatal` error vs. reusing the `invalid` array:
+
+- Not able to share as much code with invalid test cases
+- Large change / addition to the API of rule tester, as opposed to just adding a single `error: true` property
 
 ## Open Questions
 
