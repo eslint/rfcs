@@ -25,11 +25,8 @@ amount of wasted time and resources that could be avoided.
 
 ## Detailed Design
 
-The proposed implementation is to add a `--skip-warnings` flag to ESLint that will skip
-running any rules that are set to the `warn` level. This will be a CLI flag only, as it
-doesn't make sense to have this flag in a configuration file. This flag would implicitly
-imply the `--quiet` flag, given if the `warn` rules are not run, they will not be outputted
-to reporters.
+The proposed implementation is to modify the `--quiet` flag so that ESLint will skip
+running any rules that are set to the `warn` level.
 
 From an API perspective, this would be implemented by a predicate function that acts as
 a filter on which rules should be run. The predicate would take the rule configuration,
@@ -42,9 +39,13 @@ rules that have been set to `error`, thus filtering out any that are marked as `
 
 The check for unused `eslint-disable` directives (`--report-unused-disable-directives`)
 should continue to mark `warn` rules as used, even when running with `--skip-warnings`.
+As the rules are not actually run, an assumption would have to be made that all directives
+on rules marked `warn` are used when in this mode. This is a reasonable assumption, as
+the user likely does not expect `warn` flags to be touched at all in this mode.
 
-The `--max-warnings` flag should disable the `--skip-warnings` flag, as it requires that
-`warn` rules are run to know the current number of reported warnings.
+The `--max-warnings` flag should be disabled when the `--quiet` flag is in use, as it requires that
+`warn` rules are run to know the current number of reported warnings. This should provide an
+error when the two flags are used together.
 
 ## Documentation
 
@@ -59,10 +60,10 @@ This change adds a new command line flag, as well as a new API method. This adds
 maintenance burden. However, the implementation is relatively simple, and the benefits
 are significant.
 
-Another potential drawback around this specific implementation is that the existence of
-both `--quiet` and `--skip-warnings` might be confusing to some users, however this can be
-partially alleviated by updating the `--quiet` docs to mention that warnings will still be
-run, and to use `--skip-warnings` instead to not run them.
+As this flag has many interactions with other systems such as `--max-warnings`, further
+maintenance overhead is introduced by having to ensure it behaves correctly between
+the different flags. This would require updating documentation across all flags and relevant
+settings, rather than just the added flag.
 
 ## Backwards Compatibility Analysis
 
@@ -72,18 +73,12 @@ by this change.
 
 ## Alternatives
 
-### Implement this into `--quiet` instead of a new flag
+### Implement this via a separate `--skip-warnings` flag
 
-This alternative would still require the same API changes, but would instead implement
-this behavior into the `--quiet` flag. This would be a breaking change, as it would
-change the behavior of `--quiet` to not run `warn` rules. The upside of this alternative
-would be that it's less confusing to users. This would presumably need to wait for ESLint 9.
-
-Another downside of this alternative is that it would introduce confusion around the
-`--max-warnings` flag and other checks that require warnings to run. Currently the quiet
-flag works fine alongside these. If we were to implement this into the quiet flag, we would
-have to either break that functionality, or have the quiet flag only sometimes stop actual
-running depending on what other flags are in use, which is confusing and unclear.
+This alternative would be to implement this via a separate `--skip-warnings` flag, rather
+than into the `--quiet` flag. The same API changes would still be required. The benefit of
+this alternative is that it doesn't break behavior of the `--quiet` flag, but it also can
+cause confusion with a new flag.
 
 ### Expose more power via the CLI flag
 
@@ -97,10 +92,12 @@ use-case is ideal to keep as a flag either way.
 
 ## Open Questions
 
-### Flag naming
+### How to handle conflicting flags
 
-Whether `--skip-warnings` is the best name for the flag is still an open question. I feel it's
-the most clear around the base purpose, however I'm open to hearing other suggestions.
+This proposal notes that the `--max-warnings` flag would be disabled under `--quiet`, however
+this might not be the best option. Rather than preventing it working, it might make sense to
+warn the user that this mode will still run the `warn` rules despite being in quiet mode,
+so that a setting like `--max-warnings` can still co-exist with `--quiet`.
 
 ### Are there any other considerations I've missed
 
