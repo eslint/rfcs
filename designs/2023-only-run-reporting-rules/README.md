@@ -18,10 +18,11 @@ intended outcome of this RFC is to allow users to not run these rules when unnec
 A common use-case of the `warn` level is to report errors to the developer in their IDE,
 but to completely ignore it when running ESLint on the command line via the `--quiet` flag.
 When running with many rules set to the `warn` level, this can cause a significant amount
-of overhead on ESLint runtime. On an example large codebase, I found that by disabling all
-rules set to warn, I was able to reduce ESLint runtime from 4 minutes and 39 seconds to just
-22 seconds. As the `warn` rules are entirely ignored in this situation, this is a substantial
-amount of wasted time and resources that could be avoided.
+of overhead on ESLint runtime. On an example large codebase with 154988 lines of TypeScript
+code, I found that by disabling all rules set to warn, I was able to reduce ESLint runtime
+from 4 minutes and 39 seconds to just 22 seconds. As the `warn` rules are entirely ignored
+in this situation, this is a substantial amount of wasted time and resources that could be
+avoided.
 
 ## Detailed Design
 
@@ -38,8 +39,8 @@ The flag would be implemented by passing a predicate function that only returns 
 rules that have been set to `error`, thus filtering out any that are marked as `warn`.
 
 The check for unused `eslint-disable` directives (`--report-unused-disable-directives`)
-should continue to mark `warn` rules as used, even when running with `--skip-warnings`.
-As the rules are not actually run, an assumption would have to be made that all directives
+should continue to mark `warn` rules as used, even when running with `--quiet`. As the
+rules are not actually run, an assumption would have to be made that all directives
 on rules marked `warn` are used when in this mode. This is a reasonable assumption, as
 the user likely does not expect `warn` flags to be touched at all in this mode.
 
