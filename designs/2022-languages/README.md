@@ -24,7 +24,7 @@ In addition, there are numerous projects that hack around other languages to mak
 
 Instead of forcing others to rewrite what is core linting functionality, or asking people to produce an ESTree format AST for some language other than JavaScript, we can make everyone's lives easier by providing formal language support such that languages can be plugged in to ESLint easily.
 
-We did also previously accept [#56](https://github.com/eslint/rfcs/pull/56) as an extension to `parseForESLint()` to support more languages.
+We did also previously accept [#56](https://github.com/eslint/rfcs/pull/56) as an extension to `parseForESLint()` to support more languages and [eslint/eslint#14745](https://github.com/eslint/eslint/issues/14745) has been open for a couple of years to figure out a way to lint both a file and its virtual parts.
 
 ## Detailed Design
 
@@ -182,7 +182,7 @@ At a high-level, ESLint uses the language object in the following way:
 
 * When ESLint reads a file, it checks `fileType` to determine whether the language would prefer the file in text or binary format.
 * When preparing violation messages, ESLint uses `lineStart` and `columnStart` to determine how to offset the locations. Some parsers user line 0 as the first line but ESLint normalizes to line 1 as the first line (similar for columns). Using `lineStart` and `columnStart` allows ESLint to ensure a consistently reported output so one file doesn't start with line 0 and another starts at line 1. If not present, `lineStart` and `columnStart` are assumed to be 0.
-* The `languageOptionsSchema` is an [`ObjectSchema`](https://npmjs.com/package/@humanwhocodes/object-schema) definition object that can be used to validate the langauge options.
+* The `languageOptionsSchema` is an [`ObjectSchema`](https://npmjs.com/package/@humanwhocodes/object-schema) definition object that can be used to validate the language options.
 * After reading a file, ESLint passes the file information to `parse()` to create a raw parse result.
 * The raw parse result is then passed into `createSourceCode()` to create the `SourceCode` object that ESLint will use to interact with the code.
 
@@ -243,6 +243,17 @@ interface SourceCode {
      * Return all of the inline areas where ESLint should be disabled/enabled.
      */
     getDisableDirectives(): Array<DisableDirective>;
+
+    /**
+     * Return any inline configuration provided via comments.
+     */
+    getInlineConfig(): Array<FlatConfig>;
+
+    /**
+     * Get any virtual files (blocks of other languages embedded inside of
+     * this file). Example: Extracting CSS and JavaScript blocks from HTML. 
+     */
+    getVirtualFiles(): Array<VirtualFile>;
 }
 
 type TraversalStep = VisitTraversalStep | CallTraversalStep;
@@ -274,6 +285,62 @@ interface DisableDirective {
      * Location of the comment.
      */
     loc: LocationRange;
+}
+
+type VirtualFile = VirtualTextFile | VirtualBinaryFile;
+
+interface VirtualTextFile {
+
+    /**
+     * The name of the file without a path.
+     */
+    filename: string;
+
+    /**
+     * The body of the file to parse.
+     */
+    body: string | ArrayBuffer;
+
+    /**
+     * The number to add to any line-based violations. 0 if undefined.
+     */
+    lineStart?: number;
+
+    /**
+     * The number to add to any violations that occur in the first line of
+     * the virtual file. 0 if undefined.
+     */
+    columnStart?: number;
+
+    /**
+     * The number to add to the column number of each violation in the body.
+     * 0 if undefined.
+     */
+    indentOffset?: number;
+}
+
+interface VirtualBinaryFile {
+
+    /**
+     * The name of the file without a path.
+     */
+    filename: string;
+
+    /**
+     * The body of the file to parse.
+     */
+    body: ArrayBuffer;
+
+    /**
+     * The number to add to violation offset locations. 0 if undefined.
+     */
+    byteStart?: number;
+
+    /**
+     * The number to add to the offset location of each violation in the body.
+     * 0 if undefined.
+     */
+    byteOffset?: number;
 }
 
 interface LocationRange {
@@ -431,6 +498,26 @@ The ESLint core will then use the disable directive information to:
 * Report any unused disable directives.
 
 This functionality currently lives in [`apply-disable-directives.js`](https://github.com/eslint/eslint/blob/0311d81834d675b8ae7cc92a460b37115edc4018/lib/linter/apply-disable-directives.js) and will have to be updated to call `SourceCode#getDisableDirectives()`.
+
+This is a method instead of a property because if ESLint is run with `noInlineConfig: true` then there is no reason to calculate the disable directives.
+
+#### The `SoureCode#getInlineConfig()` Method
+
+In JavaScript, we use `/* eslint */` comments to specify inline configuration of rules. Other languages may want to do the same thing, so this method provides a way for a language to extract any inline configuration and return it to the ESLint core.
+
+This functionality currently lives in [`linter.js`](https://github.com/eslint/eslint/blob/ea10ca5b7b5bd8f6e6daf030ece9a3a82f10994c/lib/linter/linter.js#L466) and will have to be updated to call `SourceCode#getInlineConfig()`.
+
+This is a method instead of a property because if ESLint is run with `noInlineConfig: true` then there is no reason to calculate inline config.
+
+#### The `SoureCode#getVirtualFiles()` Method
+
+This method allows a file to specify that it contains "virtual" files, i.e., blocks of code written in another language. For languages such as Markdown and HTML, this would allow ESLint to lint both the primary language the file is written in and then lint each of the blocks and provide a unified report for the entire file.
+
+The design of `VirtualTextFile` is intended to automate the mapping of line/column reporting that currently has to be done manually inside of a processor in the `postprocess()` step. By specifying the line and column location of the virtual file inside its parent, we can calculate that automatically.
+
+The core would call `Source#getVirtualFiles()` and start lint processes on each of the virtual files. To each rule, virtual files would look the same as if they came from a processor.
+
+This could make processors obsolete going forward.
 
 ### Extracting JavaScript Functionality
 
@@ -612,6 +699,10 @@ N/A
 ### Why allow binary files?
 
 I think there may be a use in validating non-text files such as images, videos, and WebAssembly files. I may be wrong, but by allowing languages to specify that they'd prefer to receive the file in binary, it at least opens up the possibility that people may create plugins that can validate binary files in some way.
+
+### How will we autofix binary files?
+
+At least to start, we won't allow autofix for binary files. While it is technically possible to overwrite particular byte offsets in the same way we do character ranges, it's difficult to know how this should work in practice without an actual use case. My suggestion is that we implement linting for binary files and see what people end up using it for before designing autofix for binary files.
 
 ### Will the JavaScript language live in the main eslint repo?
 
