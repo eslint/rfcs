@@ -91,6 +91,7 @@ Examples of how exceptions would be thrown with different exception classes that
 Differences between `fatal` test cases and `invalid` test cases:
 
 - `code` is not required (the code may be irrelevant when testing options)
+  - If neither `code` nor `name` are provided, we'll use a placeholder name `(Test Case #x` as the test case's `it` title)
 - There's a required `error` object instead of an `errors` array
 
 This feature can only be used for testing the following user-facing exceptions:
@@ -104,26 +105,22 @@ This design is similar to the [API](https://github.com/ember-template-lint/ember
 
 ### Implementation
 
-This will require changes to:
+> Draft/WIP PR demonstrating a working implementation of the current design: [#16823](https://github.com/eslint/eslint/pull/16823)
+
+The primary changes will be to the rule tester:
 
 - lib/rule-tester/rule-tester.js
 - lib/rule-tester/flat-rule-tester.js
-
-And new tests in:
-
 - tests/lib/rule-tester/rule-tester.js
 - tests/lib/rule-tester/flat-rule-tester.js
 
 First, we'll follow the pattern of the existing `valid` and `invalid` test case arrays to add support for a new `fatal` test case array in the rule tester.
 
-Then, when we are executing a test case with a fatal error, we need some way to convert any ESLint-generated exception during schema validation and any rule-generated exception during rule execution into a standard test error object with a `LintMessage` with `fatal: true`. This will allow the message to be compared against the expected error message in the test case.
+Then, when we are executing a test case with a fatal error, we need some way to convert any ESLint-generated exception during schema validation and any rule-generated exception during rule execution into an object that can be compared against the expected error message in the test case.
 
-We could approach this in one of two ways:
+In `runRuleForItem()`, when executing a fatal test case, we'll surround the `validate()` and `linter.verify()` calls with a try/catch block, and convert the relevant exceptions to an error object to be returned.
 
-1. Approach #1: In `runRuleForItem()`, when executing a fatal test case, pass a new option to `validate()` and `linter.verify()` to instruct them to return a message for the relevant exceptions instead of throwing them. But `linter.verify()` is part of ESLint's public API and it's not clear this option would be useful for anyone else. So we're disqualifying this approach as of now.
-2. Approach #2: In `runRuleForItem()`, when executing a fatal test case, surround the `validate()` and `linter.verify()` calls with a try/catch block, and convert the relevant exceptions to messages.
-
-Approach #2 is promising, but there are still a number of issues to solve with it:
+However, there are a number of issues to solve with this:
 
 1. Issue #1: We need some way to determine which exceptions to convert to messages, and which exceptions to let bubble up, as there are many irrelevant exceptions that can be thrown by these functions which users shouldn't be testing.
 2. Issue #2: We need to omit the superfluous ESLint helper text from the error message returned, as ESLint helper text is subject to change, not part of the original exception from the schema validation or rule, and unnecessarily including these extra lines forces the user to always write out a tedious, multi-line string with them for the message in their test case (unless they use a regexp to match part of the message). Example of exceptions with the ESLint helper text:
@@ -140,41 +137,38 @@ Approach #2 is promising, but there are still a number of issues to solve with i
     Rule: "no-foo"
     ```
 
-A few ways we could solve these issues with approach #2:
+To solve these issues, we'll add a property to the relevant exceptions `err.messageForTest = '...';` at their source and then use this property to distinguish testable exceptions and what the original exception text was. The downside is we have to add a custom property to some exception objects, and this requires the source of these exceptions to have awareness of the rule tester, which is not ideal. Example code:
 
-1. Fix #1: Do string matching on the ESLint helper text in the exception message, or possibly the exception class name, to determine if it's one of the relevant exceptions to convert and return as a message. It could help to prefix the exception message with an error code for easier and less-brittle string matching. Note that this fix requires manually stripping the ESLint helper text, which is also brittle, but workable. The code would be similar to Fix #2 but with string matching instead of relying on `err.messageForTest`.
+```js
+// Inside the rule tester class.
+function runRuleForItem(item) {
+  // ...
 
-2. Fix #2: Add a property to the relevant exceptions `err.messageForTest = '...';` at their source and then use this property to determine if it's one of the relevant exceptions to convert to a message and what the message should be. This is more robust than string matching, but the downside is we have to add a custom property to some exception objects, and it requires the source of these exceptions to have awareness of the rule tester, which is not ideal. Example code:
+  // Only surround these calls with a try/catch if the current test case is for a fatal error.
+  try {
+      validate(...);
+      // or
+      messages = linter.verify(...);
+  } catch (err) {
+      if (err.messageForTest) {
+          // Return a message so this exception can be tested.
+          return {
+              messages: [{
+                  ruleId: ruleName,
+                  fatal: true,
+                  message: err.messageForTest,
+                  name: err.name,
+              }],
+          };
+      }
 
-    ```js
-    // Inside the rule tester class.
-    function runRuleForItem(item) {
-        // ...
+      // Not one of the relevant exceptions for testing.
+      throw err;
+  }
+}
+```
 
-        // Only surround these calls with a try/catch if the current test case is for a fatal error.
-        try {
-            validate(...);
-            // or
-            messages = linter.verify(...);
-        } catch (err) {
-            if (err.messageForTest) {
-                // Return a message so this exception can be tested.
-                return {
-                    messages: [{
-                        ruleId: ruleName,
-                        fatal: true,
-                        message: err.messageForTest,
-                    }],
-                };
-            }
-
-            // Not one of the relevant exceptions for testing.
-            throw err;
-        }
-    }
-    ```
-
-I'm interested to gather feedback on these approaches and preferences about what the implementation should look like.
+> Draft/WIP PR demonstrating a working implementation of the current design: [#16823](https://github.com/eslint/eslint/pull/16823)
 
 ## Documentation
 
@@ -279,9 +273,7 @@ Cons of a separate `fatal` error vs. reusing the `invalid` array:
 -->
 
 1. Have we come up with the ideal [implementation](#implementation)?
-2. Are there other kinds of exceptions we want to allow to be tested? The current approach essentially defines an allowlist of exceptions that are testable so that users can't test irrelevant exceptions (and so that we don't unnecessarily expose exceptions that are subject to change in our API). Note that we can add more exceptions later if we determine a need.
-3. It's unlikely but worth considering whether this feature would make it more difficult to support [snapshot testing](https://github.com/eslint/eslint/issues/14936).
-4. The property `fatal: true` is used internally to represent parsing errors. Could overloading that cause any problem or confusion? Note that we don't want to allow testing syntax/parsing errors. Also note that parsing errors and the exceptions being tested are both fatal exceptions, so it could make sense to use the same property name, as long as it doesn't cause problems. `error`, `exception`, `throws` are alternative names which mean the same thing, but having multiple property names that mean the same thing could also be confusing.
+2. Are there other kinds of exceptions we want to allow to be tested? The current approach essentially defines an allowlist of exceptions that are testable (invalid rule options, and custom exceptions thrown by a rule implementation) so that users can't test irrelevant exceptions (and so that we don't unnecessarily expose exceptions that are subject to change in our API). Note that we can add more exceptions later if we determine a need.
 
 ## Help Needed
 
