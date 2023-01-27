@@ -35,8 +35,14 @@ and return whether the rule should be run. For simplicity, this function should 
 given rules marked as `off`, as if this function handled existing behavior then users of the
 API would have to mimic that when attempting to extend it.
 
-The flag would be implemented by passing a predicate function that only returns true for
-rules that have been set to `error`, thus filtering out any that are marked as `warn`.
+This API should be added to `VerifyOptions`, and will be passed into and utilized within
+the `runRules` function during the `configuredRules` loop, after the check for disabled
+rules and the rule existing. The `ruleId`, `rule`, rule configuration from `getRuleOptions`,
+and `severity` should be passed into the predicate function as an object.
+
+The alteration to the `--quiet` flag would be implemented by passing a predicate function
+to the API that only returns true for rules that have been set to `error`, thus filtering
+out any that are marked as `warn`.
 
 The check for unused `eslint-disable` directives (`--report-unused-disable-directives`)
 should continue to mark `warn` rules as used, even when running with `--quiet`. As the
@@ -44,9 +50,12 @@ rules are not actually run, an assumption would have to be made that all directi
 on rules marked `warn` are used when in this mode. This is a reasonable assumption, as
 the user likely does not expect `warn` flags to be touched at all in this mode.
 
-The `--max-warnings` flag should be disabled when the `--quiet` flag is in use, as it requires that
-`warn` rules are run to know the current number of reported warnings. This should provide an
-error when the two flags are used together.
+In cases of conflicting flags such as the `--max-warnings` flag, this altered `--quiet` flag
+behavior should be disabled while it is in use. This is to ensure that the `--max-warnings`
+flag continues to work as expected. The predicate API should not be set, and existing
+behavior of filtering the output should be used. This altered behavior should output to the
+console on run that `--quiet` is slower when used alongside flags that require warnings to be
+run, as well as documented.
 
 ## Documentation
 
@@ -92,13 +101,6 @@ However, I feel the simple option as outlined in this proposal that covers the m
 use-case is ideal to keep as a flag either way.
 
 ## Open Questions
-
-### How to handle conflicting flags
-
-This proposal notes that the `--max-warnings` flag would be disabled under `--quiet`, however
-this might not be the best option. Rather than preventing it working, it might make sense to
-warn the user that this mode will still run the `warn` rules despite being in quiet mode,
-so that a setting like `--max-warnings` can still co-exist with `--quiet`.
 
 ### Are there any other considerations I've missed
 
