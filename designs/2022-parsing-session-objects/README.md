@@ -41,14 +41,13 @@ Using the session proposed in this RFC to determine whether it's in a "single" s
 
 ## Detailed Design
 
-This RFC proposes a `session` object be provided by ESLint to parsers that at first contains just two pieces of information:
+This RFC proposes a `session` object be provided by ESLint to parsers that at first contains one piece of information:
 
 ```ts
-type SessionMode = "persistent" | "single";
+type SessionMode = "persistent" | "single" | "single-with-fixer";
 
 interface LintSession {
   mode?: SessionMode;
-  options: ESLintOptions;
 }
 ```
 
@@ -68,7 +67,7 @@ Consumers of ESLint today use up to four classes from ESLint:
 
 - `Linter`: A lower-level class used when `fs` is not available, such as in browsers.
 - `CLIEngine` _(legacy)_: [no longer exported as of ESLint v8.0.0](https://eslint.org/docs/latest/user-guide/migrating-to-8.0.0#remove-cliengine); API predecessor to `ESLint`.
-- `ESLint`: The primary class to use in Node.js applications that includes `fs` operations.
+- `ESLint`: The soon-to-be-deprecated primary class to use in Node.js applications that includes `fs` operations.
 - `FlatESLint`: A preview of `ESLint` that uses the new [flat config](https://github.com/eslint/rfcs/pull/9)
 
 For example, the [ESLint extension for VS Code](https://github.com/Microsoft/vscode-eslint) [uses either `CLIEngine` or `ESLint`](https://github.com/Microsoft/vscode-eslint/blob/f095ba58a6bbefd5b7e5ddcff778f3f04551f554/server/src/eslint.ts#L1017-L1025), depending on the ESLint version and its configuration.
@@ -86,44 +85,27 @@ The `Linter` class will also enforce the invariant assumed by the session object
 I.e. if you're running single mode, then each file MUST be linted exactly once (unless fixed).
 
 ```ts
-const linter = new ESLint({ session: { mode: 'single' },  ... });
+const linter = new Linter({ session: { mode: "single" } /* ... */ });
 
 // No errors on these lines
-linter.lintFiles('foo.ts');
-linter.lintFiles('bar.ts');
+linter.lintFiles("foo.ts");
+linter.lintFiles("bar.ts");
 
 // Error: Cannot lint the same file twice without fixes in 'single' mode
-linter.lintFiles('foo.ts');
+linter.lintFiles("foo.ts");
 ```
 
-#### `CLIEngine`
+#### `CLIEngine` and `ESLint`
 
-The `CLIEngine` class is still used internally by the `ESLint` class to create a new `Linter`.
-That means it cannot assume it is being run by the CLI.
-It therefore needs to receive its session information as a constructor parameter.
+Per [this RFC comment by @zakas](https://github.com/eslint/rfcs/pull/102/files#r1060190555), we assume no changes will be made to the legacy `CLIEngine` and `ESLint` classes.
+If they were to be made, they'd be very similar to the following `FlatESLint`.
 
-`CLIEngine` already receives a large `CLIEngineOptions` object as a constructor parameter.
-`CLIEngineOptions` can be given an optional new property `session?: SessionOptions`.
+#### `FlatESLint`
 
-```ts
-interface SessionOptions {
-  mode?: SessionMode;
-}
-```
+The `FlatESLint` class already receives a large `FlatESLintOptions` object as a constructor parameter.
+`FlatESLintOptions` can be given an optional new property `session?: SessionOptions`.
 
-`CLIEngine`'s constructor can then provide its `options.session` to its `new Linter`:
-
-```diff
-- const linter = new Linter({ cwd: options.cwd });
-+ const linter = new Linter({ cwd: options.cwd, session: options.session });
-```
-
-#### `ESLint`
-
-The `ESLint` class already receives a large `ESLintOptions` object as a constructor parameter.
-`ESLintOptions` can be given an optional new property `session?: SessionOptions`.
-
-For example, the `lib/cli.js` > `translateOptions` would add `session: { mode: "single" }` to the `options` later passed to `ESLint`:
+For example, `lib/cli.js` > `translateOptions` would add `session: { mode: "single" }` to the `options` later passed to `FlatESLint`:
 
 ```diff
 const options = {
@@ -132,16 +114,15 @@ const options = {
 };
 ```
 
-`ESLint` can then pass `options.session` to the `CLIEngine`:
+`FlatESLint` can then pass `options.session` to `Linter`:
 
 ```diff
-- const cliEngine = new CLIEngine(processedOptions, { preloadedPlugins: options.plugins });
-+ const cliEngine = new CLIEngine(processedOptions, { preloadedPlugins: options.plugins, session: options.session });
+const linter = new Linter({
+  cwd: processedOptions.cwd,
+  configType: "flat",
++ session: options.session,
+});
 ```
-
-#### `FlatESLint`
-
-This works roughly the same as `ESLint` internally, and so would be changed in a very similar way.
 
 ### Object Identity
 
@@ -207,7 +188,6 @@ Instead of adding to `parseForESLint`, ESLint could instead set `process.env` va
 
 ```js
 process.env.ESLINT_LINT_MODE = options.session.mode;
-process.env.ESLINT_LINT_OPTIONS_FIX = options.session.options?.fix;
 ```
 
 However:
@@ -217,8 +197,8 @@ However:
 
 ## Open Questions
 
-The term `"single"` for the CLI use case is a bit of a misnomer, as the CLI can repeat up to 10 times when `--fix` is enabled.
-Is there a better antonym for `"persistent"`?
+The naming of `"single"` and `"single-with-fixer"` compared to `"persistent"` is a little clunky.
+Is there a better antonym set for `"persistent"`?
 
 Another definition for `"single"` is: any way that ESLint is _triggered once_ to the end-user, such as by the CLI.
 
