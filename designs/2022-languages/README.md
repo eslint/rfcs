@@ -519,6 +519,128 @@ The core would call `Source#getVirtualFiles()` and start lint processes on each 
 
 This could make processors obsolete going forward.
 
+As an example, suppose we have an HTML language plugin that can parse the following file:
+
+```html
+<!doctype html>
+<html>
+<head>
+    <title>Example</title>
+    <script>
+        function sayHi() {
+            console.log("Hi");
+        }
+    </script>
+    <style>
+        body {
+            background: blue;
+        }
+    </style>
+</head>
+</html>
+```
+
+The HTML language plugin will first parse the HTML into an AST. Inside of that AST, there will be a `Script` node representing the JavaScript portion of the file and a `Style` node representing the CSS portion. Inside the HTML AST, these two portions will be plain text. The plugin can then create two virtual files to represent those portions, such as:
+
+```js
+class HTMLSourceCode {
+
+    // other methods omitted
+
+    getVirtualFiles() {
+
+        return [
+
+            // the JavaScript file
+            {
+                filename: "0.js",
+                body: this.text.slice(70, 138),
+                lineStart: 6,
+                columnStart: 0,
+                indentOffset: 8
+            },
+
+            // the CSS file
+            {
+                filename: "0.css",
+                body: this.text.slice(164, 219),
+                lineStart: 11,
+                columnStart: 0,
+                indentOffset: 8
+            }
+
+        ];
+    }
+}
+```
+
+The ESLint core will call `SourceCode#getVirtualFiles()` and add the two virtual files into the list of files to be linted. When all virtual files are linted, the ESLint core will take any violations from virtual files and combine them with the violations from the primary file to create a unified report for the physical file (in this case, the HTML file). 
+
+Rules and languages can be targeted at the virtual files in a config file by treating them as if they were parts returned by a processor, such as:
+
+```js
+import js from "@eslint/js";
+import html from "eslint-plugin-html";
+import css from "eslint-plugin-css";
+
+export default [
+
+    {
+        plugins: {
+            js,
+            css,
+            html
+        }
+    },
+
+    // target the HTML files
+    {
+        files: ["**/*.html"],
+        language: "html/html",
+        rules: {
+            "html/doctype": "error"
+        }
+    },
+
+    // target the JS files -- include virtual files
+    {
+        files: ["**/*.js"],
+        language: "js/js",
+        rules: {
+            "js/semi": "error"
+        }
+    },
+
+    // target the CSS files -- includes virtual files
+    {
+        files: ["**/*.css"],
+        language: "css/css",
+        rules: {
+            "css/number-units": "error"
+        }
+    },
+
+    // target only virtual JS files
+    {
+        files: ["**/*.html/*.js"],
+        language: "js/js",
+        rules: {
+            "js/semi": "warn"
+        }
+    },
+
+    // target only virtual CSS files
+    {
+        files: ["**/*.html/*.css"],
+        language: "css/css",
+        rules: {
+            "css/number-units": "warn"
+        }
+    }
+];
+```
+
+
 ### Extracting JavaScript Functionality
 
 An important part of this process will be extracting all of the JavaScript functionality for the ESLint core and placing it in a language object. As a first step, that language object will live in the main ESLint repository so we can easily test and make changes to ensure backwards compatibility. Eventually, though, I'd like to move this functionality into its own `eslint/js` repo.
