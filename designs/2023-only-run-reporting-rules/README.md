@@ -35,10 +35,18 @@ and return whether the rule should be run. For simplicity, this function should 
 given rules marked as `off`, as if this function handled existing behavior then users of the
 API would have to mimic that when attempting to extend it.
 
-This API should be added to `VerifyOptions`, and will be passed into and utilized within
-the `runRules` function during the `configuredRules` loop, after the check for disabled
-rules and the rule existing. The `ruleId`, `rule`, rule configuration from `getRuleOptions`,
-and `severity` should be passed into the predicate function as an object.
+In `cli.js`'s `translateOptions` function, the `rulePredicate` option should be assigned to
+a predicate that checks for a `severity` of 2 (error) when the `--quiet` flag is applied, otherwise
+always returns true. In `eslint/flat-eslint.js`, the `rulePredicate` should be taken from
+the `eslintOptions` object, and passed down to the `linter.verifyAndFix` call.
+
+Within `linter.js`, the API should be added to `VerifyOptions`, and will be passed down into and
+utilized within the `runRules` function during the `configuredRules` loop, after the check
+for disabled rules and the rule existing. The `ruleId`, `rule`, rule configuration from `getRuleOptions`,
+and `severity` should be passed into the predicate function as an object. `normalizeVerifyOptions`
+should verify that the `rulePredicate` option is a function, and replace it with an always-true
+function if not. `processOptions` in `eslint-helpers.js` should also perform a validation check
+that the `rulePredicate` option is a function.
 
 The alteration to the `--quiet` flag would be implemented by passing a predicate function
 to the API that only returns true for rules that have been set to `error`, thus filtering
