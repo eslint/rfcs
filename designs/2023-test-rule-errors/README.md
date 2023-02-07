@@ -80,7 +80,10 @@ Example with a schema validation error because a non-existent option is passed:
 
 To test a custom exception thrown by a rule, simply use the exception text as the message: `"message": "Some custom exception message from the rule."` and/or the name of the exception class as the `name`.
 
-The `error` object in the test case uses the `name` and `message` properties directly from the original exception object, while grouping them nicely together in the same structure as the original exception.  Similar to `message` and `messageId` in `invalid` test cases, only one of `message` and `name` is required. If the user doesn't care to test the full exception `message` text, the exception class `name` can be used instead.
+- The `error` object groups the properties from the exception together nicely.
+- Similar to `message` and `messageId` in `invalid` test cases, only one of `message` and `name` is required. In particular, if the user doesn't care to test the full exception `message` text, the exception class `name` can be used instead.
+- `message` can be provided as a string or a regular expression (regexp), while `name` can only be provided as a string.
+- `message` comes from `err.message`, while `name` comes from `err.constructor.name`.
 
 Examples of how exceptions would be thrown with different exception classes that could be distinguished by `name`:
 
@@ -219,7 +222,7 @@ This new feature is a non-breaking change and has no impact unless a user choose
 
 ### Reuse `invalid` test cases
 
-> f**Note:** During the RFC discussion, we decided against this alternative because fatal test cases are sufficiently-different from invalid test cases that they deserve to have their own separate array to avoid confusion.
+> **Note:** During the RFC discussion, we decided against this alternative because fatal test cases are sufficiently-different from invalid test cases that they deserve to have their own separate array to avoid confusion.
 
 Augment the error objects of invalid test cases to support a `fatal: true` property. This will indicate that the test case triggered an exception with the given message.
 
