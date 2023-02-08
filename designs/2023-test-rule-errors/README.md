@@ -83,7 +83,8 @@ To test a custom exception thrown by a rule, simply use the exception text as th
 - The `error` object groups the properties from the exception together nicely.
 - Similar to `message` and `messageId` in `invalid` test cases, only one of `message` and `name` is required. In particular, if the user doesn't care to test the full exception `message` text, the exception class `name` can be used instead.
 - `message` can be provided as a string or a regular expression (regexp), while `name` can only be provided as a string.
-- `message` comes from `err.message`, while `name` comes from `err.constructor.name`.
+- `message` comes from `err.message`
+- `name` comes from `err.name` or `err.constructor.name` in case either has a custom value (besides just `Error`)
 
 Examples of how exceptions would be thrown with different exception classes that could be distinguished by `name`:
 
@@ -160,7 +161,7 @@ function runRuleForItem(item) {
                   ruleId: ruleName,
                   fatal: true,
                   message: err.messageForTest,
-                  name: err.name,
+                  name: err.name === 'Error' ? err.constructor.name : err.name,
               }],
           };
       }
