@@ -593,14 +593,6 @@ And if they just wanted to use `:exit`, we could ask them to write this:
 
 This would allow the visitor keys to stay strictly as selectors while still allowing both enter and exit phases of traversal to be hit.
 
-### Does the ESLint team want to create and maintain additional languages?
-
-The next logical step after this refactoring would be to create an additional language to ensure that other languages can be supported. JSON seems like a logical one (as many people seem to think ESLint validates JSON already).
-
-Does the ESLint team want to create an official JSON language plugin? Or any other language plugin? Or do we want to leave additional languages to the community?
-
-I think there is some benefit to having a few officially-supported language plugins that people will likely want, but that also brings additional maintenance burden.
-
 ## Help Needed
 
 N/A
@@ -638,6 +630,12 @@ Yes. The same text-based mechanism we currently use for JavaScript autofixes wil
 ### What about AST mutation for autofixing?
 
 That is out of scope for this RFC.
+
+### Will the ESLint team create and maintain additional languages?
+
+Yes. In the short-term, we will create a JSON language plugin and a Markdown language plugin (to coincide with or replace `eslint-plugin-markdown`).
+
+We may kickstart other language plugins as well and invite others to maintain them.
 
 ## Related Discussions
 
