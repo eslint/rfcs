@@ -520,7 +520,8 @@ interface RuleContext {
 interface Violation {
     messageId: string;
     data: object;
-    loc: LocationRange;
+    start: Location;
+    end: Location;
     suggest: Array<Suggestion>;
     fix(fixer: Fixer): Iterable<FixOp>;
 }
