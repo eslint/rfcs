@@ -110,6 +110,11 @@ interface ESLintLanguage {
     columnStart?: 0 | 1;
 
     /**
+     * The property to read the node name from. Used in selector querying.
+     */
+    nodeName: string;
+
+    /**
      * Validates languageOptions for this language.
      */
     validateOptions(options: LanguageOptions): void;
@@ -174,6 +179,7 @@ At a high-level, ESLint uses the methods on a language object in the following w
 * When preparing violation messages, ESLint uses `lineStart` and `columnStart` to determine how to offset the locations. Some parsers user line 0 as the first line but ESLint normalizes to line 1 as the first line (similar for columns). Using `lineStart` and `columnStart` allows ESLint to ensure a consistently reported output so one file doesn't start with line 0 and another starts at line 1. If not present, `lineStart` and `columnStart` are assumed to be 0.
 * After reading a file, ESLint passes the file information to `parse()` to create a raw parse result.
 * The raw parse result is then passed into `createSourceCode()` to create the `SourceCode` object that ESLint will use to interact with the code.
+* The `nodeName` property indicates the property key in which each AST node stores the node name. Even though ESTree uses `type`, it's also common for ASTs to use `kind` to store this information. This property will allow ESLint to use ASTs as they are instead of forcing them to use `type`. This is important as it allows for querying by selector.
 
 #### The `validateOptions()` Method
 
@@ -217,11 +223,6 @@ interface SourceCode {
      * The body of the file that you'd like rule developers to access.
      */
     body: string | ArrayBuffer;
-
-    /**
-     * Determines if a node matches a given selector.
-     */
-    match(node: ASTNode, selector: string): boolean;
 
     /**
      * Traversal of AST.
@@ -283,14 +284,6 @@ interface Location {
 
 Other than these interface members, languages may define any additional methods or properties that they need to provide to rule developers. For instance, 
 the JavaScript `SourceCode` object currently has methods allowing retrieval of tokens, comments, and lines. It is up to the individual language object implementations to determine what additional properties and methods may be required inside of rules. (We may want to provide some best practices for other methods, but they won't be required.)
-
-#### The `SourceCode#match()` Method
-
-ESLint currently uses [`esquery`](https://npmjs.com/package/esquery) to match visitor patterns to nodes. `esquery` is defined for use specifically with ESTree-compatible AST structures, which means that it cannot work for other structures without modification. We need a generic way to ensure that a given pattern in a visitor matches a given node, and that is the purpose of the `SourceCode#match()` method.
-
-For JavaScript, `SourceCode#match()` will simply use `esquery`; for other languages, they will be able to either implement their own CSS-query utilities or else just stick with node names to get started. (ESLint initially only matched the `type` property; `esquery` was added several years later.)
-
-We will need to update the [`NodeEventGenerator`](https://github.com/eslint/eslint/blob/90a5b6b4aeff7343783f85418c683f2c9901ab07/lib/linter/node-event-generator.js#L296) to use `SourceCode#match()` instead of `esquery`. This will require significant refactoring.
 
 #### The `SoureCode#traverse()` Method
 
@@ -436,7 +429,6 @@ This functionality currently lives in [`linter.js`](https://github.com/eslint/es
 
 This is a method instead of a property because if ESLint is run with `noInlineConfig: true` then there is no reason to calculate inline config.
 
-
 ### Extracting JavaScript Functionality
 
 An important part of this process will be extracting all of the JavaScript functionality for the ESLint core and placing it in a language object. As a first step, that language object will live in the main ESLint repository so we can easily test and make changes to ensure backwards compatibility. Eventually, though, I'd like to move this functionality into its own `eslint/js` repo.
@@ -448,6 +440,21 @@ The default flat config will need to be updated to specify a default `language` 
 #### Move Traversal into `SourceCode`
 
 The JavaScript-specific traversal functionality that currently lives in [`linter.js`](https://github.com/eslint/eslint/blob/dfc7ec11b11b56daaa10e8e6d08c5cddfc8c2c59/lib/linter/linter.js#L1140-L1158) will need to move into `SourceCode#traverse()`.
+
+#### Generic AST selectors
+
+ESLint currently uses [`esquery`](https://npmjs.com/package/esquery) to match visitor patterns to nodes. `esquery` is defined for use specifically with ESTree-compatible AST structures, which means that it cannot work for other structures without modification. We need a generic way to ensure that a given pattern in a visitor matches a given node, and to do that, we will need to fork `esquery`, extract the JS-specific parts while ensuring backwards compatibility with existing syntax, and then publish our own fork for use in ESLint.
+
+The fork will need to accept a property key that determines which property contains the AST node name (the `ESLintLanguage#nodeName` property). Some of the places that will need to be addressed:
+
+* [`isNode()`](https://github.com/estools/esquery/blob/7c3800a4b2ff5c7b3eb3b2cf742865b7c908981f/esquery.js#L270)
+* [`matches() identifier`](https://github.com/estools/esquery/blob/master/esquery.js#L99)
+* [`matches() class`](https://github.com/estools/esquery/blob/7c3800a4b2ff5c7b3eb3b2cf742865b7c908981f/esquery.js#L213-L233) (this contains the ESTree-specific functionality that should be extracted)
+* [`getVisitorKeys()`](https://github.com/estools/esquery/blob/7c3800a4b2ff5c7b3eb3b2cf742865b7c908981f/esquery.js#L246-L261)
+
+The best path forward here is likely to create a new class to represent the query engine with each of the top-level functions becoming methods on that class.
+
+We will need to update the [`NodeEventGenerator`](https://github.com/eslint/eslint/blob/90a5b6b4aeff7343783f85418c683f2c9901ab07/lib/linter/node-event-generator.js#L296) to use our fork instead of `esquery`. This will require significant refactoring.
 
 #### Split Disable Directive Functionality
 
@@ -481,7 +488,7 @@ In order to make all of this work, we'll need to make the following changes in t
 1. `FlatConfigArray` will need to be updated to define the `language` key and to delegate validation of `languageOptions` to the language.
 1. `Linter` will need to be updated to honor the `language` key and to use JS-specific functionality where we need to provide backwards compatibility for existing JS rules. There will be a lot of code removed and delegated to the language being used, including filtering of violation via disable directives, traversing the AST, and formulating the final violation list.
 1. The `context` object passed to rules will need to be updated so it works for all languages.
-1. `RuleTester` will need to be updated to support passing in `language`. We should also updated `RuleTester` to warn about the newly-deprecated `context` methods and properties.
+1. `FlatRuleTester` will need to be updated to support passing in `language`. We should also updated `FlatRuleTester` to warn about the newly-deprecated `context` methods and properties.
 
 #### Updating Rule Context
 
