@@ -94,28 +94,25 @@ Each language definition object must implement the following interface:
 ```ts
 interface ESLintLanguage {
 
-    options: {
+    /**
+     * Indicates how ESLint should read the file.
+     */
+    fileType: "text" | "binary";
 
-        /**
-         * Indicates how ESLint should treat the file.
-         */
-        fileType: "text" | "binary";
+    /**
+     * First line number returned from the parser (text mode only).
+     */
+    lineStart?: 0 | 1;
 
-        /**
-         * First line number returned from the parser (text mode only).
-         */
-        lineStart?: 0 | 1;
+    /**
+     * First column number returned from the parser (text mode only).
+     */
+    columnStart?: 0 | 1;
 
-        /**
-         * First column number returned from the parser (text mode only).
-         */
-        columnStart?: 0 | 1;
-        
-        /**
-         * Schema for language options.
-         */
-        languageOptionsSchema: ObjectSchemaDefinitions;
-    }
+    /**
+     * Validates languageOptions for this language.
+     */
+    validateOptions(options: LanguageOptions): void;
 
     /**
      * Parses the given file input into its component parts.
@@ -125,19 +122,11 @@ interface ESLintLanguage {
     /**
      * Creates SourceCode object that ESLint uses to work with a file.
      */
-    createSourceCode(input: ParseResult, env: LanguageContext): SourceCode | Promise<SourceCode>;
+    createSourceCode(file: File, input: ParseResult, env: LanguageContext): SourceCode | Promise<SourceCode>;
 
 }
 
 // Supplemental interfaces
-
-interface ObjectSchemaDefinition {
-    required?: boolean;
-    merge(a: unknown, b: unknown): unknown;
-    validate(value: unknown): void | never;
-}
-
-type ObjectSchemaDefinitions = Record<string, ObjectSchemaDefinition>;
 
 type LanguageOptions = Record<string, unknown>;
 
@@ -178,19 +167,19 @@ interface ParseResult {
 }
 ```
 
-At a high-level, ESLint uses the language object in the following way:
+At a high-level, ESLint uses the methods on a language object in the following way:
 
+* During config validation, ESLint calls `validateOptions()` on the `languageOptions` specified in the config. It is the expectation that 
 * When ESLint reads a file, it checks `fileType` to determine whether the language would prefer the file in text or binary format.
 * When preparing violation messages, ESLint uses `lineStart` and `columnStart` to determine how to offset the locations. Some parsers user line 0 as the first line but ESLint normalizes to line 1 as the first line (similar for columns). Using `lineStart` and `columnStart` allows ESLint to ensure a consistently reported output so one file doesn't start with line 0 and another starts at line 1. If not present, `lineStart` and `columnStart` are assumed to be 0.
-* The `languageOptionsSchema` is an [`ObjectSchema`](https://npmjs.com/package/@humanwhocodes/object-schema) definition object that can be used to validate the language options.
 * After reading a file, ESLint passes the file information to `parse()` to create a raw parse result.
 * The raw parse result is then passed into `createSourceCode()` to create the `SourceCode` object that ESLint will use to interact with the code.
 
-#### The `languageOptionsSchema` Property
+#### The `validateOptions()` Method
 
-Right now, we have an `ObjectSchema` definition for `languageOptions` inside of [`flat-config-schema.js`](https://github.com/eslint/eslint/blob/d8c8ede088e1f4a82c9b6b5c2772af268b9161aa/lib/config/flat-config-schema.js#L445). We won't be able to use a static definition because each language define what it would like inside of its `languageOptions`. 
+The intent of this method is to validate the `languageOptions` object as specified in a config. With flat config, all of the options in `languageOptions` are related to JavaScript and are currently validated [inside of the schema](https://github.com/eslint/eslint/blob/6380c87c563be5dc78ce0ddd5c7409aaf71692bb/lib/config/flat-config-schema.js#L445). With this proposal, that validation will instead need to be based on the `language` specified in the config, which will require retrieving the associated language object and calling the `validateOptions()` method [inside of `FlatConfigArray`](https://github.com/eslint/eslint/blob/f89403553b31d24f4fc841424cc7dcb8c3ef689f/lib/config/flat-config-array.js#L180).
 
-With this proposal, that validation will instead need to be based on the `language` specified in the config, which will require retrieving the associated language object and using `languageOptionsSchema` to create a new `ObjectSchema` object [inside of `FlatConfigArray`](https://github.com/eslint/eslint/blob/f89403553b31d24f4fc841424cc7dcb8c3ef689f/lib/config/flat-config-array.js#L180).
+The `validateOptions()` method must throw an error if any part of the `languageOptions` object is invalid.
 
 No specific `languageOptions` keys will be required for languages. The `parser` and `parserOptions` keys are unique to JavaScript and may not make sense for other languages.
 
