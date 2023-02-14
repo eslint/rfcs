@@ -627,6 +627,18 @@ It's important that we are able to determine the amount of time it takes to pars
 
 Additionally, `createSourceCode()` allows integrators to do their own parsing and create their own `SourceCode` instances without requiring the use of a specific `parse()` method.
 
+### How will rules be written for non-JS languages?
+
+Rules will be written the same way regardless of the language being used. The only things that will change are the AST node names and the `SourceCode` object passed in.
+
+### Will non-JS languages be able to autofix?
+
+Yes. The same text-based mechanism we currently use for JavaScript autofixes will also work for other languages.
+
+### What about AST mutation for autofixing?
+
+That is out of scope for this RFC.
+
 ## Related Discussions
 
 * [#6974 Proposal for parser services](https://github.com/eslint/eslint/issues/6974)
