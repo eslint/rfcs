@@ -502,11 +502,19 @@ interface RuleContext {
     options: Array<any>;
     id: string;
 
+    // method replacements
+    cwd: string;
+    filename: string;
+    physicalFilename: string
+    sourceCode: SourceCode;
+
+    report(violation: Violation): void;
+
+    // deprecated methods only available in JS
     getCwd(): string;
     getFilename(): string;
     getPhysicalFilename(): string;
     getSourceCode(): SourceCode;
-    report(violation: Violation): void;
 }
 
 interface Violation {
@@ -552,29 +560,6 @@ This proposal does not require any changes from end-users.
 1. We could choose to not support languages other than JavaScript.
 
 ## Open Questions
-
-### Should `RuleContext` have mostly properties instead of a mix of properties and methods?
-
-With the proposal as-is, `RuleContext` will have four properties and five methods, but four of the five methods just return a value. If we are looking at a larger rewrite, should we create a cleaner interface with just properties? Such as:
-
-```ts
-interface RuleContext {
-
-    languageOptions: LanguageOptions;
-    settings: object;
-    options: Array<any>;
-    id: string;
-
-    // method replacements
-    cwd: string;
-    filename: string;
-    physicalFilename: string
-    sourceCode: SourceCode;
-
-    report(violation: Violation): void;
-
-}
-```
 
 ### Should we eliminate `:exit` from selectors?
 
