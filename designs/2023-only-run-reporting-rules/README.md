@@ -48,6 +48,19 @@ should verify that the `rulePredicate` option is a function, and replace it with
 function if not. `processOptions` in `eslint-helpers.js` should also perform a validation check
 that the `rulePredicate` option is a function.
 
+The new `rulePredicate` function when implemented would look like this, using the `--quiet` flag
+rules outlined in this RFC as an example:
+
+```typescript
+linter.verifyAndFix(text, configs, {
+    rulePredicate: ({ ruleId: string, rule: Rule, severity: number }) => {
+        return severity === 2;
+    }
+});
+```
+
+This predicate would return true for all rules which have a severity of 2 (error).
+
 The alteration to the `--quiet` flag would be implemented by passing a predicate function
 to the API that only returns true for rules that have been set to `error`, thus filtering
 out any that are marked as `warn`.
@@ -55,15 +68,14 @@ out any that are marked as `warn`.
 The check for unused `eslint-disable` directives (`--report-unused-disable-directives`)
 should continue to mark `warn` rules as used, even when running with `--quiet`. As the
 rules are not actually run, an assumption would have to be made that all directives
-on rules marked `warn` are used when in this mode. This is a reasonable assumption, as
-the user likely does not expect `warn` flags to be touched at all in this mode.
+on rules marked false by the predicate are used when in this mode. This is a reasonable
+assumption, as the user likely does not expect `warn` flags to be touched at all in this mode.
 
 In cases of conflicting flags such as the `--max-warnings` flag, this altered `--quiet` flag
 behavior should be disabled while it is in use. This is to ensure that the `--max-warnings`
 flag continues to work as expected. The predicate API should not be set, and existing
-behavior of filtering the output should be used. This altered behavior should output to the
-console on run that `--quiet` is slower when used alongside flags that require warnings to be
-run, as well as documented.
+behavior of filtering the output should be used. This altered behavior should be documented
+to clarify that it causes warnings to be run despite the `--quiet` flag.
 
 ## Documentation
 
