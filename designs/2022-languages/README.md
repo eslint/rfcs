@@ -120,6 +120,14 @@ interface ESLintLanguage {
     validateOptions(options: LanguageOptions): void;
 
     /**
+     * Helper for esquery that allows languages to match nodes against
+     * class. esquery currently has classes like `function` that will
+     * match all the various function nodes. This method allows languages
+     * to implement similar shorthands.
+     */
+    matchesSelectorClass(className: string, node: ASTNode, ancestry: Array<ASTNode>): boolean;
+
+    /**
      * Parses the given file input into its component parts.
      */
     parse(file: File, env: LanguageContext): ParseResult | Promise<ParseResult>;
@@ -170,6 +178,10 @@ interface ParseResult {
     ast: ASTNode;
     body: string | ArrayBuffer;
 }
+
+interface ASTNode {
+    // language-defined
+}
 ```
 
 At a high-level, ESLint uses the methods on a language object in the following way:
@@ -188,6 +200,12 @@ The intent of this method is to validate the `languageOptions` object as specifi
 The `validateOptions()` method must throw an error if any part of the `languageOptions` object is invalid.
 
 No specific `languageOptions` keys will be required for languages. The `parser` and `parserOptions` keys are unique to JavaScript and may not make sense for other languages.
+
+#### The `matchesSelectorClass()` Method
+
+Inside of `esquery`, there are [some shortcuts](https://github.com/estools/esquery/blob/7c3800a4b2ff5c7b3eb3b2cf742865b7c908981f/esquery.js#L213-L233) like `function` and `expression` that will match more than one type of node. These are all specific to ESTree and might not make sense for other languages. However, these shortcut classes are very convenient and other languages might want to implement something similar.
+
+As part of this effort, we will fork `esquery` to make it more generic. We will pass in the `matchSelectorClass()` method to `esquery` so it can make classes in a language-specific way.
 
 #### The `parse()` Method
 
@@ -449,7 +467,7 @@ The fork will need to accept a property key that determines which property conta
 
 * [`isNode()`](https://github.com/estools/esquery/blob/7c3800a4b2ff5c7b3eb3b2cf742865b7c908981f/esquery.js#L270)
 * [`matches() identifier`](https://github.com/estools/esquery/blob/master/esquery.js#L99)
-* [`matches() class`](https://github.com/estools/esquery/blob/7c3800a4b2ff5c7b3eb3b2cf742865b7c908981f/esquery.js#L213-L233) (this contains the ESTree-specific functionality that should be extracted)
+* [`matches() class`](https://github.com/estools/esquery/blob/7c3800a4b2ff5c7b3eb3b2cf742865b7c908981f/esquery.js#L213-L233) (this contains the ESTree-specific functionality that should be extracted to `ESLintLanguage#matchesSelectorClass()`)
 * [`getVisitorKeys()`](https://github.com/estools/esquery/blob/7c3800a4b2ff5c7b3eb3b2cf742865b7c908981f/esquery.js#L246-L261)
 
 The best path forward here is likely to create a new class to represent the query engine with each of the top-level functions becoming methods on that class.
@@ -621,7 +639,7 @@ Additionally, `createSourceCode()` allows integrators to do their own parsing an
 
 ### How will rules be written for non-JS languages?
 
-Rules will be written the same way regardless of the language being used. The only things that will change are the AST node names and the `SourceCode` object passed in.
+Rules will be written the same way regardless of the language being used. The only things that will change are the AST node names and the `SourceCode` object passed in. Otherwise, rules can be written the same way, including the use of CSS-like selector strings to find nodes.
 
 ### Will non-JS languages be able to autofix?
 
