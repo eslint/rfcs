@@ -1,6 +1,6 @@
 - Repo: eslint/eslint
 - Start Date: 2023-02-14
-- RFC PR: (leave this empty, to be filled in later)
+- RFC PR: <https://github.com/eslint/rfcs/pull/106>
 - Authors: Christian Schulz (@cschulz)
 
 # Relative cache location strategy
