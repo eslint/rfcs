@@ -70,6 +70,8 @@ should continue to mark `warn` rules as used, even when running with `--quiet`. 
 rules are not actually run, an assumption would have to be made that all directives
 on rules marked false by the predicate are used when in this mode. This is a reasonable
 assumption, as the user likely does not expect `warn` flags to be touched at all in this mode.
+This would also apply to blanket `eslint-disable` directives that disable all rules, which
+should always be assumed to be used while a predicate is passed.
 
 In cases of conflicting flags such as the `--max-warnings` flag, this altered `--quiet` flag
 behavior should be disabled while it is in use. This is to ensure that the `--max-warnings`
@@ -79,27 +81,29 @@ to clarify that it causes warnings to be run despite the `--quiet` flag.
 
 ## Documentation
 
-Both the flag and API would make sense to document. As they are relatively simple additions,
-they would be documented inline with the rest of the CLI and API documentation. Due to the
-potentially major performance improvements for many setups, I feel mentioning it in the
-release blog post, alongside the potential benefits, would be a good idea to spread awareness.
+Both the behaviour modification of impacted flags and the API would make sense to document. 
+As they are relatively simple additions, they would be documented inline with the rest 
+of the CLI and API documentation. Due to the potentially major performance improvements for 
+many setups, I feel mentioning it in the release blog post, alongside the potential benefits,
+would be a good idea to spread awareness.
 
 ## Drawbacks
 
-This change adds a new command line flag, as well as a new API method. This adds further
+This change modifies a command line flag, as well as a new API method. This adds further
 maintenance burden. However, the implementation is relatively simple, and the benefits
 are significant.
 
 As this flag has many interactions with other systems such as `--max-warnings`, further
 maintenance overhead is introduced by having to ensure it behaves correctly between
 the different flags. This would require updating documentation across all flags and relevant
-settings, rather than just the added flag.
+settings.
 
 ## Backwards Compatibility Analysis
 
-The proposed solution does not cause any compatibility issues, as all functionality is
-implemented via new APIs and command line flags. Existing users will be unaffected
-by this change.
+This is a breaking change as it alters the behaviour of the `--quiet` flag.
+While the alterations to the quiet flag should not affect the actual outcome of the command,
+as cases where it would are covered by this RFC, it is still worth noting as the behaviour
+is changing. 
 
 ## Alternatives
 
