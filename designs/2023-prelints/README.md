@@ -208,7 +208,8 @@ interface TextFragment {
     columnStart?: number;
 
     /**
-     * The number to add to the column number of each violation in the body.
+     * The number to add to the column number of each violation in the body,
+     * and the number of characters to strip off the text slice before linting.
      * 0 if undefined.
      */
     indentOffset?: number;
@@ -323,6 +324,8 @@ export default {
     }
 };
 ```
+
+The `indentOffset` property is used to strip any indents off of the text slice before passing back to ESLint. In fix mode, once the fixing is complete, ESLint will then use `indentOffset` to re-establish the original indentation. Essentially, ESLint will capture the first `indentOffset` number of characters on the first line and then reapply that to the fixed text. 
 
 Rules and languages can be targeted at the text fragments in a config file by treating them as if they were parts returned by a processor, such as:
 
