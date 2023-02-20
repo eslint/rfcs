@@ -172,16 +172,19 @@ interface PrelintContext {
 
 
     /**
-     * Creates a virtual file from a subset of the current file.
+     * Creates a text fragment from a subset of text in the current file.
      */
-    createVirtualFile(file: VirtualFile): void;
+    createTextFragment(file: TextFragment): void;
+
+    /**
+     * Creates a binary fragment from a subset of bytes in the current file.
+     */
+    createBinaryFragment(file: BinaryFragment): void;
 }
 
 // Supplemental interfaces
 
-type VirtualFile = VirtualTextFile | VirtualBinaryFile;
-
-interface VirtualTextFile {
+interface TextFragment {
 
     /**
      * The name of the file without a path.
@@ -189,9 +192,9 @@ interface VirtualTextFile {
     filename: string;
 
     /**
-     * The body of the file to parse.
+     * The slice of text representing the fragment from the parent file.
      */
-    body: string | ArrayBuffer;
+    range: [number, number];
 
     /**
      * The number to add to any line-based violations. 0 if undefined.
@@ -200,7 +203,7 @@ interface VirtualTextFile {
 
     /**
      * The number to add to any violations that occur in the first line of
-     * the virtual file. 0 if undefined.
+     * the fragment. 0 if undefined.
      */
     columnStart?: number;
 
@@ -211,7 +214,7 @@ interface VirtualTextFile {
     indentOffset?: number;
 }
 
-interface VirtualBinaryFile {
+interface BinaryFragment {
 
     /**
      * The name of the file without a path.
@@ -219,9 +222,9 @@ interface VirtualBinaryFile {
     filename: string;
 
     /**
-     * The body of the file to parse.
+     * The slice of bytes representing the fragment from the parent file.
      */
-    body: ArrayBuffer;
+    range: [number, number];
 
     /**
      * The number to add to violation offset locations. 0 if undefined.
@@ -240,7 +243,7 @@ interface SourceCode {
 }
 ```
 
-Each prelint follows the same basic structure of as a rule, only it cannot report violations and instead can only inspect the AST, use `SourceCode` to make any necessary changes, and create virtual files as necessary. Otherwise, it looks the same as a rule, such as:
+Each prelint follows the same basic structure of as a rule, only it cannot report violations and instead can only inspect the AST, use `SourceCode` to make any necessary changes, and create fragments as necessary. Otherwise, it looks the same as a rule, such as:
 
 ```js
 export default {
@@ -264,13 +267,11 @@ export default {
 
 Because the prelints follow the same format as rules, we can use the same type of traversal.
 
-#### The `PrelintContext#createVirtualFile()` method
+#### The `PrelintContext#createTextFragment()` method
 
-The design of `VirtualTextFile` is intended to automate the mapping of line/column reporting that currently has to be done manually inside of a processor in the `postprocess()` step. By specifying the line and column location of the virtual file inside its parent, we can calculate that automatically.
+The design of `TextFragment` is intended to automate the mapping of line/column reporting that currently has to be done manually inside of a processor in the `postprocess()` step. By specifying the line and column location of the fragment inside its parent, we can calculate that automatically.
 
-During prelint traversal, the core will gather up all of the created virtual files and then queue them up for linting in addition to the original (parent) file. To each rule, virtual files would look the same as if they came from a processor.
-
-This could make processors obsolete going forward.
+During prelint traversal, the core will gather up all of the created fragments  and then queue them up for linting in addition to the original (parent) file. To each rule, text fragments would look the same as if they came from a processor.
 
 As an example, suppose we have an HTML language plugin that can parse the following file:
 
@@ -293,7 +294,7 @@ As an example, suppose we have an HTML language plugin that can parse the follow
 </html>
 ```
 
-The HTML language plugin will first parse the HTML into an AST. Inside of that AST, there will be a `Script` node representing the JavaScript portion of the file and a `Style` node representing the CSS portion. We could create a virtual file for each use prelints. Here is an example that extracts the JavaScript into a virtual file:
+The HTML language plugin will first parse the HTML into an AST. Inside of that AST, there will be a `Script` node representing the JavaScript portion of the file and a `Style` node representing the CSS portion. We could create a text fragment for each use prelints. Here is an example that extracts the JavaScript into a text fragment:
 
 ```js
 export default {
@@ -310,11 +311,9 @@ export default {
                 // imagine the content property exists
                 const textNode = node.content;
 
-                context.createVirtualFile({
+                context.createTextFragment({
                     filename: "0.js",
-                    body: removeIndents(
-                        sourceCode.text.slice(textNode.start, textNode.end)
-                    ),
+                    range: [70, 137]
                     lineStart: 6,
                     columnStart: 0,
                     indentOffset: 8                    
@@ -325,7 +324,7 @@ export default {
 };
 ```
 
-Rules and languages can be targeted at the virtual files in a config file by treating them as if they were parts returned by a processor, such as:
+Rules and languages can be targeted at the text fragments in a config file by treating them as if they were parts returned by a processor, such as:
 
 ```js
 import js from "@eslint/js";
@@ -355,7 +354,7 @@ export default [
         }
     },
 
-    // target the JS files -- include virtual files
+    // target the JS files -- include fragments
     {
         files: ["**/*.js"],
         language: "js/js",
@@ -364,7 +363,7 @@ export default [
         }
     },
 
-    // target the CSS files -- includes virtual files
+    // target the CSS files -- includes fragments
     {
         files: ["**/*.css"],
         language: "css/css",
@@ -373,7 +372,7 @@ export default [
         }
     },
 
-    // target only virtual JS files
+    // target only fragment JS files
     {
         files: ["**/*.html/*.js"],
         language: "js/js",
@@ -382,7 +381,7 @@ export default [
         }
     },
 
-    // target only virtual CSS files
+    // target only fragment CSS files
     {
         files: ["**/*.html/*.css"],
         language: "css/css",
@@ -397,7 +396,7 @@ export default [
 
 In order to make all of this work, we'll need to make the following changes in the core:
 
-1. `linter.js` will need to be updated to treat virtual files the same as processor code blocks (recursively linting) and to do a first traversal of the file using prelints.
+1. `linter.js` will need to be updated to treat fragments the same as processor code blocks (recursively linting) and to do a first traversal of the file using prelints.
 1. `FlatConfigArray` will need to be updated to define the `prelints` key.
 1. Create a new `PrelintContext` object.
 1. `RuleTester` will need to be updated to support passing in `prelints`.
@@ -440,7 +439,7 @@ N/A
 
 ### How will autofix work?
 
-Because we have the mapping of physical file to virtual file defined via lines, columns, and indent offsets, we should be able to apply autofixes to virtual files and then merge them into the physical file automatically. This should eliminate the need for postprocessing functions like we have in processors.
+Because we have the mapping of physical file to fragments defined via lines, columns, and indent offsets, we should be able to apply autofixes to fragments and then merge them into the physical file automatically. This should eliminate the need for postprocessing functions like we have in processors.
 
 ### How will this coexist with processors?
 
