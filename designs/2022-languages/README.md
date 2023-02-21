@@ -132,12 +132,12 @@ interface ESLintLanguage {
      * throws errors for parsing errors but rather should return any parsing 
      * errors as parse of the ParseResult object.
      */
-    parse(file: File, env: LanguageContext): ParseResult | Promise<ParseResult>;
+    parse(file: File, context: LanguageContext): ParseResult | Promise<ParseResult>;
 
     /**
      * Creates SourceCode object that ESLint uses to work with a file.
      */
-    createSourceCode(file: File, input: ParseResult, env: LanguageContext): SourceCode | Promise<SourceCode>;
+    createSourceCode(file: File, input: ParseResult, context: LanguageContext): SourceCode | Promise<SourceCode>;
 
 }
 
