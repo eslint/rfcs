@@ -206,8 +206,8 @@ interface ParseError {
     message: string;
     line: number;
     column: number;
-    endLine: number;
-    endColumn: number;
+    endLine?: number;
+    endColumn?: number;
 }
 
 interface ASTNode {
@@ -569,8 +569,10 @@ interface RuleContext {
 interface Violation {
     messageId: string;
     data: object;
-    start: Location;
-    end: Location;
+    line: number;
+    column: number;
+    endLine?: number;
+    endColumn?: number
     suggest: Array<Suggestion>;
     fix(fixer: Fixer): Iterable<FixOp>;
 }
