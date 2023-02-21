@@ -128,7 +128,9 @@ interface ESLintLanguage {
     matchesSelectorClass(className: string, node: ASTNode, ancestry: Array<ASTNode>): boolean;
 
     /**
-     * Parses the given file input into its component parts.
+     * Parses the given file input into its component parts. This file should not
+     * throws errors for parsing errors but rather should return any parsing 
+     * errors as parse of the ParseResult object.
      */
     parse(file: File, env: LanguageContext): ParseResult | Promise<ParseResult>;
 
@@ -175,8 +177,37 @@ interface LanguageContext {
 }
 
 interface ParseResult {
+
+    /**
+     * Indicates if the parse was successful. If true, the parse was successful
+     * and ESLint should continue on to create a SourceCode object and run rules;
+     * if false, ESLint should just report the error(s) without doing anything
+     * else.
+     */
+    ok: boolean;
+
+    /**
+     * The abstract syntax tree created by the parser.
+     */
     ast: ASTNode;
+
+    /**
+     * The body of the file, either text or bytes.
+     */
     body: string | ArrayBuffer;
+
+    /**
+     * Any parsing errors, whether fatal or not.
+     */
+    errors: Array<ParseError>;
+}
+
+interface ParseError {
+    message: string;
+    line: number;
+    column: number;
+    endLine: number;
+    endColumn: number;
 }
 
 interface ASTNode {
