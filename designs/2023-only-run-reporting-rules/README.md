@@ -59,7 +59,7 @@ linter.verifyAndFix(text, configs, {
 });
 ```
 
-This predicate would return true for all rules which have a severity of 2 (error).
+The predicate acts as a filter on the rules to enable, where a value of `true` allows a rule to remain as configured and a value of `false` would disable a rule. This predicate would return true for all rules which have a severity of 2 (error), effectively filtering out all other rules.
 
 The alteration to the `--quiet` flag would be implemented by passing a predicate function
 to the API that only returns true for rules that have been set to `error`, thus filtering
