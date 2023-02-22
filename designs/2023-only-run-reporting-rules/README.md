@@ -35,27 +35,27 @@ and return whether the rule should be run. For simplicity, this function should 
 given rules marked as `off`, as if this function handled existing behavior then users of the
 API would have to mimic that when attempting to extend it.
 
-In `cli.js`'s `translateOptions` function, the `rulePredicate` option should be assigned to
+In `cli.js`'s `translateOptions` function, the `ruleFilter` option should be assigned to
 a predicate that checks for a `severity` of 2 (error) when the `--quiet` flag is applied, otherwise
-always returns true. In `eslint/flat-eslint.js`, the `rulePredicate` should be taken from
+always returns true. In `eslint/flat-eslint.js`, the `ruleFilter` should be taken from
 the `eslintOptions` object, and passed down to the `linter.verifyAndFix` call.
 
 Within `linter.js`, the API should be added to `VerifyOptions`, and will be passed down into and
 utilized within the `runRules` function during the `configuredRules` loop, after the check
 for disabled rules and the rule existing. The `ruleId`, `rule`, rule configuration from `getRuleOptions`,
 and `severity` should be passed into the predicate function as an object. `normalizeVerifyOptions`
-should verify that the `rulePredicate` option is a function, and replace it with an always-true
+should verify that the `ruleFilter` option is a function, and replace it with an always-true
 function if not. `processOptions` in `eslint-helpers.js` should also perform a validation check
-that the `rulePredicate` option is a function.
+that the `ruleFilter` option is a function.
 
-The new `rulePredicate` function when implemented would look like this, using the `--quiet` flag
+The new `ruleFilter` function when implemented would look like this, using the `--quiet` flag
 rules outlined in this RFC as an example:
 
 ```typescript
 linter.verifyAndFix(text, configs, {
-    rulePredicate: ({ ruleId: string, rule: Rule, severity: number }) => {
-        return severity === 2;
-    }
+  ruleFilter: ({ ruleId: string, rule: Rule, severity: number }) => {
+    return severity === 2;
+  },
 });
 ```
 
@@ -81,9 +81,9 @@ to clarify that it causes warnings to be run despite the `--quiet` flag.
 
 ## Documentation
 
-Both the behaviour modification of impacted flags and the API would make sense to document. 
-As they are relatively simple additions, they would be documented inline with the rest 
-of the CLI and API documentation. Due to the potentially major performance improvements for 
+Both the behaviour modification of impacted flags and the API would make sense to document.
+As they are relatively simple additions, they would be documented inline with the rest
+of the CLI and API documentation. Due to the potentially major performance improvements for
 many setups, I feel mentioning it in the release blog post, alongside the potential benefits,
 would be a good idea to spread awareness.
 
@@ -103,7 +103,7 @@ settings.
 This is a breaking change as it alters the behaviour of the `--quiet` flag.
 While the alterations to the quiet flag should not affect the actual outcome of the command,
 as cases where it would are covered by this RFC, it is still worth noting as the behaviour
-is changing. 
+is changing.
 
 ## Alternatives
 
