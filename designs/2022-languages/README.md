@@ -199,7 +199,7 @@ interface ParseResult {
     /**
      * Any parsing errors, whether fatal or not.
      */
-    errors: Array<ParseError>;
+    errors?: Array<ParseError>;
 }
 
 interface ParseError {
