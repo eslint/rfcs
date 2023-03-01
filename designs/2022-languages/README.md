@@ -110,9 +110,9 @@ interface ESLintLanguage {
     columnStart?: 0 | 1;
 
     /**
-     * The property to read the node name from. Used in selector querying.
+     * The property to read the node type from. Used in selector querying.
      */
-    nodeName: string;
+    nodeTypeKey: string;
 
     /**
      * Validates languageOptions for this language.
@@ -222,7 +222,7 @@ At a high-level, ESLint uses the methods on a language object in the following w
 * When preparing violation messages, ESLint uses `lineStart` and `columnStart` to determine how to offset the locations. Some parsers use line 0 as the first line but ESLint normalizes to line 1 as the first line (similar for columns). Using `lineStart` and `columnStart` allows ESLint to ensure a consistently reported output so one file doesn't start with line 0 and another starts at line 1. If not present, `lineStart` and `columnStart` are assumed to be 0.
 * After reading a file, ESLint passes the file information to `parse()` to create a raw parse result.
 * The raw parse result is then passed into `createSourceCode()` to create the `SourceCode` object that ESLint will use to interact with the code.
-* The `nodeName` property indicates the property key in which each AST node stores the node name. Even though ESTree uses `type`, it's also common for ASTs to use `kind` to store this information. This property will allow ESLint to use ASTs as they are instead of forcing them to use `type`. This is important as it allows for querying by selector.
+* The `nodeTypeKey` property indicates the property key in which each AST node stores the node name. Even though ESTree uses `type`, it's also common for ASTs to use `kind` to store this information. This property will allow ESLint to use ASTs as they are instead of forcing them to use `type`. This is important as it allows for querying by selector.
 
 #### The `validateOptions()` Method
 
@@ -236,7 +236,7 @@ No specific `languageOptions` keys will be required for languages. The `parser` 
 
 Inside of `esquery`, there are [some shortcuts](https://github.com/estools/esquery/blob/7c3800a4b2ff5c7b3eb3b2cf742865b7c908981f/esquery.js#L213-L233) like `function` and `expression` that will match more than one type of node. These are all specific to ESTree and might not make sense for other languages. However, these shortcut classes are very convenient and other languages might want to implement something similar.
 
-As part of this effort, we will fork `esquery` to make it more generic. We will pass in the `matchSelectorClass()` method to `esquery` so it can make classes in a language-specific way.
+The `esquery` [External class resolve](https://github.com/estools/esquery/pull/140) pull request implements an option that allows us to pass in a function to interpret pseudoclasses from `ESLintLanguage#matchesSelectorClass()`.
 
 #### The `parse()` Method
 
@@ -492,18 +492,12 @@ The JavaScript-specific traversal functionality that currently lives in [`linter
 
 #### Generic AST selectors
 
-ESLint currently uses [`esquery`](https://npmjs.com/package/esquery) to match visitor patterns to nodes. `esquery` is defined for use specifically with ESTree-compatible AST structures, which means that it cannot work for other structures without modification. We need a generic way to ensure that a given pattern in a visitor matches a given node, and to do that, we will need to fork `esquery`, extract the JS-specific parts while ensuring backwards compatibility with existing syntax, and then publish our own fork for use in ESLint.
+ESLint currently uses [`esquery`](https://npmjs.com/package/esquery) to match visitor patterns to nodes. `esquery` is defined for use specifically with ESTree-compatible AST structures, which means that it cannot work for other structures without modification. 
 
-The fork will need to accept a property key that determines which property contains the AST node name (the `ESLintLanguage#nodeName` property). Some of the places that will need to be addressed:
+To make `esquery` more generic, I've submitted the following pull requests:
 
-* [`isNode()`](https://github.com/estools/esquery/blob/7c3800a4b2ff5c7b3eb3b2cf742865b7c908981f/esquery.js#L270)
-* [`matches() identifier`](https://github.com/estools/esquery/blob/master/esquery.js#L99)
-* [`matches() class`](https://github.com/estools/esquery/blob/7c3800a4b2ff5c7b3eb3b2cf742865b7c908981f/esquery.js#L213-L233) (this contains the ESTree-specific functionality that should be extracted to `ESLintLanguage#matchesSelectorClass()`)
-* [`getVisitorKeys()`](https://github.com/estools/esquery/blob/7c3800a4b2ff5c7b3eb3b2cf742865b7c908981f/esquery.js#L246-L261)
-
-The best path forward here is likely to create a new class to represent the query engine with each of the top-level functions becoming methods on that class.
-
-We will need to update the [`NodeEventGenerator`](https://github.com/eslint/eslint/blob/90a5b6b4aeff7343783f85418c683f2c9901ab07/lib/linter/node-event-generator.js#L296) to use our fork instead of `esquery`. This will require significant refactoring.
+* [Allow for custom node type keys](https://github.com/estools/esquery/pull/139) that implements an option to specify which key in an AST node contains the node type.
+* [External class resolve](https://github.com/estools/esquery/pull/140) implements an option that allows us to pass in a function to interpret pseudoclasses like `:expression` from `ESLintLanguage#matchesSelectorClass()`.
 
 #### Split Disable Directive Functionality
 
