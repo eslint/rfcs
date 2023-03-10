@@ -40,9 +40,11 @@ No.
 
 ## Backwards Compatibility Analysis
 
-Existing caches needs to be depleted, because there is no cache version entry existing.
+There are several ways to maintain the BC with this addition.
 
-Another way would be to ignore existing absolute paths and write the new relative path if enabled.
+- Add a cache version entry to the new generated caches.
+- Rewrite exiting absolute paths and save with new relative path.
+- Make this addition breaking and delete every existing cache resulting in creating a new cache with relative paths only.
 
 ## Alternatives
 
