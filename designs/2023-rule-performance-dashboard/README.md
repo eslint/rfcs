@@ -65,7 +65,7 @@ Finally, we append the new [timing data](#timing-data) to the *Lint Report* in t
 - `lintOrder` (order number): Lint order of file
 - `lintTimePerRule` (ms): Lint time of file per rule
 
-Below is an expert of a sample for the 5th file that was linted in the sample project:
+Below is an excerpt of a sample for the 5th file that was linted in the sample project:
 
 ```json
     {
@@ -100,7 +100,7 @@ The **Rule Performance Dashboard** consists of two parts:
 
 1. On the left hand side (**1**), we have the usual ESLint HTML report. Here, we have embedded the already established `html` formatter as a iframe with some small styling modifications. However, this report could have also been generated independently of another formatter but we have required it here to keep the code slim and focus on the charts.
 
-2. On the right hand side (**2**), we have the charts created by the [Chart.js](https://www.chartjs.org/) library. The first chart (**2a**) is a pie chart of the usual `TIMING` performance results the user is used to seeing from ESLint's stdout. The second chart (**2c**) contains the more detailed *per file per rule* information for each file (x-axis) and lint time (y-axis, left, as line chart) per rule as well as the the respective file size (y-axis, right, as bar chart).The file sizes and the total lint times are shown in the background in gray, while the individual rule lint times are colors lines for better focus. Note, that both charts will update on changes to the rule selection checkbox menu (**2b**, top right corner of the screen) such that one can easily view and compare different rule (times) across all files, which can help to detect more intricate performance issues that may be overlooked otherwise (based on rule reports or average values across entire runs only).
+2. On the right hand side (**2**), we have the charts created by the [Chart.js](https://www.chartjs.org/) library. The first chart (**2a**) is a pie chart of the usual `TIMING` performance results the user is used to seeing from ESLint's stdout. The second chart (**2c**) contains the more detailed *per file per rule* information for each file (x-axis) and lint time (y-axis, left, line chart) per rule as well as the the respective file size (y-axis, right, bar chart).The file sizes and the total lint times are shown in the background in gray, while the individual rule lint times are shown as colored lines. Note, that both charts will update on changes to the rule selection checkbox menu (**2b**, top right corner of the screen) such that one can easily view and compare different rule (times) across all files, which can help to detect more intricate performance issues that may be overlooked otherwise (based on rule reports or average values across entire runs only).
 
 The above dashboard stems from an ESLint run on the [sample project](https://github.com/mnkiefer/eslint-samples) with 28 `*.js` files of valid/invalid [recommended rules](https://eslint.org/docs/latest/rules/) examples (as taken from [ESLint's Rule Documentation](https://eslint.org/docs/latest/rules/) examples).
 
@@ -113,7 +113,7 @@ The above dashboard stems from an ESLint run on the [sample project](https://git
 
 This RFC relates to two sections.
 
-- In the [Profile Rule Performance](https://eslint.org/docs/latest/extend/custom-rules#profile-rule-performance) section, it could be mentioned that the formatter `html-charts` may help to more depict and more closely analyse the results.
+- In the [Profile Rule Performance](https://eslint.org/docs/latest/extend/custom-rules#profile-rule-performance) section, it could be mentioned that the formatter `html-charts` may help to depict and more closely analyse the results.
 
 - The [Formatters](https://eslint.org/docs/latest/use/formatters/) section should include the formatter `html-charts`.
 
@@ -131,7 +131,7 @@ This RFC relates to two sections.
 -->
 
 - Current implementation uses third party library [Chart.js](https://www.chartjs.org/)@4.2.1
--  Adding a new built-in formatter for a **Rule Performance Dashboard** may be redundant as the UI and design is heavily dependent on use cases and personal preference.
+-  Adding a new built-in formatter for a **Rule Performance Dashboard** may be redundant as the UI and design is dependant on use cases and personal preference.
 
 ## Backwards Compatibility Analysis
 
@@ -155,7 +155,7 @@ Error: The TIMING environment variable needs to be set for this formatter.
 
 ## Alternatives
 
-For performance analyses prior to this implementation of this dashboard, a series of eslint calls (or a series of processing steps) as well as creation of a custom UI was necessary to derive and then depict the more detailed `TIMING` information to monitor and quickly get an overview of the individual rules lint time evolution.
+For performance analyses prior to this implementation of this dashboard, a series of eslint calls (or a series of processing steps) as well as creation of a custom UI was necessary to derive and then depict the more detailed `TIMING` information to monitor and quickly get an overview of the individual rule's lint time evolution.
 
 ## Open Questions
 
@@ -171,7 +171,7 @@ For performance analyses prior to this implementation of this dashboard, a serie
 -->
 
 - Is the inclusion of Chart.js acceptable or should custom UI/Charts be created for ESLint to use?
-- If Chart.js is used, the HTML page's UI should be more repsponsive, which media devices should be catered to?
+- Should the HTML page be adaptable to smaller media devices?
 
 ## Help Needed
 
