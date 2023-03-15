@@ -96,6 +96,7 @@ Differences between `fatal` test cases and `invalid` test cases:
 
 - `code` is not required (the code may be irrelevant when testing options)
   - If neither `code` nor `name` are provided, we'll use a placeholder name `(Test Case #x` as the test case's `it` title)
+  - If `code` is not provided, we'll pass an empty string for it to `linter.verify()`
 - There's a required `error` object instead of an `errors` array
 
 This feature can only be used for testing the following user-facing exceptions:
