@@ -115,6 +115,11 @@ interface ESLintLanguage {
     nodeTypeKey: string;
 
     /**
+     * The traversal path that tools should take when evaluating the AST
+     */
+    visitorKeys: Record<string,Array<string>>;
+
+    /**
      * Validates languageOptions for this language.
      */
     validateOptions(options: LanguageOptions): void;
@@ -274,6 +279,11 @@ interface SourceCode {
     body: string | ArrayBuffer;
 
     /**
+     * The traversal path that tools should take when evaluating the AST
+     */
+    visitorKeys?: Record<string,Array<string>>;
+
+    /**
      * Traversal of AST.
      */
     traverse(): Iterable<TraversalStep>;
@@ -333,6 +343,10 @@ interface Location {
 
 Other than these interface members, languages may define any additional methods or properties that they need to provide to rule developers. For instance, 
 the JavaScript `SourceCode` object currently has methods allowing retrieval of tokens, comments, and lines. It is up to the individual language object implementations to determine what additional properties and methods may be required inside of rules. (We may want to provide some best practices for other methods, but they won't be required.)
+
+#### The `SoureCode#visitorKeys` Property
+
+The JavaScript language allows a `parser` option to be passed in, and so the result AST may not be the exact structure represented on the `ESLintLanguage` object. In such a case, an additional `visitorKeys` property can be provided on `SourceCode` that overrides the `ESLintLanguage#visitorKeys` property just for this file.
 
 #### The `SoureCode#traverse()` Method
 
