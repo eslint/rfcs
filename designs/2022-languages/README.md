@@ -222,7 +222,7 @@ interface ASTNode {
 
 At a high-level, ESLint uses the methods on a language object in the following way:
 
-* During config validation, ESLint calls `validateOptions()` on the `languageOptions` specified in the config. It is the expectation that 
+* During config validation, ESLint calls `validateOptions()` on the `languageOptions` specified in the config. It is the expectation that this method throws an error if any of the options are invalid. 
 * When ESLint reads a file, it checks `fileType` to determine whether the language would prefer the file in text or binary format.
 * When preparing violation messages, ESLint uses `lineStart` and `columnStart` to determine how to offset the locations. Some parsers use line 0 as the first line but ESLint normalizes to line 1 as the first line (similar for columns). Using `lineStart` and `columnStart` allows ESLint to ensure a consistently reported output so one file doesn't start with line 0 and another starts at line 1. If not present, `lineStart` and `columnStart` are assumed to be 0.
 * After reading a file, ESLint passes the file information to `parse()` to create a raw parse result.
