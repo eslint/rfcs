@@ -56,7 +56,7 @@ The *proof-of-concept* can be found at:
 
 Exposure of the timing object requires only a few changes in the Linter and CLI engline.
 
-The timing is already collected in `lib/linter/timing.js`. Note, that the function requires the extra input paramter `filename`. For the function itself, the only change is that we now *persist* that information in the `lintTimesPerRule` object, which stores the detailed *per file per rule* lint times under the **lintTimes** key. An extra function `getLintTime()` is returned to the linter to retrieve this object.
+The timing is already collected in `lib/linter/timing.js`. Note, that the function requires the extra input paramter `filename`. For the function itself, the only change is that we now *persist* that information in the `lintTimesPerRule` object, which stores the detailed *per file per rule* lint times under the **lintTimes** key.
 
 The linter `lib/linter/linter.js` retrieves the timing data only when `TIMING` is enabled (i.e. from the ESLint CLI).
 
