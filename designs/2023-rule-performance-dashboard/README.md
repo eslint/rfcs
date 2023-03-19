@@ -9,7 +9,7 @@
 
 <!-- One-paragraph explanation of the feature. -->
 
-This document describes how to expose ESLint's [`TIMING`](https://eslint.org/docs/latest/extend/custom-rules#profile-rule-performance) information to the [formatters](https://eslint.org/docs/latest/use/formatters/) and use it in a new formatter [`html-charts`]() to generate a **Rule Performance Dashboard**.
+This document describes how to expose ESLint's [`TIMING`](https://eslint.org/docs/latest/extend/custom-rules#profile-rule-performance) information to the [formatters](https://eslint.org/docs/latest/use/formatters/) and use it in a new formatter [`html-rule-performance`]() to generate a **Rule Performance Dashboard**.
 
 ## Motivation
 
@@ -90,7 +90,7 @@ Below is an excerpt of a sample for the 5th file that was linted in the sample p
     }
 ```
 
-### Formatter `html-charts`
+### Formatter `html-rule-performance`
 
 
 <img width="600" alt="rule-performance-dashboard" src="./htmlCharts.png">
@@ -113,9 +113,9 @@ The above dashboard stems from an ESLint run on the [sample project](https://git
 
 This RFC relates to two sections.
 
-- In the [Profile Rule Performance](https://eslint.org/docs/latest/extend/custom-rules#profile-rule-performance) section, it could be mentioned that the formatter `html-charts` may help to depict and more closely analyse the results.
+- In the [Profile Rule Performance](https://eslint.org/docs/latest/extend/custom-rules#profile-rule-performance) section, it could be mentioned that the formatter `html-rule-performance` may help to depict and more closely analyse the results.
 
-- The [Formatters](https://eslint.org/docs/latest/use/formatters/) section should include the formatter `html-charts`.
+- The [Formatters](https://eslint.org/docs/latest/use/formatters/) section should include the formatter `html-rule-performance`.
 
 ## Drawbacks
 
@@ -141,9 +141,9 @@ This RFC relates to two sections.
     to existing users?
 -->
 
-- Trying to use the `html-charts` formatter without having `TIMING` on will produce the following error as it is only useful for performance analyses:
+- Trying to use the `html-rule-performance` formatter without having `TIMING` on will produce the following error as it is only useful for performance analyses:
 ```
-node ../eslint/bin/eslint.js . --format html-charts -o ESLintDashboard.html
+node ../eslint/bin/eslint.js . --format html-rule-performance -o ESLintDashboard.html
 
 Oops! Something went wrong! :(
 
@@ -196,7 +196,7 @@ Yes, but more detailed requirements and feedback from the ESLint team would be n
 
 > "Why do we need a new built-in formatter?"
 
-Although everone probably wants to create their own dashboard, it is still time consuming and cumbersome to do so. If `html-charts` was offered, the user still as the option to just use it as is, or copy it and adapt his custom formatter from there.
+Although everone probably wants to create their own dashboard, it is still time consuming and cumbersome to do so. If `html-rule-performance` was offered, the user still as the option to just use it as is, or copy it and adapt his custom formatter from there.
 
 ## Related Discussions
 
