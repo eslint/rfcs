@@ -1,6 +1,6 @@
 - Repo: eslint/eslint
 - Start Date: 2023-03-10
-- RFC PR:
+- RFC PR: <https://github.com/eslint/rfcs/pull/108>
 - Authors: Mara Nikola Kiefer (@mnkiefer)
 
 # Rule Performance Dashboard
