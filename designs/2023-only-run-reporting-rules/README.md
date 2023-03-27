@@ -71,7 +71,7 @@ rules are not actually run, an assumption would have to be made that all directi
 on rules present only in the un-filtered list are used when in this mode. This is a reasonable
 assumption, as the user likely does not expect `warn` flags to be touched at all in this mode.
 This would also apply to blanket `eslint-disable` directives that disable all rules, which
-should always be assumed to be used while a non-identity filter function is passed.
+should always be assumed to be used when the filter function has not changed the length of the list.
 
 In cases of conflicting flags such as the `--max-warnings` flag, this altered `--quiet` flag
 behavior should be disabled while it is in use. This is to ensure that the `--max-warnings`
