@@ -3,13 +3,13 @@
 - RFC PR: <https://github.com/eslint/rfcs/pull/108>
 - Authors: Mara Nikola Kiefer (@mnkiefer)
 
-# Rule Performance Dashboard
+# Rule Performance Statistics
 
 ## Summary
 
 <!-- One-paragraph explanation of the feature. -->
 
-This document describes how to expose ESLint's [`TIMING`](https://eslint.org/docs/latest/extend/custom-rules#profile-rule-performance) information to the [formatters](https://eslint.org/docs/latest/use/formatters/) and use it in a new formatter [`html-rule-performance`]() to generate a **Rule Performance Dashboard**.
+This document describes how to expose ESLint's [`TIMING`](https://eslint.org/docs/latest/extend/custom-rules#profile-rule-performance) information as well as some general runtime statistics to the [formatters](https://eslint.org/docs/latest/use/formatters/) when using the `--stats` flag.
 
 ## Motivation
 
@@ -56,7 +56,7 @@ The *proof-of-concept* can be found at:
 
 Exposure of the timing object requires only a few changes in the Linter and CLI engline.
 
-The timing is already collected in `lib/linter/timing.js`. Note, that the function requires the extra input paramter `filename`. For the function itself, the only change is that we now *persist* that information in the `lintTimesPerRule` object, which stores the detailed *per file per rule* lint times under the **lintTimes** key.
+The timing is already collected in `lib/linter/timing.js`. Note, that the function requires the extra input paramter `filename`. For the function itself, the only change is that we now *persist* that information in the `timing` object, which stores the detailed *per file per rule* lint times under the **rules** key.
 
 The linter `lib/linter/linter.js` retrieves the timing data only when `TIMING` is enabled (i.e. from the ESLint CLI).
 
