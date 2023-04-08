@@ -1,6 +1,6 @@
 - Repos: eslint/eslint, js-cst-tokens/cst-tokens
 - Start Date: 2023-04-7
-- RFC PR: #110
+- RFC PR: #111
 - Authors: Conrad Buck (github:conartist6)
 
 # A literacy engine for plugins
