@@ -48,7 +48,7 @@ All match and productions results are ranges, where a range is `[startToken, end
 Ranges are also optimally structured for subrange exclusion. To skip the tokens in a subrange as you are iterating, simply skip from its `endToken` to its `startToken`. All together range iteration with skips looks like this:
 
 ```js
-function *ownTokensFor(range, context) {
+function *reversedOwnTokensFor(range, context) {
     if (!range) return;
 
     const { prevTokens, paths, ranges } = context;
