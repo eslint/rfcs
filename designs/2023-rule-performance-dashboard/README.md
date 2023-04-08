@@ -72,7 +72,7 @@ The time that is spent when parsing a file, that is when [`parse()`](#timing-par
 
 This is essentially the same as the rules timing already collected in `lib/linter/timing.js`. To persist this, the function requires the extra input parameter `filename` to be able to store more detailed *per file per rule* lint times under the **rules** key.
 
-**Pass number**:
+**Fix passes**:
 The number of [fixes](https://eslint.org/docs/latest/use/command-line-interface#fix-problems) successfully applied to a file (see [linter](
 https://github.com/eslint/eslint/blob/main/lib/linter/linter.js#L1987)).
 
@@ -86,8 +86,9 @@ Below is an excerpt of a sample for the 5th file that was linted in the sample p
 {
     // Result object properties
     "stats": {
-         "fixPasses": 3,
-         "timing": {
+        "directives": 3,
+        "fixPasses": 3,
+        "timing": {
             "lint": 123,
             "parse": 123,
             "fix": 456,
@@ -95,7 +96,9 @@ Below is an excerpt of a sample for the 5th file that was linted in the sample p
                 "semi": 123,
                 "quotes": 123
             }
-        }
+        },
+        "suppressions": 3,
+        "violations": 3,
      }
 }
 ```
