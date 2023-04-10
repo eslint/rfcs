@@ -9,7 +9,7 @@
 
 <!-- One-paragraph explanation of the feature. -->
 
-This document describes the new flag `--stats`, which adds a series of runtime *statistics* such as [parse](#timing-parse)-, [fix](#timing-fix)-, and [lint](#timing-lint)-times ([`TIMING`](https://eslint.org/docs/latest/extend/custom-rules#profile-rule-performance)) as well the number of [fix passes](#number-of-fix-passes), [directives, suppressions and violations](#number-of-directives-suppressions-and-violations) to the final result object.
+This document describes the new flag `--stats`, which adds a series of runtime *statistics* such as [parse](#timing-parse)-, [fix](#timing-fix)-, and [lint](#timing-lint)-times ([`TIMING`](https://eslint.org/docs/latest/extend/custom-rules#profile-rule-performance)) as well the number of [fix passes](#fix-passes), [directives and violations](#directives-and-violations) to the final result object.
 
 A special [formatter](https://eslint.org/docs/latest/use/formatters/) `html-rule-performance` enables easy ingestion and interpretation of this data in form of a dashboard.
 
@@ -78,7 +78,7 @@ https://github.com/eslint/eslint/blob/main/lib/linter/linter.js#L1987)).
 #### Directives and violations:
 &nbsp;&nbsp;&nbsp;&nbsp; See [this issue comment](https://github.com/eslint/eslint/issues/14597#issuecomment-1003863524) for a description/motivation of each.
 
-Below is an excerpt of a sample for the 5th file that was linted in the sample project:
+Below is an excerpt of a sample for the 6th file (`invalid/no-regex-spaces`) that was linted in the sample project:
 
 ```json
 {
