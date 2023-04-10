@@ -9,10 +9,9 @@
 
 <!-- One-paragraph explanation of the feature. -->
 
-This document describes the new flag `--stats`, which adds a series of runtime statistics such as parse-, fix-, and lint-times ([`TIMING`](https://eslint.org/docs/latest/extend/custom-rules#profile-rule-performance)) as well the number of directives, fix passes, suppressions, and violations to the final result object.
+This document describes the new flag `--stats`, which adds a series of runtime *statistics* such as [parse](#timing-parse)-, [fix](#timing-fix)-, and [lint](#timing-lint)-times ([`TIMING`](https://eslint.org/docs/latest/extend/custom-rules#profile-rule-performance)) as well the number of [fix passes](#number-of-fix-passes), [directives, suppressions and violations](#number-of-directives-suppressions-and-violations) to the final result object.
 
-> **Optional:**
-> A special [formatter](https://eslint.org/docs/latest/use/formatters/) `html-rule-performance` enables easy ingestion and interpretation of this data in form of a dashboard.
+A special [formatter](https://eslint.org/docs/latest/use/formatters/) `html-rule-performance` enables easy ingestion and interpretation of this data in form of a dashboard.
 
 ## Motivation
 
@@ -39,7 +38,7 @@ It would be more *convenient and shareable* to have:
 
    1. The **timing data** ESLint already collects exposed to the formatters.
    2. Also collect and expose [other statistics](https://github.com/eslint/eslint/issues/14597#issuecomment-1003863524).
-   > [optional] 3. A **built-in formatter** for that data
+   3. A **built-in formatter** for a dashboard of that data.
 
 ## Detailed Design
 
@@ -58,84 +57,56 @@ The *proof-of-concept* can be found at:
 
 ### ESLint *timing* exposed
 
-Exposure of the timing object requires only a few changes to files in the Linter (in `lib/linter`) and ESLint itself (`lib/eslint`) as most of the information is already present but just needs to be persistet.
+&nbsp;&nbsp;&nbsp;&nbsp;Exposure of the timing object requires only a few changes to files in the Linter (in `lib/linter`) and ESLint itself (`lib/eslint`) as most of the information is already present but just needs to be persistet.
 
-**Timing: `lint`**:
+#### Timing: lint:
 
-The overall lint time that is spent on a file. This includes `parse-`, `timing-`running all of the rules as well as any fixes.
+&nbsp;&nbsp;&nbsp;&nbsp; The overall lint time that is spent on a file. This includes `parse-`, `timing-`running all of the rules as well as any fixes.
 
-**Timing: `parse`**
+#### Timing: parse
 
-The time that is spent when parsing a file, that is when [`parse()`](#timing-parse) or `parseForEslint()` is called (in [linter](https://github.com/eslint/eslint/blob/main/lib/linter/linter.js#L808)).
+&nbsp;&nbsp;&nbsp;&nbsp; The time that is spent when parsing a file, that is when [`parse()`](#timing-parse) or `parseForEslint()` is called (in [linter](https://github.com/eslint/eslint/blob/main/lib/linter/linter.js#L808)).
 
-**Timing: `rules`**:
+#### Timing: rules:
 
-This is essentially the same as the rules timing already collected in `lib/linter/timing.js`. To persist this, the function requires the extra input parameter `filename` to be able to store more detailed *per file per rule* lint times under the **rules** key.
+&nbsp;&nbsp;&nbsp;&nbsp; This is essentially the same as the rules timing already collected in `lib/linter/timing.js`. To persist this, the function requires the extra input parameter `filename` to be able to store more detailed *per file per rule* lint times under the **rules** key.
 
-**Fix passes**:
-The number of [fixes](https://eslint.org/docs/latest/use/command-line-interface#fix-problems) successfully applied to a file (see [linter](
+#### Fix passes:
+&nbsp;&nbsp;&nbsp;&nbsp; The number of [fixes](https://eslint.org/docs/latest/use/command-line-interface#fix-problems) successfully applied to a file (see [linter](
 https://github.com/eslint/eslint/blob/main/lib/linter/linter.js#L1987)).
 
-**Violations, Suppressions, Directives**:
-See [this issue comment](https://github.com/eslint/eslint/issues/14597#issuecomment-1003863524) for a description/motivation of each.
+#### Directives and violations:
+&nbsp;&nbsp;&nbsp;&nbsp; See [this issue comment](https://github.com/eslint/eslint/issues/14597#issuecomment-1003863524) for a description/motivation of each.
 
 Below is an excerpt of a sample for the 5th file that was linted in the sample project:
 
 ```json
-// Numbers based on implementation sample (TO BE UPDATED)
 {
-    // Result object properties
     "stats": {
-        "directives": 3,
-        "fixPasses": 3,
+        "directives": 0,
+        "violations": 0,
+        "fixPasses": 0,
         "timing": {
-            "lint": 123,
-            "parse": 123,
-            "fix": 456,
+            "lint": 5.61325,
             "rules": {
-                "semi": 123,
-                "quotes": 123
-            }
-        },
-        "suppressions": 3,
-        "violations": 3,
-     }
+                "no-regex-spaces": 5.61325
+            },
+            "fix": 0,
+            "parse": 5.000917
+        }
+    },
 }
 ```
-<!--
-```json
-    {
-        ...
-        "lintOrder": 5,
-        "lintTime": 13.642954999999999,
-        "lintTimePerRule": {
-            "constructor-super": 0.05145500000000001,
-            "for-direction": 0.032875,
-            "getter-return": 0.003292,
-            "no-async-promise-executor": 0,
-            "no-case-declarations": 0,
-            "no-class-assign": 0,
-            "no-compare-neg-zero": 0,
-            "no-cond-assign": 0.035042000000000004,
-            "no-const-assign": 0.0025,
-            "no-constant-condition": 0.563125,
-            ...
-        },
-        ...
-        "fileSize": 312
-    }
+
+### Formatter `html-rule-performance`
+
+Trying to use the new formatter `html-rule-performance` without using `--stats` on will produce the following error:
 ```
--->
+The --stats option must be used to collect the statistics data for this formatter.
+```
+With all options provided, the following dashboard is automatically generated:
 
-> **Optional:**
-> ### Formatter `html-rule-performance` [optional]
-> ```
-> < IMAGE/DESCRIPTION (TO BE UPDATED) >
-> ```
-
-<!-- TEXT/IMAGE TO BE UPDATED
-<img width="600" alt="rule-performance-dashboard" src="./htmlCharts.png">
-
+<img width="900" alt="rule-performance-dashboard" src="./html-rule-performance.png">
 
 The **Rule Performance Dashboard** consists of two parts:
 
@@ -143,8 +114,7 @@ The **Rule Performance Dashboard** consists of two parts:
 
 2. On the right hand side (**2**), we have the charts created by the [Chart.js](https://www.chartjs.org/) library. The first chart (**2a**) is a pie chart of the usual `TIMING` performance results the user is used to seeing from ESLint's stdout. The second chart (**2c**) contains the more detailed *per file per rule* information for each file (x-axis) and lint time (y-axis, left, line chart) per rule as well as the the respective file size (y-axis, right, bar chart).The file sizes and the total lint times are shown in the background in gray, while the individual rule lint times are shown as colored lines. Note, that both charts will update on changes to the rule selection checkbox menu (**2b**, top right corner of the screen) such that one can easily view and compare different rule (times) across all files, which can help to detect more intricate performance issues that may be overlooked otherwise (based on rule reports or average values across entire runs only).
 
-The above dashboard stems from an ESLint run on the [sample project](https://github.com/mnkiefer/eslint-samples) with 28 `*.js` files of valid/invalid [recommended rules](https://eslint.org/docs/latest/rules/) examples (as taken from [ESLint's Rule Documentation](https://eslint.org/docs/latest/rules/) examples).
--->
+The above dashboard stems from an ESLint run on the [sample project](https://github.com/mnkiefer/eslint-samples) with 20 `*.js` files of 10 valid/invalid [recommended rules](https://eslint.org/docs/latest/rules/) examples (as taken from [ESLint's Rule Documentation](https://eslint.org/docs/latest/rules/) examples).
 
 ## Documentation
 
@@ -183,17 +153,7 @@ This RFC relates to two sections.
     to existing users?
 -->
 
-- Trying to use the `html-rule-performance` formatter without having `TIMING` on will produce the following error as it is only useful for performance analyses:
-```
-node ../eslint/bin/eslint.js . --format html-rule-performance -o ESLintDashboard.html
-
-Oops! Something went wrong! :(
-
-ESLint: 8.36.0
-
-Error: The TIMING environment variable needs to be set for this formatter.
-    at module.exports ...
-```
+- The current ESLint users should not be affected by these changes, as the statistics are only collected when `--stats` is enabled.
 
 ## Alternatives
 
