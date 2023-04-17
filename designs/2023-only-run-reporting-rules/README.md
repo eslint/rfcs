@@ -30,7 +30,7 @@ The proposed implementation is to modify the `--quiet` flag so that ESLint will 
 running any rules that are set to the `warn` level.
 
 From an API perspective, this would be implemented by a filter function that filters down to
-which rules should be run. The function would take a list of the rule configuration `(ruleId, severity, rule)`,
+which rules should be run. The function would take a list of the rule configuration `(ruleId, severity)`,
 and return the rule that should be run. For simplicity, this function should not be
 given rules marked as `off`, as if this function handled existing behavior then users of the
 API would have to mimic that when attempting to extend it.
@@ -43,7 +43,7 @@ the `eslintOptions` object, and passed down to the `linter.verifyAndFix` call.
 Within `linter.js`, the API should be added to `VerifyOptions`, and will be passed down into and
 utilized within the `runRules` function before the current `configuredRules` loop. Rather than the
 current configuredRules loop, this should extract the `severity` and `rule` existence checks and
-build a list of `{ ruleId, severity, rule}` objects. This new list should be passed to `filterRules`,
+build a list of `{ ruleId, severity }` objects. This new list should be passed to `filterRules`,
 and the resulting list should be iterated on instead of `configuredRules`.
 
 `normalizeVerifyOptions` should verify that the `filterRules` option is a function, and replace it
@@ -55,7 +55,7 @@ rules outlined in this RFC as an example:
 
 ```typescript
 linter.verifyAndFix(text, configs, {
-  filterRules: (rules: { ruleId: string; rule: Rule; severity: number }[]) => {
+  filterRules: (rules: { ruleId: string; severity: number }[]) => {
     return rules.filter((rule) => rule.severity === 2);
   },
 });
