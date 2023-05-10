@@ -30,39 +30,36 @@ The proposed implementation is to modify the `--quiet` flag so that ESLint will 
 running any rules that are set to the `warn` level.
 
 From an API perspective, this would be implemented by a filter function that filters down to
-which rules should be run. The function would take a list of the rule configuration `(ruleId, severity)`,
-and return the rule that should be run. For simplicity, this function should not be
+which rules should be run. The function would take `(ruleId, severity)` and return true to
+include a rule or false to exclude it. For simplicity, this function should not be
 given rules marked as `off`, as if this function handled existing behavior then users of the
 API would have to mimic that when attempting to extend it.
 
-In `cli.js`'s `translateOptions` function, the `filterRules` option should be assigned to
-a function that filters to rules with a `severity` of 2 (error) when the `--quiet` flag is applied, otherwise
-acts as an identity function. In `eslint/flat-eslint.js`, the `filterRules` should be taken from
+In `cli.js`'s `translateOptions` function, the `ruleFilter` option should be assigned to
+a function that filters to rules with a `severity` of 2 (error) when the `--quiet` flag is applied,
+otherwise always returns true. In `eslint/flat-eslint.js`, the `filterRules` should be taken from
 the `eslintOptions` object, and passed down to the `linter.verifyAndFix` call.
 
 Within `linter.js`, the API should be added to `VerifyOptions`, and will be passed down into and
-utilized within the `runRules` function before the current `configuredRules` loop. Rather than the
-current configuredRules loop, this should extract the `severity` and `rule` existence checks and
-build a list of `{ ruleId, severity }` objects. This new list should be passed to `filterRules`,
-and the resulting list should be iterated on instead of `configuredRules`.
+utilized within the `runRules` function during the `configuredRules` loop, after the check
+for disabled rules and the rule existing. The `ruleId`, and `severity` should be passed into the
+predicate function as an object. `normalizeVerifyOptions` should verify that the `ruleFilter`
+option is a function, and replace it with an always-true function if not. `processOptions` in
+`eslint-helpers.js` should also perform a validation check that the `ruleFilter` option is a function.
 
-`normalizeVerifyOptions` should verify that the `filterRules` option is a function, and replace it
-with an identity function if not. `processOptions` in `eslint-helpers.js` should also perform a
-validation check that the `filterRules` option is a function.
-
-The new `filterRules` function when implemented would look like this, using the `--quiet` flag
+The new `ruleFilter` function when implemented would look like this, using the `--quiet` flag
 rules outlined in this RFC as an example:
 
 ```typescript
 linter.verifyAndFix(text, configs, {
-  filterRules: (rules: { ruleId: string; severity: number }[]) => {
-    return rules.filter((rule) => rule.severity === 2);
+  ruleFilter: ({ ruleId: string, severity: number }) => {
+    return severity === 2;
   },
 });
 ```
 
 The function acts as a filter on the rules to enable, where removal from the list disables a rule.
-This function would return all rules which have a severity of 2 (error), effectively filtering out
+This function would return true for all rules which have a severity of 2 (error), effectively filtering out
 all other rules.
 
 The check for unused `eslint-disable` directives (`--report-unused-disable-directives`)
