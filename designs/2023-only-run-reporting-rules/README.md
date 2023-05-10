@@ -37,7 +37,7 @@ API would have to mimic that when attempting to extend it.
 
 In `cli.js`'s `translateOptions` function, the `ruleFilter` option should be assigned to
 a function that filters to rules with a `severity` of 2 (error) when the `--quiet` flag is applied,
-otherwise always returns true. In `eslint/flat-eslint.js`, the `filterRules` should be taken from
+otherwise always returns true. In `eslint/flat-eslint.js`, the `ruleFilter` should be taken from
 the `eslintOptions` object, and passed down to the `linter.verifyAndFix` call.
 
 Within `linter.js`, the API should be added to `VerifyOptions`, and will be passed down into and
