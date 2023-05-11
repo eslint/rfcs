@@ -75,6 +75,10 @@ The *proof-of-concept* can be found at:
 &nbsp;&nbsp;&nbsp;&nbsp; The number of [fixes](https://eslint.org/docs/latest/use/command-line-interface#fix-problems) successfully applied to a file (see [linter](
 https://github.com/eslint/eslint/blob/main/lib/linter/linter.js#L1987)).
 
+
+#### Pass Timing: 
+&nbsp;&nbsp;&nbsp;&nbsp; The *Timing* objects for each of the [fix pass](#fix-passes).
+
 #### Directives and violations:
 &nbsp;&nbsp;&nbsp;&nbsp; See [this issue comment](https://github.com/eslint/eslint/issues/14597#issuecomment-1003863524) for a description/motivation of each.
 
@@ -85,7 +89,7 @@ Below is an excerpt of a sample for the 6th file (`invalid/no-regex-spaces`) tha
     "stats": {
         "directives": 0,
         "violations": 0,
-        "fixPasses": 0,
+        "fixPasses": 2,
         "timing": {
             "lint": 5.61325,
             "rules": {
@@ -93,7 +97,10 @@ Below is an excerpt of a sample for the 6th file (`invalid/no-regex-spaces`) tha
             },
             "fix": 0,
             "parse": 5.000917
-        }
+        },
+        "passTiming": [
+            ...
+        ]
     },
 }
 ```
