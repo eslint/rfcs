@@ -77,7 +77,7 @@ https://github.com/eslint/eslint/blob/main/lib/linter/linter.js#L1987)).
 
 
 #### Pass Timing: 
-&nbsp;&nbsp;&nbsp;&nbsp; The *Timing* objects for each of the [fix pass](#fix-passes).
+&nbsp;&nbsp;&nbsp;&nbsp; An array of *timing* objects for each of the [fix passes](#fix-passes). In total, these amount to the (total) *timing* object for the respective file.
 
 #### Directives and violations:
 &nbsp;&nbsp;&nbsp;&nbsp; See [this issue comment](https://github.com/eslint/eslint/issues/14597#issuecomment-1003863524) for a description/motivation of each.
