@@ -102,6 +102,10 @@ While the alterations to the quiet flag should not affect the actual outcome of 
 as cases where it would are covered by this RFC, it is still worth noting as the behaviour
 is changing.
 
+For the case of rules with side effects, such as the `react/jsx-uses-vars` rule, these side
+effects will no longer run in quiet mode when set to `warn`. Due to this, users will need to
+update their eslint configuration to ensure that any rules with side effects are set to `error`.
+
 ## Alternatives
 
 ### Implement this via a separate `--skip-warnings` flag
