@@ -86,9 +86,8 @@ This allows us to get the new functionality out to users as soon as possible as 
 
 ### Code Changes
 
-- `conf/flat-config-schema.js` - also support string / number type
-- `conf/default-cli-options.js` - use new default
-- `lib/options.js` - also support string / number type and use new default for the option
+- `lib/config/flat-config-schema.js` - also support string / number type, add new default value
+- `lib/options.js` - support new options and types of values
   - Something like `type: "Boolean|String|Number"` and `enum: ["true", "false", "error", "warn", "off", "0", "1", "2"]`
 - When processing the config or CLI options, convert any boolean value provided to a severity level
 - Anywhere `reportUnusedDisableDirectives` is passed around as a boolean needs to change to using a severity level
