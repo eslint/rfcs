@@ -9,7 +9,7 @@
 
 <!-- One-paragraph explanation of the feature. -->
 
-Provide users with more flexible, intuitive control over how unused disable directives are reported by switching the CLI and config file options from using a boolean value to a severity level. Change the default behavior to warn on unused disable directives.
+Provide users with more flexible, intuitive control over how unused disable directives are reported by supporting severity levels instead of just boolean values with CLI and config file options. Change the default behavior from off to warn on unused disable directives.
 
 ## Motivation
 
@@ -52,30 +52,28 @@ We will also change the default behavior to warn on unused disable directives so
 
 How the new "explicit severity" design works:
 
-- The config and CLI options are both changed to also accept standard severity level string values: `off`, `warn`, `error` (or the corresponding number for each level)
-- If both the CLI and config options are present, the CLI option takes precedence over (overrides) the config option
-- If only the CLI option is present, then it is used; if only the config option is present, then it is used.
-- If neither of the CLI or config options are present, the default value (`warn`) is used
+- A new CLI option `--report-unused-disable-directives-severity <severity>` is added, while the existing CLI option `--report-unused-disable-directives` remains in place untouched
+- If both CLI options `--report-unused-disable-directives` and `--report-unused-disable-directives-severity <severity>` are provided, an error is thrown
+- The existing config file option `reportUnusedDisableDirectives` is updated to, in addition to the current boolean values, also accept standard severity level string values: `off`, `warn`, `error` (or the corresponding number for each level)
+- If both the CLI and config file options are present, the CLI option takes precedence over (overrides) the config file option
+- If only the CLI option is present, then it is used; if only the config file option is present, then it is used
+- If neither the CLI nor config file options are present, the default value (`warn`) is used
 - Note: There's only one underlying setting, and the config and CLI options are just two different ways of controlling it
-
-Boolean values will continue to be allowed with no change in behavior, as summarized below.
 
 Allowed values for the config file option:
 
 - `reportUnusedDisableDirectives: true` - same behavior as today (`warn`)
 - `reportUnusedDisableDirectives: false` - same behavior as today (`off`)
-- `reportUnusedDisableDirectives: "error"` - new value
-- `reportUnusedDisableDirectives: "warn"` - new value
-- `reportUnusedDisableDirectives: "off"` - new value
+- `reportUnusedDisableDirectives: "error"` - new value (or `2`)
+- `reportUnusedDisableDirectives: "warn"` - new value (or `1`)
+- `reportUnusedDisableDirectives: "off"` - new value (or `0`)
 
-Allowed values for the CLI option:
+Allowed values for the CLI options:
 
-- `--report-unused-disable-directives` - same behavior as today (`error`) (common CLI shorthand to omit the value)
-- `--report-unused-disable-directives=true` - same behavior as today (`error`)
-- `--report-unused-disable-directives=false` - same behavior as today (`off`)
-- `--report-unused-disable-directives=error` - new value
-- `--report-unused-disable-directives=warn` - new value
-- `--report-unused-disable-directives=off` - new value
+- `--report-unused-disable-directives` - existing option, same behavior as today (`error`)
+- `--report-unused-disable-directives-severity error` - new option (or `2`)
+- `--report-unused-disable-directives-severity warn` - new option (or `1`)
+- `--report-unused-disable-directives-severity off` - new option (or `0`)
 
 ### Phases
 
@@ -133,7 +131,7 @@ Documentation will focus on the new severity level values as opposed to the bool
 - While we attempted to limit the [breaking changes](#backwards-compatibility-analysis) involved, any amount of breaking changes can still be disruptive.
 - Some users may not like the new default behavior of warning on unused disable directives and will be burdened by having to opt-out.
 - The new warnings can be easily ignored and some may prefer to only use warnings [temporarily](https://github.com/eslint/eslint/discussions/16512#discussioncomment-4089769).
-- Keeping around the boolean values for backwards compatibility means increased complexity in supporting both boolean and severity level values. It also means we still have the inconsistency where `reportUnusedDisableDirectives: true` means `warn` but `--report-unused-disable-directives=true` means `error`.
+- Keeping around the boolean values for backwards compatibility means increased complexity in supporting both boolean and severity level values. It also means we still have the inconsistency where `reportUnusedDisableDirectives: true` means `warn` but `--report-unused-disable-directives` means `error`.
 
 ## Backwards Compatibility Analysis
 
@@ -190,8 +188,6 @@ We don't need tweak our [semantic versioning policy](https://github.com/eslint/e
     you've received the answers and updated the design to reflect them,
     you can remove this section.
 -->
-
-1. Should we allow severity levels to be provided as numbers? If we allow these numbers everywhere else and have no plans to scrap them, then we likely want to allow them here as well for consistency.
 
 ## Help Needed
 
