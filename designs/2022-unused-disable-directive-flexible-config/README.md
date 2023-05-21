@@ -53,7 +53,7 @@ We will also change the default behavior to warn on unused disable directives so
 How the new "explicit severity" design works:
 
 - The config and CLI options are both changed to also accept standard severity level string values: `off`, `warn`, `error` (or the corresponding number for each level)
-- If both options are present, the CLI option takes precedence over (overrides) the config option
+- If both the CLI and config options are present, the CLI option takes precedence over (overrides) the config option
 - If only one of the options is present, the value of the present option is used
 - If neither option is present, the default value (`warn`) is used
 - Note: There's only one underlying setting, and the config and CLI options are just two different ways of controlling it
