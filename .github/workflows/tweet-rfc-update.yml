@@ -10,13 +10,17 @@ jobs:
     steps:
       - uses: actions/setup-node@v3
         with:
-          node-version: '16.x'
+          node-version: '18.x'
       - run: npx @humanwhocodes/tweet 'The RFC "${{ github.event.pull_request.title }}" is now in the ${{ github.event.label.name }} phase.\n\n${{ github.event.pull_request.html_url }}'
         env:
           TWITTER_CONSUMER_KEY: ${{ secrets.TWITTER_CONSUMER_KEY }}
           TWITTER_CONSUMER_SECRET: ${{ secrets.TWITTER_CONSUMER_SECRET }}
           TWITTER_ACCESS_TOKEN_KEY: ${{ secrets.TWITTER_ACCESS_TOKEN_KEY }}
           TWITTER_ACCESS_TOKEN_SECRET: ${{ secrets.TWITTER_ACCESS_TOKEN_SECRET }}
+      - run: npx @humanwhocodes/toot 'The RFC "${{ github.event.pull_request.title }}" is now in the ${{ github.event.label.name }} phase.\n\n${{ github.event.pull_request.html_url }}'
+        env:
+          MASTODON_ACCESS_TOKEN: ${{ secrets.MASTODON_ACCESS_TOKEN }}
+          MASTODON_HOST: ${{ secrets.MASTODON_HOST }}
 
   tweetMerge:
     runs-on: ubuntu-latest
@@ -24,10 +28,14 @@ jobs:
     steps:
       - uses: actions/setup-node@v3
         with:
-          node-version: '16.x'
+          node-version: '18.x'
       - run: npx @humanwhocodes/tweet 'The RFC "${{ github.event.pull_request.title }}" has been approved and merged!\n\n${{ github.event.pull_request.html_url }}'
         env:
           TWITTER_CONSUMER_KEY: ${{ secrets.TWITTER_CONSUMER_KEY }}
           TWITTER_CONSUMER_SECRET: ${{ secrets.TWITTER_CONSUMER_SECRET }}
           TWITTER_ACCESS_TOKEN_KEY: ${{ secrets.TWITTER_ACCESS_TOKEN_KEY }}
           TWITTER_ACCESS_TOKEN_SECRET: ${{ secrets.TWITTER_ACCESS_TOKEN_SECRET }}
+      - run: npx @humanwhocodes/toot 'The RFC "${{ github.event.pull_request.title }}" has been approved and merged!\n\n${{ github.event.pull_request.html_url }}'
+        env:
+          MASTODON_ACCESS_TOKEN: ${{ secrets.MASTODON_ACCESS_TOKEN }}
+          MASTODON_HOST: ${{ secrets.MASTODON_HOST }}
