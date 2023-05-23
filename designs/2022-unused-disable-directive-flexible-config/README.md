@@ -86,14 +86,15 @@ This allows us to get the new functionality out to users as soon as possible as 
 
 ### Code Changes
 
-- `lib/config/flat-config-schema.js` - also support string / number type, add new default value
-- `lib/options.js` - support new options and types of values
-  - Something like `type: "Boolean|String|Number"` and `enum: ["true", "false", "error", "warn", "off", "0", "1", "2"]`
-- When processing the config or CLI options, convert any boolean value provided to a severity level
-- Anywhere `reportUnusedDisableDirectives` is passed around as a boolean needs to change to using a severity level
-- In addition to testing `reportUnusedDisableDirectives` as a boolean, we'll also need to test it as a severity level
+See this [Draft PR](https://github.com/eslint/eslint/pull/17212) of phase 1 code changes.
 
-Luckily, `reportUnusedDisableDirectives` is already stored as a severity level in much of the underlying code.
+- `conf/default-cli-options.js` - default to `undefined` for new CLI option `--report-unused-disable-directives-severity`
+- `lib/cli.js` - convert `--report-unused-disable-directives` and `--report-unused-disable-directives-severity` to `reportUnusedDisableDirectives`
+- `lib/config/flat-config-schema.js` - support boolean or string value for `linterOptions.reportUnusedDisableDirectives`
+- `lib/linter/linter.js` - normalize string or boolean for `linterOptions.reportUnusedDisableDirectives` to a severity string, add new default value of `warn` in phase 2
+- `lib/options.js` add new CLI option `--report-unused-disable-directives-severity`
+- `tests/lib/cli.js` - test the CLI options
+- `tests/lib/linter/linter.js` - test the `reportUnusedDisableDirectives` config option
 
 ## Documentation
 
@@ -187,6 +188,8 @@ We don't need tweak our [semantic versioning policy](https://github.com/eslint/e
     you've received the answers and updated the design to reflect them,
     you can remove this section.
 -->
+
+1. Should we support severity numbers (`0`, `1`, `2`) in addition to severity strings (`off`, `warn`, `error`) for the config option and new CLI option?
 
 ## Help Needed
 
