@@ -90,8 +90,8 @@ See this [Draft PR](https://github.com/eslint/eslint/pull/17212) of phase 1 code
 
 - `conf/default-cli-options.js` - default to `undefined` for new CLI option `--report-unused-disable-directives-severity`
 - `lib/cli.js` - convert `--report-unused-disable-directives` and `--report-unused-disable-directives-severity` to `reportUnusedDisableDirectives`
-- `lib/config/flat-config-schema.js` - support boolean or string value for `linterOptions.reportUnusedDisableDirectives`
-- `lib/linter/linter.js` - normalize string or boolean for `linterOptions.reportUnusedDisableDirectives` to a severity string, add new default value of `warn` in phase 2
+- `lib/config/flat-config-schema.js` - support boolean or severity value for `linterOptions.reportUnusedDisableDirectives`, add new default value of `warn` in phase 2
+- `lib/linter/linter.js` - normalize severity or boolean for `linterOptions.reportUnusedDisableDirectives` to a severity string
 - `lib/options.js` add new CLI option `--report-unused-disable-directives-severity`
 - `tests/lib/cli.js` - test the CLI options
 - `tests/lib/linter/linter.js` - test the `reportUnusedDisableDirectives` config option
@@ -188,8 +188,6 @@ We don't need tweak our [semantic versioning policy](https://github.com/eslint/e
     you've received the answers and updated the design to reflect them,
     you can remove this section.
 -->
-
-1. Should we support severity numbers (`0`, `1`, `2`) in addition to severity strings (`off`, `warn`, `error`) for the config option and new CLI option?
 
 ## Help Needed
 
