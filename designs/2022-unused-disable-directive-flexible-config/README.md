@@ -90,7 +90,8 @@ See this [Draft PR](https://github.com/eslint/eslint/pull/17212) of phase 1 code
 
 - `conf/default-cli-options.js` - default to `undefined` for new CLI option `--report-unused-disable-directives-severity`
 - `lib/cli.js` - convert `--report-unused-disable-directives` and `--report-unused-disable-directives-severity` to `reportUnusedDisableDirectives`
-- `lib/config/flat-config-schema.js` - support boolean or severity value for `linterOptions.reportUnusedDisableDirectives`, add new default value of `warn` in phase 2
+- `lib/config/default-config.js` - add new default value of `warn` in phase 2
+- `lib/config/flat-config-schema.js` - support boolean or severity value for `linterOptions.reportUnusedDisableDirectives`
 - `lib/linter/linter.js` - normalize severity or boolean for `linterOptions.reportUnusedDisableDirectives` to a severity string
 - `lib/options.js` add new CLI option `--report-unused-disable-directives-severity`
 - `tests/lib/cli.js` - test the CLI options
