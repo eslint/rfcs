@@ -79,8 +79,8 @@ Allowed values for the CLI options:
 
 The implementation of this RFC will likely involve two phases:
 
-1. Phase 1: A non-breaking change to add support for the new severity levels.
-2. Phase 2: A breaking change intended for a major release in which the default behavior is changed to `warn`.
+1. Phase 1: Non-breaking changes to add support for the new severity levels.
+2. Phase 2: Any breaking changes for flat config users (`warn` by default, remove redundant `reportUnusedDisableDirectives` option from `processOptions()`), suitable for a major release or potentially a minor release since the flat config is not considered stable yet.
 
 This allows us to get the new functionality out to users as soon as possible as a smaller change with reduced risk, while also keeping the breaking change small and focused.
 
@@ -90,8 +90,10 @@ See this [Draft PR](https://github.com/eslint/eslint/pull/17212) of phase 1 code
 
 - `conf/default-cli-options.js` - default to `undefined` for new CLI option `--report-unused-disable-directives-severity`
 - `lib/cli.js` - convert `--report-unused-disable-directives` and `--report-unused-disable-directives-severity` to `reportUnusedDisableDirectives`
-- `lib/config/default-config.js` - add new default value of `warn` in phase 2
+- `lib/config/default-config.js` - (phase 2, breaking change for flag config users) add new default value of `warn` for `reportUnusedDisableDirectives` config option
 - `lib/config/flat-config-schema.js` - support boolean or severity value for `linterOptions.reportUnusedDisableDirectives`
+- `lib/eslint/eslint-helpers.js` - (phase 2, breaking change for flag config users) remove option `reportUnusedDisableDirectives` from `processOptions()` because `overrideConfig.reportUnusedDisableDirectives` can be used instead now
+- `lib/eslint/eslint.js` - same change as `lib/eslint/eslint-helpers.js`
 - `lib/linter/linter.js` - normalize severity or boolean for `linterOptions.reportUnusedDisableDirectives` to a severity string
 - `lib/options.js` add new CLI option `--report-unused-disable-directives-severity`
 - `tests/lib/cli.js` - test the CLI options
