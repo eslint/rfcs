@@ -80,7 +80,7 @@ Allowed values for the CLI options:
 The implementation of this RFC will likely involve two phases:
 
 1. Phase 1: Non-breaking changes to add support for the new severity levels.
-2. Phase 2: Any breaking changes for flat config users (`warn` by default, remove redundant `reportUnusedDisableDirectives` option from `processOptions()`), suitable for a major release or potentially a minor release since the flat config is not considered stable yet.
+2. Phase 2: Any breaking changes for flat config users (`warn` by default, remove redundant `reportUnusedDisableDirectives` option from `processOptions()`), suitable for a minor release prior to ESLint v9 since the flat config is not considered stable yet, or otherwise a major release.
 
 This allows us to get the new functionality out to users as soon as possible as a smaller change with reduced risk, while also keeping the breaking change small and focused.
 
