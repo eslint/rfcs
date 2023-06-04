@@ -96,7 +96,7 @@ Since ESLint already collects most of this data internally, it would be more *co
 1. **Adding the new `stats` option to ESLint:**
 
  - [_docs/src/use/command-line-interface.md_](https://github.com/mnkiefer/eslint/pull/1/files#diff-80937556f9a8e68352718255c20699fce061fa72760504c6accc3fc6b3b0613aR117): First, we document its *name* and *purpose* for the [Command Line Interface Reference](https://eslint.org/docs/latest/use/command-line-interface) under the *Miscellaneous* category.
-     ```js
+     ```md
      --stats     Add additional statistics to lint results
      ```
 
@@ -145,7 +145,7 @@ Since ESLint already collects most of this data internally, it would be more *co
     We will start by the exposure of the `timing` object, as most of the information is already collected by the Linter and just needs to be persisted.
 
   - [_shared/types.js](https://github.com/mnkiefer/eslint/pull/1/files#diff-28a93c0c2a90d26ab4f8007aed5c72473b5650f25dde18060bac60c1081a2767R188): We first document the new property by adding `timing` to the `LintResult` type definition.
-     ```js
+     ```md
      * @property {number} [lintTime] Lint time of file
      ```
 
