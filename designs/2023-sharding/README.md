@@ -20,9 +20,9 @@ The implementation of sharding in the ESLint package involves the following step
 
 - **Configuration**: Introduce a new configuration option or flag in the ESLint configuration file to enable sharding. This option can specify the number of shards or the desired granularity of the shards.
 
-    ```
-    eslint --shard=1/3
-    ```
+  ```
+  eslint --shard=1/3
+  ```
 
 - **Workload Division**: Analyze the input codebase and divide it into smaller units of work called shards. The division can be based on files, directories, or any other logical grouping that allows for parallel processing. Each shard should be self-contained and independent of the others. For example, larger files can be distributed across shards to balance the workload. We could also expose api to get custom division statergy.
 
@@ -31,6 +31,54 @@ The implementation of sharding in the ESLint package involves the following step
 - **Results Aggregation**: Once all shards have completed linting, aggregate the results from each process/thread into a unified report. This report should provide a consolidated view of the linting issues found across all shards.
 
 - **Error Handling**: Implement appropriate error handling mechanisms to handle failures in individual shards. If a shard encounters an error during linting, it should be reported as part of the aggregated results, along with any relevant error information.
+
+## Detailed Design
+
+1. Get the files in a deterministic order.
+   in `lib/cli.js`, we can get all the files. Update the `executeOnFiles` function
+
+   ```js
+   const allFiles = [];
+   for (const { config, filePath, ignored } of fileEnumerator.iterateFiles(
+     patterns
+   )) {
+     /* ... */
+     allFiles.push({ config, filePath, ignored });
+   }
+   ```
+
+2. Divide the files into shards. The number of shards is determined by the `--shard` option.
+
+   ```js
+   const sortedFiles = allFiles.sort((a, b) =>
+     a.filePath.localeCompare(b.filePath)
+   );
+   ```
+
+3. Lint these sorted files
+
+   ```js
+   const shard = parseInt(cliOptions.shard);
+   const totalShards = parseInt(cliOptions.totalShards);
+   const shardFiles = allFiles.filter(
+     (_, index) => index % totalShards === shard - 1
+   );
+
+   shardFiles.forEach(({ filePath, config }) => {
+     const result = verifyText({
+       text: fs.readFileSync(filePath, "utf8"),
+       filePath,
+       config,
+       cwd,
+       fix,
+       allowInlineConfig,
+       reportUnusedDisableDirectives,
+       fileEnumerator,
+       linter,
+     });
+     results.push(result);
+   });
+   ```
 
 ## Documentation
 
@@ -48,7 +96,6 @@ Introducing sharding in the ESLint package has several potential drawbacks to co
 
 ## Backwards Compatibility Analysis
 
-
 The introduction of sharding in the ESLint package should not affect existing ESLint users by default. Sharding should be an opt-in feature, enabled through configuration options or flags. Users who do not wish to utilize sharding can continue to use ESLint as before without any disruption.
 
 ## Alternatives
@@ -64,22 +111,19 @@ Manually splitting the project to run in parallel example by @bmish in https://g
     "lint:js:dir1": "eslint --cache dir1/",
     "lint:js:dir2": "eslint --cache dir2/",
     "lint:js:dir3": "eslint --cache dir3/",
-    "lint:js:other": "eslint --cache --ignore-pattern dir1/ --ignore-pattern dir2/ --ignore-pattern dir3/ .",
+    "lint:js:other": "eslint --cache --ignore-pattern dir1/ --ignore-pattern dir2/ --ignore-pattern dir3/ ."
   }
 }
 ```
 
-
 ## Open Questions
 
 - What process/thread management strategy should be employed to handle the shards effectively?
-    
 - How to allow custom division statergy?
 
 ## Help Needed
 
 As a first-time contributor, I would greatly appreciate guidance and assistance from the ESLint core team and the community in implementing the sharding feature. While I have experience as a programmer, contributing to a large-scale project like ESLint involves understanding the codebase, adhering to coding standards, and following the established contribution process.
-
 
 ## Frequently Asked Questions
 
