@@ -15,7 +15,7 @@ These statistics include more granular information, such as the [parse](#timing-
 
 | Stats |  | Description |
 |--------|-------|---|
-| **timing** | lint  | The overall lint time that is spent on a file. This includes `parse-`, `timing-`running all of the rules as well as any fixes. |
+| **timing** | total  | The overall lint time that is spent on a file. This includes `parse-`, `fix-` and all `rules-` (total) times. |
 |        | parse | The time that is spent when parsing a file, that is when [`parse()`](#timing-parse) or `parseForEslint()` is called. |
 |        | rules | This is similar to the rule performance TIMING, except that it is more granular, that is, persisted as *per file per rule*.  |
 | **passTiming** | | An array of *timing* objects for each of the [fix passes](#fix-passes). In total, these amount to the (total) *timing* object for the respective file. |
@@ -35,17 +35,19 @@ Below is an example of what the `stats` properties would look like (based on the
         "violations": 0,
         "fixPasses": 0,
         "timing": {
-            "lint": 0.029165,
             "rules": {
-                "valid-typeof": {
-                    "total": 0.029165,
-                    "create": 0.004041,
-                    "Program": 0.008958,
-                    "UnaryExpression": 0.016166
+                "total": 1.650541,
+                "no-regex-spaces": {
+                    "total": 1.650541,
+                    "create": 0.0435,
+                    "Literal": 0.030583,
+                    "CallExpression": 0,
+                    "NewExpression": 1.576458
                 }
             },
             "fix": 0,
-            "parse": 0
+            "parse": 1.911792,
+            "total": 3.5623329999999997
         }
     }
 }
@@ -125,13 +127,16 @@ Since ESLint already collects most of this data internally, it would be more *co
         result.stats.directives = linter.getDirectives().length;
         result.stats.violations = linter.getViolations().length;
         result.stats.fixPasses = fixPasses > 0 ? fixPasses : 0;
-        if (timing) {
+        const hasTiming = Object.keys(timing).length > 0;
+
+        if (hasTiming) {
             result.stats.timing = {
-                lint: timing ? Object.values(timing).reduce((a, b) => a + b, 0) : 0,
-                rules: timing || 0,
+                rules: hasTiming ? timing : {},
                 fix: result.stats.fixTime || 0,
-                parse: linter.getParseTime()
+                parse: linter.getParseTime(),
+                total: 0
             };
+            result.stats.timing.total = result.stats.timing.parse + result.stats.timing.fix + result.stats.timing.rules.total;
         }
     }
      ```
