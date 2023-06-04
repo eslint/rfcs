@@ -28,26 +28,20 @@ A *proof-of-concept* can be found at:
 - [**Sample project**](https://github.com/mnkiefer/eslint-samples): Example on which the dashboard (as depicted below) has been generated.
 
 Below is an example of what the `stats` properties would look like (based on the sample project file `invalid/no-regex-spaces`). Each property will be addressed individually in the [Detailed Design](#detailed-design) section 2 ("Adding the `stats` option to Linter").
-```json LintResult
-@LintResult {
-    ...
+```json
+{
     "stats": {
         "directives": 0,
         "violations": 0,
         "fixPasses": 0,
         "timing": {
-            "lint": "0[object Object]",
+            "lint": 0.029165,
             "rules": {
                 "valid-typeof": {
-                    "create": {
-                        "total": 0.004041
-                    },
-                    "Program": {
-                        "total": 0.008958
-                    },
-                    "UnaryExpression": {
-                        "total": 0.016166
-                    }
+                    "total": 0.029165,
+                    "create": 0.004041,
+                    "Program": 0.008958,
+                    "UnaryExpression": 0.016166
                 }
             },
             "fix": 0,
@@ -107,7 +101,7 @@ Since ESLint already collects most of this data internally, it would be more *co
      ```
 
  - [_lib/options.js_](https://github.com/mnkiefer/eslint/pull/1/files#diff-358c9491edc00f0db6f2f3c317df9aa932135803481b86c9289bd56bf8af0622R375-R3809): Now that the option has been documented, we add the `stats` option to ESLint's CLI options of type (`ParsedCLIOptions`):
-     ```json
+     ```js
      {
          option: "stats",
          type: "Boolean",
