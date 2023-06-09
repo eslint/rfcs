@@ -1,6 +1,6 @@
 - Repo: eslint/eslint
 - Start Date: 2023-06-01
-- RFC PR:
+- RFC PR: <https://github.com/eslint/rfcs/pull/112>
 - Authors: [Balavishnu V J](@balavishnuvj)
 
 # Sharding
