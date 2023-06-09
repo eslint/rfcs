@@ -119,7 +119,7 @@ Manually splitting the project to run in parallel example by @bmish in https://g
 ## Open Questions
 
 - What process/thread management strategy should be employed to handle the shards effectively?
-- How to allow custom division statergy?
+- How to allow custom division strategy?
 
 ## Help Needed
 
