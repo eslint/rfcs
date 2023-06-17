@@ -19,7 +19,7 @@ These statistics include more granular information, such as the [parse](#timing-
 |        | parse | The time that is spent when parsing a file, that is when [`parse()`](#timing-parse) or `parseForEslint()` is called. |
 |        | rules | This is similar to the rule performance TIMING, except that it is more granular, that is, persisted as *per file per rule*.  |
 | **passTiming** | | An array of *timing* objects for each of the [fix passes](#fix-passes). In total, these amount to the (total) *timing* object for the respective file. |
-| **fixPasses** | | The number of [fixes](https://eslint.org/docs/latest/use/command-line-interface#fix-problems) successfully applied to a file. |
+| **fixPasses** | | The number of times ESLint has applied at least one fix after linting. |
 | **directives** | | Refer to [this issue comment](https://github.com/eslint/eslint/issues/14597#issuecomment-1003863524) |
 | **violations** | | Refer to [this issue comment](https://github.com/eslint/eslint/issues/14597#issuecomment-1003863524) |
 
