@@ -9,14 +9,14 @@
 
 <!-- One-paragraph explanation of the feature. -->
 
-When ignored files are explicitly linted, ESLint shows a warning. This causes problems when using tools which pass the file list to ESLint automatically together with `--max-warnings 0` option.
+When ignored files are explicitly linted, ESLint shows a warning. When `--max-warnings 0` option is used, and an ignored file is passed to ESLint, the process exits with code 1. In some cases this is unexpected and currently there is no way to suppress ignored file warnings via CLI.
 
 ## Motivation
 
 <!-- Why are we doing this? What use cases does it support? What is the expected
 outcome? -->
 
-While this is warning is reasonable in cases where filenames are passed to ESLint manually, it causes issues when the process is automated with tools like [lint-staged](https://github.com/okonet/lint-staged) and [pre-commit](https://github.com/pre-commit/pre-commit). These tools pass staged filenames to any command, not just ESLint. Therefore, they are not aware of the .eslintignore. Linting before commit is commonly set up with `--max-warnings 0`, therefore ESLint will exit with an error in such case.
+While this is warning is reasonable in cases where filenames are passed to ESLint manually, it causes issues when the process is automated with tools like [lint-staged](https://github.com/okonet/lint-staged) and [pre-commit](https://github.com/pre-commit/pre-commit). These tools pass staged filenames to any command, not just ESLint. Therefore, they are not aware of the .eslintignore. Linting before commit is commonly set up with `--max-warnings 0`. In such cases ESLint will exit with an error and prevent commits, or even cause CI to fail.
 
 For example, with
 
@@ -39,6 +39,23 @@ warning  File ignored because of a matching ignore pattern. Use "--no-ignore" to
 
 It is possible to filter out ignored files using ESLint `CLIEngine`. This was the main reasoning to reject the CLI flag idea during [TSC meeting in 2018](https://gitter.im/eslint/tsc-meetings/archives/2018/08/02). The commitee was only considering the use case of integrations. However, this problem affects end users as well. Lint-staged FAQ includes a section [how can I ignore files from .eslintignore](https://github.com/okonet/lint-staged#how-can-i-ignore-files-from-eslintignore), which suggests adding additional config file and using `CLIEngine.isPathIgnored` to filter out ignored files. Having a CLI flag for this would improve the end-user experience.
 
+This RFC proposes a `--warn-ignored/--no-warn-ignored` CLI option, which would allow suppressing the warning. For example, with
+
+```
+// .eslintignore
+foo.js
+```
+
+Running
+
+```
+eslint --no-warn-ignored foo.js
+```
+
+Would not result in a warning.
+
+In order to avoid breaking changes, this will only be available via FlatESLint, [as decided in the RFC discussion](https://github.com/eslint/rfcs/pull/90#issuecomment-1386024387).
+
 ## Detailed Design
 
 <!--
@@ -50,34 +67,100 @@ It is possible to filter out ignored files using ESLint `CLIEngine`. This was th
    used. Be sure to define any new terms in this section.
 -->
 
-ESLint CLI should have an optional flag to disable the ignored file warning. The flag should be boolean. In order to stay consistent with current CLI flags, it should be called `--no-warning-on-ignored-files`. If it is present, ESLint should supress the `File ignored because of a matching ignore pattern.` warning. The flag should replicate `eslint.lintText`[warnIgnored option](https://eslint.org/docs/developer-guide/nodejs-api#-eslintlinttextcode-options) when it is set to `false`.
-
-The [3 warnings](https://github.com/eslint/eslint/blob/f31216a90a6204ed1fd56547772376a10f5d3ebb/lib/cli-engine/cli-engine.js#L299-L305) related to ignored files should be appended with `Use "--no-warning-on-ignored-files" to suppress this warning.`
+ESLint CLI should have an optional flag to disable the ignored file warning. The flag should be a boolean. It should be called `--warn-ignored/--no-warn-ignored`. If `--no-warn-ignored` is present, ESLint should supress the `File ignored because of a matching ignore pattern.` warning. The flag should replicate `eslint.lintText`[warnIgnored option](https://eslint.org/docs/developer-guide/nodejs-api#-eslintlinttextcode-options) when it is set to `false`.
 
 Add the flag to `optionator()` in `options.js`:
 
-```js
-{
-    option: "warning-on-ignored-files",
-    type: "Boolean",
-    default: "true",
-    description: "Show warning when the file list includes ignored files"
-},
+First, add the property to the `ParsedCLIOptions` typedef:
+
+```
+@property {boolean} warnIgnored Show a warning when the file list includes ignored files
 ```
 
-It should be placed under `heading: "Miscellaneous"`.
+Define the flag only when FlatESLint is used:
 
-Add `warningOnIgnoredFiles` to `translateOptions()` in `cli.js`. It should be returned as `warnIgnored`. Forced `warnIgnored: true` should be removed [here](https://github.com/eslint/eslint/blob/f31216a90a6204ed1fd56547772376a10f5d3ebb/lib/cli.js#L298) in order for CLI to respect the `--no-warning-on-ignored-files` flag when `useStdin` is true.
+```js
+let warnIgnoredFlag;
 
-Destructure `warnIgnored` from `options` from `internalSlotsMap.get(this)` in `executeOnFiles()` function in `cli-engine.js`.
+if (usingFlatConfig) {
+    warnIgnoredFlag = {
+        option: "warn-ignored",
+        type: "Boolean",
+        default: "true",
+        description: "Show warning when the file list includes ignored files"
+    };
+}
+```
 
-In `iterateFiles()` of `executeOnFiles()` function in `cli-engine.js`, wrap the `results.push(createIgnoreResult(filePath, cwd));` with `if (warnIgnored)` to suppress the warning for ignored files. Keep in mind that the ignored file should not be linted.
+It should then be placed under `heading: "Handle Warnings"`.
 
-Destructure `warnIgnored` from `options` from `internalSlotsMap.get(this)` in `executeOnText()` function in `cli-engine.js` and rename it to `engineWarnIgnored` in order to distinguish it from the `warnIgnored` parameter. Update the `if (warnIgnored)` condition to fallback to `engineWarnIgnored` in case `warnIgnored` parameter is not provided.
+Add `warnIgnored` to `translateOptions()` in `cli.js`:
+```js
+async function translateOptions({
+    ...,
+    warnIgnored
+}) {
+    ...
+    if (configType === "flat") {
+        ...
+        options.warnIgnored = warnIgnored;
+    }
+}
+```
 
-Remove the code which overrides the default value of `warnIgnored` [here](https://github.com/eslint/eslint/blob/f31216a90a6204ed1fd56547772376a10f5d3ebb/lib/cli.js#L298) and [here](https://github.com/eslint/eslint/blob/main/lib/eslint/eslint.js#L571)
+Add `warnIgnored` to `processOptions()` in `eslint-helpers.js` and set it to `true` by default, and add validation:
+```js
+function processOptions({
+    ...,
+    warnIgnored = true
+}) {
+    ...
+    if (typeof warnIgnored !== "boolean") {
+        errors.push("'warnIgnored' must be a boolean.");
+    }
+    ...
+    return {
+        ...,
+        warnIgnored
+    }
+}
+```
 
-The default `warnIgnored` value should only be set in `default-cli-options.js` and `eslint.js` `processOptions`. It should be set to `true`. The CLIEngine and ESLint classes will inherit this and use it in `lintText`, `lintFiles`, `executeOnFiles`, and `executeOnText`. This is a breaking change, as previously `lintText` and `executeOnText` functions were defaulting to `warnIgnored: false`. This change will improve consistency.
+Default `true` value was chosen as this is the current behaviour of ESLint. This point can be challenged, as `lintText` uses `warnIgnored = false` by default. In order to make it consistent, the default for `warnIgnored` CLI option could be `false` too.
+
+### lintFiles
+
+Destructure `warnIgnored` from `eslintOptions` in `lintFiles()` function of `flat-eslint.js`:
+```js
+const {
+    ...,
+    warnIgnored
+} = eslintOptions;
+```
+
+When iterating over `filePaths`, add an additional condition for `createIgnoreResult`:
+
+```js
+filePaths.map(({ filePath, ignored }) => {
+    /*
+    * If a filename was entered that matches an ignore
+    * pattern, and warnIgnored is true, then notify the user.
+    */
+    if (ignored) {
+        if (warnIgnored) {
+            return createIgnoreResult(filePath, cwd);
+        }
+        return void 0;
+    }
+    ...
+})
+```
+
+### lintText
+
+Currently, `lintText` function already has a `warnIgnored` option, and it is set as `false` [by default](https://github.com/eslint/eslint/blob/87b247058ed520061fe1a146b7f0e7072a94990d/lib/eslint/flat-eslint.js#L970). `lintText` is executed via CLI when stdin is used. However, when stdin is used, `warnIgnored` is set to `true` [in cli.js](https://github.com/eslint/eslint/blob/8f9759e2a94586357d85fac902e038fabdba79a7/lib/cli.js#L412-L415). This means even if `--no-warn-ignored` is passed, the ignored file warning would still be shown.
+
+In order to maintain backwards compatibility, no changes should be made for this flow.
 
 ## Documentation
 
@@ -86,9 +169,7 @@ The default `warnIgnored` value should only be set in `default-cli-options.js` a
     on the ESLint blog to explain the motivation?
 -->
 
-The [CLI Documentation](https://eslint.org/docs/user-guide/command-line-interface) should be updated to include the new flag. Additionally, [Node.js API documentation](https://eslint.org/docs/developer-guide/nodejs-api#-new-eslintoptions) will need to add additional option under `new ESLint(options)`.
-
-[Ignoring Code](https://eslint.org/docs/user-guide/configuring/ignoring-code) page will need to be updated to reflect the changes to the error messages.
+The [CLI Documentation](https://eslint.org/docs/user-guide/command-line-interface) should be updated to include the new flag. It is necessary to mention that it is only available when using FlatESLint.
 
 ## Drawbacks
 
@@ -103,7 +184,7 @@ The [CLI Documentation](https://eslint.org/docs/user-guide/command-line-interfac
     implementing this RFC as possible.
 -->
 
-Adding additional CLI flags adds additional mental overhead for the users. It might be confusing for users who don't experience this problem.
+Adding additional CLI flags adds additional mental overhead for the users. It might be confusing for users who don't experience this problem. Since we aim to maintain backwards compatibility, the inconsistent `warnIgnored` defaults remain.
 
 ## Backwards Compatibility Analysis
 
@@ -114,8 +195,6 @@ Adding additional CLI flags adds additional mental overhead for the users. It mi
 -->
 
 It should not affect existing users in any way.
-
-The `CLIEngine.isPathIgnored` solution will continue working, it is `lint-staged` and similar tools responsibility to communicate that it is possible to use the flag instead.
 
 ## Alternatives
 
@@ -142,6 +221,8 @@ It was considered to output the warning to `stderr` instead, but that would caus
 -->
 
 ESLint [collects suppressed warnings and errors](https://github.com/eslint/eslint/pull/15459). In case `--no-warning-on-ignored-files` or `warnIgnored: false` is used, should the warning be included in the suppressed messages array?
+
+Should the `warnIgnored` option be available via `eslint.config.js` too?
 
 <!-- ## Help Needed -->
 
