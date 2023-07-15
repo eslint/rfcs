@@ -126,8 +126,6 @@ function processOptions({
 }
 ```
 
-Default `true` value was chosen as this is the current behaviour of ESLint. This point can be challenged, as `lintText` uses `warnIgnored = false` by default. In order to make it consistent, the default for `warnIgnored` CLI option could be `false` too.
-
 ### lintFiles
 
 Destructure `warnIgnored` from `eslintOptions` in `lintFiles()` function of `flat-eslint.js`:
@@ -158,9 +156,38 @@ filePaths.map(({ filePath, ignored }) => {
 
 ### lintText
 
-Currently, `lintText` function already has a `warnIgnored` option, and it is set as `false` [by default](https://github.com/eslint/eslint/blob/87b247058ed520061fe1a146b7f0e7072a94990d/lib/eslint/flat-eslint.js#L970). `lintText` is executed via CLI when stdin is used. However, when stdin is used, `warnIgnored` is set to `true` [in cli.js](https://github.com/eslint/eslint/blob/8f9759e2a94586357d85fac902e038fabdba79a7/lib/cli.js#L412-L415). This means even if `--no-warn-ignored` is passed, the ignored file warning would still be shown.
+In order to maintain backwards compatibility, `lintText` should only be modified in `flat-eslint.js`. Currently, `lintText` function already has a `warnIgnored` parameter, and it is set as `false` [by default](https://github.com/eslint/eslint/blob/87b247058ed520061fe1a146b7f0e7072a94990d/lib/eslint/flat-eslint.js#L970). In order to maintain consistency with the rest of ESLint, it should default to the constructor's `warnIgnored` option (`true` by default). It should still be possible to override it by passing `{ warnIgnored: false }` to `lintText`.
 
-In order to maintain backwards compatibility, no changes should be made for this flow.
+Remove the default `false` in `lintText` in `flat-eslint.js`:
+```diff
+const {
+    filePath,
+-    warnIgnored = false
++    warnIgnored,
+    ...unknownOptions
+} = options || {};
+```
+
+Destructure `warnIgnored` from `eslintOptions` and rename it to `constructorWarnIgnored` to make it distinct from the options from function parameters:
+
+```js
+const {
+    ...
+    warnIgnored: constructorWarnIgnored
+} = eslintOptions;
+```
+
+Extend the condition on which ignore result is created. `warnIgnored` from function arguments overrides `constructorWarnIgnored`:
+
+```js
+const shouldWarnIgnored = typeof warnIgnored === "boolean" ? warnIgnored : constructorWarnIgnored;
+...
+if (shouldWarnIgnored) {
+    results.push(createIgnoreResult(resolvedFilename, cwd));
+}
+```
+
+We could use nullish coalescing here (`warnIgnored ?? constructorWarnIgnored`), but it was only added in Node 14, and ESLint needs to support Node 12.
 
 ## Documentation
 
@@ -184,7 +211,7 @@ The [CLI Documentation](https://eslint.org/docs/user-guide/command-line-interfac
     implementing this RFC as possible.
 -->
 
-Adding additional CLI flags adds additional mental overhead for the users. It might be confusing for users who don't experience this problem. Since we aim to maintain backwards compatibility, the inconsistent `warnIgnored` defaults remain.
+Adding additional CLI flags adds additional mental overhead for the users. It might be confusing for users who don't experience this problem. Since we maintain backwards compatibility, ESLint and FlatESLint are going to behave slightly differently.
 
 ## Backwards Compatibility Analysis
 
@@ -194,7 +221,7 @@ Adding additional CLI flags adds additional mental overhead for the users. It mi
     to existing users?
 -->
 
-It should not affect existing users in any way.
+Users of FlatESLint linting text via stdin might encounter unexpected `File ignored because of a matching ignore pattern` errors.
 
 ## Alternatives
 
