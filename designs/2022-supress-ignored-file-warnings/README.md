@@ -222,7 +222,10 @@ It was considered to output the warning to `stderr` instead, but that would caus
 
 ESLint [collects suppressed warnings and errors](https://github.com/eslint/eslint/pull/15459). In case `--no-warning-on-ignored-files` or `warnIgnored: false` is used, should the warning be included in the suppressed messages array?
 
+> No, https://github.com/eslint/rfcs/pull/90#discussion_r907721233
+
 Should the `warnIgnored` option be available via `eslint.config.js` too?
+> No, https://github.com/eslint/rfcs/pull/90#discussion_r1137743213
 
 <!-- ## Help Needed -->
 
