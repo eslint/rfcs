@@ -37,21 +37,26 @@ Each property will be addressed individually in the [Detailed Design](#detailed-
     "directives": 1,
     "fixPasses": 1,
     "times": {
-        "parse": 0.310625,
-        "total": 0.35879099999999997,
+        "parse": 0.129959,
+        "total": 0.15254299999999998,
         "rules": {
-            "total": 0.044916000000000005,
+            "total": 0.020625,
             "valid-typeof": {
-                "total": 0.044916000000000005,
-                "UnaryExpression": 0.04079100000000001,
-                "Program": 0.004125
+                "total": 0.020625,
+                "nodes": {
+                    "UnaryExpression": 0.018208000000000002,
+                    "Program": 0.002417
+                }
             }
         },
         "fix": {
-            "1": 0.00325,
-            "total": 0.00325
+            "passes": [
+                0.001959
+            ],
+            "total": 0.001959
         }
-    }
+    },
+    "violations": 0
 }
 ```
 
