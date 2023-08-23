@@ -15,15 +15,13 @@ These statistics include more granular timing information, such as the parse-, f
 
 | Stats |  | Description |
 |--------|-------|---|
-| **times*** | | The times/time objects spent on (parsing, fixing, linting) a file. |
-|        | fix* | An array of time objects for each of the fix passes. |
+| **times.passes*** | | The times spent on (parsing, fixing, linting) a file for each fix pass. |
+|        | fix | The time that is spent on a fix pass. |
 |        | parse | The time that is spent when parsing a file. |
-|        | rules* | An array of time objects for each file/rule/selector combination. |
+|        | rules | An array of time objects for each file/rule combination. |
 | **fixPasses** | | The number of times ESLint has applied at least one fix after linting. |
 | **directives** | | The number of disable directives which have been applied to silence rule violations. |
 | **violations** | | The number of times a rule has been violated. |
-
-> All object properties marked with a `*` also contain a computed `total` property.
 
 A *proof-of-concept* can be found at:
 - [**ESLint**](https://github.com/mnkiefer/eslint/pull/1): **Fork of ESLint** on which the [detailed design](#detailed-design) (as described below) has been implemented.
@@ -37,24 +35,19 @@ Each property will be addressed individually in the [Detailed Design](#detailed-
     "directives": 1,
     "fixPasses": 1,
     "times": {
-        "parse": 0.129959,
-        "total": 0.15254299999999998,
-        "rules": {
-            "total": 0.020625,
-            "valid-typeof": {
+        "passes": [
+            "parse": 0.129959,
+            "total": 0.15254299999999998,
+            "rules": {
                 "total": 0.020625,
-                "nodes": {
-                    "UnaryExpression": 0.018208000000000002,
-                    "Program": 0.002417
+                "valid-typeof": {
+                    "total": 0.020625
                 }
+            },
+            "fix": {
+                "total": 0.001959
             }
-        },
-        "fix": {
-            "passes": [
-                0.001959
-            ],
-            "total": 0.001959
-        }
+        ]
     },
     "violations": 0
 }
