@@ -13,15 +13,16 @@ This document describes a new ESLint flag `stats`, which enables the user to obt
 
 These statistics include more granular timing information, such as the parse-, fix-, and lint-times as well as the number of directives, fix passes, and violations encountered.
 
-| Stats |  | Description |
-|--------|-------|---|
-| **times.passes*** | | The times spent on (parsing, fixing, linting) a file for each fix pass. |
-|        | fix | The time that is spent on a fix pass. |
-|        | parse | The time that is spent when parsing a file. |
-|        | rules | An array of time objects for each file/rule combination. |
-| **fixPasses** | | The number of times ESLint has applied at least one fix after linting. |
-| **directives** | | The number of disable directives which have been applied to silence rule violations. |
-| **violations** | | The number of times a rule has been violated. |
+| Stats          |        |       | Description |
+|----------------|--------|-------|-------------|
+| **times**      |        |       | Object containing the times spent on (parsing, fixing, linting) a file. |
+|                | passes |       | Array containing the times spent on (parsing, fixing, linting) a file for each fix pass. |
+|                |        | fix   | The time that is spent on a fix pass. |
+|                |        | parse | The time that is spent when parsing a file. |
+|                |        | rules | Object for the spent on each rule. |
+| **fixPasses**  |        |       | The number of times ESLint has applied at least one fix after linting. |
+| **directives** |        |       | The number of disable directives which have been applied to silence rule violations. |
+| **violations** |        |       | The number of times a rule has been violated. |
 
 A *proof-of-concept* can be found at:
 - [**ESLint**](https://github.com/mnkiefer/eslint/pull/1): **Fork of ESLint** on which the [detailed design](#detailed-design) (as described below) has been implemented.
@@ -133,25 +134,30 @@ Since ESLint already collects most of this data internally, it would be more *co
 
     ```js
     /**
-        * Performance statistics
-        * @typedef {Object} Stats
-        * @property {number} directives The number of disable directives which have been applied to silence rule violations.
-        * @property {number} fixPasses The number of times ESLint has applied at least one fix after linting.
-        * @property {Times} times The times spent on (parsing, fixing, linting) a file.
-        * @property {number} violations The number of times a rule has been violated.
-        */
+      * Performance statistics
+      * @typedef {Object} Stats
+      * @property {number} directives The number of disable directives which have been applied to silence rule violations.
+      * @property {number} fixPasses The number of times ESLint has applied at least one fix after linting.
+      * @property {Times} times The times spent on (parsing, fixing, linting) a file.
+      * @property {number} violations The number of times a rule has been violated.
+      */
 
     /**
-        * Performance statistics times
-        * @typedef {Object} Times
-        * @property {Object} fix The times spent on each fix pass applied.
-        * @property {number} parse The time that is spent when parsing a file.
-        * @property {Object} rules An array of time objects for each file/rule/selector combination.
-        * @property {number} total The total time that is spent on (parsing, fixing, linting) a file.
-        */
+      * Performance Times for each ESLint pass
+      * @typedef {Times[]} Time passes
+      */
+
+    /**
+      * @typedef {Object} Times
+      * @property {number} fix The time for the fix pass.
+      * @property {number} parse The time that is spent when parsing a file.
+      * @property {Object} rules Object of times for each rule.
+      * @property {number} total The total time that is spent on (parsing, fixing, linting) a file.
+      */
+
     ```
 
-  - [_lib/linter/timing.js_](https://github.com/mnkiefer/eslint/pull/1/files#diff-126a649c1db33de2cfe67b418435b10d45fc310143547e334f7be9a1a73c0901R142): The Linter collects the TIMING information in the `time(key, fn, filename, selector, reset)` function where we have added two optional parameters to collect more granular information for the `filename` and `selector` for a given rule. We collect this information in a new Object `times` which is persisted in a new Map `lintTimesPerRule` under the key `"lintTimes"`. Finally, we add new function `timing.getLintTime()`, with which the Linter can collect the respective lint times. The `reset` parameter is used reset the times once a file is re-parsed.
+  - [_lib/linter/timing.js_](https://github.com/mnkiefer/eslint/pull/1/files#diff-126a649c1db33de2cfe67b418435b10d45fc310143547e334f7be9a1a73c0901R142): The Linter collects the TIMING information in the `time(key, fn, filename, reset)` function where we have added two optional parameters to collect more granular information for the `filename` for a given rule. We collect this information in a new Object `times` which is persisted in a new Map `lintTimesPerRule` under the key `"lintTimes"`. Finally, we add new function `timing.getLintTime()`, with which the Linter can collect the respective lint times. The `reset` parameter is used reset the times once a file is re-parsed.
 
   - [_lib/linter/linter.js_](https://github.com/mnkiefer/eslint/pull/1/files#diff-a4ade4bc7a7214733687d84fbb54b625e464d13be7181caf54f564e5985db980R1117): When the `stats` option is enabled, the Linter class method `verifyAndFix()` adds the properties `directives`, `fixPasses`, `times` and `violations` to the `LintResult` object.
     - To collect the times information, the Linter only calls `times.time(ruleId, ruleListeners)` when `times.enabled = true`. Hence, we add a condition here that the function is also called when `stats=true`. This, in turn, is called from `runRules()`, so we must add the `stats` option as an extra input parameter.
