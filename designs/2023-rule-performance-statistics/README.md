@@ -11,46 +11,106 @@
 
 This document describes a new ESLint flag `stats`, which enables the user to obtain a series of runtime *statistics* on top of their final lint results (refer to the table below).
 
-These statistics include more granular timing information, such as the parse-, fix-, and lint-times as well as the number of directives, fix passes, and violations encountered.
+These statistics include more fine-grained timing information, such as the parse-, fix-, and lint-times and the number of directives, fix passes, and violations.
 
 | Stats          |        |       | Description |
 |----------------|--------|-------|-------------|
 | **times**      |        |       | Object containing the times spent on (parsing, fixing, linting) a file. |
-|                | passes |       | Array containing the times spent on (parsing, fixing, linting) a file for each fix pass. |
-|                |        | fix   | The time that is spent on a fix pass. |
-|                |        | parse | The time that is spent when parsing a file. |
-|                |        | rules | Object for the spent on each rule. |
+|                | passes |       | Array containing the times spent on (parsing, fixing, linting) a file for each run- or fix-pass. |
+|                |        | fix   | The time that is spent on fixing a file. |
+|                |        | parse | The time that is spent on parsing a file. |
+|                |        | rules | Object containing the times spent on each rule. |
 | **fixPasses**  |        |       | The number of times ESLint has applied at least one fix after linting. |
-| **directives** |        |       | The number of disable directives which have been applied to silence rule violations. |
+| **directives** |        |       | The number of disable directives applied to silence rule violations. |
 | **violations** |        |       | The number of times a rule has been violated. |
 
-A *proof-of-concept* can be found at:
+> Note, that each `times.passes` entry `fix`, `parse` and `rules` provides the time measured in the `total` property to keep the `stats` format flexible and extensible.
+
+Fore more information, please find each of the above properties is addressed individually in the [Detailed Design](#detailed-design) section 2 ("Adding the `stats` option to the Linter").
+
+### Proof of concept (POC)
+A proof-of-concept of this feature can be found at:
 - [**ESLint**](https://github.com/mnkiefer/eslint/pull/1): **Fork of ESLint** on which the [detailed design](#detailed-design) (as described below) has been implemented.
 - [**Sample project**](https://github.com/mnkiefer/eslint-samples): Project on which the above implementation can be demonstrated.
 
-Below is an brief example on what the `stats` properties would look like (based on the sample project file _invalid/no-regex-spaces_).<br>
-Each property will be addressed individually in the [Detailed Design](#detailed-design) section 2 ("Adding the `stats` option to the Linter").
+### Example
+An example which of the POC on the sample project's file _invalid/file-to-fix.js_ is given below.
+
+```js
+/*eslint no-regex-spaces: "error", wrap-regex: "error"*/
+
+function a() {
+    return /  foo/.test("bar");
+}
+```
+
+Running ESLint with the new `stats` option...
+```sh
+eslint invalid/file-to-fix.js --stats --fix -f json
+```
+
+... yields the following `stats` entry as part of the formatted lint results object:
 
 ```json
 "stats": {
-    "directives": 1,
-    "fixPasses": 1,
-    "times": {
-        "passes": [
-            "parse": 0.129959,
-            "total": 0.15254299999999998,
-            "rules": {
-                "total": 0.020625,
-                "valid-typeof": {
-                    "total": 0.020625
-                }
-            },
-            "fix": {
-                "total": 0.001959
-            }
-        ]
-    },
-    "violations": 0
+  "directives": 0,
+  "fixPasses": 0,
+  "times": {
+    "passes": [
+      {
+        "parse": {
+          "total": 5.732583
+        },
+        "rules": {
+          "no-regex-spaces": {
+            "total": 0.001375
+          },
+          "wrap-regex": {
+            "total": 0.004125
+          }
+        },
+        "fix": {
+          "total": 0.001792
+        },
+        "total": 5.739875
+      },
+      {
+        "parse": {
+          "total": 0.993792
+        },
+        "rules": {
+          "no-regex-spaces": {
+              "total": 0.173916
+          },
+          "wrap-regex": {
+              "total": 0.010668
+          }
+        },
+        "fix": {
+          "total": 0.000375
+        },
+        "total": 1.178751
+      },
+      {
+        "parse": {
+          "total": 0.641791
+        },
+        "rules": {
+          "no-regex-spaces": {
+            "total": 0.010458
+          },
+          "wrap-regex": {
+            "total": 0.025958000000000002
+          }
+        },
+        "fix": {
+          "total": 0
+        },
+        "total": 0.678207
+      }
+    ]
+  },
+  "violations": 0
 }
 ```
 
@@ -128,7 +188,10 @@ Since ESLint already collects most of this data internally, it would be more *co
     The following paragraphs describe the individual `stats` option properties, how they are collected and stored.<br>
     We will start by the exposure of the `times` object, as most of the information is already collected by the Linter and just needs to be persisted.
 
-  - [_lib/shared/stats.js_](https://github.com/mnkiefer/eslint/pull/1/files#diff-03dd66bfc8332edc2b145936aa2dd607ace1c34a31c222ec4d9617481876c27a): The function `getStats()` is used to append the `stats` data onto the lint result in both _cli-engine.js_ as well as _flat-eslint.js_.
+  - [_lib/shared/stats.js_](https://github.com/mnkiefer/eslint/pull/1/files#diff-03dd66bfc8332edc2b145936aa2dd607ace1c34a31c222ec4d9617481876c27a): The function `getStats()` is used to append the `stats` data onto the lint result in _flat-eslint.js_. We have also introduced 3 helper functions, namely `startTime()`, `endTime(t)`, and `storeTime(time, timeOpts, slots, resetTimes = false)` which are used by the _timing.s_ and _linter.js_ scripts to uniformly store the measured times.
+    - `startTime()`: Uses `process.hrtime()` to initiate a time measurement.
+    - `endTime(t)`: Uses that time `t` to measure the code execution time since.
+    - `storeTime(time, timeOpts, slots, resetTimes = false)`: Uses the measured time `t` and the linter's internal slots map `slots` with `timeOpts` to store the time for a given `type` ('parse', 'rules', or 'fix' time) and `filename` (current file) combination.
 
   - [_lib/shared/types.js](https://github.com/mnkiefer/eslint/pull/1/files#diff-28a93c0c2a90d26ab4f8007aed5c72473b5650f25dde18060bac60c1081a2767R188): We first document the new feature by adding `Stats` to the `LintResult` type definition. Its definition is as follows:
 
@@ -157,13 +220,13 @@ Since ESLint already collects most of this data internally, it would be more *co
 
     ```
 
-  - [_lib/linter/timing.js_](https://github.com/mnkiefer/eslint/pull/1/files#diff-126a649c1db33de2cfe67b418435b10d45fc310143547e334f7be9a1a73c0901R142): The Linter collects the TIMING information in the `time(key, fn, filename, reset)` function where we have added two optional parameters to collect more granular information for the `filename` for a given rule. We collect this information in a new Object `times` which is persisted in a new Map `lintTimesPerRule` under the key `"lintTimes"`. Finally, we add new function `timing.getLintTime()`, with which the Linter can collect the respective lint times. The `reset` parameter is used reset the times once a file is re-parsed.
+  - [_lib/linter/timing.js_](https://github.com/mnkiefer/eslint/pull/1/files#diff-126a649c1db33de2cfe67b418435b10d45fc310143547e334f7be9a1a73c0901R142): The Linter collects the TIMING information in the `time(key, fn, filename, slots)` function where we have added two optional parameters to collect more granular information for the `filename` for a given rule in `slots`, which is the linter's internal slots map. The current filename is also stored in `slots.resetTimes` which can be used to reset the times when that file gets re-parsed. Note, that we import three helper functions: `startTime()`, `endTime()`, and `storeTime()` which are also used in the linter below to normalize how to record and track times for each (parse, rules, fix) property.
 
   - [_lib/linter/linter.js_](https://github.com/mnkiefer/eslint/pull/1/files#diff-a4ade4bc7a7214733687d84fbb54b625e464d13be7181caf54f564e5985db980R1117): When the `stats` option is enabled, the Linter class method `verifyAndFix()` adds the properties `directives`, `fixPasses`, `times` and `violations` to the `LintResult` object.
-    - To collect the times information, the Linter only calls `times.time(ruleId, ruleListeners)` when `times.enabled = true`. Hence, we add a condition here that the function is also called when `stats=true`. This, in turn, is called from `runRules()`, so we must add the `stats` option as an extra input parameter.
+    - To collect the times information, the Linter thus far only called `timing.time(ruleId, ruleListeners)` when `times.enabled = true`. Hence, we add a condition here that the function may also be called when `stats=true`. This, in turn, is called from `runRules()`, so we must add the `stats` option as an extra input parameter as well as `slots` where we store the collected time information (i.e. the linter's internal slots map).
     - For all collected properties, we and extend the `internalSlotsMap` and add helper functions (`getDirectives()`, `getFixPasses()`, `getTimes()`, `getViolations()`) respectively to store and later collect them to append to the lint result.
     - The properties *directives* and *violations* are already collected by ESLint via `commentDirectives.directives` and `commentDirectives.problems` and only need to be persisted.
-    - The *parse* time property (`times.parse`) is collected in the `parse()` function. Here, we also store the filename in the `resetTimes` variable to reset the times data.
+    - The *parse* time property (`times.parse`) is wrapped around the `parse()` function. Note, that we also track the filename in `slots.resetTimes`to reset the rules times data (if not in fix mode) as this signals a new parse of a file that has already been linted.
     - The `fixPasses` property is implemented and collected from the Linter method `verifyAndFix()`.
 
 
