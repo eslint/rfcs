@@ -1,6 +1,6 @@
 - Repo: eslint/eslint
 - Start Date: 2023-09-18
-- RFC PR:
+- RFC PR: https://github.com/eslint/rfcs/pull/113
 - Authors: [Josh Goldberg](https://github.com/JoshuaKGoldberg)
 
 # Support for including options defaults in rules
