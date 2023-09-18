@@ -177,7 +177,9 @@ We'll want to augment the following docs generators in:
 
 - The core ESLint docs: automating and therefore standardizing how rule docs pages phrase default values
 - typescript-eslint's docs: the same as the core ESLint docs
-- []`eslint-doc-generator`](https://github.com/bmish/eslint-doc-generator)
+- [`eslint-doc-generator`](https://github.com/bmish/eslint-doc-generator)
+
+We'll also want to mention this in the ESLint core custom rule documentation.
 
 ## Drawbacks
 
