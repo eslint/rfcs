@@ -11,14 +11,17 @@ Enable rule authors to describe default values for rule options in a formal sche
 
 ## Motivation
 
-Right now, there's no programmatic way to determine what an ESLint rule's default options are.
+Right now, most popular ESLint rules do not adhere to a single programmatic way to determine their default options.
 This has resulted in a proliferation of per-repository or per-rule strategies for normalizing options with defaults.
 
 - Some rules define functions with names like `normalizeOptions` ([`array-bracket-newline`](https://github.com/eslint/eslint/blob/da09f4e641141f585ef611c6e9d63d4331054706/lib/rules/array-bracket-newline.js#L102), [`object-curly-newline`](https://github.com/eslint/eslint/blob/da09f4e641141f585ef611c6e9d63d4331054706/lib/rules/object-curly-newline.js#L99)) or `parseOptions` ([`no-implicit-coercion`](https://github.com/eslint/eslint/blob/da09f4e641141f585ef611c6e9d63d4331054706/lib/rules/no-implicit-coercion.js#L22), [`use-before-define`](https://github.com/eslint/eslint/blob/da09f4e641141f585ef611c6e9d63d4331054706/lib/rules/no-use-before-define.js#L20)) that apply various, subtly different value defaults to the provided `context.options`.
 - Some rules define individual option purely with inline logic ([`accessor-pairs`](https://github.com/eslint/eslint/blob/da09f4e641141f585ef611c6e9d63d4331054706/lib/rules/accessor-pairs.js#L177-L180), [`n/file-extension-in-import`](https://github.com/eslint-community/eslint-plugin-n/blob/150b34fa60287b088fc51cf754ff716e4862883c/lib/rules/file-extension-in-import.js#L67-L68)) or inline with a helper ([`array-bracket-spacing`](https://github.com/eslint/eslint/blob/da09f4e641141f585ef611c6e9d63d4331054706/lib/rules/array-bracket-spacing.js#L65-L74))
 - `@typescript-eslint/eslint-plugin` has its own [`applyDefault`](https://github.com/typescript-eslint/typescript-eslint/blob/da09f4e641141f585ef611c6e9d63d4331054706/packages/utils/src/eslint-utils/applyDefault.ts#L10) used in a wrapping [`createRule`](https://github.com/typescript-eslint/typescript-eslint/blob/da09f4e641141f585ef611c6e9d63d4331054706/packages/utils/src/eslint-utils/RuleCreator.ts#L84)
 
-In addition to increasing development complexity for rules, the lack of a standard options parsing strategy means users don't have a consistent or programmatic way to determine rule defaults.
+Although the currently used Ajv package does provide a [`useDefaults` option](https://ajv.js.org/guide/modifying-data.html#assigning-defaults), rule developers typically have not used it.
+Ajv does not recursively fill in objects for rule defaults - an ergonomics issue for rule authors.
+
+In addition to increasing development complexity for rules, the lack of ergonomic options defaulting means end-users haven't had a consistent or programmatic way to determine rule defaults.
 The only user-facing method to determine a rule's default options is to read the documentation, or if it either doesn't exist or doesn't describe default values, read the rule's source.
 Even if a plugin does have documentation, there is no guaranteed consistency in phrasing.
 
@@ -27,25 +30,24 @@ For example:
 - [`array-callback-return`](https://eslint.org/docs/latest/rules/array-callback-return#options) phrases its options as _`"<key>": <value> (default) <explanation>`_
 - [`accessor-pairs`](https://eslint.org/docs/latest/rules/accessor-pairs#options) phrases its options as _`<key> <explanation> (Default <default>)`_
 
-This RFC proposes allowing rules to opt into declaring the default values of their options.
+This RFC proposes augmenting Ajv's defaulting logic to recursively fill in objects.
 Doing so would:
 
 - Streamline the process of creating and maintaining rules that take in options
 - Standardize how both developers and end-users can reason about default rule options
-- Allow tooling such as [`eslint-doc-generator`](https://github.com/bmish/eslint-doc-generator) to describe rule options programmatically - and therefore more consistently
-
-This RFC proposes defaulting options passed to rules:
-
-- Schemas that include `default` values will cause the `context.options` provided to rules to use that `default` if a value is `undefined`
-- Options will always recursively default to at least an empty `{}`, to make behavior of nested object definitions with or without `default` properties consist
-- The original, non-defaulted options object will be available as `context.optionsRaw` to reduce code churn in rules that currently rely on original (raw) values
+- Encourage writing rules that allow tooling such as [`eslint-doc-generator`](https://github.com/bmish/eslint-doc-generator) to describe rule options programmatically - and therefore more consistently
 
 Doing so would be a breaking change as it impacts what values are passed to the `create` method of rules.
 
 ## Detailed Design
 
-This RFC proposes using the already-existing optional `default` field for each property in a rule's `meta.schema` when resolving what options values are provided to rules.
-For each config value defined in `meta.schema`:
+This RFC proposes defaulting options passed to rules:
+
+- Schemas that include `default` values will continue to allow those default values using Ajv's `useDefaults`
+- Object options will always recursively default to at least an empty `{}`, to make behavior of nested object definitions with or without `default` properties consist
+- The options object created by Ajv's parsing without any recursive object creation will be available as `context.optionsRaw` to reduce code churn in rules that currently rely on original (raw) values
+
+Specifically, for each config value defined in `meta.schema`:
 
 - If `default` is defined and the rule config's value is `undefined`, the value of `default` is used instead
 - If the config value contains `type: "object"`, each property's `default` will recursively go through this same defaulting logic
@@ -73,8 +75,6 @@ The proposed change would impact only cases when the provided value is `undefine
 | ----------------------- | ------------------------- | -------------------------- |
 | `"error"`               | `[]`                      | `["implicit"]`             |
 | `["error"]`             | `[]`                      | `["implicit"]`             |
-| `["error", undefined]`  | `[undefined]`             | `["implicit"]`             |
-| `["error", null]`       | `[null]`                  | `[null]`                   |
 | `["error", "explicit"]` | `["explicit"]`            | `["explicit"]`             |
 
 ### Example: Nested Object Defaults
@@ -128,9 +128,7 @@ The proposed behavior would impact cases when the provided value is `undefined` 
 | --------------------------------------------- | ------------------------------------ | -------------------------------------- |
 | `"error"`                                     | `[]`                                 | `[ { enforceForClassFields: true } ]`  |
 | `["error"]`                                   | `[]`                                 | `[ { enforceForClassFields: true } ]`  |
-| `["error", undefined]`                        | `[undefined]`                        | `[ { enforceForClassFields: true } ]`  |
-| `["error", null]`                             | `[null]`                             | `[null]`                               |
-| `["error", {}]`                               | `[{}]`                               | `[ { enforceForClassFields: true } ]`  |
+| `["error", {}]`                               | `[{ enforceForClassFields: true }]`  | `[ { enforceForClassFields: true } ]`  |
 | `["error", { enforceForClassFields: false }]` | `[{ enforceForClassFields: false }]` | `[ { enforceForClassFields: false } ]` |
 | `["error", { enforceForClassFields: true }]`  | `[{ enforceForClassFields: true }]`  | `[ { enforceForClassFields: true } ]`  |
 
@@ -188,12 +186,8 @@ We'll also want to mention this in the ESLint core custom rule documentation.
 
 ## Backwards Compatibility Analysis
 
-This proposal contains two breaking changes:
-
-- If a schema declares `default` values, rule options that were `undefined` will become those defaults instead
-- Options will recursively default to `{}` based on schemas even if the schema has no `default` properties
-
-Those breaking changes will impact rules that rely on the exact length or existing of properties in `context.options`.
+Options will recursively default to `{}` based on schemas even if the schema has no `default` properties
+That breaking change will impact rules which rely on the exact length or existing of properties in `context.options`.
 Rules that wish to preserve the legacy options behavior can switch to referring to the new `context.optionsRaw` property.
 
 In the draft PR containing this change, only 3 test files -rule tests for `indent`, `max-len`, and `no-multiple-empty-lines`- failed during `npm run test`.
@@ -203,15 +197,24 @@ All were fixed with a direct find-and-replace from `context.options` to `context
 
 ### Non-Recursive Object Defaults
 
-An alternate, lower-impact change would be to _not_ options to `{}` if there is no `default` in its schema.
-However:
+Ajv provides its own support for `default` values with a [`useDefaults` option](https://ajv.js.org/guide/modifying-data.html#assigning-defaults).
+It's used in ESLint core already, in [`lib/shared/ajv.js`](https://github.com/eslint/eslint/blob/22a558228ff98f478fa308c9ecde361acc4caf20/lib/shared/ajv.js#L21).
+Sticking Ajv's own defaults logic would bring two benefits:
 
-- Defaulting to `{}` allows rules logic to not need to `|| {}` or `?? {}` as much in source code.
-- Consider the case of an options schema declaring a `default` for a child property inside an object whose parent does not have a `default` introduces complexity:
-  - If the defaulting logic didn't recursively create default objects, it could be confusing why the `default` value wasn't being used.
-  - If the defaulting logic were to recursively create default objects only when a descendent property contains `default`, the inconsistency could also be confusing to users (and would be more code to implement in ESLint).
+- Aligning ESLint schema defaulting with the standard logic used by Ajv
+- Avoiding a custom defaulting implementation in ESLint by using Ajv's instead
 
-This RFC proposes always defaulting objects to `{}` for consistency.
+However, [`useDefaults` requires explicit empty object for intermediate object entries to work for nested properties](https://github.com/ajv-validator/ajv/issues/1710).
+That means:
+
+- Schemas with optional objects containing properties with default need to provide an explicit `default: {}` for those objects.
+- If those properties are themselves optional objects containing properties, both the outer and inner objects need explicit `default` values.
+
+An alternative to this RFC could be to fill in those default values in ESLint core rules and plugins.
+See [this Runkit with simulated Ajv objects](https://runkit.com/joshuakgoldberg/650a826da5839400082514ff) for examples of how rules would need to provide those default values.
+
+This RFC attempts to optimize for common cases of how rule authors would write ESLint rules.
+As rules have typically omitted `default: {}`, the path of least inconvenience for rule authors seems to be to fill in those values for them recursively.
 
 ### Prior Art
 
