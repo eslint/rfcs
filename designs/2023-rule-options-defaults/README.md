@@ -7,7 +7,7 @@
 
 ## Summary
 
-Enable rule authors to describe default values for rule options in a formal schema.
+Enable rule options defaulting logic to recursively fill in objects and their default properties.
 
 ## Motivation
 
