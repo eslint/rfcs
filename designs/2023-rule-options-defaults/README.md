@@ -37,7 +37,7 @@ Doing so would:
 - Standardize how both developers and end-users can reason about default rule options
 - Encourage writing rules that allow tooling such as [`eslint-doc-generator`](https://github.com/bmish/eslint-doc-generator) to describe rule options programmatically - and therefore more consistently
 
-Doing so would be a breaking change as it impacts what values are passed to the `create` method of rules.
+A new `useRecursiveOptionDefaults` option would be made available to ESLint plugins to let them opt into the behavior.
 
 ## Detailed Design
 
@@ -182,11 +182,18 @@ We'll also want to mention this in the ESLint core custom rule documentation.
 ## Drawbacks
 
 - This increases both conceptual and implementation complexity around rule options
-- As a breaking change, this may break user rules - especially private rules we don't have visibility to
+- As a future breaking change, this may break user rules - especially private rules we don't have visibility to
 
 ## Backwards Compatibility Analysis
 
-Options will recursively default to `{}` based on schemas even if the schema has no `default` properties
+The new `useRecursiveOptionDefaults` option being opt-in means this would not be a breaking change in the current version of ESLint.
+This RFC's intent is for that option to gradually be removed over time:
+
+1. ESLint v8: opt-in (default to `false`)
+2. ESLint v9: opt-out (default to `true`)
+3. ESLint v10: remove both `useRecursiveOptionDefaults` and `context.optionsRaw`
+
+Changing `useRecursiveOptionDefaults` to opt-out would be a breaking change as it impacts what values are passed to the `create` method of rules.
 That breaking change will impact rules which rely on the exact length or existing of properties in `context.options`.
 Rules that wish to preserve the legacy options behavior can switch to referring to the new `context.optionsRaw` property.
 
