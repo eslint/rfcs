@@ -3,7 +3,7 @@
 - RFC PR: https://github.com/eslint/rfcs/pull/113
 - Authors: [Josh Goldberg](https://github.com/JoshuaKGoldberg)
 
-# Support for including options defaults in rules
+# Support for recursively filling in options defaults in rules
 
 ## Summary
 
