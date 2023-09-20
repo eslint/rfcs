@@ -43,8 +43,8 @@ A new `useRecursiveOptionDefaults` option would be made available to ESLint plug
 
 This RFC proposes defaulting options passed to rules:
 
-- Schemas that include `default` values will continue to allow those default values using Ajv's `useDefaults`
-- Object options will always recursively default to at least an empty `{}`, to make behavior of nested object definitions with or without `default` properties consist
+- Schemas that include `default` values will continue to allow those default values similarly to Ajv's `useDefaults`
+- Object options will always recursively default to at least an empty `{}`, to make behavior of nested object definitions with or without `default` properties consistent
 - The options object created by Ajv's parsing without any recursive object creation will be available as `context.optionsRaw` to reduce code churn in rules that currently rely on original (raw) values
 
 Specifically, for each config value defined in `meta.schema`:
@@ -261,6 +261,7 @@ This proposal goes with a less opinionated _shallow_ merge.
 2. Would we want to eventually deprecate/delete `context.optionsRaw`? Alternately, should we avoid it altogether, in favor of rewriting the options logic in the core rules?
 3. Should ESLint eventually write its own schema parsing package?
 4. Should figuring out TypeScript types block this proposal?
+5. The three core rules that would want `optionsRaw` -indent, max-len, and no-multiple-empty-lines- are all formatting rules. Is it safe to assume they'll be removed by ESLint 10 (https://github.com/eslint/eslint/issues/17522)?
 
 ## Help Needed
 
