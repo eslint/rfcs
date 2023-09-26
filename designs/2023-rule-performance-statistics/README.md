@@ -54,7 +54,7 @@ eslint invalid/file-to-fix.js --stats --fix -f json
 ```json
 "stats": {
   "directives": 0,
-  "fixPasses": 0,
+  "fixPasses": 2,
   "times": {
     "passes": [
       {
