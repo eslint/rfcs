@@ -172,11 +172,7 @@ Since ESLint already collects most of this data internally, it would be more *co
 
  - [_lib/cli.js_](https://github.com/mnkiefer/eslint/pull/1/files#diff-347ff93ed2b00c93c817863e32fbac5b4fac71d7339a48378980e682777689f4R96): The function `translateOptions(ParsedCLIOptions)` is called, so we add the `stats` option as an input parameter here too.
 
- - [_lib/eslint/eslint.js_](): The function `processOptions(ESLintOptions)` is called, which is responsible for validating and normalizing options for the *ESLint* CLIEngine instance. Here, we add the `stats` option as a parameter to:
-    <br>&nbsp;&nbsp;&nbsp;&nbsp;<a name="eslintjs-step1">Step 1</a>: The `processOptions` function and in that function set its default to `false` and make sure that a given value is always a boolean.
-    <br>&nbsp;&nbsp;&nbsp;&nbsp;<a name="eslintjs-step2">Step 2</a>: The `ESLintOptions` type definition
-
- - [_lib/eslint/eslint-helpers.js_](https://github.com/mnkiefer/eslint/pull/1/files#diff-87d53094b12d82e4c11a0e1167d79cf2f471d2f5e5ebb6fc483e891f9dc87a5a): Similar to as we have done in [_eslint.js_ step 1](#eslintjs-step1) but for the *FlatESLint* CLIEngine instance.
+ - [_lib/eslint/eslint-helpers.js_](https://github.com/mnkiefer/eslint/pull/1/files#diff-87d53094b12d82e4c11a0e1167d79cf2f471d2f5e5ebb6fc483e891f9dc87a5a): Here, we add the `stats` option for the *FlatESLint* CLIEngine instance and check that its value is of type Boolean.
 
 - [_lib/eslint/flat-eslint.js_](https://github.com/mnkiefer/eslint/pull/1/files#diff-03dd66bfc8332edc2b145936aa2dd607ace1c34a31c222ec4d9617481876c27a): Similar to as we have done in [_eslint.js_ step 2](#eslintjs-step2) but for `FlatESLintOptions`. We also add the `stats` option to the function `verifyText(Object)` which returns the `LintResult` object. So, if `stats=true`, the `stats` properties (collected by the Linter) must be appended to the lint result (see `getStats()` in the next section).
 > Note, that we have also adjusted the `linter.verifyAndFix()` input and output, which will be explained in the next section regarding changes to the Linter.
