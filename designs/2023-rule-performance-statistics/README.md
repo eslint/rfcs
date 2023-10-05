@@ -180,7 +180,7 @@ Since ESLint already collects most of this data internally, it would be more *co
     The following paragraphs describe the individual `stats` option properties, how they are collected and stored.<br>
     We will start by the exposure of the `times` object, as most of the information is already collected by the Linter and just needs to be persisted.
 
-  - [_lib/shared/stats.js_](https://github.com/mnkiefer/eslint/pull/1/files#diff-03dd66bfc8332edc2b145936aa2dd607ace1c34a31c222ec4d9617481876c27a): The function `getStats()` is used to append the `stats` data onto the lint result in _flat-eslint.js_. We have also introduced 3 helper functions, namely `startTime()`, `endTime(t)`, and `storeTime(time, timeOpts, slots, resetTimes = false)` which are used by the _timing.s_ and _linter.js_ scripts to uniformly store the measured times.
+  - [_lib/shared/stats.js_](https://github.com/mnkiefer/eslint/pull/1/files#diff-03dd66bfc8332edc2b145936aa2dd607ace1c34a31c222ec4d9617481876c27a): The function `getStats()` is used to append the `stats` data onto the lint result in _flat-eslint.js_. We have also introduced 3 helper functions, namely `startTime()`, `endTime(t)`, and `storeTime(time, timeOpts, slots, resetTimes = false)` which are used by the _timing.js_ and _linter.js_ scripts to uniformly store the measured times.
     - `startTime()`: Uses `process.hrtime()` to initiate a time measurement.
     - `endTime(t)`: Uses that time `t` to measure the code execution time since.
     - `storeTime(time, timeOpts, slots, resetTimes = false)`: Uses the measured time `t` and the linter's internal slots map `slots` with `timeOpts` to store the time for a given `type` ('parse', 'rules', or 'fix' time) and `filename` (current file) combination.
