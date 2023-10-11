@@ -28,6 +28,113 @@ The LintResultCache takes a file path as parameter to find or store a file cache
 
 The suggested approach is to truncate the given absolute path of the file to a relative path in the cache.
 
+### Example existing cache file
+
+Here is an example existing cache file for an extremely small project with two source files. You see that the full path of the file is included in the
+filenames, '/home/USER/git/samplecode'.
+
+```
+[
+  {
+    "/home/USER/git/samplecode/src/formatter.ts": "1",
+    "/home/USER/git/samplecode/src/vite-env.d.ts": "2"
+  },
+  {
+    "size": 2584,
+    "mtime": 1695823503788,
+    "results": "3",
+    "hashOfConfig": "4"
+  },
+  {
+    "size": 75,
+    "mtime": 1695814197580,
+    "results": "5",
+    "hashOfConfig": "4"
+  },
+  {
+    "filePath": "6",
+    "messages": "7",
+    "suppressedMessages": "8",
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0
+  },
+  "1k0siqs",
+  {
+    "filePath": "9",
+    "messages": "10",
+    "suppressedMessages": "11",
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0
+  },
+  "/home/USER/git/samplecode/src/formatter.ts",
+  [],
+  [],
+  "/home/USER/git/samplecode/src/vite-env.d.ts",
+  [],
+  []
+]
+
+```
+
+### Suggested updated cache file
+
+Here is a suggested updated cache file, with relative paths instead of full paths. The . is the directory from which 
+eslint is run. Typically, eslint is always run from the same place, so using a relative path should not cause a problem.
+
+``` 
+[
+  {
+    "./src/formatter.ts": "1",
+    "./src/vite-env.d.ts": "2"
+  },
+  {
+    "size": 2584,
+    "mtime": 1695823503788,
+    "results": "3",
+    "hashOfConfig": "4"
+  },
+  {
+    "size": 75,
+    "mtime": 1695814197580,
+    "results": "5",
+    "hashOfConfig": "4"
+  },
+  {
+    "filePath": "6",
+    "messages": "7",
+    "suppressedMessages": "8",
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0
+  },
+  "1k0siqs",
+  {
+    "filePath": "9",
+    "messages": "10",
+    "suppressedMessages": "11",
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0
+  },
+  "./src/formatter.ts",
+  [],
+  [],
+  "./src/vite-env.d.ts",
+  [],
+  []
+]
+```
+
 ### Adding the command line parameter
 - conf/default-cli-options.js: add the property 'shareableCache' with a default of false. It should be put in the section with the other cache variables, below cacheStrategy. 
 - docs/src/use/command-line-interface.md: Add an explanation of the 'shareable-cache' variable with the other cache variables: "By default, an eslintcache contains full file paths and thus cannot readily be shared across developers or ci machines. "False" is that default. "True" changes the internal storage to store a relative path to the process execution directory, thus making the eslintcache shareable across developers and ci machines. . If you change this setting, you must regenerate your entire eslint cache."
