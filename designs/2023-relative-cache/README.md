@@ -26,7 +26,7 @@ I have a branch with the following design already. It is not fully tested, so I'
 
 The LintResultCache takes a file path as parameter to find or store a file cache entry.
 
-One approach would be to truncate the given absolute path of the file by the path of the cache location.
+The suggested approach is to truncate the given absolute path of the file to a relative path in the cache.
 
 ### Adding the command line parameter
 - conf/default-cli-options.js: add the property 'shearableCache' with a default of false. It should be put in the section with the other cache variables, below cacheStrategy. 
