@@ -163,7 +163,7 @@ be used. They will not need to regenerate their cache unless they set this flag.
 
 ## Alternatives
 
-A CLI tool which translates the existing cache to the current folder structure.
+A CLI tool which translates the existing cache to the current folder structure. This could be any sort of script that will basically do a replace-all on the paths in the .eslintcache file so that they are the new location rather than the old. A downside to this is that any tool based on string replacement would be fragile at best. 
 
 ## Open Questions
 
