@@ -53,12 +53,12 @@ Defaulting logic could go with the following logic to approximate user intent:
 See [[Reference] feat: add meta.defaultOptions](https://github.com/eslint/eslint/pull/17656) > [`function deepMerge`](https://github.com/eslint/eslint/pull/17656/files#diff-9bbcc1ca9625b99554a055ac028190e5bd28432207a7f1a519690c5d0484287fR24) and [`describe("deepMerge")`](https://github.com/eslint/eslint/pull/17656/files#diff-fa70d7d4c142a6c3e727cf7280f981cb80a1db10bd6cc85c205e47e47da05cfeR25) for the proposed defaulting logic.
 
 The original `options` provided to rules will temporarily be available on a new `context.optionsRaw` property.
-That property exists solely as a legacy compatibility layer for rules that would want the behavioral and/or documentation benefits of `meta.defaultOptions` but have nonstandard options parsing logic.
+That property will exist solely as a legacy compatibility layer for rules that would want the behavioral and/or documentation benefits of `meta.defaultOptions` but have nonstandard options parsing logic.
 `context.optionsRaw` will be removed in the next major version of ESLint.
 
 ### Rules with Differing Options Behavior
 
-The PoC PR implements `meta.defaultOptions` on rules that include options, are not deprecated, and match any of:
+[[Reference] feat: add meta.defaultOptions](https://github.com/eslint/eslint/pull/17656) implements `meta.defaultOptions` on rules that include options, are not deprecated, and match any of:
 
 - Are mentioned earlier in this RFC
 - Have a name starting with `A-C` and include the search string `context.options`
@@ -137,17 +137,20 @@ We'll also want to mention this in the ESLint core custom rule documentation.
 
 ## Drawbacks
 
-- This increases both conceptual and implementation complexity around rule options
+- This increases both conceptual and implementation complexity around built-in rule options logic
+  - This RFC believes that enough rules were already implemented with ad-hoc logic to make standardizing rule options logic a net reduction of complexity
 - This explicitly moves away from the JSON Schema / ajv style description of putting `default` values in `meta.schema`
+  - This RFC believes that schema-oriented defaults are too convoluted to justify their usage
 
 ## Backwards Compatibility Analysis
 
 If a rule does not specify `meta.defaultOptions`, its behavior will not change.
-This change is backwards compatible.
+This change is therefore completely backwards compatible to start.
 
 The removals of `context.optionsRaw` and Ajv `useDefaults: true` will be breaking changes in the next major version.
-This RFC believes the change will be minor and not create significant use pain.
+This RFC believes the impact of those removals will be minor and not create significant user pain.
 Most ESLint core rules did not change behavior when switched to `meta.defaultOptions`.
+Popular third-party plugins will be notified of the change and helped move to it.
 
 ## Alternatives
 
@@ -198,6 +201,8 @@ Doing so aligned with existing schema usage; however, its drawbacks were noted a
 </tbody>
 </table>
 
+This RFC believes that the simplicity of defining option defaults in `meta.defaultOptions` is the best outcome for rule authors and end-users.
+
 As a data point, typescript-eslint's `defaultOptions` approach has been in wide use for several years:
 
 1. `eslint-plugin-typescript` originally added its `defaultOptions` in [December 2018](https://github.com/bradzacher/eslint-plugin-typescript/pull/206)
@@ -223,7 +228,7 @@ See [this Runkit with simulated Ajv objects](https://runkit.com/joshuakgoldberg/
 
 ### Prior Art
 
-The only standardized options application I could find was `@typescript-eslint/eslint-plugin`'s `defaultOptions` property on rules.
+The only standardized options application found in the wild is `@typescript-eslint/eslint-plugin`'s `defaultOptions` property on rules.
 It's visible in the plugin's [Custom Rules guide](https://typescript-eslint.io/developers/custom-rules#rulecreator), which suggests users wrap rule creation with a `RuleCreator`'s `createRule`:
 
 ```ts
@@ -247,7 +252,7 @@ export const rule = createRule({
 });
 ```
 
-`createRule` applies a _deep_ merge rather than a shallow `Object.assign`: https://github.com/typescript-eslint/typescript-eslint/blob/324c4d31e46cbc95e8eb67d71792de9f49e65606/packages/utils/src/eslint-utils/applyDefault.ts.
+`createRule` also applies a deep merge rather than a shallow `Object.assign`: https://github.com/typescript-eslint/typescript-eslint/blob/324c4d31e46cbc95e8eb67d71792de9f49e65606/packages/utils/src/eslint-utils/applyDefault.ts.
 This has the benefit of allowing user-provided options to "merge" into complex objects, rather than requiring rewriting larger objects.
 Most rules with nontrivial options ask for those options to be specified with at least one object.
 
