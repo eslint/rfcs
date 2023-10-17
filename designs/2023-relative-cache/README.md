@@ -30,8 +30,11 @@ The suggested approach is to truncate the given absolute path of the file to a r
 
 ### Example existing cache file
 
-Here is an example existing cache file for an extremely small project with two source files. You see that the full path of the file is included in the
-filenames, '/home/USER/git/samplecode'.
+Here is an example existing cache file for an extremely small project with two source files. It has been formatted for readability. 
+
+You can see that the full path of the file is included in the filenames, '/home/USER/git/samplecode'. There is also an obscure field, the value
+1k0siqs. That is the hash-value of a stringified ConfigArray object that contains all the configuration for the entire eslint run. It is there so
+that any rule changes or configuration changes will cause a complete eslint recheck on all files. 
 
 ```
 [
@@ -87,6 +90,9 @@ filenames, '/home/USER/git/samplecode'.
 Here is a suggested updated cache file, with relative paths instead of full paths. The . is the directory from which 
 eslint is run. Typically, eslint is always run from the same place, so using a relative path should not cause a problem.
 
+Note that the obscure hash value is still there, and is now Ak0sovs. This hash value will need to be calculated using
+relative paths only. 
+
 ``` 
 [
   {
@@ -115,7 +121,7 @@ eslint is run. Typically, eslint is always run from the same place, so using a r
     "fixableErrorCount": 0,
     "fixableWarningCount": 0
   },
-  "1k0siqs",
+  "Ak0sovs",
   {
     "filePath": "9",
     "messages": "10",
@@ -138,13 +144,24 @@ eslint is run. Typically, eslint is always run from the same place, so using a r
 ### Adding the command line parameter
 - conf/default-cli-options.js: add the property 'shareableCache' with a default of false. It should be put in the section with the other cache variables, below cacheStrategy. 
 - docs/src/use/command-line-interface.md: Add an explanation of the 'shareable-cache' variable with the other cache variables: "By default, an eslintcache contains full file paths and thus cannot readily be shared across developers or ci machines. "False" is that default. "True" changes the internal storage to store a relative path to the process execution directory, thus making the eslintcache shareable across developers and ci machines. . If you change this setting, you must regenerate your entire eslint cache."
-- eslint-helpers.js: add shareableCache variable (set to false) to the processOptions
+- eslint-helpers.js: add shareableCache variable (set to false) to the processOptions, and make sure it must be a boolean. 
 - lib/options.js: Add an option 'shareable-cache' of type Boolean with a nice description for people to read: By default, an eslintcache contains full file paths and thus cannot readily be shared across developers or ci machines. "False" is that default. "True" changes the internal storage to store a relative path to the process execution directory, thus making the eslintcache shareable across developers and ci machines. . If you change this setting, you must regenerate your entire eslint cache.
-
+- lib/cli.js: Add the shareableCache option, defaulted to false, in the translateOptions function. 
 
 ### Changing cache file serialization
-- lib/eslint/flat-eslint.js: Define the shearableCache property at the top, with the other properties, as a boolean
-- lib/eslint/flat-eslint.js: Around line 873, where the flat-eslint.js file is saving the cache in the cachefile, if processOptions.shareableCache is set to true, pass a PARTIAL path to the lintResultCache.setCachedLintResults() function instead of the full path. 
+- lib/cli-engine/lint-result-cache.js: Add the properties 'cwd' and 'shareableCache' to the LintResultCache class. 'cwd' is a string, the current working directory. shareableCache is a boolean, the result of the user's passed in command line parameter. Use these values in two main places: 
+    1. Whenever we store or retrieve file results in the cache, use the results of the new class function, getFileKey(filePath). If shareableCache is false, it uses a full file path as the key. If shareableCache is true, uses a relative file path. 
+    2. Update the function hashOfConfigFor, so that when the configuration object is hashed into a hash key and put into the eslintcache, if shareableCache is set to true, the file paths hashed are all relative paths. Implementation detail:
+```
+function hashOfConfigFor(config, cwd) {
+    if (!configHashCache.has(config)) {
+        // replace the full directory path in the config string to make the hash location-neutral
+        const stringConfig = stringify(config).replaceAll(cwd, '.');
+        configHashCache.set(config, hash(`${pkg.version}_${nodeVersion}_${stringConfig}`));
+    }
+``` 
+- lib/cli-engine/cli-engine.js:  Update the constructor call to LintResultCache to add the new parameters cwd and shareableCache. 
+- lib/eslint/flat-eslint.js: Update the constructor call to LintResultCache to add the new parameters cwd and shareableCache. 
 
 ## Documentation
 
@@ -159,11 +176,14 @@ Furthermore, defaulting to the existing behavior does help make upgrading less p
 ## Backwards Compatibility Analysis
 
 The new flag, shareable-cache, passed in on the command line, will default to false. Unless people explicitly set it to true, then the old algorithms will
-be used. They will not need to regenerate their cache unless they set this flag. 
+be used. Users of the eslint cache will still need to regenerate their cache no matter how they set this flag, because the current implementation forces a cache rebuild if there are
+any configuration changes. Adding a new property counts as a change. 
 
 ## Alternatives
 
-A CLI tool which translates the existing cache to the current folder structure. This could be any sort of script that will basically do a replace-all on the paths in the .eslintcache file so that they are the new location rather than the old. A downside to this is that any tool based on string replacement would be fragile at best. 
+A CLI tool which translates the existing cache to the current folder structure. This could be any sort of script that will basically do a replace-all on the paths in 
+the .eslintcache file and also recalculates the hash so that they are the new location rather than the old. A downside to this is that any tool based on string 
+replacement would be fragile at best. 
 
 ## Open Questions
 
@@ -171,9 +191,20 @@ No.
 
 ## Help Needed
 
-I have a branch with code changes, but I am trying to figure out how to build an artifact to test with. Using the eslint.js artifact in the browser does not make sense
-with a cache change, and I would like to test it in my project. How can I build a package that I can install with NPM into my project to test?? I am able to run the tests
-on the eslintproject and they all pass. My fork is here: https://github.com/cs6cs6/eslint_patch/tree/fork/shareable-eslintcache
+Decision needed: Make every cache shareable, or keep the shreable-cache flag default to false?
+
+I originally planned the shareable-cache flag so that users of eslint could not be surprised by changed cache behavior, and would also not have to regenerate their cache 
+for a patch version change. But I discovered by testing that there is no way to NOT force people to regenerate their eslint cache with this change. That's because by adding 
+the 'shareable-cache' flag, it adds a property to the ConfigArray object. Even if it's set to false (the old behavior), the object's structure changes with a new property 
+field. This in turn changes the ConfigArray object's stringify results, which are fed into a hash function to create a hash key. (See lint-result-cache.js function hashOfConfigFor.) 
+In turn, that becomes a part of the eslintcache file. I think it's so that everything will be re-scanned with configuration changes. 
+
+For that reason, should we simply have a shareable cache full of relative paths be the only behavior? That means no command line flag, and strictly internal changes that
+would be invisible to the end user. On the other hand, if this change DOES have undesirable side effects because people are using eslint in unexpected ways, having the flag
+default to the old behavior would save them from surprises on upgrade. Judging by the number of .gitignore files with .eslintcache in them, people are used to this
+cache not being shareable. 
+
+What would the eslint team prefer? No flag, or keep the shareable-cache flag and default to false? 
 
 ## Frequently Asked Questions
 
