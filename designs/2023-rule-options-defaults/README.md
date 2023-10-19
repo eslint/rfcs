@@ -52,10 +52,6 @@ Defaulting logic could go with the following logic to approximate user intent:
 
 See [[Reference] feat: add meta.defaultOptions](https://github.com/eslint/eslint/pull/17656) > [`function deepMerge`](https://github.com/eslint/eslint/pull/17656/files#diff-9bbcc1ca9625b99554a055ac028190e5bd28432207a7f1a519690c5d0484287fR24) and [`describe("deepMerge")`](https://github.com/eslint/eslint/pull/17656/files#diff-fa70d7d4c142a6c3e727cf7280f981cb80a1db10bd6cc85c205e47e47da05cfeR25) for the proposed defaulting logic.
 
-The original `options` provided to rules will temporarily be available on a new `context.optionsRaw` property.
-That property will exist solely as a legacy compatibility layer for rules that would want the behavioral and/or documentation benefits of `meta.defaultOptions` but have nonstandard options parsing logic.
-`context.optionsRaw` will be removed in the next major version of ESLint.
-
 ### Rules with Differing Options Behavior
 
 [[Reference] feat: add meta.defaultOptions](https://github.com/eslint/eslint/pull/17656) implements `meta.defaultOptions` on rules that include options, are not deprecated, and match any of:
@@ -67,7 +63,7 @@ That property will exist solely as a legacy compatibility layer for rules that w
 
 <details>
 <summary>
-The following matched rules use <code>context.optionsRaw</code> because their current defaulting logic is incompatible with <code>context.options</code> + <code>meta.defaultOptions</code>.
+The following matched rules will not use <code>meta.defaultOptions</code> because their current defaulting logic is incompatible with the new merging logic:
 </summary>
 
 - `array-bracket-newline`:
@@ -109,9 +105,21 @@ Some core ESLint rules describe `default:` values in that schema.
 
 Having two places to describe `default` values can be confusing for developers.
 It can be unclear where a value comes from when its default may be specified in two separate locations.
-This RFC proposes removing the `useDefaults: true` setting in the next major version of ESLint.
+This RFC proposes removing the `useDefaults: true` setting in a future major version of ESLint.
 
 ### Out of Scope
+
+#### Preserving Original Options
+
+The original `options` provided to rules could be made available on a new property with a name like `context.optionsRaw`.
+That property could exist solely as a legacy compatibility layer for rules that would want the behavioral and/or documentation benefits of `meta.defaultOptions` but have nonstandard options parsing logic.
+
+However:
+
+- The overlap of rules that would want the documentation benefits of `meta.defaultOptions` but would not be able to work with the new defaulting logic is quite small.
+- Using non-standard defaulting logic is detrimental to users being able to reliably understand how rules' options generally work.
+
+This RFC considers `context.optionsRaw` or an equivalent as not worth the code addition.
 
 #### TypeScript Types
 
@@ -147,10 +155,12 @@ We'll also want to mention this in the ESLint core custom rule documentation.
 If a rule does not specify `meta.defaultOptions`, its behavior will not change.
 This change is therefore completely backwards compatible to start.
 
-The removals of `context.optionsRaw` and Ajv `useDefaults: true` will be breaking changes in the next major version.
-This RFC believes the impact of those removals will be minor and not create significant user pain.
+The removal of Ajv `useDefaults: true` will be a breaking change in a future major version.
+This RFC believes the impact of that removal will be minor and not create significant user pain.
 Most ESLint core rules did not change behavior when switched to `meta.defaultOptions`.
-Popular third-party plugins will be notified of the change and helped move to it.
+
+Popular third-party plugins will be notified of the upcoming change and helped move to `meta.defaultOptions`.
+Given the improvements to rule implementations and documentation `eslint-doc-generator`, this RFC expects plugins to be generally receptive.
 
 ## Alternatives
 
@@ -267,9 +277,8 @@ The typescript-eslint team will take on that work.
 
 ## Open Questions
 
-1. Is adding `context.optionsRaw` for backwards compatibility until the next major version worth the cost?
-2. Should ESLint eventually write its own schema parsing package - i.e. formalizing its fork from ajv?
-3. _"`RuleTester` should validate the default options against the rule options schema."_ was mentioned in the original issue prompting this RFC. `RuleTester` in the PoC validates the results of merging `meta.defaultOptions` with test-provided `options`. Is this enough?
+1. Should ESLint eventually write its own schema parsing package - i.e. formalizing its fork from ajv?
+2. _"`RuleTester` should validate the default options against the rule options schema."_ was mentioned in the original issue prompting this RFC. `RuleTester` in the PoC validates the results of merging `meta.defaultOptions` with test-provided `options`. Is this enough?
 
 ## Help Needed
 
