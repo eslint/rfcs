@@ -149,9 +149,9 @@ relative paths only.
 - lib/cli.js: Add the shareableCache option, defaulted to false, in the translateOptions function. 
 
 ### Changing cache file serialization
-- lib/cli-engine/lint-result-cache.js: Add the properties 'cwd' and 'shareableCache' to the LintResultCache class. 'cwd' is a string, the current working directory. shareableCache is a boolean, the result of the user's passed in command line parameter. Use these values in two main places: 
-    1. Whenever we store or retrieve file results in the cache, use the results of the new class function, getFileKey(filePath). If shareableCache is false, it uses a full file path as the key. If shareableCache is true, uses a relative file path. 
-    2. Update the function hashOfConfigFor, so that when the configuration object is hashed into a hash key and put into the eslintcache, if shareableCache is set to true, the file paths hashed are all relative paths. Implementation detail:
+- `lib/cli-engine/lint-result-cache.js`: Add the properties `cwd` and `shareableCache` to the `LintResultCache` class. `cwd` is a string, the current working directory. `shareableCache` is a boolean, the result of the user's passed in command line parameter. Use these values in two main places: 
+    1. Whenever we store or retrieve file results in the cache, use the results of the new class function, `getFileKey(filePath)`. If `shareableCache` is false, it uses a full file path as the key. If `shareableCache` is true, uses a relative file path. 
+    2. Update the function `hashOfConfigFor`, so that when the configuration object is hashed into a hash key and put into the eslintcache, if `shareableCache` is set to true, the file paths hashed are all relative paths. Implementation detail:
 ```js
 function hashOfConfigFor(config, cwd) {
     if (!configHashCache.has(config)) {
