@@ -186,24 +186,13 @@ replacement would be fragile at best.
 
 ## Open Questions
 
-No.
+Question: Should we make every cache shareable, or keep the shreable-cache flag default to false?
+
+Answer: We don't know how people are currently using the cache file, so we can't make assumptions about what is and isn't safe to change. Even if we made a shareable cache the default (which would be a breaking change), we'd still need a way to enable the previous behavior in case there is a use case we aren't aware of..
 
 ## Help Needed
 
-Decision needed: Make every cache shareable, or keep the shreable-cache flag default to false?
-
-I originally planned the shareable-cache flag so that users of eslint could not be surprised by changed cache behavior, and would also not have to regenerate their cache 
-for a patch version change. But I discovered by testing that there is no way to NOT force people to regenerate their eslint cache with this change. That's because by adding 
-the 'shareable-cache' flag, it adds a property to the ConfigArray object. Even if it's set to false (the old behavior), the object's structure changes with a new property 
-field. This in turn changes the ConfigArray object's stringify results, which are fed into a hash function to create a hash key. (See lint-result-cache.js function hashOfConfigFor.) 
-In turn, that becomes a part of the eslintcache file. I think it's so that everything will be re-scanned with configuration changes. 
-
-For that reason, should we simply have a shareable cache full of relative paths be the only behavior? That means no command line flag, and strictly internal changes that
-would be invisible to the end user. On the other hand, if this change DOES have undesirable side effects because people are using eslint in unexpected ways, having the flag
-default to the old behavior would save them from surprises on upgrade. Judging by the number of .gitignore files with .eslintcache in them, people are used to this
-cache not being shareable. 
-
-What would the eslint team prefer? No flag, or keep the shareable-cache flag and default to false? 
+None at this time.
 
 ## Frequently Asked Questions
 
