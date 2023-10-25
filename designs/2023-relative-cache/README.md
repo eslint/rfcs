@@ -87,8 +87,8 @@ that any rule changes or configuration changes will cause a complete eslint rech
 
 ### Suggested updated cache file
 
-Here is a suggested updated cache file, with relative paths instead of full paths. The . is the directory from which 
-eslint is run. Typically, eslint is always run from the same place, so using a relative path should not cause a problem.
+Here is a suggested updated cache file, with relative paths instead of full paths. The `.` is the current working  
+directory. Typically, eslint is always run from the same place, so using a relative path should not cause a problem.
 
 Note that the obscure hash value is still there, and is now Ak0sovs. This hash value will need to be calculated using
 relative paths only. 
@@ -152,12 +152,11 @@ relative paths only.
 - lib/cli-engine/lint-result-cache.js: Add the properties 'cwd' and 'shareableCache' to the LintResultCache class. 'cwd' is a string, the current working directory. shareableCache is a boolean, the result of the user's passed in command line parameter. Use these values in two main places: 
     1. Whenever we store or retrieve file results in the cache, use the results of the new class function, getFileKey(filePath). If shareableCache is false, it uses a full file path as the key. If shareableCache is true, uses a relative file path. 
     2. Update the function hashOfConfigFor, so that when the configuration object is hashed into a hash key and put into the eslintcache, if shareableCache is set to true, the file paths hashed are all relative paths. Implementation detail:
-```
+```js
 function hashOfConfigFor(config, cwd) {
     if (!configHashCache.has(config)) {
         // replace the full directory path in the config string to make the hash location-neutral
-        const stringConfig = stringify(config).replaceAll(cwd, '.');
-        configHashCache.set(config, hash(`${pkg.version}_${nodeVersion}_${stringConfig}`));
+        // implementation TBD; please note configHashCache is a complex object with over 100 fields.        
     }
 ``` 
 - lib/cli-engine/cli-engine.js:  Update the constructor call to LintResultCache to add the new parameters cwd and shareableCache. 
