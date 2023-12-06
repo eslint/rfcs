@@ -79,6 +79,11 @@ const processor = {
 
 It would be more powerful and more explicit.
 
+### Plugins Adoptions
+
+For `eslint-plugin-markdown`, it could have a setting option to allow passthrough the original markdown file. So that other plugins (e.g. `eslint-plugin-markdownlint`) could lint the markdown content.
+
+For `eslint-plugin-vue` would have an optional processor package (for example, `eslint-processor-vue-blocks`), which creates virtual files for each blocks like `<style>` `<i18n>` while keeping the original `.vue` file for `eslint-plugin-vue` to process.
 
 ## Documentation
 
