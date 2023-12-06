@@ -113,3 +113,4 @@ It would be an optional addition to the existing API, so it should be backward c
 ## Related Discussions
 
 - https://github.com/eslint/eslint/issues/14745
+- https://github.com/eslint/eslint-plugin-markdown/issues/179
