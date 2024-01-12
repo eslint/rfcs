@@ -160,7 +160,6 @@ function hashOfConfigFor(config, cwd) {
     }
 ``` 
 - lib/cli-engine/cli-engine.js:  Update the constructor call to LintResultCache to add the new parameters cwd and shareableCache. 
-- lib/eslint/flat-eslint.js: Update the constructor call to LintResultCache to add the new parameters cwd and shareableCache. 
 
 ## Documentation
 
