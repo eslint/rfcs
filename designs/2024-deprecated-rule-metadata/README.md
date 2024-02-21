@@ -207,6 +207,7 @@ We do not need to consider this to be a breaking change in terms of [ESLint's se
 -->
 
 1. Is there additional deprecation information we'd like to represent? Note that additional information can always be added later, but it's good to consider any possible needs now.
+   - We considered including properties such as the options or conversion function needed to achieve the same behavior with a replacement rule, but deemed these out-of-scope for now. [More info in this comment](https://github.com/eslint/rfcs/pull/116#discussion_r1497468163).
 
 ## Help Needed
 
