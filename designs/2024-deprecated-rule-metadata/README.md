@@ -16,7 +16,7 @@ This RFC suggests a format for storing additional information in rule metadata a
 <!-- Why are we doing this? What use cases does it support? What is the expected
 outcome? -->
 
-There are long-time rule [properties](https://eslint.org/docs/latest/extend/custom-rules#rule-structure) `meta.deprecated` and `meta.replacedBy` that have been intended to document when rules are deprecated and what their replacement rule(s) are. For the most part, usage would look something like this:
+There are long-time [rule properties](https://eslint.org/docs/latest/extend/custom-rules#rule-structure) `meta.deprecated` and `meta.replacedBy` that have been intended to document when rules are deprecated and what their replacement rule(s) are. For the most part, usage would look something like this:
 
 ```js
 module.exports = { meta: { deprecated: true, replacedBy: ['replacement-rule-name'] } };
