@@ -44,7 +44,7 @@ We propose extended `meta.deprecated` and `meta.replacedBy` rule property schema
 
 ```ts
 type RuleMeta = {
-  deprecated:
+  deprecated?:
     | boolean // Existing boolean option, backwards compatible.
     | string // Shorthand property for general deprecation message, such as why the deprecation occurred. Any truthy value implies deprecated.
     | {
@@ -66,7 +66,7 @@ type RuleMeta = {
               url?: string; // URL to plugin documentation.
             };
         rule:
-          | string // Shorthand property for rule name (without plugin prefix).
+          | string // Shorthand property for replacement rule name (without plugin prefix).
           | {
               name?: string; // Replacement rule name (without plugin prefix).
               url?: string; // URL to rule documentation.
@@ -120,7 +120,7 @@ We can also support the same `meta.deprecated` and `meta.replacedBy` properties 
 
 In terms of actual changes inside ESLint needed for this:
 
-- Mention the new schema in the custom rule [documentation](https://eslint.org/docs/latest/extend/custom-rules#rule-structure)
+- Mention the new schema in the [custom rule documentation](https://eslint.org/docs/latest/extend/custom-rules#rule-structure)
 - Ensure these properties are allowed on configurations and processors
 - Add any additional information to these properties in core rules as desired (such as in <https://github.com/eslint/eslint/issues/18053>, <https://github.com/eslint/eslint/pull/13274>)
 - Update ESLint's website generator to take into account the additional information for rule doc deprecation notices
@@ -174,7 +174,7 @@ For the most part, the new `meta.deprecated` format should be backwards-compatib
 
 Overall, a limited number of third-party tools that might be affected, and these should be trivial to fix when impacts are discovered.
 
-We do not need to consider this to be a breaking change in terms of ESLint's [semantic versioning policy](https://github.com/eslint/eslint#semantic-versioning-policy).
+We do not need to consider this to be a breaking change in terms of [ESLint's semantic versioning policy](https://github.com/eslint/eslint#semantic-versioning-policy).
 
 ## Alternatives
 
