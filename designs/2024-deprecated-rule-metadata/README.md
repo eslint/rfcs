@@ -187,11 +187,24 @@ We do not need to consider this to be a breaking change in terms of [ESLint's se
     projects have already implemented a similar feature.
 -->
 
-1. Do nothing. This would leave the current `meta.deprecated` and `meta.replacedBy` properties as they are, which would continue to be ambiguous and limited in the information they can provide.
-2. Consolidate `meta.replacedBy` into `meta.deprecated.replacedBy`. This alternative was strongly considered. If we were to design things from scratch, we might choose this approach. However, there's not much tangible benefit to it besides organizational tidiness, and the downsides include:
-   - It creates yet another migration burden for the plugin ecosystem (potentially hundreds of plugins) to migrate from the old property to the new property
-   - There's overhead for us to go through the process of deprecating the old property and encouraging or helping plugins to move to the new one
-   - Tooling would need to support both properties, perhaps indefinitely due to the long tail of rules that may never be updated
+### Do nothing
+
+This would leave the current `meta.deprecated` and `meta.replacedBy` properties as they are, which would continue to be ambiguous and limited in the information they can provide.
+
+### Consolidate `meta.replacedBy` into `meta.deprecated.replacedBy`
+
+This alternative was strongly considered. If we were to design things from scratch, we might choose this approach.
+
+Pros:
+
+- Organizational tidiness
+- Avoids the inconsistent situation where `meta.deprecated` is `false` or omitted but `meta.replacedBy` has a value, resulting in ambiguity about whether the rule is deprecated or not
+
+Cons:
+
+- It creates yet another migration burden for the plugin ecosystem (potentially hundreds of plugins) to migrate from the old property to the new property
+- There's overhead for us to go through the process of deprecating the old property and encouraging or helping plugins to move to the new one
+- Tooling would need to support both properties, perhaps indefinitely due to the long tail of rules that may never be updated
 
 ## Open Questions
 
