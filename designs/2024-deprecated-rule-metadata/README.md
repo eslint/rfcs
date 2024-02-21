@@ -114,6 +114,7 @@ This data could be used by documentation websites and tooling like [eslint-doc-g
 
 > semi (deprecated) \
 > Replaced by [semi](https://eslint.style/rules/js/semi) from [@stylistic/js](https://eslint.style/). \
+> Use the `foo` option on the new rule to achieve the same behavior as before. [Read more](https://example.com/how-to-migrate-to-the-new-semi-rule). \
 > Stylistic rules are being moved out of ESLint core. [Read more](https://eslint.org/blog/2023/10/deprecating-formatting-rules/).
 
 We can also support the same `meta.deprecated` and `meta.replacedBy` properties on configurations and processors (the other kinds of objects exported by ESLint plugins), replacing `rule` with `config` or `processor` as needed. This would be part of the effort to standardize documentation properties in <https://github.com/eslint/eslint/issues/17842>.
