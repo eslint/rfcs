@@ -100,6 +100,10 @@ module.exports = {
           name: 'semi',
           url: 'https://eslint.style/rules/js/semi',
         },
+        meta: {
+          message: 'Use the `foo` option on the new rule to achieve the same behavior as before.',
+          url: 'https://example.com/how-to-migrate-to-the-new-semi-rule',
+        }
       },
     ],
   },
@@ -137,7 +141,7 @@ External changes:
 
 We don't necessarily need a formal announcement for this. The aforementioned changes to the rule documentation page and types should be sufficient.
 
-However, this update could be covered in a blog post about general rule metadata best practices, if anyone ever has an interest in writing something like that.
+However, this update could be covered in a blog post about general rule documentation best practices, if anyone ever has an interest in writing something like that.
 
 ## Drawbacks
 
