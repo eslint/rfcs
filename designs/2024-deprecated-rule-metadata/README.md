@@ -65,7 +65,7 @@ type RuleMeta = {
               name?: string; // Plugin name i.e. "eslint-plugin-example" that contains the replacement rule.
               url?: string; // URL to plugin documentation.
             };
-        rule:
+        rule?:
           | string // Shorthand property for replacement rule name (without plugin prefix).
           | {
               name?: string; // Replacement rule name (without plugin prefix).
