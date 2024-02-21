@@ -50,7 +50,8 @@ type RuleMeta = {
     | {
         message?: string; // General deprecation message, such as why the deprecation occurred.
         url?: string; // URL to more information about this deprecation in general.
-      };
+      }
+    | undefined;
   replacedBy?:
     | readonly string[] // Existing shorthand property for rule names, backwards compatible. It's recommended to omit the plugin prefix from rule names.
     | readonly {
