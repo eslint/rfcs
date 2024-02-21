@@ -199,6 +199,8 @@ Pros:
 
 - Organizational tidiness
 - Avoids the inconsistent situation where `meta.deprecated` is `false` or omitted but `meta.replacedBy` has a value, resulting in ambiguity about whether the rule is deprecated or not
+- This RFC, where we're already making changes to these properties, is likely the best time to clean things up
+- This would be a relatively lightweight and inconsequential migration, compared to more painful ESLint migrations or breaking changes we have performed in the past.
 
 Cons:
 
