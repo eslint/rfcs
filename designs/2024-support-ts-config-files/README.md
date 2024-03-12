@@ -34,7 +34,7 @@ The goal is to seamlessly support TypeScript configuration files in ESLint. To a
 - There should not be extra overhead for JavaScript users. This means this change should not have a significant impact (if any at all) affecting users who use plain JavaScript config files.
 - The external tools that are used to parse the config files written in TypeScript should not create side effects. Specifically, it is imperative that these tools do not interfere with Node.js's native module resolution system by hooking into or altering the standard `import/require` mechanisms. This means tools like [`ts-node`](https://github.com/TypeStrong/ts-node) and [`tsx`](https://github.com/privatenumber/tsx) might not be suitable for this purpose.
 
-So far the tool that seems to be the most suitable for this purpose is [`jiti`](https://github.com/unjs/jiti). It does not introduce side effects and performs well, demonstrating its reliability. It also seems to be more battle-tested given some established frameworks such as [Nuxt](https://github.com/nuxt/nuxt) and [Tailwind CSS](https://github.com/tailwindlabs/tailwindcss) have been using it to load their configuration files.
+So far the tool that seems to be the most suitable for this purpose is [`jiti`](https://www.npmjs.com/package/jiti). It does not introduce side effects and performs well, demonstrating its reliability. It also seems to be more battle-tested given some established frameworks such as [Nuxt](https://github.com/nuxt/nuxt) and [Tailwind CSS](https://github.com/tailwindlabs/tailwindcss) have been using it to load their configuration files.
 
 ## Documentation
 
@@ -130,3 +130,13 @@ I will be implementing this feature. I will need help from the team to review th
 [This PR](https://github.com/eslint/eslint/pull/18134) is related to this RFC.
 [Prior Discussion](https://github.com/eslint/rfcs/pull/50) related to supporting `.eslintrc.ts` files.
 [Prior Issue](https://github.com/eslint/eslint/issues/12078) related to supporting `.eslintrc.ts` files.
+
+## External References
+
+- [`jiti` on NPM](https://www.npmjs.com/package/jiti)
+- [`jiti` on Github](https://github.com/unjs/jiti)
+- [`tsx` on NPM](https://www.npmjs.com/package/tsx)
+- [`tsx` on Github](https://github.com/privatenumber/tsx)
+- [`ts-node` on NPM](https://www.npmjs.com/package/ts-node)
+- [`ts-node` on Github](https://github.com/TypeStrong/ts-node)
+- [`ts-node` Docs](https://typestrong.org/ts-node)
