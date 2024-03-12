@@ -1,6 +1,6 @@
 - Repo: eslint/eslint
 - Start Date: 2024-03-09
-- RFC PR: (leave this empty, to be filled in later)
+- RFC PR: <https://github.com/eslint/rfcs/pull/117>
 - Authors: [Arya Emami](https://github.com/aryaemami59)
 
 # Add Support for TypeScript Config Files
