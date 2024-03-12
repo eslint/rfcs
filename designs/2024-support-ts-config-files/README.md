@@ -148,3 +148,7 @@ I will be implementing this feature. I will need help from the team to review th
 - [`ts-node` on NPM](https://www.npmjs.com/package/ts-node)
 - [`ts-node` on Github](https://github.com/TypeStrong/ts-node)
 - [`ts-node` Docs](https://typestrong.org/ts-node)
+- [TypeScript on NPM](https://www.npmjs.com/package/typescript)
+- [TypeScript on Github](https://github.com/Microsoft/TypeScript)
+- [TypeScript docs](https://www.typescriptlang.org)
+- [TypeScript's `transpileModule()`](https://github.com/microsoft/TypeScript/wiki/Using-the-Compiler-API#a-simple-transform-function)
