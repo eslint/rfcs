@@ -36,6 +36,62 @@ The goal is to seamlessly support TypeScript configuration files in ESLint. To a
 
 So far the tool that seems to be the most suitable for this purpose is [`jiti`](https://www.npmjs.com/package/jiti). It does not introduce side effects and performs well, demonstrating its reliability. It also seems to be more battle-tested given some established frameworks such as [Nuxt](https://github.com/nuxt/nuxt) and [Tailwind CSS](https://github.com/tailwindlabs/tailwindcss) have been using it to load their configuration files.
 
+## Examples
+
+with `eslint.config.mts` file:
+
+```ts
+import eslint from "@eslint/js"
+import type { Linter } from "eslint"
+
+const config: Linter.FlatConfig[] = [
+  eslint.configs.recommended,
+  {
+    rules: {
+      "no-console": [0],
+    },
+  },
+]
+
+export default config
+```
+
+with `eslint.config.cts` file:
+
+```ts
+import type { Linter } from "eslint"
+const eslint = require("@eslint/js")
+
+const config: Linter.FlatConfig[] = [
+  eslint.configs.recommended,
+  {
+    rules: {
+      "no-console": [0],
+    },
+  },
+]
+
+module.exports = config
+```
+
+with `eslint.config.ts` file:
+
+```ts
+import eslint from "@eslint/js"
+import type { Linter } from "eslint"
+
+const config: Linter.FlatConfig[] = [
+  eslint.configs.recommended,
+  {
+    rules: {
+      "no-console": [0],
+    },
+  },
+]
+
+export default config
+```
+
 ## Documentation
 
 <!--
