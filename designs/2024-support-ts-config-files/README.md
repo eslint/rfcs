@@ -128,3 +128,5 @@ I will be implementing this feature. I will need help from the team to review th
 -->
 
 [This PR](https://github.com/eslint/eslint/pull/18134) is related to this RFC.
+[Prior Discussion](https://github.com/eslint/rfcs/pull/50) related to supporting `.eslintrc.ts` files.
+[Prior Issue](https://github.com/eslint/eslint/issues/12078) related to supporting `.eslintrc.ts` files.
