@@ -92,6 +92,44 @@ const config: Linter.FlatConfig[] = [
 export default config
 ```
 
+It is worth noting that you can already perform some type-checking with the [`checkJs`](https://www.typescriptlang.org/tsconfig#checkJs) TypeScript option and a JavaScript config file. Here's an example:
+
+with `eslint.config.mjs` or (`eslint.config.js` + `"type": "module"` in the nearest `package.json`):
+
+```js
+import eslint from "@eslint/js"
+
+/** @type {import('eslint').Linter.FlatConfig[]} */
+const config = [
+  eslint.configs.recommended,
+  {
+    rules: {
+      "no-console": [0],
+    },
+  },
+]
+
+export default config
+```
+
+with `eslint.config.cjs` or (`eslint.config.js` without `"type": "module"` in the nearest `package.json`):
+
+```js
+const eslint = require("@eslint/js")
+
+/** @type {import('eslint').Linter.FlatConfig[]} */
+const config = [
+  eslint.configs.recommended,
+  {
+    rules: {
+      "no-console": [0],
+    },
+  },
+]
+
+module.exports = config
+```
+
 ## Documentation
 
 <!--
