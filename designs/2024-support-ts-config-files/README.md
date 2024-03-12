@@ -79,6 +79,14 @@ This goal is to minimize the disruption to existing users. The primary focus is 
     projects have already implemented a similar feature.
 -->
 
+While developing this feature, we considered the following alternatives:
+
+1. Using [`ts-node`](https://github.com/TypeStrong/ts-node) to parse TypeScript configuration files. This approach proved to be problematic because [`ts-node`](https://github.com/TypeStrong/ts-node) hooks into Node.js's native module resolution system, which could potentially cause side effects.
+
+2. Using [`tsx`](https://github.com/privatenumber/tsx) to parse TypeScript configuration files. This approach also proved to be problematic because [`tsx`](https://github.com/privatenumber/tsx) hooks into Node.js's native module resolution system, which could potentially cause side effects.
+
+3. Using [TypeScript's `transpileModule()`](https://github.com/microsoft/TypeScript/wiki/Using-the-Compiler-API#a-simple-transform-function) to parse TypeScript configuration files. This approach proved to be problematic because it requires a significant amount of overhead and is not suitable for this purpose.
+
 ## Open Questions
 
 <!--
