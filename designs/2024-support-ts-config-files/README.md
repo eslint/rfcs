@@ -34,7 +34,7 @@ The goal is to seamlessly support TypeScript configuration files in ESLint. To a
 - There should not be extra overhead for JavaScript users. This means this change should not have a significant impact (if any at all) affecting users who use plain JavaScript config files.
 - The external tools that are used to parse the config files written in TypeScript should not create side effects. Specifically, it is imperative that these tools do not interfere with Node.js's native module resolution system by hooking into or altering the standard `import/require` mechanisms. This means tools like [`ts-node`](https://github.com/TypeStrong/ts-node) and [`tsx`](https://github.com/privatenumber/tsx) might not be suitable for this purpose.
 
-So far the tool that seems to be the most suitable for this purpose is [`jiti`](https://www.npmjs.com/package/jiti). It does not introduce side effects and performs well, demonstrating its reliability. It also seems to be more battle-tested given some established frameworks such as [Nuxt](https://github.com/nuxt/nuxt) and [Tailwind CSS](https://github.com/tailwindlabs/tailwindcss) have been using it to load their configuration files.
+So far the tool that seems to be the most suitable for this purpose is [`jiti`](https://www.npmjs.com/package/jiti). It does not introduce side effects and performs well, demonstrating its reliability. It also seems to be more battle-tested given some established frameworks such as [Nuxt](https://github.com/nuxt/nuxt), [Tailwind CSS](https://github.com/tailwindlabs/tailwindcss) and [Docusaurus](https://github.com/facebook/docusaurus) have been using it to load their configuration files.
 
 ## Examples
 
@@ -250,3 +250,6 @@ I will be implementing this feature. I will need help from the team to review th
 - [Vitest on Github](https://github.com/vitest-dev/vitest)
 - [Vitest on NPM](https://www.npmjs.com/package/vitest)
 - [Vitest Docs](https://vitest.dev)
+- [Docusaurus on Github](https://github.com/facebook/docusaurus)
+- [Docusaurus on NPM](https://www.npmjs.com/package/docusaurus)
+- [Docusaurus Docs](https://docusaurus.io)
