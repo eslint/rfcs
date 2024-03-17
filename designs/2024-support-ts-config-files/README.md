@@ -198,6 +198,7 @@ While developing this feature, we considered the following alternatives:
 2. Should we look at the nearest `tsconfig.json` file to determine the module resolution for `eslint.config.ts` files? Most likely not, but it's worth considering.
 3. Should we allow some sort of interoperability between JavaScript and TypeScript configuration files? For example, should we allow a TypeScript configuration file to extend a JavaScript configuration file and vice versa?
 4. Should we allow `eslint.config.ts` to be able to use `export default` as well as `module.exports` (might be related to [TypeScript's automatic Module Detection](https://www.typescriptlang.org/tsconfig#moduleDetection))?
+5. Tools like [Vitest](https://github.com/vitest-dev/vitest) export a [`defineConfig`](https://vitest.dev/config/file.html#managing-vitest-config-file) function to make it easier to write configuration files in TypeScript. Should we consider doing something similar for ESLint?
 
 ## Help Needed
 
@@ -246,3 +247,6 @@ I will be implementing this feature. I will need help from the team to review th
 - [TypeScript on Github](https://github.com/Microsoft/TypeScript)
 - [TypeScript docs](https://www.typescriptlang.org)
 - [TypeScript's `transpileModule()`](https://github.com/microsoft/TypeScript/wiki/Using-the-Compiler-API#a-simple-transform-function)
+- [Vitest on Github](https://github.com/vitest-dev/vitest)
+- [Vitest on NPM](https://www.npmjs.com/package/vitest)
+- [Vitest Docs](https://vitest.dev)
