@@ -36,6 +36,83 @@ The goal is to seamlessly support TypeScript configuration files in ESLint. To a
 
 So far the tool that seems to be the most suitable for this purpose is [`jiti`](https://www.npmjs.com/package/jiti). It does not introduce side effects and performs well, demonstrating its reliability. It also seems to be more battle-tested given some established frameworks such as [Nuxt](https://github.com/nuxt/nuxt), [Tailwind CSS](https://github.com/tailwindlabs/tailwindcss) and [Docusaurus](https://github.com/facebook/docusaurus) have been using it to load their configuration files.
 
+- Here is how we would use [`jiti`](https://www.npmjs.com/package/jiti) to load TypeScript configuration files:
+
+inside [`lib/eslint/eslint.js`](https://github.com/eslint/eslint/blob/main/lib/eslint/eslint.js):
+
+```js
+/**
+ * Check if the file is a TypeScript file.
+ * @param {string} filePath The file path to check.
+ * @returns {boolean} `true` if the file is a TypeScript file, `false` if it's not.
+ */
+function isFileTS(filePath) {
+    const fileExtension = path.extname(filePath);
+
+    return fileExtension.endsWith("ts");
+}
+
+/**
+ * Load the config array from the given filename.
+ * @param {string} filePath The filename to load from.
+ * @returns {Promise<any>} The config loaded from the config file.
+ */
+async function loadFlatConfigFile(filePath) {
+    debug(`Loading config from ${filePath}`);
+
+    const fileURL = pathToFileURL(filePath);
+
+    debug(`Config file URL is ${fileURL}`);
+
+    const mtime = (await fs.stat(filePath)).mtime.getTime();
+
+    /*
+     * Append a query with the config file's modification time (`mtime`) in order
+     * to import the current version of the config file. Without the query, `import()` would
+     * cache the config file module by the pathname only, and then always return
+     * the same version (the one that was actual when the module was imported for the first time).
+     *
+     * This ensures that the config file module is loaded and executed again
+     * if it has been changed since the last time it was imported.
+     * If it hasn't been changed, `import()` will just return the cached version.
+     *
+     * Note that we should not overuse queries (e.g., by appending the current time
+     * to always reload the config file module) as that could cause memory leaks
+     * because entries are never removed from the import cache.
+     */
+    fileURL.searchParams.append("mtime", mtime);
+
+    /*
+     * With queries, we can bypass the import cache. However, when import-ing a CJS module,
+     * Node.js uses the require infrastructure under the hood. That includes the require cache,
+     * which caches the config file module by its file path (queries have no effect).
+     * Therefore, we also need to clear the require cache before importing the config file module.
+     * In order to get the same behavior with ESM and CJS config files, in particular - to reload
+     * the config file only if it has been changed, we track file modification times and clear
+     * the require cache only if the file has been changed.
+     */
+    if (importedConfigFileModificationTime.get(filePath) !== mtime) {
+        delete require.cache[filePath];
+    }
+
+    const isTS = isFileTS(filePath);
+
+    if (isTS) {
+        const jiti = (await import("jiti")).default(__filename, { interopDefault: true });
+
+        const config = jiti(fileURL.href);
+
+        return config;
+    }
+
+    const config = (await import(fileURL.href)).default;
+
+    importedConfigFileModificationTime.set(filePath, mtime);
+
+    return config;
+}
+```
+
 ## Examples
 
 with `eslint.config.mts` file:
