@@ -199,6 +199,7 @@ While developing this feature, we considered the following alternatives:
 3. Should we allow some sort of interoperability between JavaScript and TypeScript configuration files? For example, should we allow a TypeScript configuration file to extend a JavaScript configuration file and vice versa?
 4. Should we allow `eslint.config.ts` to be able to use `export default` as well as `module.exports` (might be related to [TypeScript's automatic Module Detection](https://www.typescriptlang.org/tsconfig#moduleDetection))?
 5. Tools like [Vitest](https://github.com/vitest-dev/vitest) export a [`defineConfig`](https://vitest.dev/config/file.html#managing-vitest-config-file) function to make it easier to write configuration files in TypeScript. Should we consider doing something similar for ESLint?
+6. How does the feature interact with the [CLI option](https://eslint.org/docs/latest/use/command-line-interface#options) [`--config`](https://eslint.org/docs/latest/use/command-line-interface#-c---config) for specifying a config file? It doesn't behave any differently, same as before. You can do `eslint . --config=eslint.config.ts` or `eslint . -c eslint.config.ts` and they just work. Same as with a `eslint.config.js` file.
 
 ## Help Needed
 
