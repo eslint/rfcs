@@ -194,7 +194,7 @@ While developing this feature, we considered the following alternatives:
     you can remove this section.
 -->
 
-1. How is caching going to work with TypeScript config files?
+1. How is caching going to work with TypeScript config files? We only cache the computed result of loading a config file, so I don't think this should be a problem.
 2. Should we look at the nearest `tsconfig.json` file to determine the module resolution for `eslint.config.ts` files? Most likely not, but it's worth considering.
 3. Should we allow some sort of interoperability between JavaScript and TypeScript configuration files? For example, should we allow a TypeScript configuration file to extend a JavaScript configuration file and vice versa?
 4. Should we allow `eslint.config.ts` to be able to use `export default` as well as `module.exports` (might be related to [TypeScript's automatic Module Detection](https://www.typescriptlang.org/tsconfig#moduleDetection))?
