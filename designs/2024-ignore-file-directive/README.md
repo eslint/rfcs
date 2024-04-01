@@ -110,7 +110,7 @@ Other than what is highlighted in **Drawbacks > Bardwards Compatibility**, there
 
 ## Help Needed
 
-I am unable to implement this in the code itself.
+I am unable to implement this in the code myself.
 
 ## Frequently Asked Questions
 
