@@ -102,6 +102,8 @@ async function loadFlatConfigFile(filePath) {
 
         const config = jiti(fileURL.href);
 
+        importedConfigFileModificationTime.set(filePath, mtime);
+
         return config;
     }
 
