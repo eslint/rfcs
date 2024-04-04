@@ -29,7 +29,7 @@ The primary motivation for adding support for TypeScript configuration files to 
    used. Be sure to define any new terms in this section.
 -->
 
-The goal is to seamlessly support TypeScript configuration files in ESLint. To achieve this, ESLint will need to recognize and parse TypeScript configuration files in the same way it does for JavaScript configuration files. This will involve creating the configuration file resolution logic to recognize `.ts`, `.mts`, and `.cts` files as valid ESLint configuration files. We will need to treat `eslint.config.mts` files as ECMAScript Modules (ESM) and `eslint.config.cts` files as CommonJS (CJS). The module resolution for `eslint.config.ts` files will depend on the `type` field in the nearest `package.json`. The maintainers of ESLint have raised some valid concerns some of which include:
+The goal is to seamlessly support TypeScript configuration files in ESLint. To achieve this, ESLint will need to recognize and parse TypeScript configuration files in the same way it does for JavaScript configuration files. This will involve creating the configuration file resolution logic to recognize `.ts`, `.mts`, and `.cts` files as valid ESLint configuration files. We will need to treat these files as TypeScript files. The resolution of imported modules will depend on the `type` field in the nearest `package.json`, and users will be able to specify exports using either `module.exports` or the `export default` syntax regardless of the config file extension. The maintainers of ESLint have raised some valid concerns some of which include:
 
 - There should not be extra overhead for JavaScript users. This means this change should not have a significant impact (if any at all) affecting users who use plain JavaScript config files.
 - The external tools that are used to parse the config files written in TypeScript should not create side effects. Specifically, it is imperative that these tools do not interfere with Node.js's native module resolution system by hooking into or altering the standard `import/require` mechanisms. This means tools like [`ts-node`](https://github.com/TypeStrong/ts-node) and [`tsx`](https://github.com/privatenumber/tsx) might not be suitable for this purpose.
@@ -47,9 +47,9 @@ inside [`lib/eslint/eslint.js`](https://github.com/eslint/eslint/blob/main/lib/e
  * @returns {boolean} `true` if the file is a TypeScript file, `false` if it's not.
  */
 function isFileTS(filePath) {
-    const fileExtension = path.extname(filePath);
+  const fileExtension = path.extname(filePath)
 
-    return fileExtension.endsWith("ts");
+  return fileExtension.endsWith("ts")
 }
 
 /**
@@ -58,60 +58,63 @@ function isFileTS(filePath) {
  * @returns {Promise<any>} The config loaded from the config file.
  */
 async function loadFlatConfigFile(filePath) {
-    debug(`Loading config from ${filePath}`);
+  debug(`Loading config from ${filePath}`)
 
-    const fileURL = pathToFileURL(filePath);
+  const fileURL = pathToFileURL(filePath)
 
-    debug(`Config file URL is ${fileURL}`);
+  debug(`Config file URL is ${fileURL}`)
 
-    const mtime = (await fs.stat(filePath)).mtime.getTime();
+  const mtime = (await fs.stat(filePath)).mtime.getTime()
 
-    /*
-     * Append a query with the config file's modification time (`mtime`) in order
-     * to import the current version of the config file. Without the query, `import()` would
-     * cache the config file module by the pathname only, and then always return
-     * the same version (the one that was actual when the module was imported for the first time).
-     *
-     * This ensures that the config file module is loaded and executed again
-     * if it has been changed since the last time it was imported.
-     * If it hasn't been changed, `import()` will just return the cached version.
-     *
-     * Note that we should not overuse queries (e.g., by appending the current time
-     * to always reload the config file module) as that could cause memory leaks
-     * because entries are never removed from the import cache.
-     */
-    fileURL.searchParams.append("mtime", mtime);
+  /*
+   * Append a query with the config file's modification time (`mtime`) in order
+   * to import the current version of the config file. Without the query, `import()` would
+   * cache the config file module by the pathname only, and then always return
+   * the same version (the one that was actual when the module was imported for the first time).
+   *
+   * This ensures that the config file module is loaded and executed again
+   * if it has been changed since the last time it was imported.
+   * If it hasn't been changed, `import()` will just return the cached version.
+   *
+   * Note that we should not overuse queries (e.g., by appending the current time
+   * to always reload the config file module) as that could cause memory leaks
+   * because entries are never removed from the import cache.
+   */
+  fileURL.searchParams.append("mtime", mtime)
 
-    /*
-     * With queries, we can bypass the import cache. However, when import-ing a CJS module,
-     * Node.js uses the require infrastructure under the hood. That includes the require cache,
-     * which caches the config file module by its file path (queries have no effect).
-     * Therefore, we also need to clear the require cache before importing the config file module.
-     * In order to get the same behavior with ESM and CJS config files, in particular - to reload
-     * the config file only if it has been changed, we track file modification times and clear
-     * the require cache only if the file has been changed.
-     */
-    if (importedConfigFileModificationTime.get(filePath) !== mtime) {
-        delete require.cache[filePath];
-    }
+  /*
+   * With queries, we can bypass the import cache. However, when import-ing a CJS module,
+   * Node.js uses the require infrastructure under the hood. That includes the require cache,
+   * which caches the config file module by its file path (queries have no effect).
+   * Therefore, we also need to clear the require cache before importing the config file module.
+   * In order to get the same behavior with ESM and CJS config files, in particular - to reload
+   * the config file only if it has been changed, we track file modification times and clear
+   * the require cache only if the file has been changed.
+   */
+  if (importedConfigFileModificationTime.get(filePath) !== mtime) {
+    delete require.cache[filePath]
+  }
 
-    const isTS = isFileTS(filePath);
+  const isTS = isFileTS(filePath)
 
-    if (isTS) {
-        const jiti = (await import("jiti")).default(__filename, { interopDefault: true, esmResolve: true });
+  if (isTS) {
+    const jiti = (await import("jiti")).default(__filename, {
+      interopDefault: true,
+      esmResolve: true,
+    })
 
-        const config = jiti(fileURL.href);
+    const config = jiti(fileURL.href)
 
-        importedConfigFileModificationTime.set(filePath, mtime);
+    importedConfigFileModificationTime.set(filePath, mtime)
 
-        return config;
-    }
+    return config
+  }
 
-    const config = (await import(fileURL.href)).default;
+  const config = (await import(fileURL.href)).default
 
-    importedConfigFileModificationTime.set(filePath, mtime);
+  importedConfigFileModificationTime.set(filePath, mtime)
 
-    return config;
+  return config
 }
 ```
 
