@@ -118,6 +118,9 @@ async function loadFlatConfigFile(filePath) {
 }
 ```
 
+> [!IMPORTANT]
+> AS of now [`jiti`](https://www.npmjs.com/package/jiti) does not support the [top-level `await` syntax](https://github.com/unjs/jiti/issues/72)
+
 ## Examples
 
 with `eslint.config.mts` file:
