@@ -33,11 +33,11 @@ This can be counterintuitive for enabling new rules as `error`, since the develo
 
 To keep track of the all the errors that we would like to ignore, we are introducing the concept of the baseline file; A JSON file containing the number of errors that must be ignored for each rule in each file. By design, the baseline is disabled by default and it doesn't affect existing or new projects, unless the baseline file is generated.
 
-Here is what the baseline file looks like. This indicates that the file `"src/app/components/foobar/foobar.component.ts"` has one error for the rule `@typescript-eslint/no-explicit-any` that is acceptable to be ignored.
+Here is what the baseline file looks like. This indicates that the file `"/home/user/project/src/app/components/foobar/foobar.component.ts"` has one error for the rule `@typescript-eslint/no-explicit-any` that is acceptable to be ignored.
 
 ```
 {
-  "src/app/components/foobar/foobar.component.ts": {
+  "/home/user/project/src/app/components/foobar/foobar.component.ts": {
     "@typescript-eslint/no-explicit-any": 1
   }
 }
