@@ -187,7 +187,9 @@ I expect to implement this change.
     in this section.
 -->
 
-No questions so far.
+### Does this count warnings?
+
+No, we are only counting errors when generating the baseline. Also only errors are considered when checking against the baseline.
 
 ## Related Discussions
 
