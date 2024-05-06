@@ -45,13 +45,19 @@ Here is what the baseline file looks like. This indicates that the file `"/home/
 
 ### Generating the baseline
 
-A new option `--generate-baseline` can be added to ESLint CLI. When provided, the baseline is generated and saved in `.eslint-baseline.json`. If the file already exists, it gets over-written. Note that this is a boolean flag option (no values are accepted). For example:
+A new option `--baseline` can be added to ESLint CLI. When provided, the baseline is generated and saved in `.eslint-baseline.json`. If the file already exists, it gets over-written. Note that this is a boolean flag option (no values are accepted). For example:
 
 ``` bash
-eslint --generate-baseline ./src
+eslint --baseline ./src
 ```
 
 The above will go through each result item and messages, and count the number of errors (`severity == 2`). If one or more such messages are found, the necessary details must be stored in the baseline file. The process should take place right after the fixes are applied to avoid counting errors that are about to be fixed.
+
+By default, the baseline file is saved at `.eslint-baseline.json` . To control where the baseline is saved, another option can be introduced  `--baseline-location`. That is a string argument specifying the file or a directory. If a directory is specified, a baseline file is created inside the specified folder.
+
+``` bash
+eslint --baseline --baseline-location /home/user/project/mycache
+```
 
 ### Matching against the baseline
 
