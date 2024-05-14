@@ -7,7 +7,7 @@
 
 ## Summary
 
-Add support for TypeScript config files (`eslint.config.ts`, `eslint.config.mts`, `eslint.config.cts`)
+Add experimental support for TypeScript config files (`eslint.config.ts`, `eslint.config.mts`, `eslint.config.cts`)
 
 <!-- One-paragraph explanation of the feature. -->
 
