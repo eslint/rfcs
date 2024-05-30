@@ -40,7 +40,9 @@ All paths are relative to CWD.
 ```
 {
   "src/app/components/foobar/foobar.component.ts": {
-    "@typescript-eslint/no-explicit-any": 1
+    "@typescript-eslint/no-explicit-any": {
+        count: 1
+    }
   }
 }
 ```
