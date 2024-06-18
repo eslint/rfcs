@@ -68,7 +68,7 @@ It's necessary to return a `FlatConfigArray` because we [pass a `FlatConfigArray
 In order to make all of this work, we'll need to make the following changes in the core:
 
 1. Create a new `lib/config/config-loader.js` file to contain both `ConfigLoader` and `LegacyConfigLoader`.
-1. Move `findFlatConfigFile()`, `loadFlatConfigFile()`, `locateConfigFileToUse()`, and `calculcateConfigArray()` from `lib/eslint/eslint.js` to `lib/config/config-loader.js`.
+1. Move `findFlatConfigFile()`, `loadFlatConfigFile()`, `locateConfigFileToUse()`, and `calculateConfigArray()` from `lib/eslint/eslint.js` to `lib/config/config-loader.js`.
 1. Create a new feature flag called `unstable_config_lookup_from_file` (once https://github.com/eslint/eslint/pull/18516 is merged).
 1. Update `lib/eslint/eslint.js`:
     1. Create a new `ConfigLoader` based on the presence or absence of the flag. This should be used in the `ESLint#lintText()` and `ESLint#lintFiles()` methods.
