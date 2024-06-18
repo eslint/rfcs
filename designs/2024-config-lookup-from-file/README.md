@@ -15,7 +15,7 @@ One of the significant changes from the eslintrc configuration system to the fla
 
 We first offered that they should put a configuration file in the root of the repo and list out overrides for specific projects, but the feedback was that for large monorepos, this created a burden and prevented them from having everything related to a project inside of the project subdirectory.
 
-Looking up configuration files from the current working directory also proved to be problematic whenever users were using ESLint without the CLI. Notable, IDEs don't necessarily have a directory that would logically map to the current working directory, and that meant needing to calculate something that would make ESLint work.
+Looking up configuration files from the current working directory also proved to be problematic whenever users were using ESLint without the CLI. Notably, IDEs don't necessarily have a directory that would logically map to the current working directory, and that meant needing to calculate something that would make ESLint work.
 
 As a result, it became obvious that the modified configuration lookup strategy in flat config would not work in the long term, and we need to go back to looking up configuration files from the file being linted.
 
