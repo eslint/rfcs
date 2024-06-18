@@ -38,28 +38,28 @@ interface ConfigLoader {
 
     /**
      * Searches the file system for the right config file to use based on the
-     * absolute file path.
+     * absolute path.
      */
-    findConfigFileForFile(filePath): Promise<string|undefined>;
+    findConfigFileForPath(fileOrDirPath): Promise<string|undefined>;
 
     /**
      * An asynchronous call that searches for a config file from the given
-     * absolute file path and returns the config array for that file.
+     * absolute path and returns the config array for that path.
      */
-    loadConfigArrayForFile(filePath): Promise<FlatConfigArray>;
+    loadConfigArrayForPath(fileOrDirPath): Promise<FlatConfigArray>;
 
 }
 ```
 
-#### The `findConfigFileForFile()` Method
+#### The `findConfigFileForPath()` Method
 
 This method returns the path to the config file for a given file path. When used in `LegacyConfigLoader`, this method would search from the cwd and ignore the argument that was passed in. This replaces the [`findFlatConfigFile()` method](https://github.com/eslint/eslint/blob/455f7fd1662069e9e0f4dc912ecda72962679fbe/lib/eslint/eslint.js#L266-L271) that is currently in `lib/eslint/eslint.js`.
 
-#### The `loadConfigArrayForFile()` Method
+#### The `loadConfigArrayForPath()` Method
 
-This method behaves similarly as the current [`ESLint#calculateConfigForFile()` method](https://github.com/eslint/eslint/blob/455f7fd1662069e9e0f4dc912ecda72962679fbe/lib/eslint/eslint.js#L1165-L1174) except that it returns the `FlatConfigArray` instead of the config for the given file. All of the logic in `ESLint#calculateConfigForFile()` will be moved to the `ConfigLoader` class and the `ESLint` class will call the `ConfigLoader` method to provide this functionality. This requires moving the [`calculateConfigArray()` function](https://github.com/eslint/eslint/blob/455f7fd1662069e9e0f4dc912ecda72962679fbe/lib/eslint/eslint.js#L369) into `ConfigLoader` (as a private method).
+This method behaves similarly as the current [`ESLint#calculateConfigForPath()` method](https://github.com/eslint/eslint/blob/455f7fd1662069e9e0f4dc912ecda72962679fbe/lib/eslint/eslint.js#L1165-L1174) except that it returns the `FlatConfigArray` instead of the config for the given file. All of the logic in `ESLint#calculateConfigForPath()` will be moved to the `ConfigLoader` class and the `ESLint` class will call the `ConfigLoader` method to provide this functionality. This requires moving the [`calculateConfigArray()` function](https://github.com/eslint/eslint/blob/455f7fd1662069e9e0f4dc912ecda72962679fbe/lib/eslint/eslint.js#L369) into `ConfigLoader` (as a private method).
 
-In most of the `ESLint` class logic, `FlatConfigArray#getConfig()` will need to be replaced by `ConfigLoader#loadConfigArrayForFile()` to ensure that the file system is always searched to find the correct configuration.
+In most of the `ESLint` class logic, `FlatConfigArray#getConfig()` will need to be replaced by `ConfigLoader#loadConfigArrayForPath()` to ensure that the file system is always searched to find the correct configuration.
 
 It's necessary to return a `FlatConfigArray` because we [pass a `FlatConfigArray` to `Linter`](https://github.com/eslint/eslint/blob/455f7fd1662069e9e0f4dc912ecda72962679fbe/lib/eslint/eslint.js#L498) and also use it when we [filter out code blocks](https://github.com/eslint/eslint/blob/455f7fd1662069e9e0f4dc912ecda72962679fbe/lib/eslint/eslint.js#L511-L513). Because `Linter` is a synchronous API, we need to maintain the synchronous calls, and the easiest way to do that is to access the `FlatConfigArray` directly.
 
@@ -72,8 +72,8 @@ In order to make all of this work, we'll need to make the following changes in t
 1. Create a new feature flag called `unstable_config_lookup_from_file` (once https://github.com/eslint/eslint/pull/18516 is merged).
 1. Update `lib/eslint/eslint.js`:
     1. Create a new `ConfigLoader` based on the presence or absence of the flag. This should be used in the `ESLint#lintText()` and `ESLint#lintFiles()` methods.
-    1. Update `ESLint#calculateConfigForFile()` to use the config loader.
-    1. Update `ESLint#findConfigFile()` to use the config loader.
+    1. Update `ESLint#calculateConfigForPath()` to use the config loader.
+    1. Update `ESLint#findConfigFile()` to use the config loader. To preserve backwards compatibility, when called without an argument, this method will start the config file search from the current working directory; it will also accept an argument, which is the path to search from.
     1. Update `getOrFindUsedDeprecatedRules()` to use the config loader.
 1. Update `findFiles()` in `lib/eslint/eslint-helpers.js` to use the config loader. This also requires a change to the file system walking logic because `fswalk` filter functions are synchronous, but we'll need them to be asynchronous to use with the config loader. I plan on using [`humanfs`](https://github.com/humanwhocodes/humanfs/blob/main/docs/directory-operations.md#reading-directory-entries-recursively) (which I wrote).
 
@@ -119,7 +119,9 @@ N/A
 
 ## Frequently Asked Questions
 
-N/A
+### What will the behavior be of `-c` when `*_config_lookup_from_file` is enabled?
+
+The same as the current implementation: The `-c` option completely overrides which config file to use and there will be no config lookup performed.
 
 ## Related Discussions
 
