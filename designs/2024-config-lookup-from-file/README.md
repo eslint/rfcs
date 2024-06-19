@@ -57,7 +57,7 @@ This method returns the path to the config file for a given file path. When used
 
 #### The `loadConfigArrayForPath()` Method
 
-This method behaves similarly as the current [`ESLint#calculateConfigForPath()` method](https://github.com/eslint/eslint/blob/455f7fd1662069e9e0f4dc912ecda72962679fbe/lib/eslint/eslint.js#L1165-L1174) except that it returns the `FlatConfigArray` instead of the config for the given file. All of the logic in `ESLint#calculateConfigForPath()` will be moved to the `ConfigLoader` class and the `ESLint` class will call the `ConfigLoader` method to provide this functionality. This requires moving the [`calculateConfigArray()` function](https://github.com/eslint/eslint/blob/455f7fd1662069e9e0f4dc912ecda72962679fbe/lib/eslint/eslint.js#L369) into `ConfigLoader` (as a private method).
+This method behaves similarly as the current [`ESLint#calculateConfigForFile()` method](https://github.com/eslint/eslint/blob/455f7fd1662069e9e0f4dc912ecda72962679fbe/lib/eslint/eslint.js#L1165-L1174) except that it returns the `FlatConfigArray` instead of the config for the given file. All of the logic in `ESLint#calculateConfigForFile()` will be moved to the `ConfigLoader` class and the `ESLint` class will call the `ConfigLoader` method to provide this functionality. This requires moving the [`calculateConfigArray()` function](https://github.com/eslint/eslint/blob/455f7fd1662069e9e0f4dc912ecda72962679fbe/lib/eslint/eslint.js#L369) into `ConfigLoader` (as a private method).
 
 In most of the `ESLint` class logic, `FlatConfigArray#getConfig()` will need to be replaced by `ConfigLoader#loadConfigArrayForPath()` to ensure that the file system is always searched to find the correct configuration.
 
