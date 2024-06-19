@@ -72,7 +72,7 @@ In order to make all of this work, we'll need to make the following changes in t
 1. Create a new feature flag called `unstable_config_lookup_from_file` (once https://github.com/eslint/eslint/pull/18516 is merged).
 1. Update `lib/eslint/eslint.js`:
     1. Create a new `ConfigLoader` based on the presence or absence of the flag. This should be used in the `ESLint#lintText()` and `ESLint#lintFiles()` methods.
-    1. Update `ESLint#calculateConfigForPath()` to use the config loader.
+    1. Update `ESLint#calculateConfigForFile()` to use the config loader.
     1. Update `ESLint#findConfigFile()` to use the config loader. To preserve backwards compatibility, when called without an argument, this method will start the config file search from the current working directory; it will also accept an argument, which is the path to search from.
     1. Update `getOrFindUsedDeprecatedRules()` to use the config loader.
 1. Update `findFiles()` in `lib/eslint/eslint-helpers.js` to use the config loader. This also requires a change to the file system walking logic because `fswalk` filter functions are synchronous, but we'll need them to be asynchronous to use with the config loader. I plan on using [`humanfs`](https://github.com/humanwhocodes/humanfs/blob/main/docs/directory-operations.md#reading-directory-entries-recursively) (which I wrote).
