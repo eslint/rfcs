@@ -1,6 +1,6 @@
 - Repo: eslint/eslint
 - Start Date: 2024-06-14
-- RFC PR: TBD
+- RFC PR: https://github.com/eslint/rfcs/pull/120
 - Authors: Nicholas C. Zakas
 
 # Look Up Config Files From Linted File
