@@ -48,6 +48,12 @@ interface ConfigLoader {
      */
     loadConfigArrayForPath(fileOrDirPath): Promise<FlatConfigArray>;
 
+    /**
+     * A synchronous call to retrieve already-cached configuration information.
+     * Necessary for areas that must be synchronous and still need access to
+     * config data.
+     */
+    getCachedConfigArrayForPath(fileOrDirPath): FlatConfigArray|undefined;
 }
 ```
 
@@ -62,6 +68,11 @@ This method behaves similarly as the current [`ESLint#calculateConfigForFile()` 
 In most of the `ESLint` class logic, `FlatConfigArray#getConfig()` will need to be replaced by `ConfigLoader#loadConfigArrayForPath()` to ensure that the file system is always searched to find the correct configuration.
 
 It's necessary to return a `FlatConfigArray` because we [pass a `FlatConfigArray` to `Linter`](https://github.com/eslint/eslint/blob/455f7fd1662069e9e0f4dc912ecda72962679fbe/lib/eslint/eslint.js#L498) and also use it when we [filter out code blocks](https://github.com/eslint/eslint/blob/455f7fd1662069e9e0f4dc912ecda72962679fbe/lib/eslint/eslint.js#L511-L513). Because `Linter` is a synchronous API, we need to maintain the synchronous calls, and the easiest way to do that is to access the `FlatConfigArray` directly.
+
+#### The `getCachedConfigArrayForPath()` Method
+
+This method checks the cache of already-read configuration information produced by `loadConfigArrayForPath()` to return a `FlatConfigArray`. This is necessary for areas of the codebase that must be synchronous and don't need updated configuration information from disk, such as [`getOrFindUsedDeprecatedRules()`](https://github.com/eslint/eslint/blob/7c78ad9d9f896354d557f24e2d37710cf79a27bf/lib/eslint/eslint.js#L185).
+
 
 ### Core Changes
 
