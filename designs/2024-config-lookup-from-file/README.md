@@ -38,40 +38,59 @@ interface ConfigLoader {
 
     /**
      * Searches the file system for the right config file to use based on the
-     * absolute path.
+     * absolute file path.
      */
-    findConfigFileForPath(fileOrDirPath): Promise<string|undefined>;
+    findConfigFileForFile(filePath): Promise<string|undefined>;
 
     /**
      * An asynchronous call that searches for a config file from the given
-     * absolute path and returns the config array for that path.
+     * absolute file path and returns the config array for that path.
      */
-    loadConfigArrayForPath(fileOrDirPath): Promise<FlatConfigArray>;
+    loadConfigArrayForFile(filePath): Promise<FlatConfigArray>;
 
     /**
      * A synchronous call to retrieve already-cached configuration information.
      * Necessary for areas that must be synchronous and still need access to
      * config data.
      */
-    getCachedConfigArrayForPath(fileOrDirPath): FlatConfigArray|undefined;
+    getCachedConfigArrayForFile(filePath): FlatConfigArray|undefined;
+
+    /**
+     * Searches the file system for the right config file to use based on the
+     * absolute directory path.
+     */
+    findConfigFileForDirectory(dirPath): Promise<string|undefined>;
+
+    /**
+     * An asynchronous call that searches for a config file from the given
+     * absolute directory path and returns the config array for that path.
+     */
+    loadConfigArrayForDirectory(dirPath): Promise<FlatConfigArray>;
+
+    /**
+     * A synchronous call to retrieve already-cached configuration information.
+     * Necessary for areas that must be synchronous and still need access to
+     * config data.
+     */
+    getCachedConfigArrayForDirectory(dirPath): FlatConfigArray|undefined;
 }
 ```
 
-#### The `findConfigFileForPath()` Method
+#### The `findConfigFileForFile()`,`findConfigFileForDirectory()` Methods
 
-This method returns the path to the config file for a given file path. When used in `LegacyConfigLoader`, this method would search from the cwd and ignore the argument that was passed in. This replaces the [`findFlatConfigFile()` method](https://github.com/eslint/eslint/blob/455f7fd1662069e9e0f4dc912ecda72962679fbe/lib/eslint/eslint.js#L266-L271) that is currently in `lib/eslint/eslint.js`.
+These methods return the path to the config file for a given file or directory path. When used in `LegacyConfigLoader`, these methods would search from the cwd and ignore the argument that was passed in. This replaces the [`findFlatConfigFile()` method](https://github.com/eslint/eslint/blob/455f7fd1662069e9e0f4dc912ecda72962679fbe/lib/eslint/eslint.js#L266-L271) that is currently in `lib/eslint/eslint.js`.
 
-#### The `loadConfigArrayForPath()` Method
+#### The `loadConfigArrayForFile()`,`loadConfigArrayForDirectory()` Methods
 
-This method behaves similarly as the current [`ESLint#calculateConfigForFile()` method](https://github.com/eslint/eslint/blob/455f7fd1662069e9e0f4dc912ecda72962679fbe/lib/eslint/eslint.js#L1165-L1174) except that it returns the `FlatConfigArray` instead of the config for the given file. All of the logic in `ESLint#calculateConfigForFile()` will be moved to the `ConfigLoader` class and the `ESLint` class will call the `ConfigLoader` method to provide this functionality. This requires moving the [`calculateConfigArray()` function](https://github.com/eslint/eslint/blob/455f7fd1662069e9e0f4dc912ecda72962679fbe/lib/eslint/eslint.js#L369) into `ConfigLoader` (as a private method).
+These methods behave similarly as the current [`ESLint#calculateConfigForFile()` method](https://github.com/eslint/eslint/blob/455f7fd1662069e9e0f4dc912ecda72962679fbe/lib/eslint/eslint.js#L1165-L1174) except that they return the `FlatConfigArray` instead of the config for the given file. All of the logic in `ESLint#calculateConfigForFile()` will be moved to the `ConfigLoader` class and the `ESLint` class will call the `ConfigLoader` method to provide this functionality. This requires moving the [`calculateConfigArray()` function](https://github.com/eslint/eslint/blob/455f7fd1662069e9e0f4dc912ecda72962679fbe/lib/eslint/eslint.js#L369) into `ConfigLoader` (as a private method).
 
-In most of the `ESLint` class logic, `FlatConfigArray#getConfig()` will need to be replaced by `ConfigLoader#loadConfigArrayForPath()` to ensure that the file system is always searched to find the correct configuration.
+In most of the `ESLint` class logic, `FlatConfigArray#getConfig()` will need to be replaced by `ConfigLoader#loadConfigArrayForFile()` to ensure that the file system is always searched to find the correct configuration.
 
 It's necessary to return a `FlatConfigArray` because we [pass a `FlatConfigArray` to `Linter`](https://github.com/eslint/eslint/blob/455f7fd1662069e9e0f4dc912ecda72962679fbe/lib/eslint/eslint.js#L498) and also use it when we [filter out code blocks](https://github.com/eslint/eslint/blob/455f7fd1662069e9e0f4dc912ecda72962679fbe/lib/eslint/eslint.js#L511-L513). Because `Linter` is a synchronous API, we need to maintain the synchronous calls, and the easiest way to do that is to access the `FlatConfigArray` directly.
 
-#### The `getCachedConfigArrayForPath()` Method
+#### The `getCachedConfigArrayForFile()`,`getCachedConfigArrayForDirectory()` Methods
 
-This method checks the cache of already-read configuration information produced by `loadConfigArrayForPath()` to return a `FlatConfigArray`. This is necessary for areas of the codebase that must be synchronous and don't need updated configuration information from disk, such as [`getOrFindUsedDeprecatedRules()`](https://github.com/eslint/eslint/blob/7c78ad9d9f896354d557f24e2d37710cf79a27bf/lib/eslint/eslint.js#L185).
+These methods checks the cache of already-read configuration information produced by `loadConfigArrayForPath()` to return a `FlatConfigArray`. This is necessary for areas of the codebase that must be synchronous and don't need updated configuration information from disk, such as [`getOrFindUsedDeprecatedRules()`](https://github.com/eslint/eslint/blob/7c78ad9d9f896354d557f24e2d37710cf79a27bf/lib/eslint/eslint.js#L185).
 
 
 ### Core Changes
@@ -133,6 +152,21 @@ N/A
 ### What will the behavior be of `-c` when `*_config_lookup_from_file` is enabled?
 
 The same as the current implementation: The `-c` option completely overrides which config file to use and there will be no config lookup performed.
+
+### If I'm linting `./subdir/foo.js` where `./subdir/eslint.config.js` exists, why is `./eslint.config.js` loaded?
+
+Here's the structure in question:
+
+```
+/usr/tmp/
+├── eslint.config.js
+└── subdir/
+    ├── foo.js
+    └── eslint.config.js
+```
+
+Because ignores are handled in `eslint.config.js`, we need to look at `./eslint.config.js` to ensure that `subdir` isn't being ignored.
+The file/directory structure described in the markdown is as follows:
 
 ## Related Discussions
 
