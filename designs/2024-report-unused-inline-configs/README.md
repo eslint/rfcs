@@ -136,7 +136,7 @@ Additional logic can be added to the existing code points in `Linter` that valid
 
 For a rough code reference, see [`poc: reporting unused inline configs`](https://github.com/JoshuaKGoldberg/eslint/commit/e14e404ed93e6238bdee817923a449f5215eecd8).
 
-This proposed design intentionally not involve any language-specific code changes.
+This proposed design does intentionally not involve any language-specific code changes.
 How a specific language computes its configuration comments is irrelevant to this proposed feature.
 
 ### Computing Option Differences
