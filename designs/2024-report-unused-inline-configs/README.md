@@ -22,7 +22,7 @@ For example:
 This RFC proposes adding the ability for ESLint to report on those unused inline configs:
 
 - `--report-unused-inline-configs` CLI option
-- `linterOptions.reportUnusedDisableDirectives` configuration file option
+- `linterOptions.reportUnusedInlineConfigs` configuration file option
 
 ```shell
 npx eslint --report-unused-inline-configs error
@@ -31,7 +31,7 @@ npx eslint --report-unused-inline-configs error
 ```js
 {
   linterOptions: {
-    reportUnusedDisableDirectives: "error",
+    reportUnusedInlineConfigs: "error",
   }
 }
 ```
