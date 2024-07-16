@@ -38,28 +38,15 @@ interface ConfigLoader {
 
     /**
      * Searches the file system for the right config file to use based on the
-     * absolute file path.
+     * absolute file or directory path.
      */
-    findConfigFileForFile(filePath): Promise<string|undefined>;
+    findConfigFileForPath(fileOrDirPath): Promise<string|undefined>;
 
     /**
      * An asynchronous call that searches for a config file from the given
      * absolute file path and returns the config array for that path.
      */
     loadConfigArrayForFile(filePath): Promise<FlatConfigArray>;
-
-    /**
-     * A synchronous call to retrieve already-cached configuration information.
-     * Necessary for areas that must be synchronous and still need access to
-     * config data.
-     */
-    getCachedConfigArrayForFile(filePath): FlatConfigArray|undefined;
-
-    /**
-     * Searches the file system for the right config file to use based on the
-     * absolute directory path.
-     */
-    findConfigFileForDirectory(dirPath): Promise<string|undefined>;
 
     /**
      * An asynchronous call that searches for a config file from the given
@@ -72,13 +59,13 @@ interface ConfigLoader {
      * Necessary for areas that must be synchronous and still need access to
      * config data.
      */
-    getCachedConfigArrayForDirectory(dirPath): FlatConfigArray|undefined;
+    getCachedConfigArrayForPath(fileOrDirPath): FlatConfigArray|undefined;
 }
 ```
 
-#### The `findConfigFileForFile()`,`findConfigFileForDirectory()` Methods
+#### The `findConfigFileForPath()` Method
 
-These methods return the path to the config file for a given file or directory path. When used in `LegacyConfigLoader`, these methods would search from the cwd and ignore the argument that was passed in. This replaces the [`findFlatConfigFile()` method](https://github.com/eslint/eslint/blob/455f7fd1662069e9e0f4dc912ecda72962679fbe/lib/eslint/eslint.js#L266-L271) that is currently in `lib/eslint/eslint.js`.
+This methods returns the path to the config file for a given file or directory path. When used in `LegacyConfigLoader`, this method would search from the cwd and ignore the argument that was passed in. This replaces the [`findFlatConfigFile()` method](https://github.com/eslint/eslint/blob/455f7fd1662069e9e0f4dc912ecda72962679fbe/lib/eslint/eslint.js#L266-L271) that is currently in `lib/eslint/eslint.js`.
 
 #### The `loadConfigArrayForFile()`,`loadConfigArrayForDirectory()` Methods
 
@@ -88,9 +75,11 @@ In most of the `ESLint` class logic, `FlatConfigArray#getConfig()` will need to 
 
 It's necessary to return a `FlatConfigArray` because we [pass a `FlatConfigArray` to `Linter`](https://github.com/eslint/eslint/blob/455f7fd1662069e9e0f4dc912ecda72962679fbe/lib/eslint/eslint.js#L498) and also use it when we [filter out code blocks](https://github.com/eslint/eslint/blob/455f7fd1662069e9e0f4dc912ecda72962679fbe/lib/eslint/eslint.js#L511-L513). Because `Linter` is a synchronous API, we need to maintain the synchronous calls, and the easiest way to do that is to access the `FlatConfigArray` directly.
 
-#### The `getCachedConfigArrayForFile()`,`getCachedConfigArrayForDirectory()` Methods
+To maintain current behavior, `loadConfigArrayForFile()` throws an error if no config file is found; `loadConfigArrayForDirectory()` does not throw an error if a config file isn't found and instead returns just the default configuration, which is necessary to ensure we can traverse directories.
 
-These methods checks the cache of already-read configuration information produced by `loadConfigArrayForPath()` to return a `FlatConfigArray`. This is necessary for areas of the codebase that must be synchronous and don't need updated configuration information from disk, such as [`getOrFindUsedDeprecatedRules()`](https://github.com/eslint/eslint/blob/7c78ad9d9f896354d557f24e2d37710cf79a27bf/lib/eslint/eslint.js#L185).
+#### The `getCachedConfigArrayForPath()` Methods
+
+This method checks the cache of already-read configuration information produced by `loadConfigArrayForFile()`/`loadConfigArrayForDirectory()` to return a `FlatConfigArray`. This is necessary for areas of the codebase that must be synchronous and don't need updated configuration information from disk, such as [`getOrFindUsedDeprecatedRules()`](https://github.com/eslint/eslint/blob/7c78ad9d9f896354d557f24e2d37710cf79a27bf/lib/eslint/eslint.js#L185).
 
 
 ### Core Changes
@@ -166,7 +155,20 @@ Here's the structure in question:
 ```
 
 Because ignores are handled in `eslint.config.js`, we need to look at `./eslint.config.js` to ensure that `subdir` isn't being ignored.
-The file/directory structure described in the markdown is as follows:
+
+### What happens if there's a `eslint.config.js` file with an ignore pattern of `subdir` in the parent directory `subdir`?
+
+Here's the structure in question:
+
+```
+/usr/tmp/
+├── eslint.config.js    <-- ignores: ["subdir"]
+└── subdir/
+    ├── foo.js
+    └── eslint.config.js
+```
+
+When `eslint subdir/foo.js` is called, no files will be linted because the root `eslint.config.js` file ignores `subdir`.
 
 ## Related Discussions
 
