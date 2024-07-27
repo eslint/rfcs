@@ -33,9 +33,9 @@ This can be counterintuitive for enabling new rules as `error`, since the develo
 
 To keep track of the all the errors that we would like to ignore, we are introducing the concept of the baseline file; A JSON file containing the number of errors that must be ignored for each rule in each file. By design, the baseline is disabled by default and it doesn't affect existing or new projects, unless the baseline file is generated.
 
-Here is what the baseline file looks like. This indicates that the file `"src/app/components/foobar/foobar.component.ts"` has one error for the rule `@typescript-eslint/no-explicit-any` that is acceptable to be ignored.
+### Baseline format
 
-All paths are relative to CWD.
+The baseline files includes details about the file where the error found, the rule name and the number of errors. Here is what the baseline file looks like. This indicates that the file `"src/app/components/foobar/foobar.component.ts"` has one error for the rule `@typescript-eslint/no-explicit-any` that is acceptable to be ignored. All paths are relative to CWD, for portability reasons.
 
 ```
 {
@@ -49,23 +49,27 @@ All paths are relative to CWD.
 
 ### Generating the baseline
 
-A new option `--baseline` can be added to ESLint CLI. When provided, the baseline is generated and saved in `.eslint-baseline.json`. If the file already exists, it gets over-written. Note that this is a boolean flag option (no values are accepted). For example:
+A new option `--baseline` wil be introduced to ESLint CLI. When provided, the baseline is generated and saved in `.eslint-baseline.json`. If the file already exists, it gets over-written. Note that this is a boolean flag option (no values are accepted). Here is an example how to generate the baseline:
 
 ``` bash
 eslint --baseline ./src
 ```
 
-The above goes through each result item and messages, and counts the number of errors (`severity == 2`). If one or more such messages are found, the necessary details are stored in the baseline file. Note that the file is a relative path to CWD.
-
-By default, the baseline file is saved at `.eslint-baseline.json` . To control where the baseline is saved, another option can be introduced  `--baseline-location`. That is a string argument specifying where the baseline must be saved.
+The above goes through each result item and messages, and counts the number of errors (`severity == 2`). If one or more such messages are found, the necessary details are stored in the baseline file. By default, the baseline file is saved at `.eslint-baseline.json` . To control where the baseline is saved, another option will be introduced `--baseline-location`. That is a string argument specifying where the baseline must be saved. Here is an example 
+how to generate the baseline and save the results to `/home/user/project/mycache`.
 
 ``` bash
 eslint --baseline --baseline-location /home/user/project/mycache
 ```
 
-To implement this, we will need to add the two new options in `default-cli-options.js`, adjust the config for optionator and add the two new options as comments and arguments for both eslint. Documentation must be updated as well to explain the newly introduced options.
+To introduce the above-mentioned options, we will need to: 
 
-On top of that, we will need to adjust `cli.js` to check if `--baseline` was provided and set to true, right after the fixes are done and the warnings are filtered out, to avoid counting errors that are about to be fixed. A new method `generateBaseline` can be introduced in both `eslint.js` - the method must be called only and only if `--baseline` was provided and set to true.
+ * add the new options in `default-cli-options.js`.
+ * adjust the config for optionator.
+ * add the new options as comments and arguments for eslint.
+ * update documentation to explain the newly introduced options.
+
+On top of that, we will need to adjust `cli.js` to check if `--baseline` was provided and set to true, right after the fixes are done and the warnings are filtered out, to avoid counting errors that are about to be fixed. A new method `generateBaseline` will be introduced, which must be called only and only if `--baseline` was provided and set to true. Please refer to "Implementation Details" for more details on this.
 
 ### Matching against the baseline
 
@@ -73,7 +77,7 @@ The suggested solution always compares against the baseline, given that the base
 
 This will go through each result item and message, and check each rule giving an error (`severity == 2`) against the baseline. By design, we do not take warnings into consideration (regardless of whether quite mode is enabled or not), since warnings do not cause eslint to exit with an error code and they already serve a different purpose. If the file and rule are part of the baseline, means that we can remove and ignore the result message. 
 
-To implement this, we will need to adjust further `cli.js` and check if the baseline file exists - taking `--baseline-location` into consideration if exists, otherwise fallback to `.eslint-baseline.json`. This needs to take place right after the baseline is generated so that we take the baseline into consideration, if it was just generated. It also needs to take place before the error counting, so that the remaining errors are counted correctly. A new method `applyBaseline` can be introduced in both `eslint.js` and `eslint-legacy.js` - this must be called only and only if the baseline file exists. 
+To implement this, we will need to adjust further `cli.js` and check if the baseline file exists - taking `--baseline-location` into consideration if exists, otherwise fallback to `.eslint-baseline.json`. This needs to take place right after the baseline is generated so that we take the baseline into consideration, if it was just generated. It also needs to take place before the error counting, so that the remaining errors are counted correctly.  
 
 We can also keep track of which errors from baseline were not matched, that is useful for the next section.
 
@@ -81,7 +85,7 @@ We can also keep track of which errors from baseline were not matched, that is u
 
 When using the baseline, there is a chance that an error is resolved but the baseline file is not updated. This might allow new errors to creep in without noticing. To ensure that the baseline is always up to date, eslint can exit with an error code when there are ignored errors that do not occur anymore. To fix this, the developer can regenerate the baseline file.
 
-To implement this, we will need to extend `applyBaseline` to return the unmatched rules. In `cli.js` we will need to check if one or more rules are left unmatched, and exit with an error code. Depending on the verbose more we can display the list of errors that were left unmatched.
+To implement this, we will need to extend `applyBaseline` to return the unmatched rules. In particular, we will need to check if one or more rules are left unmatched, and exit with an error code. Depending on the verbose mode we can display the list of errors that were left unmatched.
 
 ### ESLint Cache
 
@@ -90,6 +94,99 @@ ESLint cache (`--cache`) must contain the full list of detected errors, even tho
 - Generating the baseline can be based on the cache file and should be faster when the cache file is used.
 - Allows developers to re-generate the baseline or even adjust it manually and re-lint still taking the same cache into consideration.
 - It even allows developers to delete the baseline and still take advantage of the cached file in subsequent runs. 
+
+### Implementation Details
+
+First of all we need to introduce a new type to hold the individual baseline result:
+
+``` js
+/**
+ * @typedef {Record<string, { count: number }>} BaselineResult
+ */
+```
+
+One way to approach this is to introduce a Manager class handling the baseline results - in particular, both generating a baseline and validating the results against a baseline.
+
+``` js
+class BaselineResultManager {
+    /**
+     * Creates a new instance of BaselineResultManager.
+     * @param {string} baselineLocation The location of the baseline file.
+     */
+    constructor(baselineLocation) {}
+
+    /**
+     * Generates the baseline from the provided lint results.
+     * @param {LintResult[]} results The lint results.
+     * @returns BaselineResult[]
+     */
+    generateBaseline(results) 
+
+    /**
+     * Checks the provided baseline results against the lint results.
+     * It filters and returns the lint results that are not in the baseline.
+     * It also returns the unmatched baseline results.
+     * 
+     * @param {LintResult[]} results The lint results.
+     * @param {BaselineResult[]} baseline The baseline.
+     * @return {
+     *   results: LintResult[],
+     *   unmatched: BaselineResult[]
+     * }
+     */
+    applyBaseline(results, baseline)
+    
+    /**
+     * Loads the baseline from the file.
+     * @returns BaselineResult[]
+     */
+    loadBaseline()
+
+    /**
+     * Saves the baseline to the file.
+     * @param {BaselineResult[]}
+     * @returns void
+     * @private
+     */
+    saveBaseline(baseline)
+}
+```
+
+The resolution of the baseline location must happen outside of the above class. An idea is to make `getCacheFile` in `lib/eslint/eslint-helpers.js` a bit more abstract so that we can inject the prefix i.e. `.cache_` or `.baseline` when a directory is provided. This way both `cache-location` and `baseline-location` are consistent and following the same pattern.
+
+Once the above are in place, `cli.js` should look something like:
+
+``` js
+// ...
+const { baseline } = require("../conf/default-cli-options");
+// ...
+if (options.quiet) {
+    debug("Quiet mode enabled - filtering out warnings");
+    resultsToPrint = ActiveESLint.getErrorResults(resultsToPrint);
+}
+
+const baselineFileLocation = getCacheFile(baseline, cwd, '_baseline');
+if (options.baseline || fs.existsSync(baseline)) {
+    const baselineManager = new BaselineResultManager(baselineFileLocation);
+    let loadedBaselineRecords = [];
+    if (options.baseline) {
+        loadedBaselineRecords = baselineManager.generateBaseline(resultsToPrint);
+    } else {
+        loadedBaselineRecords = baselineManager.loadBaseline();
+    }
+
+    const baselineResults = await baselineManager.applyBaseline(resultsToPrint, loadedBaselineRecords);
+
+    if (baselineResults.unmatched.length > 0) {
+        // exit with errors
+    }
+
+    resultsToPrint = baselineResults.results;
+}
+
+const resultCounts = countErrors(results);
+//...
+```
 
 ## Documentation
 
