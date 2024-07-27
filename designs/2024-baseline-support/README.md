@@ -63,9 +63,9 @@ By default, the baseline file is saved at `.eslintbaseline` . To control where t
 eslint --baseline --baseline-location /home/user/project/mycache
 ```
 
-To implement this, we will need to add the two new options in `default-cli-options.js`, adjust the config for optionator and add the two new options as comments and arguments for both eslint and cli-engine. Documentation must be updated as well to explain the newly introduced options.
+To implement this, we will need to add the two new options in `default-cli-options.js`, adjust the config for optionator and add the two new options as comments and arguments for both eslint. Documentation must be updated as well to explain the newly introduced options.
 
-On top of that, we will need to adjust `cli.js` to check if `--baseline` was provided and set to true, right after the fixes are done and the warnings are filtered out, to avoid counting errors that are about to be fixed. A new method `generateBaseline` can be introduced in both `eslint.js` and `eslint-legacy.js` - the method must be called only and only if `--baseline` was provided and set to true.
+On top of that, we will need to adjust `cli.js` to check if `--baseline` was provided and set to true, right after the fixes are done and the warnings are filtered out, to avoid counting errors that are about to be fixed. A new method `generateBaseline` can be introduced in both `eslint.js` - the method must be called only and only if `--baseline` was provided and set to true.
 
 ### Matching against the baseline
 
