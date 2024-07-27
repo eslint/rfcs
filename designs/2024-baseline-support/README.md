@@ -49,7 +49,7 @@ All paths are relative to CWD.
 
 ### Generating the baseline
 
-A new option `--baseline` can be added to ESLint CLI. When provided, the baseline is generated and saved in `.eslintbaseline`. If the file already exists, it gets over-written. Note that this is a boolean flag option (no values are accepted). For example:
+A new option `--baseline` can be added to ESLint CLI. When provided, the baseline is generated and saved in `.eslint-baseline.json`. If the file already exists, it gets over-written. Note that this is a boolean flag option (no values are accepted). For example:
 
 ``` bash
 eslint --baseline ./src
@@ -57,7 +57,7 @@ eslint --baseline ./src
 
 The above goes through each result item and messages, and counts the number of errors (`severity == 2`). If one or more such messages are found, the necessary details are stored in the baseline file. Note that the file is a relative path to CWD.
 
-By default, the baseline file is saved at `.eslintbaseline` . To control where the baseline is saved, another option can be introduced  `--baseline-location`. That is a string argument specifying where the baseline must be saved.
+By default, the baseline file is saved at `.eslint-baseline.json` . To control where the baseline is saved, another option can be introduced  `--baseline-location`. That is a string argument specifying where the baseline must be saved.
 
 ``` bash
 eslint --baseline --baseline-location /home/user/project/mycache
@@ -69,11 +69,11 @@ On top of that, we will need to adjust `cli.js` to check if `--baseline` was pro
 
 ### Matching against the baseline
 
-The suggested solution always compares against the baseline, given that the baseline file exists. By default the baseline file is picked up from `.eslintbaseline`, unless the option `--baseline-location` is provided. This makes it easier for existing and new projects to adopt the baseline without the need to adjust scripts in `package.json` and CI/CD workflows. As mentioned above, `--baseline-location` is a string argument specifying where the baseline was previously saved.
+The suggested solution always compares against the baseline, given that the baseline file exists. By default the baseline file is picked up from `.eslint-baseline.json`, unless the option `--baseline-location` is provided. This makes it easier for existing and new projects to adopt the baseline without the need to adjust scripts in `package.json` and CI/CD workflows. As mentioned above, `--baseline-location` is a string argument specifying where the baseline was previously saved.
 
 This will go through each result item and message, and check each rule giving an error (`severity == 2`) against the baseline. By design, we do not take warnings into consideration (regardless of whether quite mode is enabled or not), since warnings do not cause eslint to exit with an error code and they already serve a different purpose. If the file and rule are part of the baseline, means that we can remove and ignore the result message. 
 
-To implement this, we will need to adjust further `cli.js` and check if the baseline file exists - taking `--baseline-location` into consideration if exists, otherwise fallback to `.eslintbaseline`. This needs to take place right after the baseline is generated so that we take the baseline into consideration, if it was just generated. It also needs to take place before the error counting, so that the remaining errors are counted correctly. A new method `applyBaseline` can be introduced in both `eslint.js` and `eslint-legacy.js` - this must be called only and only if the baseline file exists. 
+To implement this, we will need to adjust further `cli.js` and check if the baseline file exists - taking `--baseline-location` into consideration if exists, otherwise fallback to `.eslint-baseline.json`. This needs to take place right after the baseline is generated so that we take the baseline into consideration, if it was just generated. It also needs to take place before the error counting, so that the remaining errors are counted correctly. A new method `applyBaseline` can be introduced in both `eslint.js` and `eslint-legacy.js` - this must be called only and only if the baseline file exists. 
 
 We can also keep track of which errors from baseline were not matched, that is useful for the next section.
 
@@ -83,9 +83,9 @@ When using the baseline, there is a chance that an error is resolved but the bas
 
 To implement this, we will need to extend `applyBaseline` to return the unmatched rules. In `cli.js` we will need to check if one or more rules are left unmatched, and exit with an error code. Depending on the verbose more we can display the list of errors that were left unmatched.
 
-### Caching
+### ESLint Cache
 
-Caching must contain the full list of detected errors, even those matched against the baseline. This approach has the following benefits:
+ESLint cache (`--cache`) must contain the full list of detected errors, even those matched against the baseline. This approach has the following benefits:
 
 - Generating the baseline can be based on the cache file and should be faster when the cache file is used.
 - Allows developers to re-generate the baseline or even adjust it manually and re-lint still taking the same cache into consideration.
