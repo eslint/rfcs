@@ -168,7 +168,30 @@ Here's the structure in question:
     └── eslint.config.js
 ```
 
-When `eslint subdir/foo.js` is called, no files will be linted because the root `eslint.config.js` file ignores `subdir`.
+In this scenario, it matters how ESLint is called:
+
+1. `eslint .` - ESLint first reads `./eslint.config.js`, which says to ignore `subdir`. Because ESLint must recursively traverse `.`, it skips `subdir`. Only `./eslint.config.js` is linted.
+1. `eslint subdir` - ESLint first reads `./subdir/eslint.config.js` and lints `./subdir/foo.js` and `./subdir/eslint.config.js`. The `./eslint.config.js` file is never read because config lookup starts and stops in `subdir` due to the presence of `./subdir/eslint.config.js`.
+1. `eslint subdir/foo.js` - ESLint first reads `./subdir/eslint.config.js` and lints `./subdir/foo.js`.
+
+A more complicated example:
+
+```
+/usr/tmp/
+├── eslint.config.js       <-- ignores: ['**/subsubdir1']
+└── subdir/
+    ├── eslint.config.js   <-- ignores: ['**/subsubdir2'] 
+    ├── subsubdir1/
+    │   └── file.js
+    └── subsubdir2/
+        └── file.js
+```
+
+In this scenario:
+
+1. `eslint .` - ESLint first reads `./eslint.config.js`, which has an `ignores` pattern that doesn't match any of the child directories, so ESLint traverses into each child directory. Once in `subdir`, ESLint reads `./subdir/eslint.config.js`, which says to ignore `subsubdir2`, so ESLint skips traversing into `subsubdir2` but still traverses into `subsubdir1`. ESLint lints `./eslint.config.js`, `./subdir/eslint.config.js`, and `./subdir/subsubdir1/file.js`.
+1. `eslint subdir` - ESLint first reads `./subdir/eslint.config.js` which says to ignore `subsubdir2`, so ESLint skips traversing into `subsubdir2` but still traverses into `subsubdir1`. ESLint lints `./subdir/eslint.config.js`, and `./subdir/subsubdir1/file.js`.
+
 
 ## Related Discussions
 
