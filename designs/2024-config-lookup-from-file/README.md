@@ -192,6 +192,21 @@ In this scenario:
 1. `eslint .` - ESLint first reads `./eslint.config.js`, which has an `ignores` pattern that doesn't match any of the child directories, so ESLint traverses into each child directory. Once in `subdir`, ESLint reads `./subdir/eslint.config.js`, which says to ignore `subsubdir2`, so ESLint skips traversing into `subsubdir2` but still traverses into `subsubdir1`. ESLint lints `./eslint.config.js`, `./subdir/eslint.config.js`, and `./subdir/subsubdir1/file.js`.
 1. `eslint subdir` - ESLint first reads `./subdir/eslint.config.js` which says to ignore `subsubdir2`, so ESLint skips traversing into `subsubdir2` but still traverses into `subsubdir1`. ESLint lints `./subdir/eslint.config.js`, and `./subdir/subsubdir1/file.js`.
 
+### What happens when I run `eslint *`?
+
+Consider this example:
+
+```
+/usr/tmp/
+└── subdir/
+    ├── eslint.config.js
+    ├── subsubdir1/
+    │   └── file.js
+    └── subsubdir2/
+        └── file.js
+```
+
+When you run `eslint *`, it's the same as if you ran `eslint subdir`, as it matches all immediate children of `.`. If the immediate children include `node_modules` and `.git`, those will still be ignored because they are default ignores in ESLint. All other subdirectories will be traversed but will only be linted if there's an `eslint.config.js` file present, as is the case with `./subdir` in this example.
 
 ## Related Discussions
 
