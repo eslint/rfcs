@@ -55,7 +55,7 @@ A new option `--baseline` wil be introduced to ESLint CLI. When provided, the ba
 eslint --baseline ./src
 ```
 
-The above goes through each result item and messages, and counts the number of errors (`severity == 2`). If one or more such messages are found, the necessary details are stored in the baseline file. By default, the baseline file is saved at `.eslint-baseline.json` . To control where the baseline is saved, another option will be introduced `--baseline-location`. That is a string argument specifying where the baseline must be saved. Here is an example 
+The above goes through each result item and messages, and counts the number of errors (`severity == 2`). The necessary details are stored in the baseline file. By default, the baseline file is saved at `.eslint-baseline.json` . To control where the baseline is saved, another option will be introduced `--baseline-location`. That is a string argument specifying where the baseline must be saved. Here is an example 
 how to generate the baseline and save the results to `/home/user/project/mycache`.
 
 ``` bash
