@@ -16,7 +16,7 @@ Declare currently reported errors as the "baseline", so that they are not being 
 <!-- Why are we doing this? What use cases does it support? What is the expected
 outcome? -->
 
-Enabling a new lint rule as `error` can be painful when the codebase has many violations and the rule isn't auto-fixable. A good example, is  `no-explicit-any`. Unless the rule is enabled during the early stages of the project, it becomes harder and harder to enable it as the codebase grows. Existing violations must be resolved before enabling the rule, but while doing that other violations might creep in.
+Enabling a new lint rule as `error` can be painful when the codebase has many violations and the rule isn't auto-fixable. A good example is [`@typescript-eslint/no-explicit-any`](https://typescript-eslint.io/rules/no-explicit-any/). Unless the rule is enabled during the early stages of the project, it becomes harder and harder to enable it as the codebase grows. Existing violations must be resolved before enabling the rule, but while doing that other violations might creep in.
 
 This can be counterintuitive for enabling new rules as `error`, since the developers need to address the violations before-hand in one way or another. The suggested solution suppress existing violations, allowing the developers to address these at their own pace. It also reports any new violations making it easier to identify and address future violations.
 
