@@ -64,10 +64,10 @@ eslint --baseline --baseline-location /home/user/project/mycache
 
 To introduce the above-mentioned options, we will need to: 
 
- * add the new options in `default-cli-options.js`.
- * adjust the config for optionator.
- * add the new options as comments and arguments for eslint.
- * update documentation to explain the newly introduced options.
+* add the new options in `default-cli-options.js`.
+* adjust the config for optionator.
+* add the new options as comments and arguments for eslint.
+* update documentation to explain the newly introduced options.
 
 On top of that, we will need to adjust `cli.js` to check if `--baseline` was provided and set to true, right after the fixes are done and the warnings are filtered out, to avoid counting errors that are about to be fixed. A new method `generateBaseline` will be introduced, which must be called only and only if `--baseline` was provided and set to true. Please refer to "Implementation Details" for more details on this.
 
@@ -87,7 +87,7 @@ To implement this, we will need to adjust further `cli.js` to adopt the followin
   * If yes, we reduce the `count` by 1 and ignore the current error. If `count` has already reach zero we keep the error.
   * If no, we keep the error.
 
-Note that `cli.js` the error detection in `cli.js` happens quite earlier before the error counting. This allow us to create the baseline, before it is time to count errors. Please refer to the last example of the "Implementation details".
+Note that the error detection in `cli.js` happens before the error counting. This allow us to create the baseline, before it is time to count errors. Please refer to the last example of the "Implementation details".
 
 We can also keep track of which errors from baseline were not matched, that is useful for the next section.
 
