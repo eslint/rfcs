@@ -80,12 +80,12 @@ This will go through each result item and message, and check each rule giving an
 To implement this, we will need to adjust further `cli.js` to adopt the following operations:
 
 * Check if the `--baseline` option is passed
-> * If yes, we need to generate the baseline based on `resultsToPrint`. 
-> * If no, we need to check if the baseline file already exists taking `--baseline-location` into consideration
+  * If yes, we need to generate the baseline based on `resultsToPrint`. 
+  * If no, we need to check if the baseline file already exists taking `--baseline-location` into consideration
 * Assuming that a baseline was found or generated, we need to match the errors found against the baseline. In particular, for each error found:
-> * We need to check whether both file and error are part of the baseline
-> * If yes, we reduce the `count` by 1 and ignore the current error. If `count` has already reach zero we keep the error.
-> * If no, we keep the error.
+  * We need to check whether both file and error are part of the baseline
+  * If yes, we reduce the `count` by 1 and ignore the current error. If `count` has already reach zero we keep the error.
+  * If no, we keep the error.
 
 Note that `cli.js` the error detection in `cli.js` happens quite earlier before the error counting. This allow us to create the baseline, before it is time to count errors. Please refer to the last example of the "Implementation details".
 
