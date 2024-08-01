@@ -165,7 +165,7 @@ if (options.quiet) {
     resultsToPrint = ActiveESLint.getErrorResults(resultsToPrint);
 }
 
-const baselineFileLocation = getCacheFile(baseline, cwd, '_baseline');
+const baselineFileLocation = getCacheFile(baseline, cwd, 'baseline_');
 if (options.baseline || fs.existsSync(baseline)) {
     const baselineManager = new BaselineResultManager(baselineFileLocation);
     let loadedBaselineRecords = [];
