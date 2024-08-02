@@ -118,7 +118,7 @@ Furthermore, ESLint cache (`--cache`) must contain the full list of detected vio
 - Allows developers to re-generate the suppressions file or even adjust it manually and re-lint still taking the same cache into consideration.
 - It even allows developers to delete the suppressions file and still take advantage of the cached file in subsequent runs. 
 
-# Implementation notes
+### Implementation notes
 
 To introduce the above-mentioned options, we will need to: 
 
@@ -135,6 +135,8 @@ A new type must be created:
  */
 ```
 
+A new class must be created to manage the suppressions file:
+
 ``` js
 class SuppressedViolationsManager {
     /**
@@ -144,10 +146,10 @@ class SuppressedViolationsManager {
     constructor(suppressionsLocation) {}
 
     /**
-     * Updates the suppressions file based on the current violations
+     * Updates the suppressions file based on the current violations.
      * 
      * @param {LintResult[]} results The lint results.
-     * @returns SuppressedViolation[]
+     * @returns {LintResult[]}
      */
     suppressAll(results) 
 
@@ -210,19 +212,19 @@ const suppressionsFileLocation = getCacheFile(options.suppressionsLocation, cwd,
 if (options.suppressAll || options.suppressRule || options.pruneSuppressions || fs.existsSync(suppressionsFileLocation)) {
     const suppressionsManager = new SuppressedViolationsManager(suppressionsFileLocation);
     if (options.suppressAll) {
-        results = suppressionsManager.suppressAll(results);
+        suppressionsManager.suppressAll(results);
     } else if (options.suppressRule) {
-        results = suppressionsManager.suppressByRule(results, options.suppressRule);
+        suppressionsManager.suppressByRule(results, options.suppressRule);
     } else if (options.pruneSuppressions) {
-        results = suppressionsManager.prune();
-    } else {
-        const suppressionResults = suppressionsManager.applySuppressions(results, suppressionsManager.load());
-        if (suppressionResults.unmatched.length > 0) {
-            // exit with a non-zero code
-        }
-
-        results = suppressionResults.results;
+        suppressionsManager.prune();
     }
+ 
+    const suppressionResults = suppressionsManager.applySuppressions(results, suppressionsManager.load());
+    if (suppressionResults.unmatched.length > 0) {
+        // exit with a non-zero code
+    }
+
+    results = suppressionResults.results;
 }
 
 let resultsToPrint = results;
