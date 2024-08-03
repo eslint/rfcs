@@ -132,11 +132,11 @@ To introduce the above-mentioned options, we will need to:
 * add the new options as comments and arguments for eslint.
 * update documentation to explain the newly introduced feature.
 
-A new type must be created:
+A new type must be created to represent the suppressions file:
 
 ``` js
 /**
- * @typedef {Record<string, { count: number }>} SuppressedViolation
+ * @typedef {Record<string, Record<string, { count: number }>} SuppressedViolations
  */
 ```
 
@@ -154,21 +154,22 @@ class SuppressedViolationsManager {
      * Updates the suppressions file based on the current violations.
      * 
      * @param {LintResult[]} results The lint results.
-     * @returns {LintResult[]}
+     * @returns {void}
      */
     suppressAll(results) 
 
     /**
-     * Updates the suppressions file based on the current violations and the provided rule
+     * Updates the suppressions file based on the current violations and the provided rule.
      * 
      * @param {LintResult[]} results The lint results.
      * @param {string} rule The rule to suppress.
+     * @returns {void}
      */
     suppressByRule(results, rule)
 
     /**
      * Removes old suppressions that do not occur anymore.
-     * @returns void
+     * @returns {void}
      */
     prune()
 
@@ -178,27 +179,27 @@ class SuppressedViolationsManager {
      * It also returns the unmatched suppressions.
      * 
      * @param {LintResult[]} results The lint results.
-     * @param {SuppressedViolation[]} suppressions The suppressions.
-     * @return {
+     * @param {SuppressedViolations} suppressions The suppressions.
+     * @returns {{
      *   results: LintResult[],
-     *   unmatched: SuppressedViolation[]
-     * }
+     *   unmatched: SuppressedViolations
+     * }}
      */
     applySuppressions(results, suppressions)
     
     /**
      * Loads the suppressions file.
-     * @returns SuppressedViolation[]
+     * @returns {SuppressedViolations}
      */
     load()
 
     /**
      * Updates the suppressions file.
-     * @param {SuppressedViolation[]}
-     * @returns void
+     * @param {SuppressedViolations} suppressions The suppressions to save.
+     * @returns {void}
      * @private
      */
-    save()
+    save(suppressions)
 }
 ```
 
