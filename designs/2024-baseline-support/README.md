@@ -107,13 +107,9 @@ Here is a high-level overview of the execution flow:
     * For each error, check if it and the file are in the suppressions file.
    * If yes, decrease count by 1 and ignore the error unless count is zero.
    * If no, keep the error.
-3. Report and exit
+3. **Report and exit**
     * Exit with a non-zero status if there are unmatched violations, optionally listing them in verbose mode.
     * Otherwise, list remaining errors as usual.
-* Check if the `--suppress-all` or `--suppress-rule` option is passed
-  * If both are passed exit with an error, since the two options are mutually exclusive.
-  * If either option was passed, we need to update the suppressions file based on `results`. 
-  * If none option was passed, we need to check if the suppressions file already exists taking `--suppressions-location` into consideration
 
 Note that the error detection in `cli.js` occurs before the error counting. This allow us to update the suppressions file and modify the errors, before it is time to count errors. Please refer to the last example of the "Implementation notes" for more details.
 
@@ -224,7 +220,7 @@ if (options.suppressAll || options.suppressRule || options.pruneSuppressions || 
     } else if (options.pruneSuppressions) {
         suppressionsManager.prune();
     }
- 
+
     const suppressionResults = suppressionsManager.applySuppressions(results, suppressionsManager.load());
     if (suppressionResults.unmatched.length > 0) {
         // exit with a non-zero code
