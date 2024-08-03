@@ -31,11 +31,11 @@ This can be counterintuitive for enabling new rules as `error`, since the develo
    used. Be sure to define any new terms in this section.
 -->
 
-To keep track of the all the violations that we would like to suppress, we are storing these into a separate file; A JSON file containing the number of errors that must be ignored for each rule in each file. By design, no violations are suppressed - in other words, this feature doesn't affect existing or new projects, unless the developers explicitly suppress one or more violations.
+We are storing all the violations that we would like to suppress into a separate file. This file is a JSON file containing the number of errors that must be ignored for each rule in each file. By design, no violations are suppressed - in other words, this feature doesn't affect existing or new projects, unless the developers explicitly suppress one or more violations.
 
 ### File format
 
-The JSON file includes details about the file where the violations found, the rule name and the number of violations. As an example, the following indicates that the file `"src/app/components/foobar/foobar.component.ts"` has one violation for the rule `@typescript-eslint/no-explicit-any` that we want to suppress. All paths are relative to CWD, for portability reasons.
+The JSON file includes details about the file where the violations are found, the rule name and the number of violations. As an example, the following indicates that the file `"src/app/components/foobar/foobar.component.ts"` has one violation for the rule `@typescript-eslint/no-explicit-any` that we want to suppress. All paths are relative to CWD, for portability reasons.
 
 ```
 {
@@ -75,16 +75,16 @@ eslint --suppress-all --suppressions-location /home/user/project/mycache ./src
 
 ### Maintaining a lean suppressions file
 
-When working with suppressed violations, there is a chance that a violation is addressed but the suppressions file is not updated. This might allow new violations to creep in without noticing. To ensure that the suppressions file is always up to date, `eslint` can exit with an error code when there are suppressed violations that do not occur anymore.
+When working with suppressed violations, it's possible to address a violation without updating the suppressions file. This oversight can allow new violations to go unnoticed. To prevent this, eslint can exit with an error code if there are outdated (unmatched) suppressions.
 
 Consider the following scenario:
 
-* The developer executes `eslint --supress-all ./src` which creates the suppressions file.
-* Then `eslint ./src` is executed which reports no violations, with an exit status of 0.
-* The developer addresses an error violation. While the violation is addressed is still part of the suppressions file.
-* The developer then executes `eslint ./src` again. While it still reports no violations, it exits with a non-zero status code. That is to indicate that the suppressions file needs to be updated.
+* The developer runs `eslint --supress-all ./src` to create the suppressions file.
+* Running `eslint ./src` reports no violations and exits with status 0.
+* After fixing a violation, the suppressions file still contains the now-resolved violation.
+* Running `eslint ./src` again reports no violations but exits with a non-zero status code, indicating the suppressions file needs updating.
 
-To address this, a new option `--prune-suggestions` will be introduced to ESLint. Note that this is a boolean flag option (no values are accepted). When provided, violations in suppressions file that no longer occur will be removed, but no new violations will be added (in contrary to when executing `--suppress-all`).
+To address this, a new option `--prune-suggestions` will be introduced to ESLint. This boolean flag removes resolved violations from the suppressions file without adding new ones, unlike `--suppress-all`.
 
 ``` bash
 eslint --prune-suppressions ./src
@@ -93,29 +93,34 @@ eslint --prune-suppressions --suppressions-location /home/user/project/mycache .
 
 ### Execution details
 
-The suggested solution always compares against the suppressions file, given that the file already exists. By default the file is picked up from `.eslint-suppressions.json`, unless the option `--suppressions-location` is provided. This makes it easier for existing and new projects to adopt this feature without the need to adjust scripts in `package.json` and CI/CD workflows. 
+The suggested solution always compares against the existing suppressions file, typically `.eslint-suppressions.json`, unless `--suppressions-location` is specified.  This makes it easier for existing and new projects to adopt this feature without the need to adjust scripts in `package.json` and CI/CD workflows. 
 
-This will go through each result item and message, and check each rule giving an error (`severity == 2`) against the suppressions. By design, we do not take warnings into consideration (regardless of whether quite mode is enabled or not), since warnings do not cause eslint to exit with an error code and they already serve a different purpose. If the file and rule are part of the suppressions file, it means that we can remove and ignore the result message. 
+To perform the comparison, we will go through each result and message from `ESLint.lintFiles`, checking each error `(severity == 2)` against the suppressions file. By design, we ignore warnings since they don't cause eslint to exit with an error code and serve a different purpose. If the file and rule are listed in the suppressions file, we can remove and ignore the result message.
 
-To implement this, we will need to adjust mainly `cli.js` to adopt the following operations:
+Here is a high-level overview of the execution flow:
 
+1. **Check for Options**
+    * If both `--suppress-all` and `--suppress-rule` are passed, exit with an error (these options are mutually exclusive).
+    * If either option is passed, update the suppressions file based on the `results`.
+    * If no option is passed, check if the suppressions file exists, considering `--suppressions-location`.
+2. **Match Errors Against Suppressions**
+    * For each error, check if it and the file are in the suppressions file.
+   * If yes, decrease count by 1 and ignore the error unless count is zero.
+   * If no, keep the error.
+3. Report and exit
+    * Exit with a non-zero status if there are unmatched violations, optionally listing them in verbose mode.
+    * Otherwise, list remaining errors as usual.
 * Check if the `--suppress-all` or `--suppress-rule` option is passed
   * If both are passed exit with an error, since the two options are mutually exclusive.
   * If either option was passed, we need to update the suppressions file based on `results`. 
   * If none option was passed, we need to check if the suppressions file already exists taking `--suppressions-location` into consideration
-* Assuming that a suppressions file was found or generated, we need to match the errors found against the violations included in the suppressions file. In particular, for each error found:
-  * We need to check whether both file and error are part of the suppressions file.
-  * If yes, we reduce the `count` by 1 and ignore the current error. If `count` has already reach zero we keep the error.
-  * If no, we keep the error.
-* Exit with a non-zero status code if there are unmatched violations. Depending on the verbose mode we can display the list of errors that were left unmatched.
-* Otherwise list the remaining errors as usual.
 
-Note that the error detection in `cli.js` happens before the error counting. This allow us to update the suppressions file and modify the errors, before it is time to count errors. Please refer to the last example of the "Implementation notes" for more details.
+Note that the error detection in `cli.js` occurs before the error counting. This allow us to update the suppressions file and modify the errors, before it is time to count errors. Please refer to the last example of the "Implementation notes" for more details.
 
-Furthermore, ESLint cache (`--cache`) must contain the full list of detected violations, even those matched against the suppressions file. This approach has the following benefits:
+Furthermore, ESLint cache (`--cache`) must include the full list of detected violations, even those in the suppressions file. This approach has the following benefits:
 
 - Generating the suppressions file can be based on the cache file and should be faster when the cache file is used.
-- Allows developers to re-generate the suppressions file or even adjust it manually and re-lint still taking the same cache into consideration.
+- Allows developers to update the suppressions file and then re-lint still taking the same cache into consideration.
 - It even allows developers to delete the suppressions file and still take advantage of the cached file in subsequent runs. 
 
 ### Implementation notes
@@ -125,7 +130,7 @@ To introduce the above-mentioned options, we will need to:
 * add the new options in `default-cli-options.js`.
 * adjust the config for optionator.
 * add the new options as comments and arguments for eslint.
-* update documentation to explain the newly introduced option
+* update documentation to explain the newly introduced feature.
 
 A new type must be created:
 
