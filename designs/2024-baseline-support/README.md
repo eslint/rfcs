@@ -84,7 +84,7 @@ Consider the following scenario:
 * After fixing a violation, the suppressions file still contains the now-resolved violation.
 * Running `eslint ./src` again reports no violations but exits with a non-zero status code, indicating the suppressions file needs updating.
 
-To address this, a new option `--prune-suggestions` will be introduced to ESLint. This boolean flag removes resolved violations from the suppressions file without adding new ones, unlike `--suppress-all`.
+To address this, a new option `--prune-suppressions` will be introduced to ESLint. This boolean flag removes resolved violations from the suppressions file without adding new ones, unlike `--suppress-all`.
 
 ``` bash
 eslint --prune-suppressions ./src
