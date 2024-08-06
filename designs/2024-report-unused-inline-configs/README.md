@@ -201,7 +201,7 @@ Unlike the changes discussed in [Change Request: Enable reportUnusedDisableDirec
 The existing `--report-unused-disable-directives` (enabling) and `--report-unused-disable-directives-severity` (severity) options were kept separate for backwards compatibility.
 
 Adding a sole `--report-unused-inline-configs` CLI option presents a discrepency between the two sets of options.
-An alternative could be to instead add `--report-unused-inline-configs` an `--report-unused-inline-configs-severity` options for consistency's sake.
+An alternative could be to instead add `--report-unused-inline-configs` and `--report-unused-inline-configs-severity` options for consistency's sake.
 
 This RFC's opinion is that the consistency of adding two new options is not worth the excess options logic.
 It would instead be preferable to, in a future ESLint major version, deprecate `--report-unused-disable-directives-severity` and merge its logic setting into `--report-unused-disable-directives`.
