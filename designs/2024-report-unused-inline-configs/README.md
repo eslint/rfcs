@@ -1,6 +1,6 @@
 - Repo: eslint/eslint
 - Start Date: 2024-07-08
-- RFC PR:
+- RFC PR: https://github.com/eslint/rfcs/pull/121
 - Authors: [Josh Goldberg](https://github.com/JoshuaKGoldberg)
 
 # Reporting unused inline configs
