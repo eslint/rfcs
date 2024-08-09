@@ -161,7 +161,7 @@ class SuppressedViolationsManager {
      * @param {string[]} rules The rules to suppress.
      * @returns {void}
      */
-    suppressByRule(results, rules)
+    suppressRules(results, rules)
 
     /**
      * Removes old suppressions that do not occur anymore.
