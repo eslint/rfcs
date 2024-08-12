@@ -120,6 +120,27 @@ const teardown = () => {
     on the ESLint blog to explain the motivation?
 -->
 
+The new `setup` property should be formally documented in the following ways:
+
+- ESLint Rule Tester Documentation: Update the official ESLint `RuleTester` documentation to include detailed
+  information about the new property. This documentation should explain:
+  - The purpose and use cases of the setup property;
+  - How to implement the setup function in test cases;
+  - Example demonstrating the usage of the `setup` property for both `valid` and `invalid` test cases;
+- Changelog: Include an entry in the ESLint changelog outlining the new property with a brief description;
+
+### Announcement
+
+To ensure that the ESLint community is aware of the new feature and understands its motivation and usage, a formal
+announcement should be made on the ESLint blog. This announcement can include:
+
+- Introduction to the Feature: Explain what the setup property is and provide context as to why it was introduced;
+- Motivation: Describe the motivation for introducing the setup property, including the challenges with the current
+  approach and the anticipated benefits of the new feature;
+- Examples and Use Cases: Provide concrete examples and use cases to show how the setup property can be used to
+  improve the testing process for ESLint plugins;
+- Link to Documentation: Include links to the updated documentation having more detailed information.
+
 ## Drawbacks
 
 <!--
