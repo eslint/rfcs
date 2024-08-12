@@ -9,10 +9,32 @@
 
 <!-- One-paragraph explanation of the feature. -->
 
+I propose adding an optional `setup` property to the test cases that the ESLint `RuleTester` runs. This feature
+will allow developers to prepare specific environments needed for certain rules before running each test case.
+
 ## Motivation
 
-<!-- Why are we doing this? What use cases does it support? What is the expected
-outcome? -->
+<!-- Why are we doing this? What use cases does it support? What is the expected outcome? -->
+
+Some rules require more awareness of the user environment, such as dependencies listed in the `package.json` file.
+That information is not provided to the rule by `RuleContext`, therefore the rule has to read it from disk.
+
+Generally, testing a rule using `RuleTester` implies running the linter against the variety of `code` samples and
+rule `options` both `valid` and `invalid` in order to cover all possible scenarios of its operation. However, testing
+a rule having behavior depending on user's `package.json` becomes more challenging, since the user environment becomes
+another variable that has to be different for every test case.
+
+The currently well-known approach is fixtures: having actual files on disk, but those files are separated from the
+test cases, they have to be maintained (they can be renamed, deleted or changed regardless the cases).
+The proposed `setup` hooks provides the place to keep the environment preparation, such as mocking the returns of the
+file system methods, right within the test cases along with other case variables: `code` and `options`.
+
+The expected outcome is a more streamlined and maintainable testing process:
+- Enhanced Developer Experience: developers can quickly understand and modify tests;
+- Improved Readability: Keeping the setup logic within the test case makes it easier to read and debug;
+- Reduced Maintenance: Eliminating the need for numerous fixture files reduces the overhead of maintenance.
+
+Ultimately, this feature will support more efficient and effective testing of rules that depend on user environment.
 
 ## Detailed Design
 
