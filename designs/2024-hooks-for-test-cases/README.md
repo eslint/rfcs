@@ -1,6 +1,6 @@
 - Repo: eslint/eslint
 - Start Date: 2024-08-12
-- RFC PR:
+- RFC PR: https://github.com/eslint/rfcs/pull/122
 - Authors: [Anna Bocharova](https://github.com/RobinTail)
 
 # Hooks for test cases
