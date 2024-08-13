@@ -30,7 +30,7 @@ For example: [see the tests of the rule mentioned above](https://github.com/impo
 
 The currently well-known approach is fixtures: having actual files on disk, but those files are separated from the
 test cases, they have to be maintained (they can be renamed, deleted or changed regardless the cases).
-The proposed `setup` hooks provides the place to keep the environment preparation, such as mocking the returns of the
+The proposed `setup` hook provides the place to keep the environment preparation, such as mocking the returns of the
 file system methods, right within the test cases along with other case variables: `code` and `options`.
 
 The expected outcome is a more streamlined and maintainable testing process:
