@@ -177,6 +177,9 @@ Possible concerns:
     to existing users?
 -->
 
+Adding new optional property to the test case is backwards compatible.
+When the property is not set, `RuleTester` acts the same for existing users — no disruption expected.
+
 ## Alternatives
 
 <!--
