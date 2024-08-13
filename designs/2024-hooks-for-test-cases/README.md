@@ -154,6 +154,21 @@ announcement should be made on the ESLint blog. This announcement can include:
     implementing this RFC as possible.
 -->
 
+Possible concerns:
+
+- Potential for Misuse:
+  - Despite being an optional feature, there remains a risk that some users might misuse the setup property
+    by inadvertently modifying global state, leading to flaky tests.
+- Performance:
+  - There is a risk that developers might overload the setup property, leading to performance decrease.
+- Redundancy: confusion with `beforeEach`:
+  - It is important to emphasize the key difference between these entities in the documentation:
+    - `beforeEach` is for **consistent** actions applicable to **all** tests;
+    - `setup` is for **specific** actions applicable to **particular** test.
+- Limited Use Case:
+  - The necessity for the `setup` might be limited to specific rules and plugins. The broader ESLint user
+    community may not frequently encounter these challenges, and it may seem unjustified to them.
+
 ## Backwards Compatibility Analysis
 
 <!--
