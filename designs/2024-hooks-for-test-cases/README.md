@@ -271,6 +271,30 @@ regarding changes to the documentation.
     in this section.
 -->
 
+- **Why not use `beforeEach` to achieve the same functionality?**
+  - While `beforeEach` is effective for common setups applied across all tests in a suite, it falls short when
+    different tests require unique setups. Using `beforeEach` for such cases would necessitate complex conditional
+    logic to differentiate setups, leading to harder-to-maintain and less readable code. The `setup` property,
+    on the other hand, allows for context-specific configurations directly within each test case, making the
+    tests easier to read and maintain.
+- **How would the new `setup` property affect existing test cases?**
+  - The `setup` property is an opt-in feature. Existing test cases will remain unaffected as they do not utilize
+    this new property. Only test cases that specifically define the `setup` function will be impacted.
+    Since `RuleTester` invalidates the unknown props in test cases, no existing users should be affected.
+    This ensures backward compatibility and does not force any changes on users who prefer existing testing methodology.
+- **Will the `setup` property introduce performance overhead?**
+  - While the execution of individual `setup` functions could introduce some overhead, it is comparable to the
+    overhead introduced by `beforeEach` hook. Users are encouraged to keep their setup functions lightweight and
+    efficient. The benefit of having isolated and context-specific setups typically outweighs the minor performance
+    costs, especially in complex testing scenarios.
+- **What if users require a `teardown` function?**
+  - I can add it to my implementation.
+- **What are the specific use cases where `setup` is more beneficial than existing solutions?**
+  - The setup property is particularly beneficial in scenarios where:
+    - Different test cases require different environmental configurations;
+    - Tests need to be highly readable and maintainable, with a preparation logic kept closely to each test case;
+    - Users need to avoid the complexity of conditional logic in shared hooks like `beforeEach`.
+
 ## Related Discussions
 
 <!--
