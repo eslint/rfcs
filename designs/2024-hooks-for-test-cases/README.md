@@ -247,6 +247,8 @@ However, I'm not satisfied with this approach due to a number of disadvantages:
     you can remove this section.
 -->
 
+- Should there also be the `teardown` property?
+
 ## Help Needed
 
 <!--
