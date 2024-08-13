@@ -189,6 +189,51 @@ When the property is not set, `RuleTester` acts the same for existing users — 
     projects have already implemented a similar feature.
 -->
 
+My current workaround is assigning a custom `it` function to the `RuleTester` that looks up the for a mock by test name:
+
+```javascript
+const mockedEnvironments = {
+  "test case one": { dependencies: { "some-package": "^1.0.0" } },
+  "test case two": { devDependencies: { "another-package": "^2.0.0" } }
+}
+
+RuleTester.it = (name, ...rest) => {
+  jest.mock('fs', () => ({
+    readFileSync: jest.fn().mockReturnValue(
+      JSON.stringify( mockedEnvironments[name] )
+    ),
+  }));
+  it(name, ...rest);
+};
+
+new RuleTester().run("my-custom-rule", myCustomRule, {
+  valid: [
+    {
+      name: "test case one",
+      code: '/* valid code example */',
+      options: [/* some options */]
+    }
+  ],
+  invalid: [
+    {
+      code: '/* invalid code example */',
+      errors: [{ messageId: "someErrorId" }],
+      options: [/* some options */]
+    }
+  ]
+});
+```
+
+However, I'm not satisfied with this approach due to a number of disadvantages:
+
+- The `name` property is required to be set on each test case so that `it` could distinguish between them;
+- Also, that `name` must be unique for proper lookup;
+- And most importantly: mocked environment is detached from the test cases definitions:
+  - They are having only that weak reference via the `name`;
+  - It's harder to read, to maintain and to make some adjustments;
+  - The mocked environment is, in essence, one of the arguments to the rule being tested,
+    therefore it does make sense for them to be near `options` and `code`.
+
 ## Open Questions
 
 <!--
