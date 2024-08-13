@@ -258,6 +258,9 @@ However, I'm not satisfied with this approach due to a number of disadvantages:
     of help would you need from the team?
 -->
 
+The implementation of `setup` is already ready in the mentioned pull request, however, I may need recommendations
+regarding changes to the documentation.
+
 ## Frequently Asked Questions
 
 <!--
