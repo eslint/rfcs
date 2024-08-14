@@ -37,6 +37,7 @@ npx eslint --report-unused-inline-configs error
 ```
 
 These new options would be similar to the existing [`--report-unused-disable-directives(-severity)`](https://eslint.org/docs/latest/use/command-line-interface#--report-unused-disable-directives) and [`linterOptions.reportUnusedDisableDirectives`](https://eslint.org/docs/latest/use/configure/configuration-files#reporting-unused-disable-directives) options.
+However, this RFC proposes a single option to both enable the report and configure its severity, rather than two separate options.
 
 ### Examples
 
@@ -214,7 +215,6 @@ Adding a sole `--report-unused-inline-configs` CLI option presents a discrepency
 An alternative could be to instead add `--report-unused-inline-configs` and `--report-unused-inline-configs-severity` options for consistency's sake.
 
 This RFC's opinion is that the consistency of adding two new options is not worth the excess options logic.
-It would instead be preferable to, in a future ESLint major version, deprecate `--report-unused-disable-directives-severity` and merge its logic setting into `--report-unused-disable-directives`.
 
 ### Superset Behavior: Unused Disable Directive Reporting
 
