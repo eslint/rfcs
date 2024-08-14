@@ -67,6 +67,11 @@ This property is an optional function that runs before the linting process for t
 Here is an example of how test case definitions would look with the new `setup` property:
 
 ```javascript
+const readerMock = jest.fn();
+jest.mock('fs', () => ({
+  readFileSync: readerMock,
+}));
+
 new RuleTester().run("my-custom-rule", myCustomRule, {
   valid: [
     {
@@ -74,10 +79,8 @@ new RuleTester().run("my-custom-rule", myCustomRule, {
       options: [/* plugin options */],
       setup: () => {
         // Mock `package.json` or other necessary setup
-        jest.mock('fs', () => ({
-          readFileSync: jest.fn().mockReturnValue(JSON.stringify({
-            dependencies: { "some-package": "^1.0.0" }
-          })),
+        readerMock.mockReturnValueOnce(JSON.stringify({
+          dependencies: { "some-package": "^1.0.0" }
         }));      
       }
     }
@@ -88,10 +91,8 @@ new RuleTester().run("my-custom-rule", myCustomRule, {
       errors: [{ messageId: "someErrorId" }],
       setup: () => {
         // Mock different `package.json` setup
-        jest.mock('fs', () => ({
-          readFileSync: jest.fn().mockReturnValue(JSON.stringify({
-            devDependencies: { "another-package": "^2.0.0" }
-          })),
+        readerMock.mockReturnValueOnce(JSON.stringify({
+          devDependencies: { "another-package": "^2.0.0" }
         }));
       }
     }
@@ -192,17 +193,20 @@ When the property is not set, `RuleTester` acts the same for existing users — 
 My current workaround is assigning a custom `it` function to the `RuleTester` that looks up the for a mock by test name:
 
 ```javascript
+const readerMock = jest.fn();
+jest.mock('fs', () => ({
+  readFileSync: readerMock
+}));
+
 const mockedEnvironments = {
   "test case one": { dependencies: { "some-package": "^1.0.0" } },
   "test case two": { devDependencies: { "another-package": "^2.0.0" } }
 }
 
 RuleTester.it = (name, ...rest) => {
-  jest.mock('fs', () => ({
-    readFileSync: jest.fn().mockReturnValue(
-      JSON.stringify( mockedEnvironments[name] )
-    ),
-  }));
+  readerMock.mockReturnValue(
+    JSON.stringify( mockedEnvironments[name] )
+  );
   it(name, ...rest);
 };
 
