@@ -199,7 +199,7 @@ If this RFC's new CLI flag or config file entry are enabled with using a legacy 
 Doing so could be beneficial to flag values that become unnecessary in config files over time.
 However, because flat config purely involves spreading objects, there's no way to know what objects originate from shared configs or shared packages.
 
-c339a59bfaec0c48817a012c2f5e92a242a1b1e6 is a reference commit of how this RFC might look with that support added in.
+[c339a5](https://github.com/eslint/rfcs/pull/121/commits/c339a59bfaec0c48817a012c2f5e92a242a1b1e6) is a reference commit of how this RFC might look with that support added in.
 
 An alternative could have been to require users provide metadata along with their shared configs, and/or wrap them in some function provided by ESLint.
 That could be a future requirement opted into ESLint.
