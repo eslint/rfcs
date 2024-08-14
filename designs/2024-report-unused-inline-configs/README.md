@@ -223,10 +223,9 @@ Reporting on unused disable directives could be thought of as a subset of report
 
 An additional direction this RFC could propose would be to have the new unused inline config reporting act as a superset of unused disable directive reporting.
 
-However:
-
-- Deprecating `reportUnusedDisableDirectives` would be a distruptive breaking change
-- This RFC proposes enabling `reportUnusedInlineConfigs` by default in a subsequent major version anyway: most users will not be manually configuring it
+However, deprecating `reportUnusedDisableDirectives` would be a disruptive breaking change.
+This RFC prefers keeping away from larger changes like that.
+A future change in a subsequent major version could take that on separately.
 
 ## Help Needed
 
