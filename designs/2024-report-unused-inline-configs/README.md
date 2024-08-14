@@ -129,15 +129,8 @@ It assumes the `accessor-pairs` default options from [feat: add meta.defaultOpti
 
 ## Detailed Design
 
-Additional logic can be added to the existing code points in `Linter` that validate inline config options:
-
-- [`_verifyWithFlatConfigArrayAndWithoutProcessors`](https://github.com/eslint/eslint/blob/7c78ad9d9f896354d557f24e2d37710cf79a27bf/lib/linter/linter.js#L1650): called in the current ("flat") config system
-- [`getDirectiveComments`](https://github.com/eslint/eslint/blob/7c78ad9d9f896354d557f24e2d37710cf79a27bf/lib/linter/linter.js#L387): called when `ESLINT_USE_FLAT_CONFIG=true`
-
+Additional logic can be added to the existing code points in `Linter` that validate inline config options: [`_verifyWithFlatConfigArrayAndWithoutProcessors`](https://github.com/eslint/eslint/blob/7c78ad9d9f896354d557f24e2d37710cf79a27bf/lib/linter/linter.js#L1636).
 For a rough code reference, see [`poc: reporting unused inline configs`](https://github.com/JoshuaKGoldberg/eslint/commit/e14e404ed93e6238bdee817923a449f5215eecd8).
-
-This proposed design does intentionally not involve any language-specific code changes.
-How a specific language computes its configuration comments is irrelevant to this proposed feature.
 
 ### Computing Option Differences
 
@@ -178,22 +171,39 @@ The new settings will be documented similarly to reporting unused disable direct
 Any added options come with an added tax on project maintenance and user comprehension.
 This RFC believes the flagging of unused inline configs is worth that tax.
 
-See [Omitting Legacy Config Support](#omitting-legacy-config-support) for a possible reduction in cost.
-
 ## Backwards Compatibility Analysis
 
 The proposed two-step approach introduces the options in a fully backwards-compatible way.
 No new warnings or errors will be reported in the current major version without the user explicitly opting into them.
 
+## Out of Scope
+
+### Language-Specific Changes
+
+This proposed design does intentionally not involve any language-specific code changes.
+How a specific language computes its configuration comments is irrelevant to this proposed feature.
+
+### Legacy ("eslintrc") Configs
+
+ESLint v9 is released and flat configs are the default for users.
+The legacy config system will likely be removed in the next major version of ESLint.
+This RFC prefers to avoid the added maintenance cost of supporting the legacy config system.
+
+If this RFC's new CLI flag or config file entry are enabled with using a legacy config, ESLint should throw an error.
+
 ## Alternatives
 
-### Omitting Legacy Config Support
+### Checking Config File Values
 
-One way to reduce costs could be to wait until ESLint completely removes support for legacy configs.
-That way, only the new ("flat") config system would need to be tested with this change.
+[eslint/eslint#15476 Change Request: report unnecessary config overrides](https://github.com/eslint/eslint/issues/15476) previously suggested also checking config files (`eslint.config.*`).
+Doing so could be beneficial to flag values that become unnecessary in config files over time.
+However, because flat config purely involves spreading objects, there's no way to know what objects originate from shared configs or shared packages.
 
-However, it is unclear when the legacy config system will be removed from ESLint core.
-This RFC prefers taking action sooner rather than later.
+c339a59bfaec0c48817a012c2f5e92a242a1b1e6 is a reference commit of how this RFC might look with that support added in.
+
+An alternative could have been to require users provide metadata along with their shared configs, and/or wrap them in some function provided by ESLint.
+That could be a future requirement opted into ESLint.
+It's too late now to add that to the flat config system, and as such is out of scope for this RFC.
 
 ### Separate CLI Option
 
@@ -236,7 +246,7 @@ As of [Change Request: Disallow multiple configuration comments for the same rul
 ## Related Discussions
 
 - <https://github.com/eslint/eslint/issues/18230>: the issue triggering this RFC
-  - <https://github.com/eslint/eslint/issues/15476>: an older issue that #18230 duplicated
+  - <https://github.com/eslint/eslint/issues/15476>: previous issue suggesting reporting unnecessary config overrides
 - <https://github.com/eslint/eslint/issues/15466>: previous issue for enabling `reportUnusedDisableDirectives` config option by default
   - <https://github.com/eslint/rfcs/pull/100>: the RFC discussion flexible config + default reporting of unused disable directives
   - <https://github.com/eslint/eslint/pull/17212>: the PR implementing custom severity when reporting unused disable directives
