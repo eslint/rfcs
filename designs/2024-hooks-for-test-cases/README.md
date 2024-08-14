@@ -128,7 +128,6 @@ The new `setup` property should be formally documented in the following ways:
   - The purpose and use cases of the setup property;
   - How to implement the setup function in test cases;
   - Example demonstrating the usage of the `setup` property for both `valid` and `invalid` test cases;
-- Changelog: Include an entry in the ESLint changelog outlining the new property with a brief description;
 
 ### Announcement
 
