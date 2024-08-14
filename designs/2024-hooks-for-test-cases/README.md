@@ -189,7 +189,7 @@ When the property is not set, `RuleTester` acts the same for existing users — 
     projects have already implemented a similar feature.
 -->
 
-My current workaround is assigning a custom `it` function to the `RuleTester` that looks up the for a mock by test name:
+My current workaround is assigning a custom `it` function to the `RuleTester` that looks up for a mock by test name:
 
 ```javascript
 const readerMock = jest.fn();
