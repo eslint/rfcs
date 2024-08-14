@@ -3,28 +3,26 @@
 - RFC PR: https://github.com/eslint/rfcs/pull/121
 - Authors: [Josh Goldberg](https://github.com/JoshuaKGoldberg)
 
-# Reporting inline configs
+# Reporting unused inline configs
 
 ## Summary
 
-Add an option to report config file `rules` values and inline `/* eslint ... */` config comments that don't change any settings.
+Add an option to report `/* eslint ... */` comments that don't change any settings.
 
 ## Motivation
 
-Right now, nothing in ESLint core stops [config files `rule` entries](https://eslint.org/docs/latest/use/configure/configuration-files#configuring-rules) or [inline configs (configuration comments)](https://eslint.org/docs/latest/use/configure/rules#using-configuration-comments) from redundantly repeating the same configuration _option_ and/or _severity_ as the existing computed configuration.
-Both forms of configuration are undesirable when redundant: they take up space and can be misleading.
+Right now, nothing in ESLint core stops [inline configs (configuration comments)](https://eslint.org/docs/latest/use/configure/rules#using-configuration-comments) from redundantly repeating the same configuration _option_ and/or _severity_ as the file's existing computed configuration.
+Unused inline configs suffer from the same drawbacks as [unused disable directives](https://eslint.org/docs/latest/use/configure/rules#report-unused-eslint-disable-comments): they take up space and can be misleading.
 
 For example:
 
-- [Stackblitz of an `eslint.config.js` setting a rule twice with the same severity](https://stackblitz.com/edit/stackblitz-starters-qcrxqr?file=eslint.config.js)
-- [Stackblitz of an `eslint.config.js` setting a rule twice with the same options](https://stackblitz.com/edit/stackblitz-starters-san7bj?file=eslint.config.js)
-- [Playground of an inline config setting the same severity as the config file](https://eslint.org/play/#eyJ0ZXh0IjoiLyogZXNsaW50IG5vLXVudXNlZC1leHByZXNzaW9uczogXCJlcnJvclwiICovXG5cIuKdjCBkb2VzIG5vdGhpbmc6IGV4aXN0aW5nIHNldmVyaXR5IHZzLiBmaWxlXCJcbiIsIm9wdGlvbnMiOnsicnVsZXMiOnsibm8tdW51c2VkLWV4cHJlc3Npb25zIjpbImVycm9yIl19LCJsYW5ndWFnZU9wdGlvbnMiOnsiZWNtYVZlcnNpb24iOiJsYXRlc3QiLCJzb3VyY2VUeXBlIjoibW9kdWxlIiwicGFyc2VyT3B0aW9ucyI6eyJlY21hRmVhdHVyZXMiOnt9fX19fQ==)
+- [Playground of an inline config setting the same severity as the config file](https://eslint.org/play/#eyJ0ZXh0IjoiLyogZXNsaW50IG5vLXVudXNlZC1leHByZXNzaW9uczogXCJlcnJvclwiICovXG5cIuKdjCBkb2VzIG5vdGhpbmc6IGV4aXN0aW5nIHNldmVyaXR5IHZzLiBmaWxlXCJcbiIsIm9wdGlvbnMiOnsicnVsZXMiOnt9LCJsYW5ndWFnZU9wdGlvbnMiOnsiZWNtYVZlcnNpb24iOiJsYXRlc3QiLCJzb3VyY2VUeXBlIjoibW9kdWxlIiwicGFyc2VyT3B0aW9ucyI6eyJlY21hRmVhdHVyZXMiOnt9fX19fQ==)
 - [Playground of an inline config setting the same options as the config file](https://eslint.org/play/#eyJ0ZXh0IjoiLyogZXNsaW50IG5vLXVudXNlZC1leHByZXNzaW9uczogW1wiZXJyb3JcIiwgeyBcImFsbG93U2hvcnRDaXJjdWl0XCI6IHRydWUgfV0gKi9cblwi4p2MIGRvZXMgbm90aGluZzogZXhpc3Rpbmcgc2V2ZXJpdHkgYW5kIG9wdGlvbnMgdnMuIGZpbGVcIlxuIiwib3B0aW9ucyI6eyJydWxlcyI6eyJuby11bnVzZWQtZXhwcmVzc2lvbnMiOlsiZXJyb3IiLHsiYWxsb3dTaG9ydENpcmN1aXQiOnRydWUsImFsbG93VGVybmFyeSI6ZmFsc2UsImFsbG93VGFnZ2VkVGVtcGxhdGVzIjpmYWxzZSwiZW5mb3JjZUZvckpTWCI6ZmFsc2V9XX0sImxhbmd1YWdlT3B0aW9ucyI6eyJlY21hVmVyc2lvbiI6ImxhdGVzdCIsInNvdXJjZVR5cGUiOiJtb2R1bGUiLCJwYXJzZXJPcHRpb25zIjp7ImVjbWFGZWF0dXJlcyI6e319fX19)
 
-This RFC proposes adding the ability for ESLint to report on both of those kinds of unused configs:
+This RFC proposes adding the ability for ESLint to report on those unused inline configs:
 
-- `--report-unused-configs` CLI option
-- `linterOptions.reportUnusedConfigs` configuration file option
+- `--report-unused-inline-configs` CLI option
+- `linterOptions.reportUnusedInlineConfigs` configuration file option
 
 ```shell
 npx eslint --report-unused-inline-configs error
@@ -33,7 +31,7 @@ npx eslint --report-unused-inline-configs error
 ```js
 {
   linterOptions: {
-    reportUnusedConfigs: "error",
+    reportUnusedInlineConfigs: "error",
   }
 }
 ```
@@ -42,7 +40,7 @@ These new options would be similar to the existing [`--report-unused-disable-dir
 
 ### Examples
 
-The following table uses [`accessor-pairs`](https://eslint.org/docs/latest/rules/accessor-pairs) as an example.
+The following table uses [`accessor-pairs`](https://eslint.org/docs/latest/rules/accessor-pairs) as an example with inline configs like `/* eslint accessor-pairs: "off" */`.
 It assumes the `accessor-pairs` default options from [feat: add meta.defaultOptions](https://github.com/eslint/eslint/pull/17656) of:
 
 ```json
@@ -53,13 +51,11 @@ It assumes the `accessor-pairs` default options from [feat: add meta.defaultOpti
 }
 ```
 
-Values apply both for config files like `rules: { "accessor-pairs": "off" }` and inline configs like `/* eslint accessor-pairs: "off" */`.
-
 <table>
   <thead>
     <tr>
-      <th>First Settings</th>
-      <th>Second Settings</th>
+      <th>Original Config Setting</th>
+      <th>Inline Config Settings</th>
       <th>Report?</th>
     </tr>
   </thead>
@@ -133,55 +129,36 @@ Values apply both for config files like `rules: { "accessor-pairs": "off" }` and
 
 ## Detailed Design
 
-This RFC proposes changing logical entry points only for the current ("flat") config system.
-Legacy ("eslintrc") configs are omitted to reduce maintenance costs.
+Additional logic can be added to the existing code points in `Linter` that validate inline config options:
+
+- [`_verifyWithFlatConfigArrayAndWithoutProcessors`](https://github.com/eslint/eslint/blob/7c78ad9d9f896354d557f24e2d37710cf79a27bf/lib/linter/linter.js#L1650): called in the current ("flat") config system
+- [`getDirectiveComments`](https://github.com/eslint/eslint/blob/7c78ad9d9f896354d557f24e2d37710cf79a27bf/lib/linter/linter.js#L387): called when `ESLINT_USE_FLAT_CONFIG=true`
+
+For a rough code reference, see [`poc: reporting unused inline configs`](https://github.com/JoshuaKGoldberg/eslint/commit/e14e404ed93e6238bdee817923a449f5215eecd8).
 
 This proposed design does intentionally not involve any language-specific code changes.
 How a specific language computes its configuration comments is irrelevant to this proposed feature.
 
-### Glossary
-
-For the sake of specificity, the following terms are used intentionally:
-
-- **Options**: The options passed to a rule, as described by its `meta.schema`
-- **Setting**: A configuration entry specifying a rule name, its severity, and optionally its _options_
-- **Config file entry**: In an `eslint.config.js` file `rules` object, a key-value pair representing a single rule's _settings_
-- **Inline config**: In a source file, a comment representing a single rule's _settings_
-
-### Logic Entry Points
-
-For rough code references, see:
-
-- Config file entries: _(todo)_
-- Inline config comments: [`poc: reporting unused inline configs`](https://github.com/JoshuaKGoldberg/eslint/commit/e14e404ed93e6238bdee817923a449f5215eecd8)
-
-
 ### Computing Option Differences
 
-Each setting will be compared against the existing configuration value(s) it attempts to override:
+Each inline config comment will be compared against the existing configuration value(s) it attempts to override:
 
-- If the setting only specifies a severity, then only the severity will be checked for redundancy
+- If the config comment only specifies a severity, then only the severity will be checked for redundancy
   - The new logic will normalize options: `"off"` will be considered equivalent to `0`
-- If the setting also specifies rule options, they will be compared for deep equality to the existing rule options
+- If the config comment also specifies rule options, they will be compared for deep equality to the existing rule options
 
 This RFC should wait to begin work until after [feat: add meta.defaultOptions](https://github.com/eslint/eslint/pull/17656) is merged into ESLint.
-That way, a rule's `meta.defaultOptions` can be factored into computing whether an setting's rule options differ from the previously configured options.
-
-### Config Files
-
-Only configs in the user's code will be checked.
-Third-party shareable configs will not be validated.
-
-For config files, that means only `rules` entries in the user's specified config file will be checked.
+That way, a rule's `meta.defaultOptions` can be factored into computing whether an inline config's rule options differ from the previously configured options.
 
 ### Default Values
 
-This RFC proposes a two-step approach to introducing unused config reporting:
+This RFC proposes a two-step approach to introducing unused inline config reporting:
 
-1. In the current major version upon introduction, don't enable unused config reporting by default
-2. In the next major version, enable unused config reporting by default
+1. In the current major version upon introduction, don't enable unused inline config reporting by default
+2. In the next major version, enable unused inline config reporting by default
 
-Note that the default value in the next major version should be the same as reporting unused disable directives, `"warn"`.
+Note that the default value in the next major version should be the same as reporting unused disable directives.
+See [Change Request: error by default for unused disable directives](https://github.com/eslint/eslint/issues/18665) for an issue on changing that from `"warn"` to `"error"`.
 
 ## Documentation
 
@@ -209,10 +186,6 @@ The proposed two-step approach introduces the options in a fully backwards-compa
 No new warnings or errors will be reported in the current major version without the user explicitly opting into them.
 
 ## Alternatives
-
-### Deferring to the Config Inspector
-
-TODO
 
 ### Omitting Legacy Config Support
 
@@ -243,7 +216,7 @@ An additional direction this RFC could propose would be to have the new unused i
 However:
 
 - Deprecating `reportUnusedDisableDirectives` would be a distruptive breaking change
-- This RFC proposes enabling `reportUnusedConfigs` by default in a subsequent major version anyway: most users will not be manually configuring it
+- This RFC proposes enabling `reportUnusedInlineConfigs` by default in a subsequent major version anyway: most users will not be manually configuring it
 
 ## Help Needed
 
@@ -262,8 +235,8 @@ As of [Change Request: Disallow multiple configuration comments for the same rul
 
 ## Related Discussions
 
-- <https://github.com/eslint/eslint/issues/15476>: issue suggesting to report on unused config file comments
-- <https://github.com/eslint/eslint/issues/18230>: issue suggesting to report on unused inline config comments
+- <https://github.com/eslint/eslint/issues/18230>: the issue triggering this RFC
+  - <https://github.com/eslint/eslint/issues/15476>: an older issue that #18230 duplicated
 - <https://github.com/eslint/eslint/issues/15466>: previous issue for enabling `reportUnusedDisableDirectives` config option by default
   - <https://github.com/eslint/rfcs/pull/100>: the RFC discussion flexible config + default reporting of unused disable directives
   - <https://github.com/eslint/eslint/pull/17212>: the PR implementing custom severity when reporting unused disable directives
