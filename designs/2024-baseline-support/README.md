@@ -100,16 +100,19 @@ To perform the comparison, we will go through each result and message from `ESLi
 Here is a high-level overview of the execution flow:
 
 1. **Check for Options**
-    * If both `--suppress-all` and `--suppress-rule` are passed, exit with an error (these options are mutually exclusive).
-    * If either option is passed, update the suppressions file based on the `results`.
-    * If no option is passed, check if the suppressions file exists, considering `--suppressions-location`.
+  * If both `--suppress-all` and `--suppress-rule` are passed, exit with an error (these options are mutually exclusive).
+  * If either option is passed, update the suppressions file based on the `results`.
+  * If no option is passed, check if the suppressions file exists, considering `--suppressions-location`.
 2. **Match Errors Against Suppressions**
-    * For each error, check if it and the file are in the suppressions file.
-   * If yes, decrease count by 1 and ignore the error unless count is zero.
-   * If no, keep the error.
-3. **Report and exit**
-    * Exit with a non-zero status if there are unmatched violations, optionally listing them in verbose mode.
-    * Otherwise, list remaining errors as usual.
+  * For each error, check if the error and the file are in the suppressions file.
+  * If yes, decrease count, in memory, by 1 and ignore the error unless count is zero.
+  * If no, keep the error.
+3. **Prune unmatched suppressions**
+  * If `--prune-suppressions` is passed, take the updated suppressions from memory to check which suppressions are left.
+  * For each suppression left, update the suppressions file by either reducing the count or removing the suppression.
+4. **Report and exit**
+  * Exit with a non-zero status if there are unmatched violations, optionally listing them in verbose mode.
+  * Otherwise, list remaining errors as usual.
 
 Note that the error detection in `cli.js` occurs before the error counting. This allow us to update the suppressions file and modify the errors, before it is time to count errors. Please refer to the last example of the "Implementation notes" for more details.
 
@@ -171,8 +174,13 @@ class SuppressedViolationsManager {
 
     /**
      * Checks the provided suppressions against the lint results.
-     * It filters and returns the lint results that are not in the suppressions file.
-     * It also returns the unmatched suppressions.
+     * 
+     * For each error included in `results`, checks if the error and the file are in `suppressions`.
+     *  If yes, the count is decreased by 1 and ignores the error unless the count has reached zero. 
+     * Otherwise, it keeps the error.
+     * 
+     * It returns the lint results that are not in the suppressions file,
+     * as well as the unmatched suppressions.
      * 
      * @param {LintResult[]} results The lint results.
      * @param {SuppressedViolations} suppressions The suppressions.
