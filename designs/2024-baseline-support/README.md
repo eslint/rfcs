@@ -67,7 +67,7 @@ eslint --suppress-rule '@typescript-eslint/no-explicit-any' --suppress-rul '@typ
 
 ### Changing the location of the suppressions file
 
-A new option `--suppression-location` will be introduced to ESLint CLI. When provided, the suppressions file will be loaded and saved to the provided location. Note that this is a string flag option (value is required).
+A new option `--suppressions-location` will be introduced to ESLint CLI. When provided, the suppressions file will be loaded and saved to the provided location. Note that this is a string flag option (value is required).
 
 ``` bash
 eslint --suppress-all --suppressions-location /home/user/project/mycache ./src
