@@ -300,7 +300,7 @@ Also, users can too easily ignore the new errors, so in a way, the rule is enabl
 
 ### Using disable comments
 
-One can use disable comments to temporarily suppress errors, by adding a comment like `// eslint-disable rule-name  -- FIX THIS LATER`
+One can use disable comments to temporarily suppress errors, by adding a comment like `/* eslint-disable rule-name -- FIX THIS LATER */`
 
 "Disable comments" can be used to enable a rule as an error early, by adding them everywhere where an error is currently reported (and that is actually something that can be automated by some linters).
 
