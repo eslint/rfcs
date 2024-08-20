@@ -142,7 +142,7 @@ Each inline config comment will be compared against the existing configuration v
 - If the config comment also specifies rule options, they will be compared for deep equality to the existing rule options
 
 This RFC should wait to begin work until after [feat: add meta.defaultOptions](https://github.com/eslint/eslint/pull/17656) is merged into ESLint.
-That way, a rule's `meta.defaultOptions` can be factored into computing whether an inline config's rule options differ from the previously configured options.
+That way, if a rule defines `meta.defaultOptions`, those default options can be factored into computing whether an inline config's rule options differ from the previously configured options.
 
 ### Default Values
 
@@ -223,7 +223,7 @@ Reporting on unused disable directives could be thought of as a subset of report
 
 An additional direction this RFC could propose would be to have the new unused inline config reporting act as a superset of unused disable directive reporting.
 
-However, deprecating `reportUnusedDisableDirectives` would be a disruptive breaking change.
+However, deprecating `reportUnusedDisableDirectives` would be a disruptive change and eventual disruptive breaking change.
 This RFC prefers keeping away from larger changes like that.
 A future change in a subsequent major version could take that on separately.
 
