@@ -177,6 +177,11 @@ This RFC believes the flagging of unused inline configs is worth that tax.
 The proposed two-step approach introduces the options in a fully backwards-compatible way.
 No new warnings or errors will be reported in the current major version without the user explicitly opting into them.
 
+## Performance Analysis
+
+This RFC believes there will be no nontrivial performance impact from this change.
+All rule lookups from inline comments are O(1) compared to the existing computed rules for a file.
+
 ## Out of Scope
 
 ### Language-Specific Changes
@@ -201,6 +206,8 @@ Doing so could be beneficial to flag values that become unnecessary in config fi
 However, because flat config purely involves spreading objects, there's no way to know what objects originate from shared configs or shared packages.
 
 [c339a5](https://github.com/eslint/rfcs/pull/121/commits/c339a59bfaec0c48817a012c2f5e92a242a1b1e6) is a reference commit of how this RFC might look with that support added in.
+
+Instead, this RFC suggests that the [config inspector](https://github.com/eslint/config-inspector) would be a more natural place to see these conflicts.
 
 An alternative could have been to require users provide metadata along with their shared configs, and/or wrap them in some function provided by ESLint.
 That could be a future requirement opted into ESLint.
