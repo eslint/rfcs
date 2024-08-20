@@ -180,7 +180,8 @@ No new warnings or errors will be reported in the current major version without 
 ## Performance Analysis
 
 This RFC believes there will be no nontrivial performance impact from this change.
-All rule lookups from inline comments are O(1) compared to the existing computed rules for a file.
+All rule lookups from inline configs are O(1) compared to the existing computed rules for a file.
+It's rare in userland code to have more than a single digit number of inline configs in any file.
 
 ## Out of Scope
 
