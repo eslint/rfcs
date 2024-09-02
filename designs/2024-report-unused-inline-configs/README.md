@@ -141,6 +141,9 @@ Each inline config comment will be compared against the existing configuration v
   - The new logic will normalize options: `"off"` will be considered equivalent to `0`
 - If the config comment also specifies rule options, they will be compared for deep equality to the existing rule options
 
+There will be a report if both the severity and rule options are the same.
+If there is a difference in the severity and/or rule options, then there will be no report.
+
 This RFC should wait to begin work until after [feat: add meta.defaultOptions](https://github.com/eslint/eslint/pull/17656) is merged into ESLint.
 That way, if a rule defines `meta.defaultOptions`, those default options can be factored into computing whether an inline config's rule options differ from the previously configured options.
 
