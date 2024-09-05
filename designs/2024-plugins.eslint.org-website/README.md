@@ -1,6 +1,6 @@
 - Repo: [`eslint/json`](https://github.com/eslint/json), [`eslint/markdown`](https://github.com/eslint/markdown)
 - Start Date: 2024-08-29 (TBU)
-- RFC PR: 
+- RFC PR: https://github.com/eslint/rfcs/pull/123
 - Authors: Francesco Trotta
 
 # plugins.eslint.org Website
@@ -44,14 +44,17 @@ It is unclear how this will work given that two repos are involved.
 `eslint` and `eslint.org` use Eleventy to generate web pages from markdown files and other metadata.
 The new website could use Eleventy or another similar tool.
 Any tool will require a specific configuration that will be kept in the repos along with the documentation pages and other assets for website.
+The tooling to build the website pages from the source files will be probably the same.
+Instead of duplicating those tools between the two repos, it may be easier to keep them in a single repo (_which one?_).
 
 A TSC member will have to create and configure a new site in Netlify.
 This site will serve the domain plugins.eslint.org.
 If possible, the site should be linked to both GitHub repos [`eslint/json`](https://github.com/eslint/json) and [`eslint/markdown`](https://github.com/eslint/markdown).
 If not, we will need to think about it.
 The intent is to be able to update the site to automatically from both repos on a specific trigger.
+Ideally, it should be possible to specify the URLs and metadata of the repos to include in a central configuration.
 
-It may be also necessary to create a new token for Netlify to fetch data from the repos (I do not know if the current token is automatically enabled to access the new repos or not).
+It may be also necessary to create a new token for Netlify to fetch data from the repos (_I do not know if the current token is automatically enabled to access the new repos or not_).
 
 **TODO:**
 * collect suggestions and elaborate
@@ -65,6 +68,10 @@ It may be also necessary to create a new token for Netlify to fetch data from th
 -->
 
 It would be good to announce the new website on the usual channels when it's ready (ESLint blog, X aka Twitter, Mastodon, Discord).
+
+`eslint/json` and `eslint/markdown` are mentioned in several places in the ESLint documentation, with links pointing to the GitHub repos of the projects or to the pages of their npm packages.
+Those links could be modified so that they point to pages in the new documentation website.
+Doing this would add visibility to the website and provide a better user experience.
 
 ## Drawbacks
 
@@ -119,6 +126,7 @@ Not relevant for this proposal.
 * What changes to the infrastructure (not code changes) will be necessary? For example:
   * Configure a new site in Netlify
   * Create new GitHub tokens for the website to fetch data from the repos
+  * Register the site URL on search engines
   * …
 * What content will be shown on the main page?
 * When will the website be updated? Common options would be during a release, when the main branch is updated, or using a manual trigger.
