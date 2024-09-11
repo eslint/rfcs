@@ -110,7 +110,8 @@ new RuleTester().run("my-custom-rule", myCustomRule, {
 
 ### Corner Cases
 
-- `before` throws `Error`: then the test case should fail, and the error should be reported;
+- `before` or `after` throws `Error`: then the test case should fail, and the error should be reported;
+- `after` should be executed even when `before` throws in order to minimize potential impact on other test cases;
 - Developer must ensure that the `before` function does not inadvertently affect global state in a way that impacts
   other test cases.
 
