@@ -57,6 +57,8 @@ type RuleMeta = {
 type DeprecateInfo = {
   info?: Message
   replacedBy?: (string|ReplacedByInfo)[] // An empty array explicitly states that there is no replacement
+  deprecatedSince?: Version // Helps users gauge when to migrate and useful for documentation
+  availableUntil?: Version | null // The estimated version when the rule is removed (probably the next major version). null means the rule is "frozen" (will be available but will not be changed)
 }
 
 /* At least one property is required */
@@ -65,8 +67,6 @@ type ReplacedByInfo = {
   rule?: string | Specifier
   info?: string | Message
   kind?: ReplacementKind // Defaults to "moved" if missing
-  deprecatedSince?: Version // Helps users gauge when to migrate and useful for documentation
-  availableUntil?: Version | null // The estimated version when the rule is removed (probably the next major version). null means the rule is "frozen" (will be available but will not be changed)
 }
 
 type Message = {
