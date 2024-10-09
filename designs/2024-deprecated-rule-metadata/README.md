@@ -46,7 +46,6 @@ We propose to extend `meta.deprecated` rule property schemas to reduce ambiguity
 type RuleMeta = {
   deprecated?:
     | boolean // Existing boolean option, backwards compatible.
-    | string // Shorthand property for general deprecation message, such as why the deprecation occurred. Empty strings are forbidden as they are falsy.
     | DeprecatedInfo // Proposed extension
 
   /** @deprecated */
@@ -63,20 +62,20 @@ type DeprecateInfo = {
 
 /* At least one property is required */
 type ReplacedByInfo = {
-  plugin?: string | Specifier // name should be "eslint" if the replacemenet is an ESLint core rule. Omit the property if the replacement is in the same plugin
-  rule?: string | Specifier
-  info?: string | Message
+  plugin?: Specifier // name should be "eslint" if the replacemenet is an ESLint core rule. Omit the property if the replacement is in the same plugin
+  rule?: Specifier
+  info?: Message
   kind?: ReplacementKind // Defaults to "moved" if missing
 }
 
 type Message = {
-  message: string // General message presented to the user. Content depends on the property (e.g. for the key rule why the rule is deprecated or for info how to replace the rule)
-  url:            // URL to more information about this deprecation in general.
+  message?: string // General message presented to the user. Content depends on the property (e.g. for the key rule why the rule is deprecated or for info how to replace the rule)
+  url?:            // URL to more information about this deprecation in general.
 }
 
 type Specifier = {
-  name: string // Name of the rule / configuration / ...
-  url: string // URL to more information about this deprecation in general.
+  name?: string // Name of the rule / configuration / ...
+  url?: string // URL to more information about this deprecation in general.
 }
 
 type ReplacementKind =
@@ -124,17 +123,6 @@ This data could be used by documentation websites and tooling like [eslint-doc-g
 > Stylistic rules are being moved out of ESLint core. [Read more](https://eslint.org/blog/2023/10/deprecating-formatting-rules/).
 
 We can also support the same `meta.deprecated` and `meta.replacedBy` properties on configurations and processors (the other kinds of objects exported by ESLint plugins), replacing `rule` with `config` or `processor` as needed. This would be part of the effort to standardize documentation properties in <https://github.com/eslint/eslint/issues/17842>.
-
-### Shorthand
-The shorthand for the properties `plugin`, `rule` and `info` is just a string representing either the `name`/`message` or the `url` based on its content.
-If it starts with a protocol (e.g. `https://`) the property should be interpreted as if only the `url` property is set, otherwise it should be interpreted as `name`/`message` property.
-This shorthand also applies for the existing `meta.deprecated` which then applies for the `meta.deprecated.info` properties.
-Some examples:
-```js
-{ meta: { deprecated: { plugin: 'https://eslint.style' } } }   // <=> { meta: { deprecated: { plugin: { url: 'https://eslint.style' } } } }
-{ meta: { deprecated: { plugin: '@eslint-stylistic/js' } } }   // <=> { meta: { deprecated: { plugin: { name: '@eslint-stylistic/js' } } } }
-{ meta: { deprecated: 'https://eslint.style/guide/migration' } // <=> { meta: { deprecated: { info: { url: 'https://eslint.style/guide/migration' } } } }
-```
 
 ### Changes
 In terms of actual changes inside ESLint needed for this:
@@ -232,10 +220,8 @@ Create a new property, e.g. `meta.deprecation`,
 
 1. Is there additional deprecation information we'd like to represent? Note that additional information can always be added later, but it's good to consider any possible needs now.
 2. Should `meta.deprecated.plugin.id` accommodate different package registries (e.g. [jsr](https://jsr.io/) with `jsr:eslint-plugin-example`)
-3. Should the exact regular expression for the shorthand which decides whether it is a description or URL be specified?
-4. Should the shorthand also be applied for the string form of the `meta.deprecated` property?
-5. Which "extension points" (rules, processors, configurations, parsers, formatters) shold be supported?
-6. Should the `rule` key be dependent on the "extension point" (e.g. `processor` for processors) or renamed (e.g. ``) so that it is the same property name for all?
+3. Which "extension points" (rules, processors, configurations, parsers, formatters) shold be supported?
+4. Should the `rule` key be dependent on the "extension point" (e.g. `processor` for processors) or renamed (e.g. ``) so that it is the same property name for all?
 
 ## Help Needed
 
