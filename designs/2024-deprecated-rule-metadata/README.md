@@ -70,7 +70,7 @@ type ReplacedByInfo = {
 
 type Message = {
   message?: string // General message presented to the user. Content depends on the property (e.g. for the key rule why the rule is deprecated or for info how to replace the rule)
-  url?:            // URL to more information about this deprecation in general.
+  url?: string     // URL to more information about this deprecation in general.
 }
 
 type Specifier = {
