@@ -53,6 +53,8 @@ export default [
 ]
 ```
 
+The fix should still exist as a suggestion. Only autofixing (when running `eslint --fix` or editor action on save) should be disabled.
+
 I think that disabling autofixes for a rule that doesn't have any or doesn't exist should be a no-op. Just like disabling a rule that doesn't exist. The reasoning being that this allows much more flexible shareable configurations.
 It's still an open question whether *enabling* autofixes for a rule that doesn't exist should warn, error or be silent.
 
@@ -121,7 +123,6 @@ Another approach I can think of is to encode that in the rule config itself. Som
     you can remove this section.
 -->
 - Where exactly should the documentation go ?
-- Should the value be more than a boolean ? (for example if we want to affect offering suggestions in editors)
 - What should the key for the new configuration be ?
 - What happens if we mark a rule as "should be autofixed" but there's no fix available? Warn? Silently ignore?
 - Whether *enabling* autofixes for a rule that doesn't exist should warn, error or be silent.
