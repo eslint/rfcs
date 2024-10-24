@@ -145,6 +145,9 @@ So I unfortunately don't think I can implement this feature myself, due to both 
     in this section.
 -->
 
+Q: Could `disableAutofixes` be an array of autofixes to disable?
+A: `disableAutofixes` is a record to allow re-enabling autofixes in downstream configurations and on a per-file basis. We could allow a shorthand to `disableAutofixes` to accept an array of rules to disable the autofix for, but that would result in additional complexity on the implementation side with marginal benefits to the user.
+
 ## Related Discussions
 
 <!--
