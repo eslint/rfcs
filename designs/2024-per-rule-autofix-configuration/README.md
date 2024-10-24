@@ -28,35 +28,34 @@ Unsafe autofixes should be suggestions, and broken fixes should be reported, *bu
    used. Be sure to define any new terms in this section.
 -->
 
-Similar to how Ruff (<https://docs.astral.sh/ruff/settings/#lint_unfixable>) does it, a top-level key to specify which rules to not autofix would be in my opinion the least disruptive and forward/backwards compatible. It should be overridable (in the `overrides` section), and picked up when extending a configuration.
+Similar to how Ruff (<https://docs.astral.sh/ruff/settings/#lint_unfixable>) does it, a top-level key to specify which rules to not autofix would be in my opinion the least disruptive and forward/backwards compatible. It should be overridable in per-file configurations, and picked up when extending a configuration.
 
 Concretely, it could look like this:
 
 ```js
 export default [
   {
-    autofixes: {
+    disableAutofixes: {
       // We don't want this to autofix, as a rule suddenly not failing should require human attention
-      "@eslint-community/eslint-comments/no-unused-disable": false,
+      "@eslint-community/eslint-comments/no-unused-disable": true,
     },
     rules: {
       '@eslint-community/eslint-comments/no-unused-disable': 'error',
     }
-    overrides: [
-      files: ["*.spec.js"],
-      autofixes: {
-        // Let's pretend we want this to be autofixed in tests, for the sake of the RFC
-        "@eslint-community/eslint-comments/no-unused-disable": true,
-      },
-    ]
-  }
+  },
+  {
+    files: ["*.spec.js"],
+    disableAutofixes: {
+      // Let's pretend we want this to be autofixed in tests, for the sake of the RFC
+      "@eslint-community/eslint-comments/no-unused-disable": false,
+    },
+  },
 ]
 ```
 
 The fix should still exist as a suggestion. Only autofixing (when running `eslint --fix` or editor action on save) should be disabled.
 
-I think that disabling autofixes for a rule that doesn't have any or doesn't exist should be a no-op. Just like disabling a rule that doesn't exist. The reasoning being that this allows much more flexible shareable configurations.
-It's still an open question whether *enabling* autofixes for a rule that doesn't exist should warn, error or be silent.
+The chosen key name `disableAutofixes` aims to remove the concern about "turning on" an autofix that doesn't exist. Disabling autofixes for a rule that doesn't have any or doesn't exist should be a no-op. Just like turning `off` a rule that doesn't exist. The reasoning being that this allows much more flexible shareable configurations.
 
 ## Documentation
 
@@ -123,9 +122,6 @@ Another approach I can think of is to encode that in the rule config itself. Som
     you can remove this section.
 -->
 - Where exactly should the documentation go ?
-- What should the key for the new configuration be ?
-- What happens if we mark a rule as "should be autofixed" but there's no fix available? Warn? Silently ignore?
-- Whether *enabling* autofixes for a rule that doesn't exist should warn, error or be silent.
 
 ## Help Needed
 
@@ -157,4 +153,6 @@ So I unfortunately don't think I can implement this feature myself, due to both 
     If there is an issue, pull request, or other URL that provides useful
     context for this proposal, please include those links here.
 -->
-<https://github.com/eslint/eslint/issues/18696>
+- <https://github.com/eslint/eslint/issues/18696>
+- <https://github.com/aladdin-add/eslint-plugin/issues/98>
+- <https://github.com/eslint-community/eslint-plugin-eslint-comments/issues/234>
