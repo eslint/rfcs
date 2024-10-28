@@ -40,7 +40,8 @@ But there are some limitations to this current format:
    used. Be sure to define any new terms in this section.
 -->
 
-We propose to extend `meta.deprecated` rule property schemas to reduce ambiguity and allow additional key details to be represented, described below using TypeScript types for clarity:
+We propose to extend `meta.deprecated` rule property schemas to reduce ambiguity and allow additional key details to be represented.
+Plugin developers are free to add additional properties (e.g. a link to the original GitHub PR).
 
 ```ts
 type RuleMeta = {
@@ -53,8 +54,9 @@ type RuleMeta = {
 };
 
 /* At least one property is required */
-type DeprecateInfo = {
-  info?: Message
+type DeprecatedInfo = {
+  message?: string // General message presented to the user, e.g. for the key rule why the rule is deprecated or for info how to replace the rule
+  url?: string     // URL to more information about this deprecation in general
   replacedBy?: (string|ReplacedByInfo)[] // An empty array explicitly states that there is no replacement
   deprecatedSince?: Version // Helps users gauge when to migrate and useful for documentation
   availableUntil?: Version | null // The estimated version when the rule is removed (probably the next major version). null means the rule is "frozen" (will be available but will not be changed)
@@ -62,15 +64,10 @@ type DeprecateInfo = {
 
 /* At least one property is required */
 type ReplacedByInfo = {
+  message?: string // General message presented to the user, e.g. how to replace the rule
+  url?: string     // URL to more information about this replacmenet in general
   plugin?: Specifier // name should be "eslint" if the replacemenet is an ESLint core rule. Omit the property if the replacement is in the same plugin
   rule?: Specifier
-  info?: Message
-  kind?: ReplacementKind // Defaults to "moved" if missing
-}
-
-type Message = {
-  message?: string // General message presented to the user. Content depends on the property (e.g. for the key rule why the rule is deprecated or for info how to replace the rule)
-  url?: string     // URL to more information about this deprecation in general.
 }
 
 type Specifier = {
@@ -78,12 +75,7 @@ type Specifier = {
   url?: string // URL to more information about this deprecation in general.
 }
 
-type ReplacementKind =
-  'moved' |  // The rule has moved to another plugin if plugin is set, otherwise the rule is renamed in the same plugin
-  'merged' | // The rule merged with another rule
-  'option'   // The current rule behavior is available as an option in the replacement rule
-
-/* Version string of the package containing the rule */
+/* Version string of the package containing the rule (without a leading v and using the full semver, e.g. 8.53.0) */
 type Version = string
 ```
 
@@ -104,9 +96,7 @@ module.exports = {
         {
           plugin: {
           name: '@stylistic/js',
-          url: 'https://eslint.style/',
-        },
-        rule: 'https://eslint.style/rules/js/semi',
+          url: 'https://eslint.style/rules/js/semi',
         },
       ],
     },
@@ -128,14 +118,14 @@ We can also support the same `meta.deprecated` and `meta.replacedBy` properties 
 In terms of actual changes inside ESLint needed for this:
 
 - Mention the new schema in the [custom rule documentation](https://eslint.org/docs/latest/extend/custom-rules#rule-structure)
-- Ensure these properties are allowed on configurations, parsers and processors
+- Ensure these properties are allowed on all extension points (configurations, formatter, parsers and processors)
 - Add any additional information to these properties in core rules as desired (such as in <https://github.com/eslint/eslint/issues/18053>)
 - Update ESLint's website generator to take into account the additional information for rule doc deprecation notices
-- Update [LintResult.usedDeprecatedRules](https://github.com/eslint/eslint/blob/0f5df509a4bc00cff2c62b90fab184bdf0231322/lib/eslint/eslint.js#L197-L211)
+- Update [LintResult.usedDeprecatedRules](https://github.com/eslint/eslint/blob/0f5df509a4bc00cff2c62b90fab184bdf0231322/lib/eslint/eslint.js#L197-L211) by normalizing the old and new format for the existing `replacedBy` property and adding a new property with the name `info` for rules using the new deprecated format
 
 External changes:
 
-- Update the [types](https://github.com/DefinitelyTyped/DefinitelyTyped/blob/b77d83e019025017b06953907cb77f35e4231714/types/eslint/index.d.ts#L734) in @types/eslint
+- Update the [types](https://github.com/eslint/eslint/blob/35a8858d62cb050fa0b56702e55c94ffaaf6956d/lib/types/index.d.ts#L745) in eslint
 - Update the [types](https://github.com/typescript-eslint/typescript-eslint/blob/82cb9dd580f62644ed988fd2bf27f519177a60bd/packages/utils/src/ts-eslint/Rule.ts#L70) in @typescript-eslint/eslint
 - Update eslint-doc-generator to handle the new information: <https://github.com/bmish/eslint-doc-generator/issues/512>
 - Update the metadata for the most common plugins
@@ -219,7 +209,8 @@ Create a new property, e.g. `meta.deprecation`,
 -->
 
 1. Is there additional deprecation information we'd like to represent? Note that additional information can always be added later, but it's good to consider any possible needs now.
-2. Should `meta.deprecated.plugin.id` accommodate different package registries (e.g. [jsr](https://jsr.io/) with `jsr:eslint-plugin-example`)
+2. Should `meta.deprecated.plugin.name` accommodate different package registries (e.g. [jsr](https://jsr.io/) with `jsr:eslint-plugin-example`)
+  - If it is a concern, plugin developers can use a direct URL
 3. Which "extension points" (rules, processors, configurations, parsers, formatters) shold be supported?
 4. Should the `rule` key be dependent on the "extension point" (e.g. `processor` for processors) or renamed (e.g. ``) so that it is the same property name for all?
 
