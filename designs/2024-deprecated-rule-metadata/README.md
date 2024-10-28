@@ -65,14 +65,14 @@ type DeprecatedInfo = {
 /* At least one property is required */
 type ReplacedByInfo = {
   message?: string // General message presented to the user, e.g. how to replace the rule
-  url?: string     // URL to more information about this replacmenet in general
+  url?: string     // URL to more information about this replacement in general
   plugin?: Specifier // name should be "eslint" if the replacemenet is an ESLint core rule. Omit the property if the replacement is in the same plugin
   rule?: Specifier
 }
 
 type Specifier = {
-  name?: string // Name of the rule / configuration / ...
-  url?: string // URL to more information about this deprecation in general.
+  name?: string // Name of the plugin / rule / ...
+  url?: string  // URL to documentation for the plugin / rule
 }
 
 /* Version string of the package containing the rule (without a leading v and using the full semver, e.g. 8.53.0) */
