@@ -57,7 +57,7 @@ type RuleMeta = {
 type DeprecatedInfo = {
   message?: string // General message presented to the user, e.g. for the key rule why the rule is deprecated or for info how to replace the rule
   url?: string     // URL to more information about this deprecation in general
-  replacedBy?: (string|ReplacedByInfo)[] // An empty array explicitly states that there is no replacement
+  replacedBy?: ReplacedByInfo[] // An empty array explicitly states that there is no replacement
   deprecatedSince?: Version // Helps users gauge when to migrate and useful for documentation
   availableUntil?: Version | null // The estimated version when the rule is removed (probably the next major version). null means the rule is "frozen" (will be available but will not be changed)
 }
@@ -96,7 +96,11 @@ module.exports = {
         {
           plugin: {
           name: '@stylistic/js',
-          url: 'https://eslint.style/rules/js/semi',
+          url: 'https://eslint.style/',
+          rule: {
+            name: 'semi',
+            url: 'https://eslint.style/rules/js/semi'
+          }
         },
       ],
     },
@@ -122,10 +126,10 @@ In terms of actual changes inside ESLint needed for this:
 - Add any additional information to these properties in core rules as desired (such as in <https://github.com/eslint/eslint/issues/18053>)
 - Update ESLint's website generator to take into account the additional information for rule doc deprecation notices
 - Update [LintResult.usedDeprecatedRules](https://github.com/eslint/eslint/blob/0f5df509a4bc00cff2c62b90fab184bdf0231322/lib/eslint/eslint.js#L197-L211) by normalizing the old and new format for the existing `replacedBy` property and adding a new property with the name `info` for rules using the new deprecated format
+- Update the [types](https://github.com/eslint/eslint/blob/35a8858d62cb050fa0b56702e55c94ffaaf6956d/lib/types/index.d.ts#L745) in eslint
 
 External changes:
 
-- Update the [types](https://github.com/eslint/eslint/blob/35a8858d62cb050fa0b56702e55c94ffaaf6956d/lib/types/index.d.ts#L745) in eslint
 - Update the [types](https://github.com/typescript-eslint/typescript-eslint/blob/82cb9dd580f62644ed988fd2bf27f519177a60bd/packages/utils/src/ts-eslint/Rule.ts#L70) in @typescript-eslint/eslint
 - Update eslint-doc-generator to handle the new information: <https://github.com/bmish/eslint-doc-generator/issues/512>
 - Update the metadata for the most common plugins
