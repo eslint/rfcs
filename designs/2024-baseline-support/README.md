@@ -95,7 +95,7 @@ eslint --prune-suppressions --suppressions-location /home/user/project/mycache .
 
 The suggested solution always compares against the existing suppressions file, typically `.eslint-suppressions.json`, unless `--suppressions-location` is specified.  This makes it easier for existing and new projects to adopt this feature without the need to adjust scripts in `package.json` and CI/CD workflows. 
 
-To perform the comparison, we will go through each result and message from `ESLint.lintFiles`, checking each error `(severity == 2)` against the suppressions file. By design, we ignore warnings since they don't cause eslint to exit with an error code and serve a different purpose. If the file and rule are listed in the suppressions file, we can remove and ignore the result message.
+To perform the comparison, we will go through each result and message from `ESLint.lintFiles`, checking each error `(severity == 2)` against the suppressions file. By design, we ignore warnings since they don't cause eslint to exit with an error code and serve a different purpose. If the file and rule are listed in the suppressions file, we can move the message to `LintResult#suppressedMessages` and ignore the result message.
 
 Here is a high-level overview of the execution flow:
 
@@ -105,7 +105,7 @@ Here is a high-level overview of the execution flow:
   * If no option is passed, check if the suppressions file exists, considering `--suppressions-location`.
 2. **Match Errors Against Suppressions**
   * For each error, check if the error and the file are in the suppressions file.
-  * If yes, decrease count, in memory, by 1 and ignore the error unless count is zero.
+  * If yes, decrease count, in memory, by 1 and move the message to `LintResult#suppressedMessages` unless count is zero.
   * If no, keep the error.
 3. **Prune unmatched suppressions**
   * If `--prune-suppressions` is passed, take the updated suppressions from memory to check which suppressions are left.
@@ -176,10 +176,12 @@ class SuppressedViolationsManager {
      * Checks the provided suppressions against the lint results.
      * 
      * For each error included in `results`, checks if the error and the file are in `suppressions`.
-     *  If yes, the count is decreased by 1 and ignores the error unless the count has reached zero. 
+     *  If yes, the count is decreased by 1 and moves the error to `LintResult#suppressedMessages` unless the count has reached zero. 
      * Otherwise, it keeps the error.
      * 
-     * It returns the lint results that are not in the suppressions file,
+     * It returns the lint result, with:
+     *  LintResult#messages indicating all the errors that are not in the suppressions file,
+     *  LintResult#suppressedMessages indicating all the matched errors from the suppressions file,
      * as well as the unmatched suppressions.
      * 
      * @param {LintResult[]} results The lint results.
