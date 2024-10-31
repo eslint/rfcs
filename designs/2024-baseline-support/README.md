@@ -62,7 +62,7 @@ eslint --suppress-all ./src
 A new option `--suppress-rule [RULE1]` will be introduced to ESLint CLI. When provided, the existing suppressions file will be updated to include any existing violation of the provided rule. The suppressions file will be created if not already exists. Note that this is option can accept an array of string values.
 
 ``` bash
-eslint --suppress-rule '@typescript-eslint/no-explicit-any' --suppress-rul '@typescript-eslint/member-ordering' ./src
+eslint --suppress-rule '@typescript-eslint/no-explicit-any' --suppress-rule '@typescript-eslint/member-ordering' ./src
 ```
 
 ### Changing the location of the suppressions file
