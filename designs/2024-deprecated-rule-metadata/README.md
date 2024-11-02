@@ -95,13 +95,14 @@ module.exports = {
       replacedBy: [
         {
           plugin: {
-          name: '@stylistic/js',
-          url: 'https://eslint.style/',
+            name: '@stylistic/js',
+            url: 'https://eslint.style/',
+          },
           rule: {
             name: 'semi',
             url: 'https://eslint.style/rules/js/semi'
           }
-        },
+        }
       ],
     },
   },
@@ -122,7 +123,6 @@ We can also support the same `meta.deprecated` and `meta.replacedBy` properties 
 In terms of actual changes inside ESLint needed for this:
 
 - Mention the new schema in the [custom rule documentation](https://eslint.org/docs/latest/extend/custom-rules#rule-structure)
-- Ensure these properties are allowed on all extension points (configurations, formatter, parsers and processors)
 - Add any additional information to these properties in core rules as desired (such as in <https://github.com/eslint/eslint/issues/18053>)
 - Update ESLint's website generator to take into account the additional information for rule doc deprecation notices
 - Update [LintResult.usedDeprecatedRules](https://github.com/eslint/eslint/blob/0f5df509a4bc00cff2c62b90fab184bdf0231322/lib/eslint/eslint.js#L197-L211) by normalizing the old and new format for the existing `replacedBy` property and adding a new property with the name `info` for rules using the new deprecated format
@@ -216,7 +216,7 @@ Create a new property, e.g. `meta.deprecation`,
 2. Should `meta.deprecated.plugin.name` accommodate different package registries (e.g. [jsr](https://jsr.io/) with `jsr:eslint-plugin-example`)
   - If it is a concern, plugin developers can use a direct URL
 3. Which "extension points" (rules, processors, configurations, parsers, formatters) shold be supported?
-4. Should the `rule` key be dependent on the "extension point" (e.g. `processor` for processors) or renamed (e.g. ``) so that it is the same property name for all?
+  - Focus on rules as other extension points have no well-defined use cases
 
 ## Help Needed
 
