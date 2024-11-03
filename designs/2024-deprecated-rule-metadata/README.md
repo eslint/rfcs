@@ -95,8 +95,8 @@ module.exports = {
       replacedBy: [
         {
           plugin: {
-            name: '@stylistic/js',
-            url: 'https://eslint.style/',
+            name: '@stylistic/eslint-plugin-js',
+            url: 'https://eslint.style/packages/js',
           },
           rule: {
             name: 'semi',
@@ -104,6 +104,7 @@ module.exports = {
           }
         }
       ],
+      deprecatedSince: "8.53.0",
     },
   },
 };
