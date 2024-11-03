@@ -259,5 +259,4 @@ I should be able to handle the minimal changes needed in ESLint core, and can ki
   - <https://github.com/eslint/eslint/issues/5774#issuecomment-220640368>
 - Related
   - <https://github.com/eslint/eslint/issues/17842>
-  - <https://github.com/eslint/eslint/issues/18694>
   - <https://github.com/eslint/eslint/issues/18053>
