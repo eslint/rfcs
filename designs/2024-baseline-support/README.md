@@ -231,7 +231,8 @@ if (options.suppressAll || options.suppressRule || options.pruneSuppressions || 
 
     const suppressionResults = suppressionsManager.applySuppressions(results, suppressionsManager.load());
     if (suppressionResults.unmatched.length > 0) {
-        // exit with a non-zero code
+        log.error("There are left suppressions that do not occur anymore. Consider re-running the command with `--prune-suppressions`.");
+        return 2;
     }
 
     results = suppressionResults.results;
