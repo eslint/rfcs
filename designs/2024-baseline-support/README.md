@@ -93,7 +93,7 @@ eslint --prune-suppressions --suppressions-location /home/user/project/mycache .
 
 ### Execution details
 
-The suggested solution always compares against the existing suppressions file, typically `.eslint-suppressions.json`, unless `--suppressions-location` is specified.  This makes it easier for existing and new projects to adopt this feature without the need to adjust scripts in `package.json` and CI/CD workflows. 
+The suggested solution always compares against the existing suppressions file, typically `.eslint-suppressions.json`, unless `--suppressions-location` is specified. This makes it easier for existing and new projects to adopt this feature without the need to adjust scripts in `package.json` and CI/CD workflows. 
 
 To perform the comparison, we will go through each result and message from `ESLint.lintFiles`, checking each error `(severity == 2)` against the suppressions file. By design, we ignore warnings since they don't cause eslint to exit with an error code and serve a different purpose. If the file and rule are listed in the suppressions file, we can move the message to `LintResult#suppressedMessages` and ignore the result message.
 
@@ -104,14 +104,16 @@ Here is a high-level overview of the execution flow:
   * If either option is passed, update the suppressions file based on the `results`.
   * If no option is passed, check if the suppressions file exists, considering `--suppressions-location`.
 2. **Match Errors Against Suppressions**
-  * For each error, check if the error and the file are in the suppressions file.
-  * If yes, decrease count, in memory, by 1 and move the message to `LintResult#suppressedMessages` unless count is zero.
-  * If no, keep the error.
+  * For each file, count the number of errors per rule.
+  * For each rule in each file, compare the number of errors against the counter from the suppressions file.
+  * If number of errors equals to the counter in the suppressions file, move the messages to `LintResult#suppressedMessages` and ignore the corresponding result messages. Remove the entry from the suppressions file, in memory.
+  * If the number of errors is less than the counter in the suppressions file, move the messages to `LintResult#suppressedMessages` and ignore the corresponding result messages. Also, set the counter to the new number, in memory.
+  * If the number of errors is greater than the counter in the suppressions file, report all the errors as usual. Remove the entry from the suppressions file, in memory.
 3. **Prune unmatched suppressions**
   * If `--prune-suppressions` is passed, take the updated suppressions from memory to check which suppressions are left.
   * For each suppression left, update the suppressions file by either reducing the count or removing the suppression.
 4. **Report and exit**
-  * Exit with a non-zero status if there are unmatched violations, optionally listing them in verbose mode.
+  * Exit with a non-zero status if there are unmatched suppressions, optionally listing them in verbose mode.
   * Otherwise, list remaining errors as usual.
 
 Note that the error detection in `cli.js` occurs before the error counting. This allow us to update the suppressions file and modify the errors, before it is time to count errors. Please refer to the last example of the "Implementation notes" for more details.
@@ -174,10 +176,6 @@ class SuppressedViolationsManager {
 
     /**
      * Checks the provided suppressions against the lint results.
-     * 
-     * For each error included in `results`, checks if the error and the file are in `suppressions`.
-     *  If yes, the count is decreased by 1 and moves the error to `LintResult#suppressedMessages` unless the count has reached zero. 
-     * Otherwise, it keeps the error.
      * 
      * It returns the lint result, with:
      *  LintResult#messages indicating all the errors that are not in the suppressions file,
