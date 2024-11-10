@@ -55,6 +55,21 @@ export default [
 
 The fix should still exist as a suggestion. Only autofixing (when running `eslint --fix` or editor action on save) should be disabled.
 
+This means removing the `LintMessage.fix` object into the `LintMessage.suggestions` array ([`LintMessage` API](https://eslint.org/docs/latest/integrate/nodejs-api#-lintmessage-type))
+
+```js
+const newSuggestion = {
+  desc: 'Apply the disabled autofix',
+  fix: lintMessage.fix,
+}
+if (!lintMessage.suggestions) {
+  lintMessage.suggestions = [newSuggestion]
+} else {
+  lintMessage.suggestions.push(newSuggestion)
+}
+lintMessage.fix = undefined
+```
+
 The chosen key name `disableAutofixes` aims to remove the concern about "turning on" an autofix that doesn't exist. Disabling autofixes for a rule that doesn't have any or doesn't exist should be a no-op. Just like turning `off` a rule that doesn't exist. The reasoning being that this allows much more flexible shareable configurations.
 
 ## Documentation
@@ -64,6 +79,8 @@ The chosen key name `disableAutofixes` aims to remove the concern about "turning
     on the ESLint blog to explain the motivation?
 -->
 I think that "Configuring autofixes" or "Disabling autofixes" could be documented as a subsection of [Configuring Rules](https://eslint.org/docs/latest/use/configure/rules). Or as a section on the same level (between "Configuring Rules" and "Configuring Plugins")
+
+As a new top-level property added to configuration objects, `disableAutofixes` should be documented in [Configuration Files > Configuration Objects](https://eslint.org/docs/latest/use/configure/configuration-files#configuration-objects) section. Additionally we may want to add a note to [Custom Rules](https://eslint.org/docs/latest/extend/custom-rulesd) to mention that some autofixes will be converted automatically into suggestions when the new feature is used.
 
 ## Drawbacks
 
@@ -122,6 +139,7 @@ Another approach I can think of is to encode that in the rule config itself. Som
     you can remove this section.
 -->
 - Where exactly should the documentation go ?
+- Where this needs to be implemented in code. Those familiar with ESLint's codebase are welcome to provide this information
 
 ## Help Needed
 
