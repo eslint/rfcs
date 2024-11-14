@@ -1,5 +1,5 @@
 - Start Date: 2024-11-13
-- RFC PR: (todo)
+- RFC PR: https://github.com/eslint/rfcs/pull/126
 - Authors: Nicholas C. Zakas (@nzakas)
 - repo: eslint/eslint
 
