@@ -92,7 +92,9 @@ Design Summary:
 
 ### Allow Arrays in Config Arrays
 
-TODO
+This was part of the original RFC but was disabled over concerns about the complexity involved with importing configs from packages and having no idea whether it was an object, an array, or an array with a mix of objects and arrays. This mattered most when users needed to use `map()` to apply different `files` or `ignores` to configs, but with `extends`, that concern goes away.
+
+Support for nested arrays is already in `ConfigArray`, it's just disabled.
 
 ### Introduce an `extends` Key
 
@@ -283,866 +285,215 @@ This has several advantages:
 1. It encourages plugin authors to use the `configs` key on their plugin in order to allow this usage.
 1. It allows ESLint to modify configs before they are used (see below).
 
+#### Reassignable Plugin Configs
 
+When using named configs, this gives ESLint the opportunity to inspect and change the config before applying it. This means we have the opportunity to improve the plugin config experience.
 
+Right now, bundling a config in a plugin is a bit of a messy process for two reasons:
 
+1. You need to include the plugin in the config directly, which means that you can't just have an single object literal defined as the plugin. You need to define the plugin first and then add the configs with the plugin reference second.
+1. You don't actually know what namespace a user will assign the plugin to, so while you might assume someone will import `eslint-plugin-import` as `import` and you then refer to rules from the plugin as `import/rule`, there is nothing preventing the user from assigning the plugin to a different name. In that case, the user won't know how to override rule options or assign different languages from the plugin.
 
-### The `eslint.config.js` File
-
-The `eslint.config.js` file is a JavaScript file (there is no JSON or YAML equivalent) that exports an object: 
+Here's an actual example from [`@eslint/json`](https://github.com/eslint/json):
 
 ```js
-module.exports = {
-    name: "name",
-    files: ["*.js"],
-    ignores: ["*.test.js"],
-    settings: {},
-    languageOptions: {
-        ecmaVersion: 2020,
-        sourceType: "module",
-        globals: {},
-        parser: object || "string",
-        parserOptions: {},
-    }
-    linterOptions: {
-        reportUnusedDisableDirectives: "string"
-    },
-    processor: object || "string",
-    plugins: {}
-    rules: {}
+const plugin = {
+	meta: {
+		name: "@eslint/json",
+		version: "0.6.0", // x-release-please-version
+	},
+	languages: {
+		json: new JSONLanguage({ mode: "json" }),
+		jsonc: new JSONLanguage({ mode: "jsonc" }),
+		json5: new JSONLanguage({ mode: "json5" }),
+	},
+	rules: {
+		"no-duplicate-keys": noDuplicateKeys,
+		"no-empty-keys": noEmptyKeys,
+	},
+
+    // can't include the plugin here because it must reference `plugin`
+	configs: {},
 };
+
+Object.assign(plugin.configs, {
+	recommended: {
+
+        // now we can reference plugin
+		plugins: { json: plugin },
+		rules: {
+			"json/no-duplicate-keys": "error",
+			"json/no-empty-keys": "error",
+		},
+	},
+});
+
+export default plugin;
 ```
 
-The following keys are new to the `eslint.config.js` format:
+Here, we are hardcoding the namespace `json` even though that might not be the namespace that the user assigns to this plugin. This is something we can now address with the use of `extends` because we have the ability to alter the config before inserting it.
 
-* `name` - Specifies the name of the config object. This is helpful for printing out debugging information and, while not required, is recommended for that reason.
-* `files` - Determines the glob file patterns that this configuration applies to. These patterns can be negated by prefixing them with `!`, which effectively mimics the behavior of `excludedFiles` in `.eslintrc`.
-* `ignores` - Determines the files that should not be linted using ESLint. The files specified by this array of glob patterns are subtracted from the files specified in `files`. If there is no `files` key, then `ignores` acts the same as `ignorePatterns` in `.eslintrc` files; if there is a `files` key then `ignores` acts like `excludedFiles` in `.eslintrc`.
-
-The following keys are specified the same as in `.eslintrc` files:
-
-* `settings`
-* `rules`
-
-The following keys are specified differently than in `.eslintrc` files:
-
-* `plugins` - an object mapping plugin names to implementations. This replaces the `plugins` key in `.eslintrc` files and the `--rulesdir` option.
-* `processor` - an object or string in `eslint.config.js` files (a string in `.eslintrc`)
-* `languageOptions` - top-level grouping for all options that affect how JavaScript is interpreted by ESLint.
-    * `ecmaVersion` - sets the JavaScript version ESLint should use for these files. This value is copied into `parserOptions` if not already present.
-    * `sourceType` - sets the source type of the JavaScript code to parse. One of `module`, `script`, or `commonjs`.
-    * `parser` - an object or string in `eslint.config.js` files (a string in `.eslintrc`)
-    * `parserOptions` - an object specifying any additional parameters to be passed to the parser.
-    * `globals` - any additional global variables to add.
-* `linterOptions` - an object for linter-specific settings
-    * `reportUnusedDisableDirectives` - new location for the same option name.
-
-Each of these keys used to require one or more strings specifying module(s) to load in `.eslintrc`. In `eslint.config.js`, these are all objects or strings (referencing an object in a plugin), requiring users to manually specify the objects to use.
-
-The following keys are invalid in `eslint.config.js`:
-
-* `extends` - replaced by config arrays
-* `env` - responsibility of the user
-* `overrides` - responsibility of the user
-* `root` - always considered `true`
-
-Each of these keys represent different ways of augmenting how configuration is calculated and all of that responsibility now falls on the user.
-
-#### Extending Another Config
-
-Extending another config is accomplished by returning an array as the value of `module.exports`. Configs that come later in the array are merged with configs that come earlier in the array. For example:
+Instead of using a hardcoded plugin namespace, plugins can instead use `#` to indicate that they'd like to have the plugin itself included and referenced using the namespace the user assigned. For example, we could rewrite the JSON plugin like this:
 
 ```js
-module.exports = [
-    require("eslint-config-standard"),
-    {
-        files: ["*.js"],
-        rules: {
-            semi: ["error", "always"]
-        }
-    }
-];
-```
+export default {
+	meta: {
+		name: "@eslint/json",
+		version: "0.6.0", // x-release-please-version
+	},
+	languages: {
+		json: new JSONLanguage({ mode: "json" }),
+		jsonc: new JSONLanguage({ mode: "jsonc" }),
+		json5: new JSONLanguage({ mode: "json5" }),
+	},
+	rules: {
+		"no-duplicate-keys": noDuplicateKeys,
+		"no-empty-keys": noEmptyKeys,
+	},
 
-This config extends `eslint-config-standard` because that package is included first in the array. You can add multiple configs into the array to extend from multiple configs, such as:
-
-```js
-module.exports = [
-    require("eslint-config-standard"),
-    require("@me/eslint-config"),
-    {
-        files: ["*.js"],
-        rules: {
-            semi: ["error", "always"]
-        }
-    }
-];
-```
-
-Each item in a config array can be a config array. For example, this is a valid config array and equivalent to the previous example:
-
-```js
-module.exports = [
-    [
-        require("eslint-config-standard"),
-        require("@me/eslint-config")
-    ],
-    {
-        files: ["*.js"],
-        rules: {
-            semi: ["error", "always"]
-        }
-    }
-];
-```
-
-A config array is always flattened before being evaluated, so even though this example is a two-dimensional config array, it will be evaluated as if it were a one-dimensional config array.
-
-When using a config array, only one config object must have a `files` key (config arrays where no objects contain `files` will result in an error). If a config in the config array does not contain `files` or `ignores`, then that config is merged into every config with a `files` pattern. For example:
-
-```js
-module.exports = [
-    {
-        languageOptions: {
-            globals: {
-                Foo: true
-            }
-        }
-    },
-    {
-        files: ["*.js"],
-        rules: {
-            semi: ["error", "always"]
-        }
-    },
-    {
-        files: ["*.mjs"],
-        rules: {
-            semi: ["error", "never"]
-        }
-    }
-];
-```
-
-In this example, the first config in the array defines a global variable of `Foo`. That global variable is merged into the other two configs in the array automatically because there is no `files` or `ignores` specifying when it should be used. The first config matches zero files on its own and would be invalid if it was the only config in the config array.
-
-#### Extending From `eslint:recommended` and `eslint:all`
-
-Both `eslint:recommended` and `eslint:all` can be represented as strings in a config array. For example:
-
-```js
-module.exports = [
-    "eslint:recommended",
-    require("eslint-config-standard"),
-    require("@me/eslint-config"),
-    {
-        files: ["*.js"],
-        rules: {
-            semi: ["error", "always"]
-        }
-    }
-];
-```
-
-This config first extends `eslint:recommended` and then continues on to extend other configs.
-
-#### Setting the Name of Shareable Configs
-
-For shareable configs, specifying a `name` property for each config they export helps ESLint to output more useful error messages if there is a problem. The `name` property is a string that will be used to identify configs to help users resolve problems. For example, if you are creating `eslint-config-example`, then you can specify a `name` property to reflect that:
-
-```js
-module.exports = {
-    name: "eslint-config-example",
-
-    // other info here
-};
-```
-
-It's recommended that the shareable config provide a unique name for each config that is exported.
-
-#### Disambiguating Shareable Configs With Common Dependencies
-
-Today, shareable configs that depend on plugin rules must specify the plugin as a peer dependency and then either provide a script to install those dependencies or ask the user to install them manually.
-
-With this design, shareable configs can specify plugins as direct dependencies that will be automatically installed with the shareable config, improving the user experience of complex shareable configs. This means it's possible for multiple shareable configs to depend on the same plugin and, in theory, depend on different versions of the same plugin. In general, npm will handle this directly, installing the correct plugin version at the correct level for each shareable config to `require()`. For example, suppose there are two shareable configs, `eslint-config-a` and `eslint-config-b` that both rely on the `eslint-plugin-example` plugin, but the former relies on 1.0.0 and the latter relies on 2.0.0. npm will install those plugins like this:
-
-```
-your-project
-├── eslint.config.js
-└── node_modules
-  ├── eslint
-  ├── eslint-config-a
-  | └── node_modules
-  |   └── eslint-plugin-example@1.0.0
-  └── eslint-config-b
-    └── node_modules
-      └── eslint-plugin-example@2.0.0
-```
-
-The problem comes when the shareable configs try to use the default namespace of `eslint-plugin-example` for its rules, such as:
-
-```js
-const example = require("eslint-plugin-example");
-
-module.exports = {
-    plugins: {
-        example
-    }
-};
-```
-
-If both shareable configs do this, and the user tries to use both shareable configs, an error will be thrown when the configs are normalized because the plugin namespace `example` can only be assigned once.
-
-To work around this problem, the end user can create a separate namespace for the same plugin so that it doesn't conflict with an existing plugin namespace from a shareable config. For example, suppose you want to use `eslint-config-first`, and that has an `example` plugin namespace defined. You'd also like to use `eslint-config-second`, which also has an `example` plugin namespace defined. Trying to use both shareable configs will throw an error because a plugin namespace cannot be defined twice. You can still use both shareable configs by creating a new config from `eslint-config-second` that uses a different namespace. For example:
-
-```js
-// get the config you want to extend
-const configToExtend = require("eslint-config-second");
-
-// create a new copy (NOTE: probably best to do this with @eslint/config somehow)
-const compatConfig = Object.create(configToExtend);
-compatConfig.plugins["compat::example"] = require("eslint-plugin-example");
-delete compatConfig.plugins.example;
-
-// include in config
-module.exports = [
-
-    require("eslint-config-first");
-    compatConfig,
-    {
-        // overrides here
-    }
-];
-```
-
-#### Referencing Plugin Rules
-
-The `plugins` key in `.eslintrc` was an array of strings indicating the plugins to load, allowing you to specify processors, rules, etc., by referencing the name of the plugin. It's no longer necessary to indicate the plugins to load because that is done directly in the `eslint.config.js` file. For example, consider this `.eslintrc` file:
-
-```yaml
-plugins:
-  - react
-
-rules:
-  react/jsx-uses-react: error
-```
-
-This file tells ESLint to load `eslint-plugin-react` and then configure a rule from that plugin. The `react/` is automatically preprended to the rule by ESLint for easy reference.
-
-In `eslint.config.js`, the same configuration is achieved using a `plugins` key:
-
-```js
-const react = require("eslint-plugin-react");
-
-module.exports = {
-    files: ["*.js"],
-    plugins: {
-        react
-    },
-    rules: {
-        "react/jsx-uses-react": "error"
-    }
-};
-```
-
-Here, it is the `plugins` that assigns the name `react` to the rules from `eslint-plugin-react`. The reference to `react/` in a rule will always look up that value in the `plugins` key.
-
-**Note:** If a config is merged with another config that already has the same `plugins` namespace defined and the namespace doesn't refer to the same rules object, then an error is thrown. In this case, if a config already has a `react` namespace, then attempting to combine with another config that has a `react` namespace that contains different rules will throw an error. This is to ensure the meaning of `namespace/rule` remains consistent.
-
-#### Plugins Specifying Their Own Namespaces
-
-Rules imported from a plugin must be assigned a namespace using `plugins`, which puts the responsibility for that namespace on the config file user. Plugins can define their own namespace for rules in two ways. (Note that plugins will not be required to define their own namespaces.)
-
-First, a plugin can export a recommended configuration to place in a config array. For example, a plugin called `eslint-plugin-example`, might define a config like this:
-
-```js
-module.exports = {
-    configs: {
+	configs: {
         recommended: {
-            plugins: {
-                example: {
-                    rules: {
-                        rule1: require("./rules/rule1")
-                    }
-                }
-            }
-        }
-    }
+            plugins: { "#": null },
+            rules: {
+                "#/no-duplicate-keys": "error",
+                "#/no-empty-keys": "error",
+            },
+        },
+    },
 };
 ```
 
-Then, inside of a user config, the plugin's recommended config can be loaded:
+In an `eslint.config.js` file:
 
 ```js
-module.exports = [
-    require("eslint-plugin-example").configs.recommended,
+import json from "@eslint/json";
+
+export default [
     {
-        rules: {
-            "example/rule1": "error"
-        }
-    }
-];
-```
-
-The user config in this example now inherits the `plugins` from the plugin's recommended config, automatically adding in the rules with their preferred namespace. (Note that the user config can't have another `plugins` namespace called `example` without an error being thrown.)
-
-The second way for plugins to specify their preferred namespace is to export a `plugin` key directly that users can include their own config. This is what it would look like in the plugin:
-
-```js
-exports.plugin = {
-    example: {
-        rules: {
-            rule1: require("./rules/rule1")
-        }
-    }
-};
-```
-
-Then, inside of a user config, the plugin's `plugin` can be included directly`:
-
-```js
-module.exports = {
-    plugins: {
-        ...require("eslint-plugin-example").plugin
-    },
-    rules: {
-        "example/rule1": "error"
-    }
-};
-```
-
-This example imports the `plugin` from a plugin directly into the same section in the user config.
-
-#### Referencing Parsers and Processors
-
-In `.eslintrc`, the `parser` and `processor` keys required strings to be specified, such as:
-
-```yaml
-plugins: ["markdown"]
-parser: "babel-eslint"
-processor: "markdown/markdown"
-```
-
-In `eslint.config.js`, there are two options. First, you can pass references directly into these keys:
-
-```js
-module.exports = {
-    files: ["*.js"],
-    languageOptions: {
-        parser: require("babel-eslint"),
-    },
-    processor: require("eslint-plugin-markdown").processors.markdown
-};
-```
-
-Second, you can use a string to specify an object to load from a plugin, such as:
-
-```js
-module.exports = {
-    plugins: {
-        markdown: require("eslint-plugin-markdown"),
-        babel: require("eslint-plugin-babel")
-    },
-    files: ["*.js"],
-    languageOptions: {
-        parser: "babel/eslint-parser",
-    },
-    processor: "markdown/markdown"
-};
-```
-
-In this example, `"babel/eslint-parser"` loads the parser defined in the `eslint-plugin-babel` plugin and `"markdown/markdown"` loads the processor from the `eslint-plugin-markdown` plugin. Note that the behavior for `parser` is different than with `.eslintrc` in that the string **must** represent a parser defined in a plugin.
-
-The benefit to this approach of specifying parsers and processors is that it uses the builtin Node.js module resolution system or allows users to specify their own. There is never a question of where the modules will be resolved from.
-
-**Note:** This example requires that `eslint-plugin-babel` publishes a `parsers` property, such as:
-
-```js
-module.exports = {
-    parsers: {
-        "eslint-parser": require("./some-file.js")
-    }
-}
-```
-
-This is a new feature of plugins introduced with this RFC.
-
-#### Applying an Environment
-
-Unlike with `.eslintrc` files, there is no `env` key in `eslint.config.js`. For different ECMA versions, ESLint will automatically add in the required globals. For example:
-
-```js
-const globals = require("globals");
-
-module.exports = {
-    files: ["*.js"],
-    languageOptions: {
-        ecmaVersion: 2020
-    }
-};
-```
-
-Because the `languageOptions.ecmaVersion` property is now a linter-level option instead of a parser-level option, ESLint will automatically add in all of the globals for ES2020 without requiring the user to do anything else.
-
-Similarly, when `sourceType` is `"commonjs"`, ESLint will automatically add the `require`, `exports`, and `module` global variables (as well as set `parserOptions.ecmaFeatures.globalReturn` to `true`). In this case, ESLint will pass a `sourceType` of `"script"` as part of `parserOptions` because parsers don't support `"commonjs"` for `sourceType`.
-
-For other globals, ssers can mimic the behavior of `env` by assigning directly to the `globals` key:
-
-```js
-const globals = require("globals");
-
-module.exports = {
-    files: ["*.js"],
-    languageOptions: {
-        globals: {
-            MyGlobal: true,
-            ...globals.browser
-        }
-    }
-};
-```
-
-This effectively duplicates the use of `env: { browser: true }` in ESLint.
-
-**Note:** This would allow us to stop shipping environments in ESLint. We could just tell people to use `globals` in their config and allow them to specify which version of `globals` they want to use.
-
-#### Overriding Configuration Based on File Patterns
-
-Whereas `.eslintrc` had an `overrides` key that made a hierarchical structure, the `eslint.config.js` file does not have any such hierarchy. Instead, users can return an array of configs that should be used. For example, consider this `.eslintrc` config:
-
-```yaml
-plugins: ["react"]
-rules:
-    react/jsx-uses-react: error
-    semi: error
-
-overrides:
-    - files: "*.md"
-      plugins: ["markdown"],
-      processor: "markdown/markdown"
-```
-
-This can be written in `eslint.config.js` as an array of two configs:
-
-```js
-module.exports = [
-    {
-        files: "*.js",
         plugins: {
-            react: require("eslint-plugin-react"),
+            j: json
         },
+        files: ["**/*.json"],
+        extends: ["j/recommended"],
         rules: {
-            "react/jsx-uses-react": "error",
-            semi: "error"
-        }
-    },
-    {
-        files: "*.md",
-        processor: require("eslint-plugin-markdown").processors.markdown
-    }
-];
-```
-
-When ESLint uses this config, it will check each `files` pattern to determine which configs apply. Any config with a `files` pattern matching the file to lint will be extracted and used (if multiple configs match, then those configs are merged to determine the final config to use). In this way, returning an array acts exactly the same as the array in `overrides`.
-
-#### Using AND patterns for files
-
-If any entry in the `files` key is an array, then all of the patterns must match in order for a filename to be considered a match. For example:
-
-```js
-module.exports = [
-    {
-        files: [ ["*.test.*", "*.js"] ],
-        rules: {
-            semi: ["error", "always"]
+            "j/no-empty-keys": "warn"
         }
     }
 ];
 ```
 
-Here, the `files` key specifies two glob patterns. The filename `foo.test.js` would match because it matches both patterns whereas the filename `foo.js` would not match because it only matches one of the glob patterns.
-
-**Note:** This feature is primarily intended for backwards compatibility with eslintrc's ability to specify `extends` in an `overrides` block.
-
-#### Ignoring files
-
-With `eslint.config.js`, there are three ways that files and directories can be ignored:
-
-1. **Defaults** - by default, ESLint will ignore `node_modules` and `.git` directories only. This is different from the current behavior where ESLint ignores `node_modules` and all files/directories beginning with a dot (`.`).
-2. **.eslintignore** - the regular ESLint ignore file.
-3. **eslint.config.js** - patterns specified in `ignores` keys when `files` is not specified. (See details below.) 
-
-Anytime `ignores` appears in a config object without `files`, then the `ignores` patterns acts like the `ignorePatterns` key in `.eslintrc` in that the patterns are excluded from all searches before any other matching is done. For example:
-
-```js
-module.exports = [{
-    ignores: "web_modules"
-}];
-```
-
-Here, the directory `web_modules` will be ignored as if it were defined in an `.eslintignore` file. The `web_modules` directory will be excluded from the glob pattern used to determine which files ESLint will run against.
-
-The `--no-ignore` flag will disable `eslint.config.js` and `.eslintignore` ignore patterns while leaving the default ignore patterns in place.
-
-### Replacing `--ext`
-
-The `--ext` flag is currently used to pass in one or more file extensions that ESLint should search for when a directory without a glob pattern is passed on the command line, such as:
-
-```bash
-eslint src/ --ext .js,.jsx
-```
-
-This curently searches all subdirectories of `src/` for files with extensions matching `.js` or `.jsx`.
-
-This proposal removes `--ext` by allowing the same information to be passed in a config. For example, the following config achieves the same result:
-
-```js
-const fs = require("fs");
-
-module.exports = {
-    files: ["*.js", "*.jsx"],
-};
-```
-
-ESLint could then be run with this command:
-
-```bash
-eslint src/
-```
-
-When evaluating the `files` array in the config, ESLint will end up searching for `src/**/*.js` and `src/**/*.jsx`. (More information about file resolution is included later this proposal.)
-
-Additionally, ESLint can be run without specifying anything on the command line, relying just on what's in `eslint.config.js` to determine what to lint:
-
-```bash
-eslint
-```
-
-This will go into the `eslint.config.js` and use all of the `files` glob patterns to determine which files to lint.
-
-### Replacing `--rulesdir`
-
-In order to recreate the functionality of `--rulesdir`, a user would need to create a new entry in `plugins` and then specify the rules from a directory. This can be accomplished using the [`requireindex`](https://npmjs.com/package/requireindex) npm package:
-
-```js
-const requireIndex = require("requireindex");
-
-module.exports = {
-    plugins: {
-        custom: {
-            rules: requireIndex("./custom-rules")
-        }
-    },
-    rules: {
-        "custom/my-rule": "error"
-    }
-};
-```
-
-The `requireIndex()` method returns an object where the keys are the rule IDs (based on the filenames found in the directory) and the values are the rule objects. Unlike today, rules loaded from a local directory must have a namespace just like plugin rules (`custom` in this example).
-
-### Function Configs
-
-Some users may need information from ESLint to determine the correct configuration to use. To allow for that, `module.exports` may also be a function that returns an object, such as:
-
-```js
-module.exports = (context) => {
-
-    // do something
-
-    return {
-        files: ["*.js"],
-        rules: {
-            "semi": ["error", "always"]
-        }
-    };
-
-};
-```
-
-The `context` object has the following members:
-
-* `name` - the name of the application being used
-* `version` - the version of ESLint being used
-* `cwd` - the current working directory for ESLint (might be different than `process.cwd()` but always matches `CLIEngine.options.cwd`, see https://github.com/eslint/eslint/issues/11218)
-
-This information allows users to make logical decisions about how the config should be constructed.
-
-A configuration function may return an object or an array of objects. An error is thrown if any other type of value is returned.
-
-#### Including Function Configs in an Array
-
-A function config can be used anywhere a config object or a config array is valid. That means you can insert a function config as a config array member:
-
-```js
-module.exports = [
-    (context) => someObject,
-    require("eslint-config-myconfig")
-];
-```
-
-Each function config in an array will be executed with a `context` object when ESLint evaluates the configuration file. This also means that shareable configs can export a function instead of an object or array.
-
-**Note:** If a function config inside of a config array happens to return an array, then those config array items are flattened as with any array-in-array situation.
-
-### The `@eslint/eslintrc` Utility
-
-To allow for backwards compatibility with existing configs and plugins, an `@eslint/eslintrc` utility is provided. The package exports the following classes:
-
-* `ESLintRCCompat` - a class to help convert `.eslintrc`-style configs into the correct format.
-
-
-```js
-class ESLintRCCompat {
-    
-    constructor(baseDir) {}
-    
-    config(configObjct) {}
-    plugins(...pluginNames) {}
-    extends(...sharedConfigNames) {}
-    env(envObject) {}
-
-}
-```
-
-#### Importing existing configs
-
-The `ESLintRCCompat#extends()` function allows users to specify an existing `.eslintrc` config location in the same format that used in the `.eslintrc` `extends` key. Users can pass in a filename, a shareable config name, or a plugin config name and have it converted automatically into the correct format. For example:
-
-```js
-const { ESLintRCCompat } = require("@eslint/eslintrc");
-
-const eslintrc = new ESLintRCCompat(__dirname);
-
-module.exports = [
-    "eslint:recommended",
-  
-    // load a file
-    eslintrc.extends("./.eslintrc.yml"),
-
-    // load eslint-config-standard
-    eslintrc.extends("standard"),
-
-    // load eslint-plugin-vue/recommended
-    eslintrc.extends("plugin:vue/recommended"),
-
-    // or multiple at once
-    eslintrc.extends("./.eslintrc.yml", "standard", "plugin:vue/recommended")
-
-];
-```
-
-#### Translating config objects
-
-The `ESLintRCCompat#config()` methods allows users to pass in a `.eslintrc`-style config and get back a config object that works with `eslint.config.js`. For example:
-
-```js
-const { ESLintRCCompat } = require("@eslint/eslintrc");
-
-const eslintrc = new ESLintRCCompat(__dirname);
-
-module.exports = [
-    "eslint:recommended",
-  
-    eslintrc.config({
-        env: {
-            node: true
-        },
-        root: true
-    });
-];
-```
-
-#### Including plugins
-
-The `ESLintRCCompat#plugins()` method allows users to automatically load a plugin's rules and processors without separately assigning a namespace. For example:
-
-```js
-const { ESLintRCCompat } = require("@eslint/eslintrc");
-
-const eslintrc = new ESLintRCCompat(__dirname);
-
-module.exports = [
-    "eslint:recommended",
-
-    // add in eslint-plugin-vue and eslint-plugin-example
-    eslintrc.plugins("vue", "example")
-];
-```
-
-This example includes both `eslint-plugin-vue` and `eslint-plugin-example` so that all of the rules are available with the correct namespace and processors are automatically hooked up to the correct `files` pattern.
-
-#### Applying environments
-
-The `ESLintRCCompat#env()` method allows users to specify an `env` settings as they would in an `.eslintrc`-style config and have globals automatically added. For example:
-
-```js
-const { ESLintRCCompat } = require("@eslint/eslintrc");
-
-const eslintrc = new ESLintRCCompat(__dirname);
-
-module.exports = [
-    "eslint:recommended",
-  
-    // load node environment
-    eslintrc.env({
-        node: true
-    })
-];
-```
-
-### Configuration Location Resolution
-
-When ESLint is executed, the following steps are taken to find the `eslint.config.js` file to use:
-
-1. If the `-c` flag is used then the specified configuration file is used. There is no further search performed.
-1. Otherwise:
-    1. Look for `eslint.config.js` in the current working directory. If found, stop searching and use that file.
-    1. If not found, search up the directory hierarchy looking for `eslint.config.js`.
-    1. If a `eslint.config.js` file is found at any point, stop searching and use that file.
-    1. If `/` is reached without finding `eslint.config.js`, then stop searching and output a "no configuration found" error.
-
-This approach will allow running ESLint from within a subdirectory of a project and get the same result as when ESLint is run from the project's root directory (the one where `eslint.config.js` is found).
-
-Some of the key differences from the way ESLint's configuration resolution works today are:
-
-1. There is no automatic search for `eslint.config.js` in the user's home directory. Users wanting this functionality can either pass a home directory file using `-c` or manually read in that file from their `eslint.config.js` file.
-1. Once a `eslint.config.js` file is found, there is no more searching for any further config files.
-1. There is no automatic merging of config files using either `extends` or `overrides`.
-1. When `-c` is passed on the command line, there is no search performed.
-
-### File Pattern Resolution
-
-Because there are file patterns included in `eslint.config.js`, this requires a change to how ESLint decides which files to lint. The process for determining which files to lint is:
-
-1. When a filename is passed directly (such as `eslint foo.js`):
-    1. ESLint checks to see if there is one or more configs where the `files` pattern matches the file that was passed in and does not match the `ignores` pattern. The pattern is evaluated by prepending the directory in which `eslint.config.js` was found to each pattern in `files`. All configs that match `files` and not `ignores` are merged (with the last matching config taking precedence over others). If no config is found, then the file is ignored with an appropriate warning.
-    1. If a matching config is found, then the `ignores` pattern is tested against the filename. If it's a match, then the file is ignored. Otherwise, the file is linted.
-1. When a glob pattern is passed directly (such as `eslint src/*.js`):
-    1. ESLint expands the glob pattern to get a list of files.
-    1. Each file is checked individually as in step 1.
-1. When a directory is passed directly (such as `eslint src`):
-    1. The directory is converted into a glob pattern by appending `**/*` to the directory (such as `src` becomes `src/**/*`).
-    1. The glob pattern is checked as in step 2.
-1. When a relative directory is passed directly (such as `eslint .`):
-    1. The relative directory pattern is resolved to a full directory name.
-    1. The glob pattern is checked as in step 3.
-
-**Note:** ESLint will continue to ignore `node_modules` by default.
-
-### Rename `--no-eslintrc` to `--no-config-file` and `useEslintrc` to `useConfigFile`
-
-Because the config filename has changed, it makes sense to change the command line `--no-eslintrc` flag to a more generic name, `--no-config-file` and change `CLIEngine`'s `useEslintrc` option to `useConfigFile`. In the short term, to avoid a breaking change, these pairs of names can be aliased to each other.
+Here, the user has assigned the namespace `j` to the JSON plugin. When ESLint loads this config, it sees `extends` with a value of `"j/recommended"`. It looks up the plugin referenced by `j` and then the config named `"recommended"`. It then sees that there's a plugin entry for `"#"` and replaces that with an entry for `j` that points to the JSON plugin. The next step is to look through the config for all the `#` references and replace that with `j` so the references are correct. 
 
 ### Implementation Details
 
 The implementation of this feature requires the following changes:
 
-1. Create a new `ESLintConfigArray` class to manage configs.
-1. Create a `--no-config-file` CLI option and alias it to `--no-eslintrc` for backwards compatibility.
-1. Create a `useConfigFile` option for `CLIEngine`. Alias `useEslintrc` to this option for backwards compatibility.
-1. In `CLIEngine#executeOnFiles()`:
-    1. Check for existence of `eslint.config.js`, and if found, opt-in to new behavior.
-    1. Create a `ESLintConfigArray` to hold the configuration information and to determine which files to lint (in conjunction with already-existing `globUtils`)
-    1. Rename the private functions `processText()` and `processFiles()` to `legacyProcessText()` and `legacyProcessFiles()`; create new versions with the new functionality named `processText()` and `processFiles()`. Use the appropriate functions based on whether or not the user has opted-in.
-    1. Update `Linter#verify()` to check for objects on keys that now support objects instead of strings (like `parser`) and add a `disableEnv` property to the options to indicate that environments should not be honored.
-1. At a later point, we will be able to remove a lot of the existing configuration utilities.
+1. Enable nested arrays in `FlatConfigArray`
+1. Create a new `ConfigExtender` class that encapsulates the functionality for extending configs.
+1. Update `FlatConfigArray` to use `ConfigExtender` inside of the `normalize()` and `normalizeSync()` methods.
 
-#### The `ESLintConfigArray` Class
+#### Enable Nested Arrays in `FlatConfigArray`
 
-The `ESLintConfigArray` class is the primary new class for handling the configuration change defined in this proposal.
+Pass [`extraConfigTypes: ["array"]`](https://github.com/eslint/rewrite/blob/a957ee351c27ac1bf22966768cf8aac8c12ce0d2/packages/config-array/src/config-array.js#L572) to [`super()`](https://github.com/eslint/eslint/blob/fd33f1315ac59b1b3828dbab8e1e056a1585eff0/lib/config/flat-config-array.js#L95-L98) to enable nested arrays.
 
-```js
-class ESLintConfigArray extends Array {
+#### The `ConfigExtender` Class
 
-    // normalize the current ConfigArray
-    async normalize(context) {}
+The `ConfigExtender` class is the primary new class for handling the `extends` key in config objects.
 
-    // get a single config for the given filename
-    getConfig(filename) {}
-
-    // get the file patterns to search for
-    get files() {}
-
-    // get the "ignore file" values
-    get ignores() {}
+```ts
+interface ConfigExtender {
+    evaluate(config: ConfigObject): Array<ConfigObject>;
 }
 ```
 
-In this class, "normalize" means that all functions are called and replaced with their results, the array has been flattened, and configs without `files` keys have been merged into configs that do have `files` keys for easier calculation.
+The `ConfigExtender#evaluate()` method accepts a single config object and returns an array of compatible config objects. If the config object doesn't contain `extends` then it just passes that object back in an array.
+
+#### Update `FlatConfigArray` to use `ConfigExtender`
+
+The [`normalize()`](https://github.com/eslint/eslint/blob/fd33f1315ac59b1b3828dbab8e1e056a1585eff0/lib/config/flat-config-array.js#L141) and [`normalizeSync()`](https://github.com/eslint/eslint/blob/fd33f1315ac59b1b3828dbab8e1e056a1585eff0/lib/config/flat-config-array.js#L160) methods will be updated to use a `ConfigExtender` instance to evaluate any `extends` keys. To do this, we'll need to evaluate each object for `extends` before allowing calling the superclass method. Here's an example of what `normalize()` will look like:
+
+```js
+
+const extender = new ConfigExtender();
+
+class FlatConfigArray {
+
+    // snip
+
+    normalize(context) {
+
+        // make sure not to make any changes if already normalized
+        if (this.isNormalized()) {
+            throw new Error("...");
+        }
+
+        // replace each element with an array
+        this.forEach((element, i) => {
+            const configs = Array.isArray(element) ? element : [element];
+            this[i] = configs.flat().map(config => extender.evaluate(config))
+        });
+
+        // proceed as usual
+        return super.normalize(context)
+            .catch(error => {
+                if (error.name === "ConfigError") {
+                    throw wrapConfigErrorWithDetails(error, this[originalLength], this[baseLength]);
+                }
+
+                throw error;
+
+            });
+    }
+}
+```
 
 ## Documentation
 
-This will require extensive documentation changes and an introductory blog post.
+This will require documentation changes and an introductory blog post.
 
-At a minimum, these pages will have to be updated (and rewritten):
+At a minimum, these pages will have to be updated:
 
-* https://eslint.org/docs/user-guide/getting-started#configuration
-* https://eslint.org/docs/user-guide/configuring
-* https://eslint.org/docs/developer-guide/working-with-plugins#configs-in-plugins
-* https://eslint.org/docs/developer-guide/shareable-configs
+* https://eslint.org/docs/latest/use/getting-started#configuration
+* https://eslint.org/docs/latest/use/configure/configuration-files
+* https://eslint.org/docs/latest/extend/plugins#configs-in-plugins
+* https://eslint.org/docs/latest/use/configure/combine-configs
 
 ## Drawbacks
 
-As with any significant change, there are some significant drawbacks:
-
-1. We'd need to do a phased rollout (see Backwards Compatibility Analysis) to minimize impact on users. That means maintaining two configuration systems for a while, increasing maintenance overhead and complexity of the application.
-1. Getting everyone to convert to `eslint.config.js` format would be a significant stress on the community that could cause some resentment.
-1. We can no longer enforce naming conventions for plugins and shareable configs. This may make it more difficult for users to find compatible npm packages.
-1. Creating configuration files will be more complicated.
-1. The `--print-config` option becomes less useful because we can't output objects in a meaningful way.
-1. People depending on environments may find this change particularly painful.
+1. Introducing a new key to flat config at this point means that users of ESLint v8 won't be able to use it. Even though v8 is EOL, we had made an attempt to provide forward compatibility to make people's transition easier.
+1. While this may reduce complexity for users, it increases the complexity of config evaluation inside of ESLint. This necessarily means a performance cost that we won't be able to quantify until implementation.
+1. Users will have to know which version of ESLint supports `extends` in order to use it. There really isn't an easy way to feature test this capability other than to inspect the version of the current ESLint package.
 
 ## Backwards Compatibility Analysis
 
-The intent of this proposal is to replace the current `.eslintrc` format, but can be implemented incrementally so as to cause as little disturbance to ESLint users as possible.
-
-In the first phase, I envision this:
-
-1. Extract all current `.eslintrc` functionality into `@eslint/eslintrc` package. Change ESLint to depend on `@eslint/eslintrc` package.
-1. `eslint.config.js` can be implemented alongside `.eslintrc`.
-1. If `eslint.config.js` is found, then:
-    1. All `.eslintrc` files are ignored.
-    1. `--rulesdir` is ignored.
-    1. `--env` is ignored.
-    1. `--ext` is ignored.
-    1. `eslint-env` config comments are ignored.
-1. If `eslint.config.js` is not found, then fall back to the current behavior.
-1. Switch ESLint itself to use `eslint.config.js` as a way to test and ensure compatibility with existing shareable configs in `.eslintrc` format.
-
-This keeps the current behavior for the majority of users while allowing some users to test out the new functionality. Also, `-c` could not be used with `eslint.config.js` in this phase.
-
-In the second phase (and in a major release), ESLint will emit deprecation warnings whenever the original functionality is used but will still honor them so long as `eslint.config.js` is not found. In this phase, we will work with several high-profile plugins and shareable configs to convert their packages into the new format. We will use this to find the remaining compatibility issues.
-
-In the third phase (and in another major release), `eslint.config.js` becomes the official way to configure ESLint. If no `eslint.config.js` file is found, ESLint will still search for a `.eslintrc` file, and if found, print an error message information the user that the configuration file format has changed.
-
-So while this is intended to be a breaking change, it will be introduced over the course of three major releases in order to give users ample time to transition.
+This proposal is additive and does not affect the way existing configurations are evaluated.
 
 ## Alternatives
 
-While there are no alternatives that cover all of the functionality in this RFC, there are alternatives designed to address various parts.
-
-* Both https://github.com/eslint/rfcs/pull/7 and https://github.com/eslint/rfcs/pull/5 specify an alternative method for resolving plugin locations in configs. This attempts to solve the problem with bundling plugins with configs (https://github.com/eslint/eslint/issues/3458). These proposals have the benefit of working within the current configuration system and requiring very few changes from users.
-* It is possible to come up with a solution to https://github.com/eslint/eslint/issues/8813 that makes use of `extends`, though this would get a bit complicated if an extended config in an `overrides` section also has `overrides`.
-* We could switch the current configuration system over so that all config files are considered to implicitly have `root:true`. This could dramatically simplify configuration searching and merging.
+1. **A utility package.** Instead of including `extends` in flat config itself, we could create a utility package that provides a method to accomplish the same thing. This has the advantage that ESLint v8 users could also use this utility package, but the downside that it would require users to install Yet Another Package to do something that many feel should be available out of the box.
+1. **A utility function.** A variation of the previous approach is to export a function from the `eslint` package that people could use to extend configs. This has the advantage that it would be easier to feature test for but the downside that it still requires an extra step to use `extends`.
 
 ## Open Questions
 
 1. **Should `files` and `ignores` be merged (as in this proposal) or just dropped completely?** I can see an argument for dropping them completely, but I also know that some folks share configs with multiple different `files` patterns in an array that is meant to be used together.
+1. **Does the `#` pattern in plugin configs cause any unintended side effects?** The string `"#"` would be an invalid package name, so it's unlikely to cause any naming collisions.
+1. **Should `extends` be allowed in plugin configs?** This RFC does not allow `extends` in plugin configs for simplicity. Allowing this would mean the possibility of nested `extends`, which may be desirable but also more challenging to implement. Further, if plugins export configs with `extends`, then that automatically means those configs cannot be used in any earlier versions of ESLint. However, not allowing it also means having different schemas for user-defined and plugin configs, which is a significant downside.
 
 ## Frequently Asked Questions
 
+### Why is `"#"` assigned as `null` in the example?
+
+This allows us to very quickly check `plugin.plugins["#"]` to see if there's a `"#"` that needs evaluating. The value actually doesn't matter because it will be replaced, so `null` seemed like a nice shorthand. Without the `"#"` entry in `plugins`, we'd need to search through `rules`, `processor`, `language`, and potentially other future keys to see if `"#"` was referenced. I considered that initially, but I think being explicit is a better idea.
+
+### Why is this functionality added to `FlatConfigArray` instead of `@eslint/config-array`
+
+In order to support named configs, we need the concept of a plugin. The generic `ConfigArray` class has no concept of plugins, which means the functionality needs to live in `FlatConfigArray` in some way. There may be an argument for supporting `extends` with just objects and arrays in `ConfigArray`, with `FlatConfigArray` overriding that to support named configs, but that would increase the complexity of implementation.
+
+If we end up not supporting named configs, then we can revisit this decision.
+
 ## Related Discussions
 
-* https://github.com/eslint/rfcs/pull/7
-* https://github.com/eslint/rfcs/pull/5
-* https://github.com/eslint/eslint/issues/3458
-* https://github.com/eslint/eslint/issues/6732
-* https://github.com/eslint/eslint/issues/8813
-* https://github.com/eslint/eslint/issues/9192
-* https://github.com/eslint/eslint/issues/9897
-* https://github.com/eslint/eslint/issues/10125
-* https://github.com/eslint/eslint/issues/10643
-* https://github.com/eslint/eslint/issues/10891
-* https://github.com/eslint/eslint/issues/11223
-* https://github.com/eslint/rfcs/pull/55
+* https://github.com/eslint/eslint/discussions/16960#discussioncomment-11147407
+* https://github.com/eslint/eslint/discussions/16960#discussioncomment-11160226
+* https://github.com/eslint/eslint/issues/18040
+* https://github.com/eslint/eslint/issues/18752
