@@ -136,14 +136,14 @@ export default [
 ];
 ```
 
-If the objects in `extends` contain `files` or `ignores`, then ESLint will merge those values with the values found in the config using `extends` such that they intersect. For example:
+If the objects in `extends` contain `files`, then ESLint will intersect those values (AND operation); if the object in `extends` contains `ignores`, then ESLint will merge those values (OR operation). For example:
 
 ```js
 import globals from "globals";
 
 const config1 = {
     name: "config1",
-    files: ["**/*.cjs"],
+    files: ["**/*.cjs.js"],
     languageOptions: {
         sourceType: "commonjs",
         globals: {
@@ -167,6 +167,7 @@ export default [
     {
         name: "myconfig",
         files: ["**/src/*.js"],
+        ignores: ["**/*.test.js"]
         extends: [config1, config2],
         rules: {
             semi: "error"
@@ -176,16 +177,17 @@ export default [
 ];
 ```
 
-Here, the `files` keys will be combined and the `ignores` key will be inherited, resulting in a final config that looks like this:
+Here, the `files` keys will be combined and the `ignores` key will be merged, resulting in a final config that looks like this:
 
 ```js
 
 export default [
 
-    // combined files
+    // intersected files and original ignores
     {
         name: "myconfig > config1",
-        files: [["**/src/*.js", "**/*.cjs"]],
+        files: [["**/src/*.js", "**/*.cjs.js"]],
+        ignores: ["**/*.test.js"],
         languageOptions: {
             sourceType: "commonjs",
             globals: {
@@ -194,11 +196,11 @@ export default [
         }
     },
 
-    // combined files and inherited ignores
+    // intersected files and merged ignores
     {
         name: "myconfig > config2",
         files: [["**/src/*.js", "**/*.js"]],
-        ignores: ["**/tests"],
+        ignores: ["**/*.test.js", "**/tests"],
         rules: {
             "no-console": "error"
         }
@@ -208,6 +210,7 @@ export default [
     {
         name: "myconfig",
         files: ["**/src/*.js"],
+        ignores: ["**/*.test.js"]
         rules: {
             semi: "error"
         }
@@ -216,11 +219,15 @@ export default [
 ];
 ```
 
-Note that the `name` key is generated for calculated config objects so that it indicates the inheritance from another config that doesn't exist in the final representation of the config array.
+Notes:
+
+1. The `files` and `ignores` values from the base config always come first in the calculated `files` and `ignores`. If there's not a match, then there's no point in continuing on to use the patterns from the extended configs.
+1. The `name` key is generated for calculated config objects so that it indicates the inheritance from another config. The extended configs don't exist in the final representation of the config array.
+1. These behaviors differ from the [typescript-eslint extends helper](https://github.com/typescript-eslint/typescript-eslint/blob/main/packages/typescript-eslint/src/config-helper.ts).
 
 #### Extending Arrays
 
-Arrays can also be used in `extends` (to eliminate the guesswork of what type a config is). When evaluating `extends`, ESLint internally calls `.flat()` on the array and then processes the config objects as discussed in the previous example. Consider the following:
+Arrays can also be used in `extends` (to eliminate the guesswork of what type a config is). When evaluating `extends`, ESLint internally calls `.flat(Infinity)` on the array and then processes the config objects as discussed in the previous example. Consider the following:
 
 ```js
 import js from "@eslint/js";
@@ -475,7 +482,6 @@ This proposal is additive and does not affect the way existing configurations ar
 
 ## Open Questions
 
-1. **Should `files` and `ignores` be merged (as in this proposal) or just dropped completely?** I can see an argument for dropping them completely, but I also know that some folks share configs with multiple different `files` patterns in an array that is meant to be used together.
 1. **Does the `#` pattern in plugin configs cause any unintended side effects?** The string `"#"` would be an invalid package name, so it's unlikely to cause any naming collisions.
 1. **Should `extends` be allowed in plugin configs?** This RFC does not allow `extends` in plugin configs for simplicity. Allowing this would mean the possibility of nested `extends`, which may be desirable but also more challenging to implement. Further, if plugins export configs with `extends`, then that automatically means those configs cannot be used in any earlier versions of ESLint. However, not allowing it also means having different schemas for user-defined and plugin configs, which is a significant downside.
 
