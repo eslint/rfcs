@@ -136,7 +136,7 @@ export default [
 ];
 ```
 
-If the objects in `extends` contain `files` or `ignores`, then ESLint will merge those values with the values found in the config using `extends`. For example:
+If the objects in `extends` contain `files` or `ignores`, then ESLint will merge those values with the values found in the config using `extends` such that they intersect. For example:
 
 ```js
 import globals from "globals";
@@ -185,7 +185,7 @@ export default [
     // combined files
     {
         name: "myconfig > config1",
-        files: ["**/src/*.js", "**/*.cjs"],
+        files: [["**/src/*.js", "**/*.cjs"]],
         languageOptions: {
             sourceType: "commonjs",
             globals: {
@@ -197,7 +197,7 @@ export default [
     // combined files and inherited ignores
     {
         name: "myconfig > config2",
-        files: ["**/src/*.js", "**/*.js"],
+        files: [["**/src/*.js", "**/*.js"]],
         ignores: ["**/tests"],
         rules: {
             "no-console": "error"
