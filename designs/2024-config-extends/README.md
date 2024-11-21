@@ -219,6 +219,32 @@ export default [
 ];
 ```
 
+When an extended config and the base config both have multiple `files` entries, then the result is a `files` entry containing all combinations. For example:
+
+```js
+export default [
+    {
+        files: ["src/**", "lib/**"],
+        extends: [{ files: ["**/*.js", "**/*.mjs"] }]
+    }
+];
+```
+
+This config would be calculated as the following:
+
+```js
+export default [
+    {
+        files: [
+            ["src/**", "**/*.js"],
+            ["lib/**", "**/*.js"],
+            ["src/**", "**/*.mjs"],
+            ["lib/**", "**/*.mjs"]
+        ]
+    }
+];
+```
+
 Notes:
 
 1. The `files` and `ignores` values from the base config always come first in the calculated `files` and `ignores`. If there's not a match, then there's no point in continuing on to use the patterns from the extended configs.
