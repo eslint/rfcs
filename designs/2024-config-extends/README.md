@@ -508,14 +508,10 @@ This proposal is additive and does not affect the way existing configurations ar
 
 ## Open Questions
 
-1. **Does the `#` pattern in plugin configs cause any unintended side effects?** The string `"#"` would be an invalid package name, so it's unlikely to cause any naming collisions.
 1. **Should `extends` be allowed in plugin configs?** This RFC does not allow `extends` in plugin configs for simplicity. Allowing this would mean the possibility of nested `extends`, which may be desirable but also more challenging to implement. Further, if plugins export configs with `extends`, then that automatically means those configs cannot be used in any earlier versions of ESLint. However, not allowing it also means having different schemas for user-defined and plugin configs, which is a significant downside.
 
 ## Frequently Asked Questions
 
-### Why is `"#"` assigned as `null` in the example?
-
-This allows us to very quickly check `plugin.plugins["#"]` to see if there's a `"#"` that needs evaluating. The value actually doesn't matter because it will be replaced, so `null` seemed like a nice shorthand. Without the `"#"` entry in `plugins`, we'd need to search through `rules`, `processor`, `language`, and potentially other future keys to see if `"#"` was referenced. I considered that initially, but I think being explicit is a better idea.
 
 ### Why is this functionality added to `FlatConfigArray` instead of `@eslint/config-array`
 
