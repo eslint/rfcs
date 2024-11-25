@@ -366,12 +366,13 @@ export default plugin;
 
 Here, we are hardcoding the namespace `json` even though that might not be the namespace that the user assigns to this plugin. This is something we can now address with the use of `extends` because we have the ability to alter the config before inserting it.
 
-Instead of using a hardcoded plugin namespace, plugins can instead use `#` to indicate that they'd like to have the plugin itself included and referenced using the namespace the user assigned. For example, we could rewrite the JSON plugin like this:
+Instead of requiring plugin configs to include the plugin in the config, we can have the plugin define a preferred namespace to indicate that any rules, processors, and plugins containing that namespace need to be rewritten using the namespace the user assigned. For example, we could rewrite the JSON plugin like this:
 
 ```js
 export default {
 	meta: {
 		name: "@eslint/json",
+        namespace: "json",
 		version: "0.6.0", // x-release-please-version
 	},
 	languages: {
@@ -386,10 +387,9 @@ export default {
 
 	configs: {
         recommended: {
-            plugins: { "#": null },
             rules: {
-                "#/no-duplicate-keys": "error",
-                "#/no-empty-keys": "error",
+                "json/no-duplicate-keys": "error",
+                "json/no-empty-keys": "error",
             },
         },
     },
@@ -415,7 +415,7 @@ export default [
 ];
 ```
 
-Here, the user has assigned the namespace `j` to the JSON plugin. When ESLint loads this config, it sees `extends` with a value of `"j/recommended"`. It looks up the plugin referenced by `j` and then the config named `"recommended"`. It then sees that there's a plugin entry for `"#"` and replaces that with an entry for `j` that points to the JSON plugin. The next step is to look through the config for all the `#` references and replace that with `j` so the references are correct. 
+Here, the user has assigned the namespace `j` to the JSON plugin. When ESLint loads this config, it sees `extends` with a value of `"j/recommended"`. It looks up the plugin referenced by `j` and then the config named `"recommended"`. It then inserts an entry for `j` in `plugins` that references the plugin. The next step is to look through the config for all the `json` references and replace that with `j` so the references are correct (which we can determine by looking at `meta.namespace`). 
 
 ### Implementation Details
 
