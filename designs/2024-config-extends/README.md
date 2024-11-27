@@ -512,12 +512,19 @@ This proposal is additive and does not affect the way existing configurations ar
 
 ## Frequently Asked Questions
 
-
 ### Why is this functionality added to `FlatConfigArray` instead of `@eslint/config-array`
 
 In order to support named configs, we need the concept of a plugin. The generic `ConfigArray` class has no concept of plugins, which means the functionality needs to live in `FlatConfigArray` in some way. There may be an argument for supporting `extends` with just objects and arrays in `ConfigArray`, with `FlatConfigArray` overriding that to support named configs, but that would increase the complexity of implementation.
 
 If we end up not supporting named configs, then we can revisit this decision.
+
+### What will happen for plugins that don't define `meta.namespace`?
+
+They will be treated the same as they are now.
+
+### Will plugins eventually be required to define `meta.namespace`?
+
+No. This is a feature we want to encourage but will not require. We want all existing plugins to continue working.
 
 ## Related Discussions
 
