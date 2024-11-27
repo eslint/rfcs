@@ -249,7 +249,7 @@ Notes:
 
 1. The `files` and `ignores` values from the base config always come first in the calculated `files` and `ignores`. If there's not a match, then there's no point in continuing on to use the patterns from the extended configs.
 1. The `name` key is generated for calculated config objects so that it indicates the inheritance from another config. The extended configs don't exist in the final representation of the config array.
-1. These behaviors differ from the [typescript-eslint extends helper](https://github.com/typescript-eslint/typescript-eslint/blob/main/packages/typescript-eslint/src/config-helper.ts).
+1. These behaviors differ from the [typescript-eslint extends helper](https://github.com/typescript-eslint/typescript-eslint/blob/main/packages/typescript-eslint/src/config-helper.ts). The `tsconfig` helper overwrites the `files` and `ignores` fields on any config contained in `extends` whereas this proposal creates combination `files` and `ignores`, merging the base config with the extended configs.
 
 #### Extending Arrays
 
