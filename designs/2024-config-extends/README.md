@@ -503,8 +503,87 @@ This proposal is additive and does not affect the way existing configurations ar
 
 ## Alternatives
 
-1. **A utility package.** Instead of including `extends` in flat config itself, we could create a utility package that provides a method to accomplish the same thing. This has the advantage that ESLint v8 users could also use this utility package, but the downside that it would require users to install Yet Another Package to do something that many feel should be available out of the box.
-1. **A utility function.** A variation of the previous approach is to export a function from the `eslint` package that people could use to extend configs. This has the advantage that it would be easier to feature test for but the downside that it still requires an extra step to use `extends`.
+
+### A `defineConfig()` function
+
+One alternative is to create a `defineConfig()` function that is exported from the `eslint` package. All of the functionality described in this RFC could be implemented in that function, leaving both `ConfigArray` and `FlatConfigArray` in their current state without the need for changes.
+
+```js
+import globals from "globals";
+import { defineConfig } from "eslint";
+
+const config1 = {
+    name: "config1",
+    files: ["**/*.cjs.js"],
+    languageOptions: {
+        sourceType: "commonjs",
+        globals: {
+            ...globals.node
+        }
+    }
+};
+
+const config2 = {
+    name: "config2",
+    files: ["**/*.js"],
+    ignores: ["**/tests"],
+    rules: {
+        "no-console": "error"
+    }
+};
+
+
+export default defineConfig([
+
+    {
+        name: "myconfig",
+        files: ["**/src/*.js"],
+        ignores: ["**/*.test.js"]
+        extends: [config1, config2],
+        rules: {
+            semi: "error"
+        }
+    }
+
+]);
+```
+
+
+Benefits to this approach:
+
+1. **No changes to `FlatConfigArray` or `ConfigArray`.** All of the changes are contained within the `defineConfig()` function.
+1. **Config Inspector just works.** There would be no additional changes necessary for Config Inspector as it would still receive a flat array.
+1. **Familiar approach.** Many other tools support a `defineConfig()` function, so this won't seem unusual to ESLint users. Examples include: [Rollup](https://rollupjs.org/command-line-interface/#config-intellisense), [Astro](https://docs.astro.build/en/guides/configuring-astro/#the-astro-config-file), [Vite](https://vite.dev/config/#config-intellisense), [Nuxt](https://nuxt.com/docs/getting-started/configuration). 
+1. **Type intellisense support.** Most other tools are using `defineConfig()` for intellisense support in editors. We've had [two](https://github.com/eslint/eslint/issues/16874) [requests](https://github.com/eslint/eslint/issues/14249) to add this intellisense support in the past.
+1. **Ability to distribute in a separate package.** If we want to provide this functionality to earlier versions of ESLint that support flat config, we can do so by including in a separate package (maybe `@eslint/config`), then `eslint` could rely on that package to transparently pass `defineConfig` to users.
+1. **Cleaner file than using a utility function.** This allows a more JSON-like appear to the overall configuration file, which makes it easier to read than if we provided a utility function such as `extends()`, with which users must intermix that with regular objects where necessary.
+
+Downsides of this approach:
+
+1. **Different config object formats depending on where used.** The `extends` key would only be valid for the argument to `defineConfig()` and not as part of the standard config object interface. Perhaps `tseslint.config()` points to that not being a problem, but it is still worth consideration.
+1. **Tying `defineConfig` to the `eslint` version.** If we encourage people to use `defineConfig` from `eslint`, then any changes or fixes will mean typing the config file to a particular version of `eslint`. (Or else encouraging people to use an `@eslint/config` package all the time, which I think isn't user-friendly.)
+1. **Config Inspector doesn't have deep insights into `extends`.** Because Config Inspector will just receive a flat array, it would have insights into how `extends` is being used. Perhaps it could use the name of calculated configs to approximate that information, or else maybe we need to add some kind of symbol property to the result objects to provide this information.
+
+### An `extend()` function
+
+As [mentioned by Kirk Waiblinger](https://github.com/eslint/rfcs/pull/126/files#r1860258048), we could also do a smaller version of the `defineConfig` approach by just defining an `extend()` function that users could use whenever they want to extend a config, such as:
+
+```js
+import { extend } from "eslint";
+import js from "@eslint/js";
+import example from "eslint-plugin-example";
+
+export default [
+  extend(
+    {
+      files: ["**/src/*.js"],
+    },
+    [js.configs.recommended, example.configs.recommended],
+  ),
+];
+```
+
+This has similar upsides and downsides to `defineConfig`, with the additional downside that this moves the config further away from the JSON-like visual that makes it easier to scan config files.
 
 ## Open Questions
 
