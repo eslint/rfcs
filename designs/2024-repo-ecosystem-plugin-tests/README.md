@@ -96,6 +96,7 @@ Otherwise the ESLint repository will assume only supporting up to the currently 
 
 The plugins that will be included to start will be:
 
+- [`eslint-plugin-eslint-comments`](https://github.com/eslint-community/eslint-plugin-eslint-comments): to capture an `eslint-community` project and AST edge cases around comments
 - [`eslint-plugin-unicorn`](https://github.com/sindresorhus/eslint-plugin-unicorn): to capture a large selection of miscellaneous rules
 - [`eslint-plugin-vue`](https://github.com/vuejs/eslint-plugin-vue): to capture support for a framework with nested parsing of a non-JavaScript/TypeScript-standard syntax
 - [`typescript-eslint`](https://github.com/typescript-eslint/typescript-eslint): to capture testing TypeScript APIs and intricate uses of parsing in general
