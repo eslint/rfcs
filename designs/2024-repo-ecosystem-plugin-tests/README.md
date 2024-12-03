@@ -101,7 +101,7 @@ The plugins that will be included to start will be:
 - [`eslint-plugin-vue`](https://github.com/vuejs/eslint-plugin-vue): to capture support for a framework with nested parsing of a non-JavaScript/TypeScript-standard syntax
 - [`typescript-eslint`](https://github.com/typescript-eslint/typescript-eslint): to capture testing TypeScript APIs and intricate uses of parsing in general
 
-Plugins will be selectively added if meet the following criteria:
+Plugins will be selectively added if they meet the following criteria:
 
 - &gt;1 million npm downloads a week: arbitrary large size threshold to avoid small packages
 - Adding a notable new API usage not yet covered: to avoid duplicate equivalent plugins
