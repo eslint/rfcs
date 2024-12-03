@@ -121,11 +121,13 @@ However, to be safe, this RFC proposes adding a CI job in three steps:
 
 At least one month should be held between steps to make sure the job is consistently passing.
 
-## Open Questions
+## Out of Scope
 
 Automation could be added for at least the filing of issues on plugin failures.
 That does not seem worth the time expenditure given how rarely plugins are expected to fail.
-Is that accurate?
+This RFC's discussion settled on it not being worth it.
+
+## Open Questions
 
 Are there other plugins we should include that satisfy the criteria?
 
