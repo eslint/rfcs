@@ -109,7 +109,7 @@ Plugins will be selectively added if they meet the following criteria:
 - &gt;1 million npm downloads a week: arbitrary large size threshold to avoid small packages
 - Adding a notable new API usage not yet covered: to avoid duplicate equivalent plugins
 - Has had a breakage reported on ESLint: to be cautious in adding to the list
-- Is under active maintenance: to avoid packages that won't be updated quickly on failures
+- Is under active maintenance and has taken a week or less to fix any ESLint breakages within the last year: to avoid packages that won't be updated quickly on failures
 
 The number of plugins should remain small.
 Each added plugin brings adds the risk of third-party breakage, so plugins will only be added after filing a new issue and gaining team consensus.
