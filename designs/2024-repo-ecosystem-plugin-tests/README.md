@@ -104,7 +104,7 @@ The plugins that will be included to start will be:
 - [`eslint-plugin-vue`](https://github.com/vuejs/eslint-plugin-vue): to capture support for a framework with nested parsing of a non-JavaScript/TypeScript-standard syntax
 - [`typescript-eslint`](https://github.com/typescript-eslint/typescript-eslint): to capture testing TypeScript APIs and intricate uses of parsing in general
 
-Plugins will be selectively added if they meet the following criteria:
+Plugins will be selectively added if they meet all of the following criteria:
 
 - &gt;1 million npm downloads a week: arbitrary large size threshold to avoid small packages
 - Adding a notable new API usage not yet covered: to avoid duplicate equivalent plugins
@@ -119,7 +119,7 @@ Each added plugin brings adds the risk of third-party breakage, so plugins will 
 This RFC expects the added ecosystem CI job to _likely_ consistently pass.
 However, to be safe, this RFC proposes adding a CI job in three steps:
 
-1. On a branch that and updated from `main` several times a week
+1. On a branch that is manually updated from `main` several times a week
 2. On the `main` branch only
 3. On all PRs targeting the `main` branch, alongside existing CI jobs
 
