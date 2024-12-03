@@ -109,7 +109,7 @@ However, to be safe, this RFC proposes adding a CI job in three steps:
 
 1. On a branch that and updated from `main` several times a week
 2. On the `main` branch only
-3. On all branches, alongside existing CI jobs
+3. On all PRs targeting the `main` branch, alongside existing CI jobs
 
 At least one month should be held between steps to make sure the job is consistently passing.
 
