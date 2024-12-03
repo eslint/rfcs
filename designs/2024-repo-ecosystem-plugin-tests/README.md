@@ -69,12 +69,20 @@ However, this RFC believes that case will be exceedingly rare and short-lived:
 - Per [Plugin Selection](#plugin-selection), only very stable plugins that test on multiple ESLint versions including the latest will be selected
 - Today, plugin breakages are typically resolved within a week - even without this RFC's proposed "early warning" detection
 
-In the case of a breakage being discovered, this RFC proposes the following process:
+In the case of a breakage being discovered on the `main` branch, this RFC proposes the following process:
 
 1. An ESLint team member should file a bug report on the plugin's repository -if it doesn't yet exist-, as well as an issue on `eslint/eslint` linking to that bug report
 2. If the issue isn't resolved within two weeks:
-   1. The plugin will be removed from ESLint's ecosystem CI job
+   1. An ESLint team member should send a PR to resolve the issue that removes the plugin from ESLint's ecosystem CI job
    2. An ESLint team member should file a followup issue to re-add it once the breakage is fixed
+
+In the case of a breaking being discovered on a PR branch, this RFC proposes the following process:
+
+1. If the failure is an indication of an issue in the PR, the PR should be updated as usual
+2. Otherwise, if the failure is an indication the plugin needs to be updated, the PR's author should file a bug report on the plugin's repository - if it doesn't yet exist
+3. If the issue isn't resolved within two weeks:
+   1. The PR's author should remove the plugin from ESLint's ecosystem CI job in the PR
+   2. The PR's author should file a followup issue to re-add it once the breakage is fixed
 
 ### Major Releases
 
