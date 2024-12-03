@@ -68,6 +68,9 @@ However, this RFC believes that case will be exceedingly rare and short-lived:
 
 - Per [Plugin Selection](#plugin-selection), only very stable plugins that test on multiple ESLint versions including the latest will be selected
 - Today, plugin breakages are typically resolved within a week - even without this RFC's proposed "early warning" detection
+  - Example: [typescript-eslint#10191](https://github.com/typescript-eslint/typescript-eslint/issues/10338) was reported on October 21st, 2024 and a fix published on October 28th, 2024
+  - Example: [typescript-eslint#10338](https://github.com/typescript-eslint/typescript-eslint/issues/10338) was reported on November 15th, 2024 and a fix published on November 18th, 2024
+  - Example: [eslint-plugin-unicorn#10191](https://github.com/sindresorhus/eslint-plugin-unicorn/issues/2496) was reported on November 15th, 2024 and a fix published on November 19th, 2024
 
 In the case of a breakage being discovered on the `main` branch, this RFC proposes the following process:
 
