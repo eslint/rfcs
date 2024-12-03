@@ -30,7 +30,7 @@ The new CI job will, for each plugin:
 2. Run a lint command (i.e. `npx eslint .`) in that directory
 3. Assert that the lint command passed with 0 lint reports.
 
-This will all be runnable locally with a `package.json` script like `npm run test:ecosystem --plugin unicorn`.
+This will all be runnable locally with a `package.json` script like `npm run test:ecosystem --plugin eslint-plugin-unicorn`.
 
 An addition to `.github/workflows/ci.yml` under `jobs` would approximately look like:
 
