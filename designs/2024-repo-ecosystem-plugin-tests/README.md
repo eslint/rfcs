@@ -18,6 +18,7 @@ Those changes might be unintentional breaking changes, or even non-breaking chan
 At least two popular plugins -[`eslint-plugin-unicorn`](https://github.com/sindresorhus/eslint-plugin-unicorn/issues/2496) and [`typescript-eslint`](https://github.com/typescript-eslint/typescript-eslint/issues/10338)- were broken by that change.
 
 The plugins broke because they were relying on non-public implementation details of ESLint rules per [Docs: Formalize recommendation against plugins calling to rules via use-at-your-own-risk](https://github.com/eslint/eslint/issues/19169).
+ESLint core's [`eslint-config-eslint`](https://github.com/eslint/eslint/tree/main/packages/eslint-config-eslint) does not use all rules of downstream plugins and is not always up-to-date with their latest versions, so its internal usage of plugins is not sufficient to flag all high visibility compatibility issues.
 When the root cause is a bug in the downstream plugins, an "early warning" system would help them fix their issues before the incompatible changes to ESLint are published.
 
 ## Detailed Design
@@ -26,7 +27,10 @@ When the root cause is a bug in the downstream plugins, an "early warning" syste
 
 The new CI job will, for each plugin:
 
-1. Create a new directory containing a `package.json`, `eslint.config.js`, and small set of files known to be parsed and not cause lint reports with the plugin
+1. Create a new directory containing:
+   - `package.json`
+   - `eslint.config.js` with the closest equivalent to an _"enable all rules"_ preset from the plugin
+   - A small set of files known to be parsed and not cause lint reports with the plugin
 2. Run a lint command (i.e. `npx eslint .`) in that directory
 3. Assert that the lint command passed with 0 lint reports.
 
