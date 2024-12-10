@@ -124,7 +124,7 @@ Each added plugin brings adds a risk of breakage, so plugins will only be added 
 This RFC expects the added ecosystem CI job to _likely_ consistently pass.
 However, to be safe, this RFC proposes adding a CI job in three steps:
 
-1. On a branch that is manually updated from `main` several times a week
+1. On a branch that is updated from `main` by a CI cron job several times a week
 2. On the `main` branch only
 3. On all PRs targeting the `main` branch, alongside existing CI jobs
 
