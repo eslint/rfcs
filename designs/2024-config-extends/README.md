@@ -87,14 +87,95 @@ There are two goals with this design:
 
 Design Summary:
 
+1. Introduce a `defineConfig()` function
 1. Allow arrays in config arrays (in addition to objects)
 1. Introduce an `extends` key in config objects
 
+### Introduce a `defineConfig()` Function
+
+Rather than changing either `FlatConfigArray` or `ConfigArray`, we'll create a `defineConfig()` function that will contain all of the functionality described in this RFC. Many other tools support a `defineConfig()` function, so this won't seem unusual to ESLint users. Examples include: [Rollup](https://rollupjs.org/command-line-interface/#config-intellisense), [Astro](https://docs.astro.build/en/guides/configuring-astro/#the-astro-config-file), [Vite](https://vite.dev/config/#config-intellisense), [Nuxt](https://nuxt.com/docs/getting-started/configuration). While those tools use `defineConfig()` primarily as a means to support editor Intellisense, we will also use it an abstraction layer between the base flat config behavior and the desired new behavior.
+
+The `defineConfig()` function will be defined in a new `@eslint/config` package contained in the [rewrite](https://github.com/eslint/rewrite) repository. The `eslint` package will depend on `@eslint/config` and export `defineConfig()` directly, so users of ESLint versions that support `defineConfig()` natively will not have to install a separate package. For older versions of ESLint, they'll still be able to use `defineConfig()` by manually installing the `@eslint/config` package.
+
+The `defineConfig()` function can accept both objects and arrays, and will flatten its arguments to create a final, flat array. As a rough sketch:
+
+```js
+export function defineConfig(...configs) {
+
+    const finalConfigs = configs.map(processConfig);
+    
+    return finalConfigs.flat(Infinity);
+}
+```
+
+The intent is to allow both of the following uses:
+
+```js
+// use case 1: array
+import { defineConfig } from "eslint";
+import js from "@eslint/js";
+
+export default defineConfig([
+    {
+        ...js.configs.recommended,
+        files: ["**/src/safe/*.js"]
+    },
+    {
+        files: ["**/*.cjs"],
+        languageOptions: {
+            sourceType: "commonjs"
+        }
+    }
+]);
+```
+
+```js
+// use case 2: multiple arguments
+import { defineConfig } from "eslint";
+import js from "@eslint/js";
+
+export default defineConfig(
+    {
+        ...js.configs.recommended,
+        files: ["**/src/safe/*.js"]
+    },
+    {
+        files: ["**/*.cjs"],
+        languageOptions: {
+            sourceType: "commonjs"
+        }
+    }
+);
+```
+
 ### Allow Arrays in Config Arrays
 
-This was part of the original RFC but was disabled over concerns about the complexity involved with importing configs from packages and having no idea whether it was an object, an array, or an array with a mix of objects and arrays. This mattered most when users needed to use `map()` to apply different `files` or `ignores` to configs, but with `extends`, that concern goes away.
+This was part of the [original flat config RFC](https://github.com/eslint/rfcs/tree/main/designs/2019-config-simplification#extending-another-config) but was disabled over concerns about the complexity involved with importing configs from packages and having no idea whether it was an object, an array, or an array with a mix of objects and arrays. This mattered most when users needed to use `map()` to apply different `files` or `ignores` to configs, but with `extends`, that concern goes away.
 
-Support for nested arrays is already in `ConfigArray`, it's just disabled.
+The flattening logic will live in `defineConfig()` rather than turning on flattening with `ConfigArray`. This allows users of older ESLint versions to also have access to this functionality. The first example in this RFC can be rewritten as:
+
+```js
+import { defineConfig } from "eslint";
+import js from "@eslint/js";
+import tailwind from "eslint-plugin-tailwindcss";
+import reactPlugin from "eslint-plugin-react";
+import eslintPluginImportX from 'eslint-plugin-import-x'
+
+export default defineConfig([
+    
+    // object
+    js.configs.recommended,
+    
+    // array
+    tailwind.configs["flat/recommended"],
+    
+    // array
+    reactPlugin.configs.flat.recommended,
+    
+    // object
+    eslintPluginImportX.flatConfigs.recommended,
+]);
+```
 
 ### Introduce an `extends` Key
 
@@ -105,26 +186,28 @@ The `extends` key is an array that may contain other configurations. When used, 
 You can pass one or more objects in `extends`, like this:
 
 ```js
+import { defineConfig } from "eslint";
 import js from "@eslint/js";
 import example from "eslint-plugin-example";
 
-export default [
+export default defineConfig([
 
     {
         files: ["**/src/*.js"],
         extends: [js.configs.recommended, example.configs.recommended]
     }
 
-];
+]);
 ```
 
 Assuming these config objects do not contain `files` or `ignores`, ESLint will convert this config into the following:
 
 ```js
+import { defineConfig } from "eslint";
 import js from "@eslint/js";
 import example from "eslint-plugin-example";
 
-export default [
+export default defineConfig([
     {
         ...js.configs.recommended
         files: ["**/src/*.js"],
@@ -133,12 +216,13 @@ export default [
         ...example.configs.recommended
         files: ["**/src/*.js"],
     },
-];
+]);
 ```
 
 If the objects in `extends` contain `files`, then ESLint will intersect those values (AND operation); if the object in `extends` contains `ignores`, then ESLint will merge those values (OR operation). For example:
 
 ```js
+import { defineConfig } from "eslint";
 import globals from "globals";
 
 const config1 = {
@@ -162,7 +246,7 @@ const config2 = {
 };
 
 
-export default [
+export default defineConfig([
 
     {
         name: "myconfig",
@@ -174,7 +258,7 @@ export default [
         }
     }
 
-];
+]);
 ```
 
 Here, the `files` keys will be combined and the `ignores` key will be merged, resulting in a final config that looks like this:
@@ -222,12 +306,14 @@ export default [
 When an extended config and the base config both have multiple `files` entries, then the result is a `files` entry containing all combinations. For example:
 
 ```js
-export default [
+import { defineConfig } from "eslint";
+
+export default defineConfig([
     {
         files: ["src/**", "lib/**"],
         extends: [{ files: ["**/*.js", "**/*.mjs"] }]
     }
-];
+]);
 ```
 
 This config would be calculated as the following:
@@ -251,15 +337,17 @@ Notes:
 1. The `name` key is generated for calculated config objects so that it indicates the inheritance from another config. The extended configs don't exist in the final representation of the config array.
 1. These behaviors differ from the [typescript-eslint extends helper](https://github.com/typescript-eslint/typescript-eslint/blob/main/packages/typescript-eslint/src/config-helper.ts). The `tseslint.config()` helper overwrites the `files` and `ignores` fields on any config contained in `extends` whereas this proposal creates combination `files` and `ignores`, merging the base config with the extended configs.
 
+
 #### Extending Arrays
 
 Arrays can also be used in `extends` (to eliminate the guesswork of what type a config is). When evaluating `extends`, ESLint internally calls `.flat(Infinity)` on the array and then processes the config objects as discussed in the previous example. Consider the following:
 
 ```js
+import { defineConfig } from "eslint";
 import js from "@eslint/js";
 import example from "eslint-plugin-example";
 
-export default [
+export default defineConfig([
 
     {
         files: ["**/src/*.js"],
@@ -268,48 +356,71 @@ export default [
         ]
     }
 
-];
+]);
 ```
 
 This is equivalent to the following:
 
 ```js
+import { defineConfig } from "eslint";
 import js from "@eslint/js";
 import example from "eslint-plugin-example";
 
-export default [
+export default defineConfig([
 
     {
         files: ["**/src/*.js"],
         extends: [js.configs.recommended, example.configs.recommended]
     }
 
-];
+]);
 ```
 
 The extended objects are evaluated in the same order and result in the same final config.
 
 #### Extending Named Configs
 
-While the previous examples are an improvement over current situation, we can go a step further and restore the use of named configs by allowing strings inside of the `extends` array. When provided, the string must refer to a config contained in a plugin. For example:
+While the previous examples are an improvement over current situation, we can go a step further and restore the use of named configs by allowing strings inside of the `extends` array. In eslintrc, you could do something like this:
 
-```js
-import js from "@eslint/js";
-
-export default [
-
-    {
-        plugins: {
-            js
-        },
-        files: ["**/src/*.js"],
-        extends: ["js/recommended"]
+```json
+{
+    "plugins": [
+        "react"
+    ],
+    "extends": [
+        "eslint:recommended",
+        "plugin:react/recommended"
+    ],
+    "rules": {
+       "react/no-set-state": "off"
     }
-
-];
+}
 ```
 
-Here, `js/recommended` refers to the plugin defined as `js`. Internally, ESLint will look up the plugin with the name `js`, looks at the `configs` key, and retrieve the `recommended` key as a replacement for the string `"js/recommended"`. 
+The `plugin:` prefix was necessary because plugin configs were implemented after shared configs, and we needed a way to differentiate. The special `"eslint:recommended"` string was necessary to differentiate it from both shareable configs and plugin configs. This made the eslintrc version of `extends` a bit messy.
+
+With flat config, however, we can fix that by omitting the `plugin:` prefix and we no longer need `"eslint:recommended"`. (Packages that only export a single config can be placed directly into the `extends` array.) The same config written using this proposal looks like this:
+
+```js
+import { defineConfig } from "eslint";
+import js from "@eslint/js";
+import react from "eslint-plugin-react";
+
+export default defineConfig([
+    {
+        plugins: {
+            js,
+            react
+        },
+        extends: ["js/recommended", "react/recommended"],
+        rules: {
+            "react/no-set-state": "off"
+        }
+    }
+]);
+```
+
+Here, `"js/recommended"` refers to the plugin defined as `js`. Internally, ESLint will look up the plugin with the name `js`, looks at the `configs` key, and retrieve the `recommended` key as a replacement for the string `"js/recommended"`. The same process occurs for `"react/recommended"`.
 
 This has several advantages:
 
@@ -399,9 +510,10 @@ export default {
 In an `eslint.config.js` file:
 
 ```js
+import { defineConfig } from "eslint";
 import json from "@eslint/json";
 
-export default [
+export default defineConfig([
     {
         plugins: {
             j: json
@@ -412,73 +524,12 @@ export default [
             "j/no-empty-keys": "warn"
         }
     }
-];
+]);
 ```
 
-Here, the user has assigned the namespace `j` to the JSON plugin. When ESLint loads this config, it sees `extends` with a value of `"j/recommended"`. It looks up the plugin referenced by `j` and then the config named `"recommended"`. It then inserts an entry for `j` in `plugins` that references the plugin. The next step is to look through the config for all the `json` references and replace that with `j` so the references are correct (which we can determine by looking at `meta.namespace`). 
+Here, the user has assigned the namespace `j` to the JSON plugin. When ESLint loads this config, it sees `extends` with a value of `"j/recommended"`. It looks up the plugin referenced by `j` and then the config named `"recommended"`. It then inserts an entry for `j` in `plugins` that references the plugin. The next step is to look through the config for all the `json` references and replace that with `j` so the references are correct (which we can determine by looking at `meta.namespace`).
 
-### Implementation Details
-
-The implementation of this feature requires the following changes:
-
-1. Enable nested arrays in `FlatConfigArray`
-1. Create a new `ConfigExtender` class that encapsulates the functionality for extending configs.
-1. Update `FlatConfigArray` to use `ConfigExtender` inside of the `normalize()` and `normalizeSync()` methods.
-
-#### Enable Nested Arrays in `FlatConfigArray`
-
-Pass [`extraConfigTypes: ["array"]`](https://github.com/eslint/rewrite/blob/a957ee351c27ac1bf22966768cf8aac8c12ce0d2/packages/config-array/src/config-array.js#L572) to [`super()`](https://github.com/eslint/eslint/blob/fd33f1315ac59b1b3828dbab8e1e056a1585eff0/lib/config/flat-config-array.js#L95-L98) to enable nested arrays.
-
-#### The `ConfigExtender` Class
-
-The `ConfigExtender` class is the primary new class for handling the `extends` key in config objects.
-
-```ts
-interface ConfigExtender {
-    evaluate(config: ConfigObject): Array<ConfigObject>;
-}
-```
-
-The `ConfigExtender#evaluate()` method accepts a single config object and returns an array of compatible config objects. If the config object doesn't contain `extends` then it just passes that object back in an array.
-
-#### Update `FlatConfigArray` to use `ConfigExtender`
-
-The [`normalize()`](https://github.com/eslint/eslint/blob/fd33f1315ac59b1b3828dbab8e1e056a1585eff0/lib/config/flat-config-array.js#L141) and [`normalizeSync()`](https://github.com/eslint/eslint/blob/fd33f1315ac59b1b3828dbab8e1e056a1585eff0/lib/config/flat-config-array.js#L160) methods will be updated to use a `ConfigExtender` instance to evaluate any `extends` keys. To do this, we'll need to evaluate each object for `extends` before allowing calling the superclass method. Here's an example of what `normalize()` will look like:
-
-```js
-
-const extender = new ConfigExtender();
-
-class FlatConfigArray {
-
-    // snip
-
-    normalize(context) {
-
-        // make sure not to make any changes if already normalized
-        if (this.isNormalized()) {
-            throw new Error("...");
-        }
-
-        // replace each element with an array
-        this.forEach((element, i) => {
-            const configs = Array.isArray(element) ? element : [element];
-            this[i] = configs.flat().map(config => extender.evaluate(config))
-        });
-
-        // proceed as usual
-        return super.normalize(context)
-            .catch(error => {
-                if (error.name === "ConfigError") {
-                    throw wrapConfigErrorWithDetails(error, this[originalLength], this[baseLength]);
-                }
-
-                throw error;
-
-            });
-    }
-}
-```
+**Note:** The `meta.namespace` value is also valuable outside of this use case. If we ever run into a case where someone has used `json/` as a prefix for a rule, language, or processor, but has only ever namespaced the plugin as `j`, we can then search through registered plugins to see if the JSON plugin is included elsewhere. This gives us the opportunity to let the user know of their error with instructions on how to fix it.
 
 ## Documentation
 
@@ -495,22 +546,24 @@ At a minimum, these pages will have to be updated:
 
 1. Introducing a new key to flat config at this point means that users of ESLint v8 won't be able to use it. Even though v8 is EOL, we had made an attempt to provide forward compatibility to make people's transition easier.
 1. While this may reduce complexity for users, it increases the complexity of config evaluation inside of ESLint. This necessarily means a performance cost that we won't be able to quantify until implementation.
-1. Users will have to know which version of ESLint supports `extends` in order to use it. There really isn't an easy way to feature test this capability other than to inspect the version of the current ESLint package.
+1. Users will have to know which version of ESLint supports `defineConfig` in order to use it. There really isn't an easy way to feature test this capability other than to inspect the version of the current ESLint package.
+1. We'll be introducing a difference in the expected config object format from what ESLint uses internally. Specifically, only `defineConfig()` arguments will support `extends`, so anyone who chooses not to use `defineConfig()` might be confused as to why `extends` doesn't work.
+1. We'll create another package to maintain and need to coordinate releases with the `eslint` package.
 
 ## Backwards Compatibility Analysis
 
-This proposal is additive and does not affect the way existing configurations are evaluated.
+With `defineConfig()` available in the `@eslint/config` package, users of flat config in ESLint v8.x and earlier v9.x will be able to use this functionality even though they'll need to manually install the package.
+
+There are no breaking changes in this proposal.
 
 ## Alternatives
 
+### Enable `extends` and Flattening in ESLint Directly
 
-### A `defineConfig()` function
-
-One alternative is to create a `defineConfig()` function that is exported from the `eslint` package. All of the functionality described in this RFC could be implemented in that function, leaving both `ConfigArray` and `FlatConfigArray` in their current state without the need for changes.
+The original proposal for this RFC was to add `extends` into the implementation of `FlatConfigArray` (or alternatively in `ConfigArray`). This approach would allow writing a config file such as this:
 
 ```js
 import globals from "globals";
-import { defineConfig } from "eslint";
 
 const config1 = {
     name: "config1",
@@ -533,7 +586,7 @@ const config2 = {
 };
 
 
-export default defineConfig([
+export default [
 
     {
         name: "myconfig",
@@ -545,28 +598,20 @@ export default defineConfig([
         }
     }
 
-]);
+];
 ```
 
+The benefit of this approach is that everything is still controlled inside of ESLint itself. There's nothing additional to learn as a user aside from using the `extends` key. 
 
-Benefits to this approach:
+However, there were several identified problems with this approach:
 
-1. **No changes to `FlatConfigArray` or `ConfigArray`.** All of the changes are contained within the `defineConfig()` function.
-1. **Config Inspector just works.** There would be no additional changes necessary for Config Inspector as it would still receive a flat array.
-1. **Familiar approach.** Many other tools support a `defineConfig()` function, so this won't seem unusual to ESLint users. Examples include: [Rollup](https://rollupjs.org/command-line-interface/#config-intellisense), [Astro](https://docs.astro.build/en/guides/configuring-astro/#the-astro-config-file), [Vite](https://vite.dev/config/#config-intellisense), [Nuxt](https://nuxt.com/docs/getting-started/configuration). 
-1. **Type intellisense support.** Most other tools are using `defineConfig()` for intellisense support in editors. We've had [two](https://github.com/eslint/eslint/issues/16874) [requests](https://github.com/eslint/eslint/issues/14249) to add this intellisense support in the past.
-1. **Ability to distribute in a separate package.** If we want to provide this functionality to earlier versions of ESLint that support flat config, we can do so by including in a separate package (maybe `@eslint/config`), then `eslint` could rely on that package to transparently pass `defineConfig` to users.
-1. **Cleaner file than using a utility function.** This allows a more JSON-like appear to the overall configuration file, which makes it easier to read than if we provided a utility function such as `extends()`, with which users must intermix that with regular objects where necessary.
-
-Downsides of this approach:
-
-1. **Different config object formats depending on where used.** The `extends` key would only be valid for the argument to `defineConfig()` and not as part of the standard config object interface. Perhaps `tseslint.config()` points to that not being a problem, but it is still worth consideration.
-1. **Tying `defineConfig` to the `eslint` version.** If we encourage people to use `defineConfig` from `eslint`, then any changes or fixes will mean typing the config file to a particular version of `eslint`. (Or else encouraging people to use an `@eslint/config` package all the time, which I think isn't user-friendly.)
-1. **Config Inspector doesn't have deep insights into `extends`.** Because Config Inspector will just receive a flat array, it would have insights into how `extends` is being used. Perhaps it could use the name of calculated configs to approximate that information, or else maybe we need to add some kind of symbol property to the result objects to provide this information.
+1. **Older ESLint versions locked out.** Users would have to upgrade to the latest ESLint version to use `extends`, meaning that folks who were still on ESLint v8.x or earlier v9.x would not be able to use this functionality at all.
+1. **Ecosystem compatibility.** There was a danger that plugins could export configs with `extends`, which users in earlier ESLint versions would attempt to use and get an error. Because support for `extends` would be tied to a specific ESLint version, that made it more difficult to create a config that would work in all ESLint versions that support flat config.
+1. **Config Inspector compatibility.** The original plan to implement the functionality in `FlatConfigArray` posed a problem because `FlatConfigArray` is not exported from the `eslint` package. We would either have to export `FlatConfigArray` or implement the functionality in `ConfigArray`. However, `ConfigArray`, being a generic base class, has no concept of plugins, so we'd either have to introduce that concept or not implemented name config extends. There were a lot of different tradeoffs to consider here.
 
 ### An `extend()` function
 
-As [mentioned by Kirk Waiblinger](https://github.com/eslint/rfcs/pull/126/files#r1860258048), we could also do a smaller version of the `defineConfig` approach by just defining an `extend()` function that users could use whenever they want to extend a config, such as:
+As [mentioned by Kirk Waiblinger](https://github.com/eslint/rfcs/pull/126/files#r1860258048), we could also do a smaller version of `defineConfig()` approach by just defining an `extend()` function that users could use whenever they want to extend a config, such as:
 
 ```js
 import { extend } from "eslint";
@@ -580,6 +625,12 @@ export default [
     },
     [js.configs.recommended, example.configs.recommended],
   ),
+  {
+    files: ["**/*.cjs"],
+    languageOptions: {
+        sourceType: "commonjs"
+    }
+  }
 ];
 ```
 
@@ -587,15 +638,19 @@ This has similar upsides and downsides to `defineConfig`, with the additional do
 
 ## Open Questions
 
-1. **Should `extends` be allowed in plugin configs?** This RFC does not allow `extends` in plugin configs for simplicity. Allowing this would mean the possibility of nested `extends`, which may be desirable but also more challenging to implement. Further, if plugins export configs with `extends`, then that automatically means those configs cannot be used in any earlier versions of ESLint. However, not allowing it also means having different schemas for user-defined and plugin configs, which is a significant downside.
+1. **Is `@eslint/config` the right package name?** We could name it `@eslint/define-config`, but that seems like a name that implies `defineConfig()` will be the only export for that package. Using `@eslint/config` seems like it would give us the flexibility to add different kinds of helpers in the future without needing to create a separate package for each. I'm still unsure if this is the correct choice.
+1. **Is the `>` character a good representation of "extends" in `name`?** Is that unique enough? Should we use the string `"extends"` instead? Or something else?
+1. **How should Config Inspector show extended configs?** Right now, Config Inspector would receive the already-flattened config array. It could infer from the `>` in config names which configs were related to one another, but should how would that work when a config didn't have a name? Should we maybe provide additional data in the form of a symbol property config objects that Config Inspector can read to determine the relationship between config objects? And would Config Inspector alter its view in some way to show this relationship?
 
 ## Frequently Asked Questions
 
-### Why is this functionality added to `FlatConfigArray` instead of `@eslint/config-array`
+### Why are named configs a part of this RFC instead of a separate one?
 
-In order to support named configs, we need the concept of a plugin. The generic `ConfigArray` class has no concept of plugins, which means the functionality needs to live in `FlatConfigArray` in some way. There may be an argument for supporting `extends` with just objects and arrays in `ConfigArray`, with `FlatConfigArray` overriding that to support named configs, but that would increase the complexity of implementation.
+Named configs are included here for three reasons:
 
-If we end up not supporting named configs, then we can revisit this decision.
+1. It helps to normalize the application of extended configs.
+1. It encourages plugins to export configs on the `configs` key.
+1. It directly affects how this proposal is implemented.
 
 ### What will happen for plugins that don't define `meta.namespace`?
 
