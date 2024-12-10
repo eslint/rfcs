@@ -3,11 +3,11 @@
 - RFC PR: <https://github.com/eslint/rfcs/pull/127>
 - Authors: [Josh Goldberg](https://github.com/JoshuaKGoldberg)
 
-# Introduce ecosystem tests for popular third-party plugins
+# Introduce ecosystem tests for popular plugins
 
 ## Summary
 
-Adding an CI job to the `eslint/eslint` repo that checks changes against a small selection of third-party plugins.
+Adding an CI job to the `eslint/eslint` repo that checks changes against `@eslint/*` plugins as well as a small selection of third-party plugins.
 
 ## Motivation
 
@@ -67,7 +67,7 @@ Depending on specifics of plugin rule reports would make the job prone to failur
 
 ### Failure Handling
 
-It is theoretically possible that the ecosystem CI job will occasionally be broken by updates to ecosystem plugins.
+It is theoretically possible that the ecosystem CI job will occasionally be broken by updates to plugins.
 However, this RFC believes that case will be exceedingly rare and short-lived:
 
 - Per [Plugin Selection](#plugin-selection), only very stable plugins that test on multiple ESLint versions including the latest will be selected
@@ -103,20 +103,21 @@ Otherwise the ESLint repository will assume only supporting up to the currently 
 
 The plugins that will be included to start will be:
 
+- All `@eslint/*` plugins, including [`@eslint/css`](https://www.npmjs.com/package/@eslint/css), [`@eslint/json`](https://www.npmjs.com/package/@eslint/json), and [`@eslint/markdown`](https://www.npmjs.com/package/@eslint/markdown)
 - [`eslint-plugin-eslint-comments`](https://github.com/eslint-community/eslint-plugin-eslint-comments): to capture an `eslint-community` project and AST edge cases around comments
 - [`eslint-plugin-unicorn`](https://github.com/sindresorhus/eslint-plugin-unicorn): to capture a large selection of miscellaneous rules
 - [`eslint-plugin-vue`](https://github.com/vuejs/eslint-plugin-vue): to capture support for a framework with nested parsing of a non-JavaScript/TypeScript-standard syntax
 - [`typescript-eslint`](https://github.com/typescript-eslint/typescript-eslint): to capture testing TypeScript APIs and intricate uses of parsing in general
 
-Plugins will be selectively added if they meet all of the following criteria:
+Third-party plugins will be selectively added if they meet all of the following criteria:
 
 - &gt;1 million npm downloads a week: arbitrary large size threshold to avoid small packages
 - Adding a notable new API usage not yet covered: to avoid duplicate equivalent plugins
 - Has had a breakage reported on ESLint: to be cautious in adding to the list
 - Is under active maintenance and has taken a week or less to fix any ESLint breakages within the last year: to avoid packages that won't be updated quickly on failures
 
-The number of plugins should remain small.
-Each added plugin brings adds the risk of third-party breakage, so plugins will only be added after filing a new issue and gaining team consensus.
+The number of third-party plugins should remain small.
+Each added plugin brings adds a risk of breakage, so plugins will only be added after filing a new issue and gaining team consensus.
 
 ### Rollout
 
@@ -151,6 +152,14 @@ It's exceedingly difficult to be sure when changes to a large published package 
 Even when all packages in an ecosystem are well-tested the way ESLint and its major plugins are, the sheer project size and duration of maintenance make unfortunate edge cases likely to happen.
 
 > [Venerable xkcd "Workflow" comic](https://xkcd.com/1172)
+
+### What if a breakage causes rules to report incorrectly, but doesn't cause `npm lint` to crash?
+
+Checking for incorrect rule reports is not handled by this RFC.
+All recent significant downstream breakages caused rules to fully crash.
+
+Any kind of rule report verification would necessitate ecosystem tests taking a dependency on the specific reports from downstream plugins.
+This RFC does not believe the effort of keeping snapshots of those reports up-to-date as worthwhile.
 
 ## Related Discussions
 
