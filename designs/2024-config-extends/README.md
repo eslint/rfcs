@@ -83,6 +83,7 @@ There are two goals with this design:
 1. **Make it easier to configure ESLint.** For users, we want to reduce unnecessarily boilerplate and guesswork as much as possible.
 1. **Encourage plugins to use `configs`.** For plugin authors, we want to encourage the use of a consistent entrypoint, `configs`, where users can find predefined configurations. 
 
+
 ## Detailed Design
 
 Design Summary:
@@ -90,6 +91,12 @@ Design Summary:
 1. Introduce a `defineConfig()` function
 1. Allow arrays in config arrays (in addition to objects)
 1. Introduce an `extends` key in config objects
+
+### Definitions
+
+* **Base Object** - an object containing the `extends` key.
+* **Extended Object** - an object that is a member of an `extends` array.
+* **Generated Object** - an object that results from applying an extended object to a base object.
 
 ### Introduce a `defineConfig()` Function
 
@@ -200,106 +207,177 @@ export default defineConfig([
 ]);
 ```
 
-Assuming these config objects do not contain `files` or `ignores`, ESLint will convert this config into the following:
+How these configs are merged depends on what `files` and `ignores` are present on both the base object and the extended objects.
+
+##### Base Objects and Extended Objects without `files` or `ignores`
+
+If the base object and the extended objects don't have any `files` or `ignores`, then the objects are placed directly into the config array with the extended objects first and the base object last. For example:
 
 ```js
 import { defineConfig } from "eslint";
-import js from "@eslint/js";
-import example from "eslint-plugin-example";
+
+const config1 = {
+    rules: {
+        semi: "error";
+    }
+};
+
+const config2 = {
+    rules: {
+        "prefer-const": "error"
+    }
+};
 
 export default defineConfig([
     {
-        ...js.configs.recommended
-        files: ["**/src/*.js"],
-    },
-    {
-        ...example.configs.recommended
-        files: ["**/src/*.js"],
-    },
+        extends: [config1, config2],
+        rules: {
+            "no-console": "error"
+        }
+    }
 ]);
 ```
+
+This config would result in the following array:
+
+```js
+export default [
+    {
+        rules: {
+            semi: "error";
+        }
+    },
+    {
+        rules: {
+            "prefer-const": "error"
+        }
+    },
+    {
+        rules: {
+            "no-console": "error"
+        }
+    }
+];
+```
+
+##### Base Object with `files` and `ignores` and Extended Objects without `files` or `ignores`
+
+When the base object has `files` and/or `ignores` and the extended objects do not, the extended objects are added with the same `files` and `ignores` as the base object. For example:
+
+```js
+import { defineConfig } from "eslint";
+
+const config1 = {
+    rules: {
+        semi: "error";
+    }
+};
+
+const config2 = {
+    rules: {
+        "prefer-const": "error"
+    }
+};
+
+export default defineConfig([
+    {
+        files: ["src/*.js"],
+        ignores: ["src/__tests/**/*.js"],
+        extends: [config1, config2],
+        rules: {
+            "no-console": "error"
+        }
+    }
+]);
+```
+
+This config would result in the following array:
+
+```js
+export default [
+    {
+        files: ["src/*.js"],
+        ignores: ["src/__tests/**/*.js"],
+        rules: {
+            semi: "error";
+        }
+    },
+    {
+        files: ["src/*.js"],
+        ignores: ["src/__tests/**/*.js"],
+        rules: {
+            "prefer-const": "error"
+        }
+    },
+    {
+        files: ["src/*.js"],
+        ignores: ["src/__tests/**/*.js"],
+        rules: {
+            "no-console": "error"
+        }
+    }
+];
+```
+
+##### Base Object with `files` and `ignores` and Extended Object with `files` or `ignores`
 
 If the objects in `extends` contain `files`, then ESLint will intersect those values (AND operation); if the object in `extends` contains `ignores`, then ESLint will merge those values (OR operation). For example:
 
 ```js
 import { defineConfig } from "eslint";
-import globals from "globals";
 
 const config1 = {
-    name: "config1",
     files: ["**/*.cjs.js"],
-    languageOptions: {
-        sourceType: "commonjs",
-        globals: {
-            ...globals.node
-        }
+    rules: {
+        semi: "error";
     }
 };
 
 const config2 = {
-    name: "config2",
     files: ["**/*.js"],
-    ignores: ["**/tests"],
+    ignores: ["**/tests/*.js"],
     rules: {
-        "no-console": "error"
+        "prefer-const": "error"
     }
 };
 
-
 export default defineConfig([
-
     {
-        name: "myconfig",
-        files: ["**/src/*.js"],
-        ignores: ["**/*.test.js"]
+        files: ["src/*.js"],
+        ignores: ["src/__tests/**/*.js"],
         extends: [config1, config2],
-        rules: {
-            semi: "error"
-        }
-    }
-
-]);
-```
-
-Here, the `files` keys will be combined and the `ignores` key will be merged, resulting in a final config that looks like this:
-
-```js
-
-export default [
-
-    // intersected files and original ignores
-    {
-        name: "myconfig > config1",
-        files: [["**/src/*.js", "**/*.cjs.js"]],
-        ignores: ["**/*.test.js"],
-        languageOptions: {
-            sourceType: "commonjs",
-            globals: {
-                ...globals.node
-            }
-        }
-    },
-
-    // intersected files and merged ignores
-    {
-        name: "myconfig > config2",
-        files: [["**/src/*.js", "**/*.js"]],
-        ignores: ["**/*.test.js", "**/tests"],
         rules: {
             "no-console": "error"
         }
-    },
+    }
+]);
+```
 
-    // original config
+This config would result in the following array:
+
+```js
+export default [
     {
-        name: "myconfig",
-        files: ["**/src/*.js"],
-        ignores: ["**/*.test.js"]
+        files: [["src/*.js"], ["**/*.cjs.js"]],
+        ignores: ["src/__tests/**/*.js"],
         rules: {
-            semi: "error"
+            semi: "error";
+        }
+    },
+    {
+        files: [["src/*.js"], ["**/*.js"]]
+        ignores: ["src/__tests/**/*.js", "**/tests/**/*.js"],
+        rules: {
+            "prefer-const": "error"
+        }
+    },
+    {
+        files: ["src/*.js"],
+        ignores: ["src/__tests/**/*.js"],
+        rules: {
+            "no-console": "error"
         }
     }
-
 ];
 ```
 
@@ -334,9 +412,119 @@ export default [
 Notes:
 
 1. The `files` and `ignores` values from the base config always come first in the calculated `files` and `ignores`. If there's not a match, then there's no point in continuing on to use the patterns from the extended configs.
-1. The `name` key is generated for calculated config objects so that it indicates the inheritance from another config. The extended configs don't exist in the final representation of the config array.
 1. These behaviors differ from the [typescript-eslint extends helper](https://github.com/typescript-eslint/typescript-eslint/blob/main/packages/typescript-eslint/src/config-helper.ts). The `tseslint.config()` helper overwrites the `files` and `ignores` fields on any config contained in `extends` whereas this proposal creates combination `files` and `ignores`, merging the base config with the extended configs.
 
+##### Extended Object with Only `ignores`
+
+When a base config extends an object with only `ignores` (global ignores), the extended object `ignores` is placed in a new object with just `ignores`. For example:
+
+```js
+import { defineConfig } from "eslint";
+
+const config1 = {
+    ignores: ["build"]
+};
+
+const config2 = {
+    ignores: ["dist"]
+};
+
+export default defineConfig([
+    {
+        files: ["src/*.js"],
+        ignores: ["src/__tests/**/*.js"],
+        extends: [config1, config2],
+        rules: {
+            "no-console": "error"
+        }
+    }
+]);
+```
+
+This config would result in the following array:
+
+```js
+export default [
+    {
+        ignores: ["build"]
+    },
+    {
+        ignores: ["dist"]
+    },
+    {
+        files: ["src/*.js"],
+        ignores: ["src/__tests/**/*.js"],
+        rules: {
+            "no-console": "error"
+        }
+    }
+];
+```
+
+In short, global ignores are always inherited without any modification.
+
+##### Calculating Config Names
+
+To provide for easier debugging, each generated object will have a `name` key that is the concatenation of the base object name and the extended object name, separated by a `>`. For example:
+
+```js
+import { defineConfig } from "eslint";
+
+const config1 = {
+    name: "config1",
+    rules: {
+        semi: "error";
+    }
+};
+
+const config2 = {
+    name: "config2",
+    rules: {
+        "prefer-const": "error"
+    }
+};
+
+export default defineConfig([
+    {
+        name: "base config",
+        extends: [config1, config2],
+        rules: {
+            "no-console": "error"
+        }
+    }
+]);
+```
+
+This config would result in the following array:
+
+```js
+export default [
+    {
+        name: "base config > config1",
+        rules: {
+            semi: "error";
+        }
+    },
+    {
+        name: "base config > config2",
+        rules: {
+            "prefer-const": "error"
+        }
+    },
+    {
+        name: "base config",
+        rules: {
+            "no-console": "error"
+        }
+    }
+];
+```
+
+Notes:
+
+1. If the base config doesn't have a `name` key, then it will be assigned a name in the format `"user config N"` where `N` is the index in the array. If the base object is, itself, contained in another array, then `N` will be the concatenation of the array indices from each parent array, such as `1,5,2` that would allow you to walk the arrays to find the object.
+1. If an extended config is specified as a string name, then that is the name that will be used. Otherwise, its `name` will be used.
+1. If an extended config doesn't have a name, it will be assigned a name of `"extended config N"` where `N` is the index in the `extends` array. Similar to base objects, if an extended object is contained in a nested array then `N` represents the concatenation of array indices starting from the `extends` array.
 
 #### Extending Arrays
 
@@ -651,6 +839,12 @@ Named configs are included here for three reasons:
 1. It helps to normalize the application of extended configs.
 1. It encourages plugins to export configs on the `configs` key.
 1. It directly affects how this proposal is implemented.
+
+### Why is `files` intersected with extended objects?
+
+This matches the behavior of the eslintrc `overrides.extends` behavior, and it ensures that extending arrays results in predictable behavior.
+
+The alternative, replacing `files` completely with the base config values, means that you can't safely extend an array of config objects that might only intend to match specific file patterns. Blindly overwriting `files` can lead to hard-to-detect errors in this case.
 
 ### What will happen for plugins that don't define `meta.namespace`?
 
