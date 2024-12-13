@@ -128,6 +128,7 @@ However, to be safe, this RFC proposes adding a CI job in three steps:
 2. On the `main` branch only
 3. On all PRs targeting the `main` branch, alongside existing CI jobs
 
+Starting with a branch outside `main` ensures that unexpectedly high frequencies of breakages are caught early, without blocking `main` branch builds.
 At least one month should be held between those steps to make sure the job is consistently passing.
 
 ## Out of Scope
