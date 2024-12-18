@@ -122,13 +122,14 @@ Each added plugin brings adds a risk of breakage, so plugins will only be added 
 ### Rollout
 
 This RFC expects the added ecosystem CI job to _likely_ consistently pass.
-However, to be safe, this RFC proposes adding a CI job in three steps:
+A CI job will be added to the `eslint/eslint` issue, but will not immediately be a part of `main` branch or PR branch builds.
+To be safe, this RFC proposes rolling out CI job in three steps:
 
-1. On a branch that is updated from `main` by a CI cron job several times a week
+1. On a CI cron job once a day, targeting the `main` branch but not blocking its builds
 2. On the `main` branch only
 3. On all PRs targeting the `main` branch, alongside existing CI jobs
 
-Starting with a branch outside `main` ensures that unexpectedly high frequencies of breakages are caught early, without blocking `main` branch builds.
+Starting with a job separately from `main` ensures that unexpectedly high frequencies of breakages are caught early, without blocking `main` branch builds.
 At least one month should be held between those steps to make sure the job is consistently passing.
 
 ## Out of Scope
