@@ -1,6 +1,6 @@
 - Repo: [eslint/eslint](https://github.com/eslint/eslint)
 - Start Date: 2024-12-20
-- RFC PR:
+- RFC PR: https://github.com/eslint/rfcs/pull/129
 - Authors: Francesco Trotta ([fasttime](https://github.com/fasttime))
 
 # Multithread Linting
