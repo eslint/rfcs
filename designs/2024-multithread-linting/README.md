@@ -624,6 +624,7 @@ An option that seems fair is moving the bounty to another issue that needs atten
 -->
 
 * Tracking issue eslint/eslint#3565
+* Prior parallel linting RFC eslint/rfcs#42
 * https://github.com/discord/eslint/tree/parallel by [faultyserver](https://github.com/faultyserver), a fork of ESLint v8 with parallel linting support[^4]
 * [eslint-p](https://www.npmjs.com/package/eslint-p) by myself, a CLI-only wrapper around ESLint that adds multithread linting support
 
