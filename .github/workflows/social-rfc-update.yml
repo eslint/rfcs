@@ -1,4 +1,4 @@
-name: Tweet RFC Update
+name: Post RFC Social Update
 on:
   # Can't use pull_request because it won't have access to secrets
   pull_request_target:
@@ -11,18 +11,17 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '18.x'
-      - run: npx @humanwhocodes/tweet "The RFC '$TITLE' is now in the ${{ github.event.label.name }} phase.\n\n${{ github.event.pull_request.html_url }}"
+      - run: npx @humanwhocodes/crosspost -t -b -m "The RFC '$TITLE' is now in the ${{ github.event.label.name }} phase.\n\n${{ github.event.pull_request.html_url }}"
         env:
-          TITLE: ${{ github.event.pull_request.title }}
-          TWITTER_CONSUMER_KEY: ${{ secrets.TWITTER_CONSUMER_KEY }}
-          TWITTER_CONSUMER_SECRET: ${{ secrets.TWITTER_CONSUMER_SECRET }}
+          TWITTER_API_CONSUMER_KEY: ${{ secrets.TWITTER_CONSUMER_KEY }}
+          TWITTER_API_CONSUMER_SECRET: ${{ secrets.TWITTER_CONSUMER_SECRET }}
           TWITTER_ACCESS_TOKEN_KEY: ${{ secrets.TWITTER_ACCESS_TOKEN_KEY }}
           TWITTER_ACCESS_TOKEN_SECRET: ${{ secrets.TWITTER_ACCESS_TOKEN_SECRET }}
-      - run: npx @humanwhocodes/toot "The RFC '$TITLE' is now in the ${{ github.event.label.name }} phase.\n\n${{ github.event.pull_request.html_url }}"
-        env:
-          TITLE: ${{ github.event.pull_request.title }}
           MASTODON_ACCESS_TOKEN: ${{ secrets.MASTODON_ACCESS_TOKEN }}
           MASTODON_HOST: ${{ secrets.MASTODON_HOST }}
+          BLUESKY_IDENTIFIER: ${{ vars.BLUESKY_IDENTIFIER }}
+          BLUESKY_PASSWORD: ${{ secrets.BLUESKY_PASSWORD }}
+          BLUESKY_HOST: ${{ vars.BLUESKY_HOST }}
 
   tweetMerge:
     runs-on: ubuntu-latest
@@ -31,15 +30,14 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '18.x'
-      - run: npx @humanwhocodes/tweet "The RFC '$TITLE' has been approved and merged!\n\n${{ github.event.pull_request.html_url }}"
+      - run: npx @humanwhocodes/crosspost -t -b -m "The RFC '$TITLE' has been approved and merged!\n\n${{ github.event.pull_request.html_url }}"
         env:
-          TITLE: ${{ github.event.pull_request.title }}
-          TWITTER_CONSUMER_KEY: ${{ secrets.TWITTER_CONSUMER_KEY }}
-          TWITTER_CONSUMER_SECRET: ${{ secrets.TWITTER_CONSUMER_SECRET }}
+          TWITTER_API_CONSUMER_KEY: ${{ secrets.TWITTER_CONSUMER_KEY }}
+          TWITTER_API_CONSUMER_SECRET: ${{ secrets.TWITTER_CONSUMER_SECRET }}
           TWITTER_ACCESS_TOKEN_KEY: ${{ secrets.TWITTER_ACCESS_TOKEN_KEY }}
           TWITTER_ACCESS_TOKEN_SECRET: ${{ secrets.TWITTER_ACCESS_TOKEN_SECRET }}
-      - run: npx @humanwhocodes/toot "The RFC '$TITLE' has been approved and merged!\n\n${{ github.event.pull_request.html_url }}"
-        env:
-          TITLE: ${{ github.event.pull_request.title }}
           MASTODON_ACCESS_TOKEN: ${{ secrets.MASTODON_ACCESS_TOKEN }}
           MASTODON_HOST: ${{ secrets.MASTODON_HOST }}
+          BLUESKY_IDENTIFIER: ${{ vars.BLUESKY_IDENTIFIER }}
+          BLUESKY_PASSWORD: ${{ secrets.BLUESKY_PASSWORD }}
+          BLUESKY_HOST: ${{ vars.BLUESKY_HOST }}
