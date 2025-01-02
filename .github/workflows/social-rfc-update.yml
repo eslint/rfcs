@@ -13,6 +13,7 @@ jobs:
           node-version: '18.x'
       - run: npx @humanwhocodes/crosspost -t -b -m "The RFC '$TITLE' is now in the ${{ github.event.label.name }} phase.\n\n${{ github.event.pull_request.html_url }}"
         env:
+          TITLE: ${{ github.event.pull_request.title }}
           TWITTER_API_CONSUMER_KEY: ${{ secrets.TWITTER_CONSUMER_KEY }}
           TWITTER_API_CONSUMER_SECRET: ${{ secrets.TWITTER_CONSUMER_SECRET }}
           TWITTER_ACCESS_TOKEN_KEY: ${{ secrets.TWITTER_ACCESS_TOKEN_KEY }}
@@ -32,6 +33,7 @@ jobs:
           node-version: '18.x'
       - run: npx @humanwhocodes/crosspost -t -b -m "The RFC '$TITLE' has been approved and merged!\n\n${{ github.event.pull_request.html_url }}"
         env:
+          TITLE: ${{ github.event.pull_request.title }}
           TWITTER_API_CONSUMER_KEY: ${{ secrets.TWITTER_CONSUMER_KEY }}
           TWITTER_API_CONSUMER_SECRET: ${{ secrets.TWITTER_CONSUMER_SECRET }}
           TWITTER_ACCESS_TOKEN_KEY: ${{ secrets.TWITTER_ACCESS_TOKEN_KEY }}
