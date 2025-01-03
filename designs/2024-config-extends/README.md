@@ -732,7 +732,6 @@ At a minimum, these pages will have to be updated:
 
 ## Drawbacks
 
-1. Introducing a new key to flat config at this point means that users of ESLint v8 won't be able to use it. Even though v8 is EOL, we had made an attempt to provide forward compatibility to make people's transition easier.
 1. While this may reduce complexity for users, it increases the complexity of config evaluation inside of ESLint. This necessarily means a performance cost that we won't be able to quantify until implementation.
 1. Users will have to know which version of ESLint supports `defineConfig` in order to use it. There really isn't an easy way to feature test this capability other than to inspect the version of the current ESLint package.
 1. We'll be introducing a difference in the expected config object format from what ESLint uses internally. Specifically, only `defineConfig()` arguments will support `extends`, so anyone who chooses not to use `defineConfig()` might be confused as to why `extends` doesn't work.
