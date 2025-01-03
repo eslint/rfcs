@@ -102,7 +102,7 @@ Design Summary:
 
 Rather than changing either `FlatConfigArray` or `ConfigArray`, we'll create a `defineConfig()` function that will contain all of the functionality described in this RFC. Many other tools support a `defineConfig()` function, so this won't seem unusual to ESLint users. Examples include: [Rollup](https://rollupjs.org/command-line-interface/#config-intellisense), [Astro](https://docs.astro.build/en/guides/configuring-astro/#the-astro-config-file), [Vite](https://vite.dev/config/#config-intellisense), [Nuxt](https://nuxt.com/docs/getting-started/configuration). While those tools use `defineConfig()` primarily as a means to support editor Intellisense, we will also use it an abstraction layer between the base flat config behavior and the desired new behavior.
 
-The `defineConfig()` function will be defined in a new `@eslint/config` package contained in the [rewrite](https://github.com/eslint/rewrite) repository. The `eslint` package will depend on `@eslint/config` and export `defineConfig()` directly, so users of ESLint versions that support `defineConfig()` natively will not have to install a separate package. For older versions of ESLint, they'll still be able to use `defineConfig()` by manually installing the `@eslint/config` package.
+The `defineConfig()` function will be defined in a new `@eslint/config-helpers` package contained in the [rewrite](https://github.com/eslint/rewrite) repository. The `eslint` package will depend on `@eslint/config-helpers` and export `defineConfig()` directly, so users of ESLint versions that support `defineConfig()` natively will not have to install a separate package. For older versions of ESLint, they'll still be able to use `defineConfig()` by manually installing the `@eslint/config-helpers` package.
 
 The `defineConfig()` function can accept both objects and arrays, and will flatten its arguments to create a final, flat array. As a rough sketch:
 
@@ -740,7 +740,7 @@ At a minimum, these pages will have to be updated:
 
 ## Backwards Compatibility Analysis
 
-With `defineConfig()` available in the `@eslint/config` package, users of flat config in ESLint v8.x and earlier v9.x will be able to use this functionality even though they'll need to manually install the package.
+With `defineConfig()` available in the `@eslint/config-helpers` package, users of flat config in ESLint v8.x and earlier v9.x will be able to use this functionality even though they'll need to manually install the package.
 
 There are no breaking changes in this proposal.
 
@@ -826,7 +826,6 @@ This has similar upsides and downsides to `defineConfig`, with the additional do
 
 ## Open Questions
 
-1. **Is `@eslint/config` the right package name?** We could name it `@eslint/define-config`, but that seems like a name that implies `defineConfig()` will be the only export for that package. Using `@eslint/config` seems like it would give us the flexibility to add different kinds of helpers in the future without needing to create a separate package for each. I'm still unsure if this is the correct choice.
 1. **Is the `>` character a good representation of "extends" in `name`?** Is that unique enough? Should we use the string `"extends"` instead? Or something else?
 1. **How should Config Inspector show extended configs?** Right now, Config Inspector would receive the already-flattened config array. It could infer from the `>` in config names which configs were related to one another, but should how would that work when a config didn't have a name? Should we maybe provide additional data in the form of a symbol property config objects that Config Inspector can read to determine the relationship between config objects? And would Config Inspector alter its view in some way to show this relationship?
 
