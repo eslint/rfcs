@@ -358,14 +358,14 @@ This config would result in the following array:
 ```js
 export default [
     {
-        files: [["src/*.js"], ["**/*.cjs.js"]],
+        files: [["src/*.js", "**/*.cjs.js"]],
         ignores: ["src/__tests/**/*.js"],
         rules: {
             semi: "error";
         }
     },
     {
-        files: [["src/*.js"], ["**/*.js"]]
+        files: [["src/*.js", "**/*.js"]]
         ignores: ["src/__tests/**/*.js", "**/tests/**/*.js"],
         rules: {
             "prefer-const": "error"
