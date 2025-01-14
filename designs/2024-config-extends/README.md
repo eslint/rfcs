@@ -730,6 +730,8 @@ At a minimum, these pages will have to be updated:
 * https://eslint.org/docs/latest/extend/plugins#configs-in-plugins
 * https://eslint.org/docs/latest/use/configure/combine-configs
 
+We should also update the documentation for the `files` array to indicate that it can contain an array of arrays.
+
 ## Drawbacks
 
 1. While this may reduce complexity for users, it increases the complexity of config evaluation inside of ESLint. This necessarily means a performance cost that we won't be able to quantify until implementation.
