@@ -7,14 +7,14 @@
 
 ## Summary
 
-Adding an CI job to the `eslint/eslint` repo that checks changes against `@eslint/*` plugins as well as a small selection of third-party plugins.
+Adding an CI job to the `eslint/eslint` repository that checks changes against `@eslint/*` plugins as well as a small selection of third-party plugins.
 
 ## Motivation
 
 Changes in ESLint occasionally break downstream plugins in unexpected ways.
 Those changes might be unintentional breaking changes, or even non-breaking changes that happen to touch edge case behaviors relied on by plugins.
 
-[Bug: Error while loading rule '@typescript-eslint/no-unused-expressions](https://github.com/eslint/eslint/issues/19134) is an example change in ESLint's that caused downstream breakages in third-party plugins.
+[Bug: Error while loading rule '@typescript-eslint/no-unused-expressions'](https://github.com/eslint/eslint/issues/19134) reports an example change in ESLint that caused downstream breakages in third-party plugins.
 At least two popular plugins -[`eslint-plugin-unicorn`](https://github.com/sindresorhus/eslint-plugin-unicorn/issues/2496) and [`typescript-eslint`](https://github.com/typescript-eslint/typescript-eslint/issues/10338)- were broken by that change.
 
 The plugins broke because they were relying on non-public implementation details of ESLint rules per [Docs: Formalize recommendation against plugins calling to rules via use-at-your-own-risk](https://github.com/eslint/eslint/issues/19169).
@@ -122,12 +122,15 @@ Each added plugin adds a risk of breakage, so plugins will only be added after f
 ### Rollout
 
 This RFC expects the added ecosystem CI job to _likely_ consistently pass.
-A CI job will be added to the `eslint/eslint` repo, but will not immediately be a part of `main` branch or PR branch builds.
+A CI job will be added to the `eslint/eslint` repository, but will not immediately be a part of `main` branch or PR branch builds.
 To be safe, this RFC proposes rolling out CI job in three steps:
 
 1. On a CI cron job once a day, targeting the `main` branch but not blocking its builds
-2. On the `main` branch only
+2. On the `main` branch only, with failures showing as failures in its builds
 3. On all PRs targeting the `main` branch, alongside existing CI jobs
+
+Each step will replace the previous step.
+Once all three are done, running ecosystem tests will be a standard part of `main` branch and pull request CI along with existing tasks like linting and testing.
 
 Starting with a job separately from `main` ensures that unexpectedly high frequencies of breakages are caught early, without blocking `main` branch builds.
 At least one month should be held between those steps to make sure the job is consistently passing.
