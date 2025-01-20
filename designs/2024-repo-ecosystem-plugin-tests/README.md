@@ -141,6 +141,10 @@ Automation could be added for at least the filing of issues on plugin failures.
 That does not seem worth the time expenditure given how rarely plugins are expected to fail.
 This RFC's discussion settled on it not being worth it.
 
+Plugins using internal/private ESLint APIs are one of the canonical examples of what this process is meant to flag.
+However, this process intentionally does not include remediations for using those APIs beyond filing an issue on the downstream repository.
+The intent is that consumers will own correcting uses of ESLint, and can ask for help in the standard ESLint channels as needed.
+
 ## Open Questions
 
 Are there other plugins we should include that satisfy the criteria?
