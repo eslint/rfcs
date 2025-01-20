@@ -117,12 +117,12 @@ Third-party plugins will be selectively added if they meet all of the following 
 - Is under active maintenance and has taken a week or less to fix any ESLint breakages within the last year: to avoid packages that won't be updated quickly on failures
 
 The number of third-party plugins should remain small.
-Each added plugin brings adds a risk of breakage, so plugins will only be added after filing a new issue and gaining team consensus.
+Each added plugin adds a risk of breakage, so plugins will only be added after filing a new issue and gaining team consensus.
 
 ### Rollout
 
 This RFC expects the added ecosystem CI job to _likely_ consistently pass.
-A CI job will be added to the `eslint/eslint` issue, but will not immediately be a part of `main` branch or PR branch builds.
+A CI job will be added to the `eslint/eslint` repo, but will not immediately be a part of `main` branch or PR branch builds.
 To be safe, this RFC proposes rolling out CI job in three steps:
 
 1. On a CI cron job once a day, targeting the `main` branch but not blocking its builds
