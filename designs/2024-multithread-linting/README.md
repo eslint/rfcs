@@ -624,9 +624,55 @@ An option that seems fair is moving the bounty to another issue that needs atten
 -->
 
 * Tracking issue eslint/eslint#3565
-* Prior parallel linting RFC eslint/rfcs#42
-* https://github.com/discord/eslint/tree/parallel by [faultyserver](https://github.com/faultyserver), a fork of ESLint v8 with parallel linting support[^4]
-* [eslint-p](https://www.npmjs.com/package/eslint-p) by myself, a CLI-only wrapper around ESLint that adds multithread linting support
+* Prior parallel linting proposals
+  * eslint/rfcs#4
+  * eslint/rfcs#11
+  * eslint/rfcs#42
+
+## Related Tools
+
+The following is a list of tools that have implemented ESLint parallelization using multiple threads or processes.
+
+**[eslint-parallel](https://github.com/pgAdmin/eslint-parallel)**
+
+A tool with parallel linting support based on ESLint v6.
+It launches multiple sub-processes where each sub-process lints a precomputed subset of files.
+It provides a programmatic API as well as a command line interface.
+
+**[esprint](https://github.com/pinterest/esprint)**
+
+A tool with parallel linting support based on ESLint v7.
+It starts a worker thread pool, calling `ESLint#lintFiles()` once for each file in the next available thread.
+A local client-server tooling with JSON-RPC support is used for cross-thread communication.
+
+**[jest-runner-eslint](https://github.com/jest-community/jest-runner-eslint)**
+
+Implemented as a runner for [Jest](https://jestjs.io/) with the option to split the workload across multiple threads.
+It takes advantage of Jest's parallelization capabilities to run ESLint v7 or v8 on a set of configured files.
+An interesting feature is the ability to specify ESLint CLI options in the Jest configuration in the same serializable format used internally by ESLint.
+
+**[Backstage](https://backstage.io/)**
+
+The Backstage CLI has an option to run ESLint (currently ESLint v8) in multithread mode along with other tools.
+Each file is linted in the next available thread.
+See the [_relevant code_](https://github.com/backstage/backstage/blob/a49030a3fc7cbeca12b81b7859889f0cb4f19b8a/packages/cli/src/commands/repo/lint.ts#L108-L220).
+
+**https://github.com/discord/eslint/tree/parallel by [faultyserver](https://github.com/faultyserver)**
+
+This is a fork of ESLint v8 with parallel linting support.[^4]
+It launches multiple sub-processes where each sub-process lints a precomputed subset of files.
+The parallel linting extension has no public API available but can be used from the command line.
+
+**[Trunk Code Quality](https://trunk.io/code-quality)**
+
+Trunk manages to parallelize ESLint and other linters by splitting the workload over multiple processes.
+It is one of the few tools that support parallelization with ESLint v9.
+Apparently, no API is available to customize the output or control the lint process programmatically.
+
+**[eslint-p](https://www.npmjs.com/package/eslint-p)**
+
+A CLI-only wrapper around ESLint v9 that adds multithread linting support, authored by myself.
+After starting a worker thread pool, each file is linted in the next available thread.
 
 [^1]: https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm#things_that_dont_work_with_structured_clone
 [^2]: https://nodejs.org/docs/latest-v18.x/api/esm.html#urls
