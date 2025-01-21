@@ -80,7 +80,7 @@ The chosen key name `disableAutofixes` aims to remove the concern about "turning
 -->
 I think that "Configuring autofixes" or "Disabling autofixes" could be documented as a subsection of [Configuring Rules](https://eslint.org/docs/latest/use/configure/rules). Or as a section on the same level (between "Configuring Rules" and "Configuring Plugins")
 
-As a new top-level property added to configuration objects, `disableAutofixes` should be documented in [Configuration Files > Configuration Objects](https://eslint.org/docs/latest/use/configure/configuration-files#configuration-objects) section. Additionally we may want to add a note to [Custom Rules](https://eslint.org/docs/latest/extend/custom-rulesd) to mention that some autofixes will be converted automatically into suggestions when the new feature is used.
+As a new top-level property added to configuration objects, `disableAutofixes` should be documented in [Configuration Files > Configuration Objects](https://eslint.org/docs/latest/use/configure/configuration-files#configuration-objects) section. Additionally we may want to add a note to [Custom Rules](https://eslint.org/docs/latest/extend/custom-rules) to mention that some autofixes will be converted automatically into suggestions when the new feature is used.
 
 ## Drawbacks
 
