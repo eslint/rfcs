@@ -365,7 +365,7 @@ export default [
         }
     },
     {
-        files: [["src/*.js", "**/*.js"]]
+        files: [["src/*.js", "**/*.js"]],
         ignores: ["src/__tests/**/*.js", "**/tests/**/*.js"],
         rules: {
             "prefer-const": "error"
