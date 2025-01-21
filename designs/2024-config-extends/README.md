@@ -827,7 +827,6 @@ This has similar upsides and downsides to `defineConfig`, with the additional do
 
 ## Open Questions
 
-1. **Is the `>` character a good representation of "extends" in `name`?** Is that unique enough? Should we use the string `"extends"` instead? Or something else?
 1. **How should Config Inspector show extended configs?** Right now, Config Inspector would receive the already-flattened config array. It could infer from the `>` in config names which configs were related to one another, but should how would that work when a config didn't have a name? Should we maybe provide additional data in the form of a symbol property config objects that Config Inspector can read to determine the relationship between config objects? And would Config Inspector alter its view in some way to show this relationship?
 
 ## Frequently Asked Questions
