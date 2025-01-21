@@ -513,8 +513,24 @@ A blog post to introduce the new feature would be also good.
     implementing this RFC as possible.
 -->
 
+### Added Complexity
+
 The new feature will introduce additional complexity, especially because of [option modules](#option-modules).
-It may also create false expectations.
+
+### False Expectations
+
+There is a legitimate concern that multithread mode may in fact make linting slower in some scenarios because of the extra overhead to initialize each thread.
+This is definitely the case as it has been reported for various related tools.
+
+* pgAdmin/eslint-parallel#4
+* pinterest/esprint#126
+* pinterest/esprint#166
+* origin-1/eslint-p#3
+
+Especially plugins that require a longer initialization time, such as typescript-eslint, will be affected by this problem.
+While several solutions have been proposed to mitigate this issue, discussing them would exceed the scope of this proposal.
+To avoid establishing false expectations, it would make sense to include a note regarding the potential performance degradation in the documentation or perhaps to issue a runtime warning.
+The recommendation will be to enable multithread linting only when it performs measurably faster than linting in single-thread mode.
 
 ## Backwards Compatibility Analysis
 
@@ -529,7 +545,7 @@ When the `concurrency` option is used, some things will change:
 * Unserializable `ESLint` constructor options will throw an error. This does not affect CLI options.
 * Some errors thrown by `ESLint#lintFiles()` could be different (see [error management](#error-management)).
 * Tools that rely on `ESLint#getRulesMetaForResults()` may start behaving incorrectly, depending on the approach chosen in [`ESLint#getRulesMetaForResults()`](#eslintgetrulesmetaforresults).
-* `typescript-eslint` will still work, but if type-aware linting is used there will be considerable additional overhead because each thread needs to load the TypeScript project.
+* typescript-eslint will still work, but if type-aware linting is used there will be considerable additional overhead because each thread needs to load the TypeScript project.
 
 ## Alternatives
 
