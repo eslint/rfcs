@@ -177,3 +177,4 @@ A: `disableAutofixes` is a record to allow re-enabling autofixes in downstream c
 - <https://github.com/eslint/eslint/issues/18696>
 - <https://github.com/aladdin-add/eslint-plugin/issues/98>
 - <https://github.com/eslint-community/eslint-plugin-eslint-comments/issues/234>
+- <https://github.com/eslint-community/eslint-plugin-eslint-comments/issues/249#issuecomment-2605557271>
