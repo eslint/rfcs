@@ -23,7 +23,7 @@ First, it's difficult to know how a plugin exports configurations. A configurati
 import js from "@eslint/js";
 import tailwind from "eslint-plugin-tailwindcss";
 import reactPlugin from "eslint-plugin-react";
-import eslintPluginImportX from 'eslint-plugin-import-x'
+import eslintPluginImportX from 'eslint-plugin-import-x';
 
 export default [
     js.configs.recommended,
@@ -365,7 +365,7 @@ export default [
         }
     },
     {
-        files: [["src/*.js", "**/*.js"]]
+        files: [["src/*.js", "**/*.js"]],
         ignores: ["src/__tests/**/*.js", "**/tests/**/*.js"],
         rules: {
             "prefer-const": "error"
