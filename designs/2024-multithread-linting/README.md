@@ -689,8 +689,11 @@ An interesting feature is the ability to specify ESLint CLI options in the Jest 
 
 **[Backstage](https://backstage.io/)**
 
-The Backstage CLI has an option to run ESLint (currently ESLint v8) in multithread mode along with other tools.
-Each file is linted in the next available thread.
+The Backstage CLI has an option to run ESLint (currently ESLint v8) in multithread mode.
+The packages in a project are linted by calling `ESLint#lintFiles()` on the respective package directory in a worker thread.
+Each packege is linted by the next available thread.
+After linting a package, the results are formatted and the formatted outputs are collected by the main thread.
+The system is designed to support the concurrent execution of arbitrary tools through a thread pool, with ESLint being executed in its own distinct thread pool.
 See the [_relevant code_](https://github.com/backstage/backstage/blob/a49030a3fc7cbeca12b81b7859889f0cb4f19b8a/packages/cli/src/commands/repo/lint.ts#L108-L220).
 
 **https://github.com/discord/eslint/tree/parallel by [faultyserver](https://github.com/faultyserver)**
