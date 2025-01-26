@@ -353,6 +353,23 @@ For the purpose of multithread linting, all worker threads are created by the ma
 The number of linting threads is determined in advance by the `concurrency` option.
 The lifetime of a worker thread can be roughly divided into an initialization phase where the environment is set up and an iteration phase where the threads concur to read and line files repeatedly, one file per thread at a time.
 
+```mermaid
+---
+title: Worker Flow
+---
+graph TB
+    START([Start]) ==> S0@{ shape: hex, label: "Initialize worker" };
+    S0 --> S1[Pick next
+        file to lint];
+    S1 --> D1{Got a file?};
+    D1 --> |Yes| S2[Read file];
+    D1 --> |No| S4[Send results
+        to main thread];
+    S2 --> S3[Lint file];
+    S3 --> S1;
+    S4 ==> END([End]);
+```
+
 Note that Worker threads do not need to instantiate or otherwise access the `ESLint` class like API consumers do.
 The bulk of the worker thread implementation could be done in a new, separate class, while common functionality could be extracted to a shared module.
 
