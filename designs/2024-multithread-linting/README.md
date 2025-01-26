@@ -711,7 +711,8 @@ Apparently, no API is available to customize the output or control the lint proc
 **[eslint-p](https://www.npmjs.com/package/eslint-p)**
 
 A CLI-only wrapper around ESLint v9 that adds multithread linting support, authored by myself.
-After starting a worker thread pool, each file is linted in the next available thread.
+After starting a worker thread pool, eslint-p uses a non-blocking mechanism to ensure that every file is linted by the next available thread.
+When a worker thread exits, it submits its lint results to the main thread.
 
 [^1]: https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm#things_that_dont_work_with_structured_clone
 [^2]: https://nodejs.org/docs/latest-v18.x/api/esm.html#urls
