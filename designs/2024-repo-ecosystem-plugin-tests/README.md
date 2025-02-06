@@ -26,7 +26,7 @@ When the root cause is a bug in the downstream plugins, an "early warning" syste
 This RFC proposes creating a small list of popular third-party plugins that will be tested as part of ESLint's CI.
 Each plugin will have a `test:eslint-compat` script in their `package.json` that runs lint rule tests.
 
-See [Selection Criteria](#plugin-selection) below for specifics on which plugins will be included.
+See [Plugin Selection](#plugin-selection) below for specifics on which plugins will be included.
 
 > ⚠️ Plugins are currently being asked for feedback on the `test:eslint-compat` script.
 
