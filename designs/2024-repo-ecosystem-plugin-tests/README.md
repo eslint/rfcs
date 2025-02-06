@@ -23,16 +23,20 @@ When the root cause is a bug in the downstream plugins, an "early warning" syste
 
 ## Detailed Design
 
+This RFC proposes creating a small list of popular third-party plugins that will be tested as part of ESLint's CI.
+Each plugin will have a `test:eslint-compat` script in their `package.json` that runs lint rule tests.
+
+See [Selection Criteria](#plugin-selection) below for specifics on which plugins will be included.
+
+> ⚠️ Plugins are currently being asked for feedback on the `test:eslint-compat` script.
+
 ### CI Job
 
 The new CI job will, for each plugin:
 
-1. Create a new directory containing:
-   - `package.json`
-   - `eslint.config.js` with the closest equivalent to an _"enable all rules"_ preset from the plugin
-   - A small set of files known to be parsed and not cause lint reports with the plugin
-2. Run a lint command (i.e. `npx eslint .`) in that directory
-3. Assert that the lint command passed with 0 lint reports.
+1. Clone the plugin into a directory named `test/ecosystem/${plugin}`
+2. Run the plugin's package installation and build commands with [ni](https://github.com/antfu-collective/ni)
+3. Run the plugin's `test:eslint-compat` script with [ni](https://github.com/antfu-collective/ni)
 
 This will all be runnable locally with a `package.json` script like `npm run test:ecosystem --plugin eslint-plugin-unicorn`.
 
@@ -59,12 +63,6 @@ test_ecosystem:
       run: npm run test:ecosystem --plugin ${{ matrix.plugin }}
 ```
 
-A `test/ecosystem` directory will be created with a directory for each plugin.
-The `test:ecosystem` script will copy the contents of the provided `--plugin` directory into a clean `test/${plugin}-scratch` directory.
-
-Asserting that plugins successfully produce reports will not be part of this job.
-Depending on specifics of plugin rule reports would make the job prone to failure on arbitrary plugin rule updates.
-
 ### Failure Handling
 
 It is theoretically possible that the ecosystem CI job will occasionally be broken by updates to plugins.
@@ -76,20 +74,25 @@ However, this RFC believes that case will be exceedingly rare and short-lived:
   - Example: [typescript-eslint#10338](https://github.com/typescript-eslint/typescript-eslint/issues/10338) was reported on November 15th, 2024 and a fix published on November 18th, 2024
   - Example: [eslint-plugin-unicorn#2496](https://github.com/sindresorhus/eslint-plugin-unicorn/issues/2496) was reported on November 15th, 2024 and a fix published on November 19th, 2024
 
-In the case of a breakage being discovered on the `main` branch, this RFC proposes the following process:
+If a breakage occurs on the `main` branch of ESLint, it will be assumed a plugin has introduced a compatibility bug and should be fixed.
+This RFC proposes the following process:
 
-1. An ESLint team member should file a bug report on the plugin's repository -if it doesn't yet exist-, as well as an issue on `eslint/eslint` linking to that bug report
-2. If the issue isn't resolved within two weeks:
-   1. An ESLint team member should send a PR to resolve the issue that removes the plugin from ESLint's ecosystem CI job
-   2. An ESLint team member should file a followup issue to re-add it once the breakage is fixed
+1. An ESLint team member should file issues tracking fixing the breakage:
+   - A bug report on the plugin's repository if it doesn't yet exist
+   - An issue on `eslint/eslint` linking to that bug report
+2. If the issue isn't resolved by the next day, an ESLint team member should:
+   1. Send a PR to the ESLint repository to remove the plugin from ESLint's ecosystem CI job
+   2. File a followup issue to re-add it once the breakage is fixed
 
-In the case of a breaking being discovered on a PR branch, this RFC proposes the following process:
+In the case of a breakage being discovered on a PR branch, this RFC proposes the following process:
 
 1. If the failure is an indication of an issue in the PR, the PR should be updated as usual
-2. Otherwise, if the failure is an indication the plugin needs to be updated, the PR's author should file a bug report on the plugin's repository - if it doesn't yet exist
-3. If the issue isn't resolved within two weeks:
-   1. The PR's author should remove the plugin from ESLint's ecosystem CI job in the PR
-   2. The PR's author should file a followup issue to re-add it once the breakage is fixed
+2. Otherwise, if the failure is an indication the plugin needs to be updated, the PR's author should drive filing issues to update the plugin:
+   1. The PR author should file a bug report on the plugin's repository - if it doesn't yet exist
+   2. If the issue isn't resolved within two weeks:
+      1. The PR's author should remove the plugin from ESLint's ecosystem CI job in the PR
+      2. The PR's author should file a followup issue on ESLint, initially labeled as `blocked`, to re-add it once the breakage is fixed
+      3. Once the breakage is fixed, a team member should remove replace the issue's `blocked` label should be replaced with `accepted`
 
 ### Major Releases
 
@@ -115,6 +118,7 @@ Third-party plugins will be selectively added if they meet all of the following 
 - Adding a notable new API usage not yet covered: to avoid duplicate equivalent plugins
 - Has had a breakage reported on ESLint: to be cautious in adding to the list
 - Is under active maintenance and has taken a week or less to fix any ESLint breakages within the last year: to avoid packages that won't be updated quickly on failures
+- Add a `test:eslint-compat` script that exclusively runs lint rule tests
 
 The number of third-party plugins should remain small.
 Each added plugin adds a risk of breakage, so plugins will only be added after filing a new issue and gaining team consensus.
@@ -142,8 +146,9 @@ That does not seem worth the time expenditure given how rarely plugins are expec
 This RFC's discussion settled on it not being worth it.
 
 Plugins using internal/private ESLint APIs are one of the canonical examples of what this process is meant to flag.
-However, this process intentionally does not include remediations for using those APIs beyond filing an issue on the downstream repository.
-The intent is that consumers will own correcting uses of ESLint, and can ask for help in the standard ESLint channels as needed.
+However, this process intentionally does not include processes for making code changes in those plugins.
+For downstream repositories, this process only proposes how the ESLint team or PR contributors may file issues.
+This RFC's intent is that those repositories will drive changing their uses of ESLint APIs.
 
 ## Open Questions
 
@@ -162,7 +167,7 @@ Even when all packages in an ecosystem are well-tested the way ESLint and its ma
 
 > [Venerable xkcd "Workflow" comic](https://xkcd.com/1172)
 
-### What if a breakage causes rules to report incorrectly, but doesn't cause `npm lint` to crash?
+### What if a breakage causes rules to report incorrectly, but doesn't cause `npm test:eslint-compat` to crash?
 
 Checking for incorrect rule reports is not handled by this RFC.
 All recent significant downstream breakages caused rules to fully crash.
