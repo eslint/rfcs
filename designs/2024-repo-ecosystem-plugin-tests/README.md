@@ -63,6 +63,9 @@ test_ecosystem:
       run: npm run test:ecosystem --plugin ${{ matrix.plugin }}
 ```
 
+For now, it is assumed each plugin that needs to be built before testing does so with a script named `build`.
+The CI job could be given overrides in the `matrix.plugin` to override the name of the builder script(s) as needed.
+
 ### Failure Handling
 
 It is theoretically possible that the ecosystem CI job will occasionally be broken by updates to plugins.
