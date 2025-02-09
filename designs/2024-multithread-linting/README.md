@@ -555,7 +555,7 @@ The recommendation will be to enable multithread linting only when it performs m
 
 Another concern with multithread linting is that it could make the implementation of multifile analysis harder, as described in [this blog](https://jfmengels.net/multi-file-analysis/).
 Currently, files in ESLint are processed one by one without mutual knowledge.
-There is however an ongoing discussion about introducing [_project-aware linting_](eslint/eslint#16819), which would largely benefit plugins such as `typescript-eslint` that require analyzing muliple files at once to function correctly.
+There is however an ongoing discussion about introducing [_project-aware linting_](https://github.com/eslint/eslint/discussions/16819), which would largely benefit plugins such as `typescript-eslint` that require analyzing muliple files at once to function correctly.
 
 ## Backwards Compatibility Analysis
 
