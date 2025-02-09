@@ -76,9 +76,10 @@ Overcoming this limitation is the most challenging part of the multithread linti
 One potential alternative to directly passing unserializable options to the `ESLint` constructor is to export these options from a module.
 This module will be uniquely identified by a (serializable) URL, and only this URL will have to be passed to worker threads.
 The module can be either a file or a memory module (**note**: Node.js can only import modules with the schemes `file`, `data`, and `node`[^2]; other runtimes like Deno also support `blob` and `http`/`https`).
+This solution is specifically conceived for API consumers, but it can be readily adapted to handle the case where ESLint is executed from the command line.
 
-In order to let consumers load those options and create an `ESLint` instance, a new static method will be added to the `ESLint` class.
-The new method `fromOptionModule` could be used by consumers to create an instance of `ESLint` from arbitrary, unserializable options:
+In order to let API consumers load those options and create an `ESLint` instance, a new static method will be added to the `ESLint` class.
+The new method `fromOptionModule` could be used by API consumers to create an instance of `ESLint` from arbitrary, unserializable options:
 
 ```js
 
@@ -208,12 +209,11 @@ Multithread linting is controlled by a new `concurrency` option of the `ESLint` 
 #### Concurrency `"auto"`
 
 When `auto` concurrency is selected, ESLint will use a heuristic to determine the best concurrency setting, which could be any number of threads or also `"off"`.
-How this heuristic will work is an open question.
 An approach I have tested is using half the number of available CPU cores, which is a reasonable starting point for modern machines with many (4 or more) cores and fast I/O peripherals to access the file system.
 But linting time also depends on the features of the project like the configuration or the number of files.
 Some plugins like typescript-eslint with type-aware linting can increase the time required to initialize a linting thread resulting in additional per-thread overhead.
 
-If we can find no viable approach to implement the `"auto"` drop setting we could drop it completely and only let users choose a number of threads or no multithreading.
+We can start by using this heuristic, and indicate in the documentation that manually adjusting the concurrency level may yield better performance.
 
 ### ESLint Constructor
 
@@ -224,10 +224,11 @@ This serializability check should only be turned off when the constructor is cal
 This method stores the option URL used to load the options so that only this URL must be passed to worker threads, while the `options` object doesn't have to be cloned.
 To disable the serializability check in the constructor, `fromOptionModule` will set a property with a specific symbol key in the options object. This symbol is not exposed by the API.
 
-The new serializability check in the constructor will look roughly like this:
+The new serializability check in the constructor will only run when `concurrency` is set to a value other than `"off"`.
+It will look roughly like this:
 
 ```js
-        if (!options[disableSerializabilityCheck]) {
+        if (!options[disableSerializabilityCheck] && !isSerializable(options)) {
             const unserializableKeys = Object.keys(options).filter(key => !isSerializable(options[key]));
 
             if (unserializableKeys.length) {
@@ -241,6 +242,7 @@ The new serializability check in the constructor will look roughly like this:
 The `isSerializable` function is defined from the requirements for serializable objects.
 Trivially, one could call `structuredClone()` or [`v8.serialize()`](https://nodejs.org/docs/latest-v18.x/api/v8.html#v8serializevalue) on a specified value and if an error is caught, assume that the value is unserializable.
 If there is a more correct implementation we could use that one instead.
+`JSON.stringify` cannot be used because it simply ignores unserializable values.
 
 ### `ESLint#lintFiles()`
 
@@ -261,7 +263,7 @@ All worker threads receive the same parameters from the main threads:
 Each worker thread repeatedly reads and lints a single file until all files have been linted or an abort signal is triggered. Errors in worker threads are not caught: they will be intercepted as error events by the main thread where they will trigger an abort signal that causes all other threads to exit.
 
 The main thread itself does not lint any files: it waits until all files are linter or an error occurs.
-When a worker tread terminates successfully it submits a list of `LintReport`s to the main thread. Each result is enriched with the index of the associated file.
+When a worker thread terminates successfully it submits a list of `LintReport`s to the main thread. Each result is enriched with the index of the associated file.
 The main thread collects the lists of `LintReport`s and merges them in the expected order, then populates `lintResultCache` with cache information (**note**: this is different from the single-thread implementation where the cache is populated progressively as files are being linted).
 From this point onwards the multithread implementation converges with the single-thread one.
 The next common step is saving the cache to a file.
@@ -388,7 +390,7 @@ Unless options were passed directly as a serializable object, they must be loade
 
 The main task of a thread is reading and linting files.
 
-When treads are created, they all receive a copy of the same list of files to lint.
+When threads are created, they all receive a copy of the same list of files to lint.
 To ensure that each file is only linted by one thread, a shared counter is used: this shared counter is created by the main thread and passed as a parameter to all worker threads.
 The counter contains the index of the next file to be linted in the list of files, starting from 0.
 Its value is read and incremented using a non-blocking atomic operation.
@@ -491,7 +493,7 @@ The main thread will use an [`error`](https://nodejs.org/docs/latest-v18.x/api/w
 The [`terminate()`](https://nodejs.org/docs/latest-v18.x/api/worker_threads.html#workerterminate) method can be used to terminate other worker threads when an error occurs.
 Another option is posting a message to a [`BroadcastChannel`](https://developer.mozilla.org/en-US/docs/Web/API/BroadcastChannel) requesting all threads to gently terminate.
 
-Errors created in a worker threads cannot be cloned to the main thread without changes, because they can contain unserializable properties.
+Errors created in a worker thread cannot be cloned to the main thread without changes, because they can contain unserializable properties.
 Instead, Node.js creates a serializable copy of the error, stripped off of unserializable properties, and reports it to the main thread as a paremeter of the [`error`](https://nodejs.org/docs/latest-v18.x/api/worker_threads.html#event-error) event.
 During this process `message` and `stack` are preserved because they are strings.
 The error's type is only preserved for the built-in error types `Error`, `EvalError`, `RangeError`, `ReferenceError`, `SyntaxError`, `TypeError` and `URIError`[^3].
@@ -549,6 +551,12 @@ While several solutions have been proposed to mitigate this issue, discussing th
 To avoid establishing false expectations, it would make sense to include a note regarding the potential performance degradation in the documentation or perhaps to issue a runtime warning.
 The recommendation will be to enable multithread linting only when it performs measurably faster than linting in single-thread mode.
 
+### Multifile Analysis
+
+Another concern with multithread linting is that it could make the implementation of multifile analysis harder, as described in [this blog](https://jfmengels.net/multi-file-analysis/).
+Currently, files in ESLint are processed one by one without mutual knowledge.
+There is however an ongoing discussion about introducing [_project-aware linting_](eslint/eslint#16819), which would largely benefit plugins such as `typescript-eslint` that require analyzing muliple files at once to function correctly.
+
 ## Backwards Compatibility Analysis
 
 <!--
@@ -600,7 +608,6 @@ This tool only supports eslintrc configuration which makes it challenging to dir
 -->
 
 * How to serialize CLI options? (see [Solution for CLI Options](#solution-for-cli-options) for a proposed solutions).
-* Should an [`"auto"` concurrency](#concurrency-auto) mode be supported? If so, how should it work?
 * How to fix `ESLint#getRulesMetaForResults()` to support multithreading? (see proposed solutions in [`ESLint#getRulesMetaForResults()`](#eslintgetrulesmetaforresults)).
 
 ## Help Needed
