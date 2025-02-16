@@ -65,7 +65,7 @@ The restriction applies to the following options:
 * `ruleFilter` (can be a function)
 * `fix` (can be a function)
 
-If one of the above options is assigned an unserializable value, that value will not be accessible outside the main thread.
+If one of the above options is assigned an unserializable value, that value will not be accessible outside the controlling thread.
 Still it is not always possible to find serializable replacements.
 
 Overcoming this limitation is the most challenging part of the multithread linting implementation.
@@ -112,7 +112,7 @@ class ESLint {
 ```
 
 Note that `optionsURL` is not a constructor option, it's an additional argument passed to the worker threads in lieu of the options.
-Worker threads must load the module specified by `optionsURL` asynchronously by calling `loadOptionsFromModule()` just like the main thread, with the difference that worker threads don't have to create an `ESLint` instance.
+Linting threads must load the module specified by `optionsURL` asynchronously by calling `loadOptionsFromModule()` just like the controlling thread, with the difference that linting threads don't have to create an `ESLint` instance.
 
 To understand the impact of this change for API consumers, consider for example the following code where the `ESLint` constructor is invoked with an unserializable value for the `fix` option:
 
@@ -252,7 +252,7 @@ See the [_relevant code_](https://github.com/eslint/eslint/blob/v9.15.0/lib/esli
 The new multithread implementation will exist alongside the current, single-thread implementation, and it will only be used when multithreading mode is enabled.
 
 In the multithread implementation `lintFiles()` launches as many worker threads as specified by the `concurrency` option, but no more than the number of enumerated files.
-All worker threads receive the same parameters from the main threads:
+All worker threads receive the same parameters from the controlling thread:
 * the list of enumerated file paths
 * a reference to shared memory containing the index of the next file to be processed in the list (a `TypedArray` with an underlying `SharedArrayBuffer`)
 * only one of the following:
@@ -260,15 +260,16 @@ All worker threads receive the same parameters from the main threads:
   * the URL of an [option module](#option-modules)
   * _possibly_ the parsed CLI options, depending on the chosen [solution for CLI options](#solution-for-cli-options)
 
-Each worker thread repeatedly reads and lints a single file until all files have been linted or an abort signal is triggered. Errors in worker threads are not caught: they will be intercepted as error events by the main thread where they will trigger an abort signal that causes all other threads to exit.
+Each worker thread repeatedly reads and lints a single file until all files have been linted or an abort signal is triggered.
+Errors in worker threads are not caught: they will be intercepted as error events by the controlling thread where they will trigger an abort signal that causes all other threads to exit.
 
-The main thread itself does not lint any files: it waits until all files are linter or an error occurs.
-When a worker thread terminates successfully it submits a list of `LintReport`s to the main thread. Each result is enriched with the index of the associated file.
-The main thread collects the lists of `LintReport`s and merges them in the expected order, then populates `lintResultCache` with cache information (**note**: this is different from the single-thread implementation where the cache is populated progressively as files are being linted).
+The controlling thread itself does not lint any files: it waits until all files are linter or an error occurs.
+When a worker thread terminates successfully it submits a list of `LintReport`s to the controlling thread. Each result is enriched with the index of the associated file.
+The controlling thread collects the lists of `LintReport`s and merges them in the expected order, then populates `lintResultCache` with cache information (**note**: this is different from the single-thread implementation where the cache is populated progressively as files are being linted).
 From this point onwards the multithread implementation converges with the single-thread one.
 The next common step is saving the cache to a file.
 
-A simplified prototype implementation of the multithread main thread logic in `lintFiles()` would look like the following:
+A simplified prototype implementation of the multithread logic in `lintFiles()` would look like the following:
 
 ```js
         const {
@@ -347,11 +348,13 @@ A simplified prototype implementation of the multithread main thread logic in `l
 
 ### Worker threads
 
-In JavaScript, worker threads have separate execution contexts and access separate memory.
-This allows worker threads in the same process to efficiently run on different cores without locking each other.
+In JavaScript, threads have separate execution contexts and access separate memory.
+This allows diferent threads in the same process to efficiently run on different cores without locking each other.
 The thread's entry point is a module specifier (path or URL) that is loaded as soon as the thread starts.
 
-For the purpose of multithread linting, all worker threads are created by the main thread at the same time before the linting process starts.
+For the purpose of multithread linting, all linting threads are created by the controlling thread at the same time before the linting process starts.
+Although the controlling thread will be typically the main thread of the process, this is not a general requirement.
+Some tools do use the `ESLint` API in a worker thread, and this usage will remain possible with mulithread linting enabled.
 The number of linting threads is determined in advance by the `concurrency` option.
 The lifetime of a worker thread can be roughly divided into an initialization phase where the environment is set up and an iteration phase where the threads concur to read and line files repeatedly, one file per thread at a time.
 
@@ -366,7 +369,7 @@ graph TB
     S1 --> D1{Got a file?};
     D1 --> |Yes| S2[Read file];
     D1 --> |No| S4[Send results
-        to main thread];
+        to controlling thread];
     S2 --> S3[Lint file];
     S3 --> S1;
     S4 ==> END([End]);
@@ -383,7 +386,7 @@ Worker threads are not aware of each other.
 Once a worker thread starts, it will first attempt to enable compile cache by calling [`module.enableCompileCache()`](https://nodejs.org/api/module.html#moduleenablecompilecachecachedir) if available (The compile cache must be enabled separately for each thread).
 
 The next important step is determining the `ESLint` constructor options to use.
-Recall that `ESLint` constructor options can be passed to worker threads in different ways (see [option modules](#option-modules) and [solution for CLI options](#solution-for-cli-options)).
+Recall that `ESLint` constructor options could be passed to worker threads in several proposed ways (see [option modules](#option-modules) and [solution for CLI options](#solution-for-cli-options)).
 Unless options were passed directly as a serializable object, they must be loaded asynchronously first.
 
 #### Iteration Phase
@@ -391,7 +394,7 @@ Unless options were passed directly as a serializable object, they must be loade
 The main task of a thread is reading and linting files.
 
 When threads are created, they all receive a copy of the same list of files to lint.
-To ensure that each file is only linted by one thread, a shared counter is used: this shared counter is created by the main thread and passed as a parameter to all worker threads.
+To ensure that each file is only linted by one thread, a shared counter is used: this shared counter is created by the controlling thread and passed as a parameter to all worker threads.
 The counter contains the index of the next file to be linted in the list of files, starting from 0.
 Its value is read and incremented using a non-blocking atomic operation.
 
@@ -405,7 +408,7 @@ if (file) {
 }
 ```
 
-This counter is the only means to track the progress during linting: no other information is shared across worker threads or with the main thread until the linting terminates or an error occurs.
+This counter is the only means to track the progress during linting: no other information is shared across worker threads or with the controlling thread until the linting terminates or an error occurs.
 This design ensures that no thread needs to block waiting for information from another thread.
 
 It isn't necessary to create a new `ESLint` instance from the options, in fact worker threads will not use the `ESLint` class.
@@ -448,25 +451,25 @@ Some API consumers will call this method after invoking `lintFiles()` or `lintTe
 For this information to be returned, all config files must have been loaded by the time `getRulesMetaForResults()` is called.
 The reason is that `getRulesMetaForResults()` is a synchronous method: it cannot load config files asynchronously, so it expects to find the config arrays already cached.
 This is always the case when `lintFiles()` was used to lint files in the current implementation, but if `lintFiles()` operates in multithread mode, the config files are loaded in a worker thread.
-Returning a config array to the main thread is not an option, because it could be unserializable, so we need a workaround.
+Returning a config array to the controlling thread is not an option, because it could be unserializable, so we need a workaround.
 
-#### Solution 1: Preload config arrays in the main thread
+#### Solution 1: Preload config arrays in the controlling thread
 
-A possible solution is loading config files in the main thread while waiting for worker threads to finish.
+A possible solution is loading config files in the controlling thread while waiting for worker threads to finish.
 Loading config files should be relatively fast, but it will slightly degrade linting performance by competing for resources with the worker threads.
 
-The disadvantage of this solution is that it will always cause additional work in the main thread, even if the config files won't be used.
+The disadvantage of this solution is that it will always cause additional work in the controlling thread, even if the config files won't be used.
 Apart from `getRulesMetaForResults()` config files are used (and loaded) when the cache is enabled.
 This means that if the cache is not enabled and `getRulesMetaForResults()` is never called, the config files will be loaded unnecessarily.
 
-#### Solution 2: Merge precalculated rules meta in the main thread
+#### Solution 2: Merge precalculated rules meta in the controlling thread
 
-Another possible solution is retrieving rules `meta` objects in each worker thread and returning this information to the main thread.
-When `getRulesMetaForResults()` is called in the main thread, rules `meta` objects from all threads will be deduped and merged and the results will be returned synchronously.
+Another possible solution is retrieving rules `meta` objects in each worker thread and returning this information to the controlling thread.
+When `getRulesMetaForResults()` is called in the controlling thread, rules `meta` objects from all threads will be deduped and merged and the results will be returned synchronously.
 
-This solution removes the need to load config files in the main thread but it still requires worker threads to do potentially useless work by adding an extra processing step unconditionally.
+This solution removes the need to load config files in the controlling thread but it still requires worker threads to do potentially useless work by adding an extra processing step unconditionally.
 Another problem is that rules `meta` objects for custom rules aren't always serializable.
-In order for `meta` objects to be passed to the main thread, unserializable properties will need to be stripped off, which is probably undesirable.
+In order for `meta` objects to be passed to the controlling thread, unserializable properties will need to be stripped off, which is probably undesirable.
 
 #### Solution 3: Provide an async alternative to `getRulesMetaForResults()`
 
@@ -486,15 +489,15 @@ When an error is thrown during a call to `ESLint#lintFiles()`, the observable ef
 * Errors thrown in a visitor are enriched with additional information like the rule's name and the AST and then rethrown.
 * Errors thrown in a processor's `preprocess()` function or inside a parser are caught and refleted as linting problems for a file (fatal errors).
 
-This will remain the same when running in multithread mode, except that errors can occur independently in the main thread or in any worker thread.
+This will remain the same when running in multithread mode, except that errors can occur independently in the controlling thread or in any worker thread.
 The general strategy is to stop all linting thread as soon as an uncaught error occurs and reject the call to `lintFiles()` with the first reported error.
 
-The main thread will use an [`error`](https://nodejs.org/docs/latest-v18.x/api/worker_threads.html#event-error) event handler to intercept errors thrown from worker threads.
+The controlling thread will use an [`error`](https://nodejs.org/docs/latest-v18.x/api/worker_threads.html#event-error) event handler to intercept errors thrown from worker threads.
 The [`terminate()`](https://nodejs.org/docs/latest-v18.x/api/worker_threads.html#workerterminate) method can be used to terminate other worker threads when an error occurs.
 Another option is posting a message to a [`BroadcastChannel`](https://developer.mozilla.org/en-US/docs/Web/API/BroadcastChannel) requesting all threads to gently terminate.
 
-Errors created in a worker thread cannot be cloned to the main thread without changes, because they can contain unserializable properties.
-Instead, Node.js creates a serializable copy of the error, stripped off of unserializable properties, and reports it to the main thread as a paremeter of the [`error`](https://nodejs.org/docs/latest-v18.x/api/worker_threads.html#event-error) event.
+Errors created in a worker thread cannot be cloned to the controlling thread without changes, because they can contain unserializable properties.
+Instead, Node.js creates a serializable copy of the error, stripped off of unserializable properties, and reports it to the controlling thread as a paremeter of the [`error`](https://nodejs.org/docs/latest-v18.x/api/worker_threads.html#event-error) event.
 During this process `message` and `stack` are preserved because they are strings.
 The error's type is only preserved for the built-in error types `Error`, `EvalError`, `RangeError`, `ReferenceError`, `SyntaxError`, `TypeError` and `URIError`[^3].
 Other error types will result in an error of a built-in type if they inherit from a built-in error in their prototype chain.
@@ -699,7 +702,7 @@ An interesting feature is the ability to specify ESLint CLI options in the Jest 
 The Backstage CLI has an option to run ESLint (currently ESLint v8) in multithread mode.
 The packages in a project are linted by calling `ESLint#lintFiles()` on the respective package directory in a worker thread.
 Each packege is linted by the next available thread.
-After linting a package, the results are formatted and the formatted outputs are collected by the main thread.
+After linting a package, the results are formatted and the formatted outputs are collected by the controlling thread.
 The system is designed to support the concurrent execution of arbitrary tools through a thread pool, with ESLint being executed in its own distinct thread pool.
 See the [_relevant code_](https://github.com/backstage/backstage/blob/a49030a3fc7cbeca12b81b7859889f0cb4f19b8a/packages/cli/src/commands/repo/lint.ts#L108-L220).
 
@@ -719,7 +722,7 @@ Apparently, no API is available to customize the output or control the lint proc
 
 A CLI-only wrapper around ESLint v9 that adds multithread linting support, authored by myself.
 After starting a worker thread pool, eslint-p uses a non-blocking mechanism to ensure that every file is linted by the next available thread.
-When a worker thread exits, it submits its lint results to the main thread.
+When a worker thread exits, it submits its lint results to the controlling thread.
 
 [^1]: https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm#things_that_dont_work_with_structured_clone
 [^2]: https://nodejs.org/docs/latest-v18.x/api/esm.html#urls
