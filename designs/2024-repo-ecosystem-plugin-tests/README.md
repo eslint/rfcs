@@ -95,7 +95,7 @@ In the case of a breakage being discovered on a PR branch, this RFC proposes the
    2. If the issue isn't resolved within two weeks:
       1. The PR's author should remove the plugin from ESLint's ecosystem CI job in the PR
       2. The PR's author should file a followup issue on ESLint, initially labeled as `blocked`, to re-add it once the breakage is fixed
-      3. Once the breakage is fixed, a team member should remove replace the issue's `blocked` label should be replaced with `accepted`
+      3. Once the breakage is fixed, a team member should replace the issue's `blocked` label with `accepted`
 
 ### Major Releases
 
