@@ -508,6 +508,45 @@ This strategy comes with some unobvious implications that consumers should be aw
 * Errors thrown by `lintFiles()` could be of a different type than the errors thrown when running in single-thread mode, and they may leak unserializable properties.
 * Because of race conditions, subsequent calls to `lintFiles()` could produce different errors for identical input.
 
+### Warning Management
+
+In certain scenarios, ESLint issues warnings to notify users of possible problems.
+Unlike errors, warnings do not halt the execution of ESLint.
+As a result, the same warning may be printed multiple times if not handled carefully, and this situation becomes further complicated when multiple threads are in play.
+
+The following sections describe possible warnigns and the strategy to control how they are reported in multithread mode.
+
+#### Eslintrc Configuration Warnings
+
+The ESLint CLI emits a warning when the user enables legacy eslintrc configuration system by setting the environment variable `ESLINT_USE_FLAT_CONFIG` to `false`.
+This warning is only emitted in the process' main thread and it doesn't need any special handling.
+
+#### ".eslintignore" File Warnings
+
+The `ESLint` constructor emits a warning when it detects an `.eslintignore` file in the current directory, as specified by the `cwd` option.
+Per this RFC, the `ESLint` class is not used by linting threads, so no special handling is required.
+
+#### Inactive Flag Warnings
+
+The `Linter` class emits a warning for each inactive flag used.
+
+Because `Linter` objects are created with the same options both in the controlling thread and in linting threads, it is sufficient to suppress warnings in linting threads to ensure that the these warnings are printed exactly once, just in the controlling thread.
+This could be done by passing a internal option to the `Linter` constructor, for example a private symbol.
+This option will only affects the behavior of the `Linter` constructor, so it doesn't need to be stored in instances of the `Linter` class along with the other public options.
+
+#### Empty Configuration File Warnings
+
+Empty config files and config files that export an empty array trigger a warning when they are loaded.
+The warning is emitted once per each empty config file.
+
+In multithread mode, config files will be always loaded by one or more worker threads, but they may or may not be loaded by the controlling thread.
+To ensure that each warning related to an empty config file is printed exactly once, when in multithread mode, the `ConfigLoader` will no longer emit the warning directly, but instead submit it to the controlling thread, either using the worker's own `MessageChannel` or with a dedicated `BroadcastChannel`.
+The warnings will be collected by the controlling thread, where they will be emitted and stored in a set.
+This `emptyConfigFileWarningSet` will be associated to an instance of `ESLint`, just like the `configLoader`, and it will keep track of warnings that were already emitted to make sure that they are not re-emitted.
+In practice, it could be more convenient to collect and store the name of the empty config file rather than the already formatted warning message.
+
+#### Other Warnings
+
 ### Tests
 
 New scenarios to be tested include cases where ESLint is launched from the CLI with the `--concurrency` flag, and usages of `ESLint#lintFiles()` with the `concurrency` option.
