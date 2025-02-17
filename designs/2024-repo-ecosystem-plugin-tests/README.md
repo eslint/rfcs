@@ -36,7 +36,9 @@ The new CI job will, for each plugin:
 
 1. Clone the plugin into a directory named `test/ecosystem/${plugin}`
 2. Run the plugin's package installation and build commands with [ni](https://github.com/antfu-collective/ni)
-3. Run the plugin's `test:eslint-compat` script with [ni](https://github.com/antfu-collective/ni)
+3. Link the plugin to the current eslint installation
+   - This will have to be done manually, as ni does not support linking ([ni#85](https://github.com/antfu-collective/ni/issues/85 "ni issue 85: Maybe xxx link can join ni project"))
+4. Run the plugin's `test:eslint-compat` script with [ni](https://github.com/antfu-collective/ni)
 
 This will all be runnable locally with a `package.json` script like `npm run test:ecosystem --plugin eslint-plugin-unicorn`.
 
