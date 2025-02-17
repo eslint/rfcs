@@ -170,14 +170,6 @@ Even when all packages in an ecosystem are well-tested the way ESLint and its ma
 
 > [Venerable xkcd "Workflow" comic](https://xkcd.com/1172)
 
-### What if a breakage causes rules to report incorrectly, but doesn't cause `npm test:eslint-compat` to crash?
-
-Checking for incorrect rule reports is not handled by this RFC.
-All recent significant downstream breakages caused rules to fully crash.
-
-Any kind of rule report verification would necessitate ecosystem tests taking a dependency on the specific reports from downstream plugins.
-This RFC does not believe the effort of keeping snapshots of those reports up-to-date as worthwhile.
-
 ## Related Discussions
 
 - [Repo: add end-to-end/integration tests for popular 3rd party plugins](https://github.com/eslint/eslint/issues/19139)
