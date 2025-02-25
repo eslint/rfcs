@@ -755,6 +755,11 @@ The parallel linting extension has no public API available but can be used from 
 
 Trunk manages to parallelize ESLint and other linters by splitting the workload over multiple processes.
 It is one of the few tools that support parallelization with ESLint v9.
+As the source code for the Trunk launcher binary is not available, many details remain unclear.
+However it seems that Trunk partitions the file list into several chunks, each containing an equal number of files.
+A chunk is linted by launching a new ESLint process from the `bin/eslint.js` executable file.
+The lint results for each chunk are output as JSON to be collected and reformatted using a custom mechanism.
+The maximum number of concurrent ESLint processes that can operate simultaneously is configurable via an option (`--jobs`).
 Apparently, no API is available to customize the output or control the lint process programmatically.
 
 **[eslint-p](https://www.npmjs.com/package/eslint-p)**
