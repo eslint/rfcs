@@ -32,15 +32,18 @@ See [Plugin Selection](#plugin-selection) below for specifics on which plugins w
 
 ### CI Job
 
-The new CI job will, for each plugin:
+The new CI job will:
 
-1. Clone the plugin into a directory named `test/ecosystem/${plugin}`
-2. Run the plugin's package installation and build commands with [ni](https://github.com/antfu-collective/ni)
-3. Link the plugin to the current eslint installation
-   - This will have to be done manually, as ni does not support linking ([ni#85](https://github.com/antfu-collective/ni/issues/85 "ni issue 85: Maybe xxx link can join ni project"))
-4. Run the plugin's `test:eslint-compat` script with [ni](https://github.com/antfu-collective/ni)
+1. For each plugin:
+   1. Clone the plugin into a directory named `test/ecosystem/${plugin}`
+   2. Run the plugin's package installation and build commands with [ni](https://github.com/antfu-collective/ni)'s `nci` command
+   3. Link the plugin to the current eslint installation
+      - This will have to be done manually, as ni does not support linking ([ni#85](https://github.com/antfu-collective/ni/issues/85 "ni issue 85: Maybe xxx link can join ni project"))
+   4. Run the plugin's `test:eslint-compat` script with [ni](https://github.com/antfu-collective/ni)
+2. If there were any failures, the job is running on the `main` branch, and the previous commit build on `main` succeeded:
+   - Post a message to the `#contributors` Discord channel alerting the team to the failure
 
-This will all be runnable locally with a `package.json` script like `npm run test:ecosystem --plugin eslint-plugin-unicorn`.
+Plugin tests will be runnable locally via a `package.json` script like `npm run test:ecosystem --plugin eslint-plugin-unicorn`.
 
 An addition to `.github/workflows/ci.yml` under `jobs` would approximately look like:
 
@@ -59,10 +62,9 @@ test_ecosystem:
     - uses: actions/setup-node@v4
       with:
         node-version: "lts/*"
-    - name: Install Packages
-      run: npm install
-    - name: Test ${{ matrix.plugin }}
-      run: npm run test:ecosystem --plugin ${{ matrix.plugin }}
+    - run: npm install
+    - run: npm install -g ni
+    - run: npm run test:ecosystem --plugin ${{ matrix.plugin }}
 ```
 
 For now, it is assumed each plugin that needs to be built before testing does so with a script named `build`.
