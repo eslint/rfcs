@@ -466,10 +466,13 @@ This means that if the cache is not enabled and `getRulesMetaForResults()` is ne
 
 Another possible solution is retrieving rules `meta` objects in each worker thread and returning this information to the controlling thread.
 When `getRulesMetaForResults()` is called in the controlling thread, rules `meta` objects from all threads will be deduped and merged and the results will be returned synchronously.
+This strategy does not require or guarantee that configurations are loaded in the main thread.
+For this reason, the `usedDeprecatedRules` property of lint results will also have to be calculated in worker theads, since the calculation needs to retrieve information found in configurations.
 
-This solution removes the need to load config files in the controlling thread but it still requires worker threads to do potentially useless work by adding an extra processing step unconditionally.
-Another problem is that rules `meta` objects for custom rules aren't always serializable.
-In order for `meta` objects to be passed to the controlling thread, unserializable properties will need to be stripped off, which is probably undesirable.
+This solution removes the need to load config files in the controlling thread but it still requires worker threads to perform potentially useless work by adding extra processing steps unconditionally.
+Another limitation is that rules `meta` objects for custom rules aren't always serializable.
+In order for `meta` objects to be passed to the controlling thread, unserializable properties will need to be stripped off.
+Common plugins such as `typescript-eslint`, `eslint-plugin-unicorn`, `eslint-plugin-n`, `eslint-plugin-import` and `eslint-plugin-react` do not include any unserializable properties in their rules `meta` objects.
 
 #### Solution 3: Provide an async alternative to `getRulesMetaForResults()`
 
