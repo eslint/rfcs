@@ -264,8 +264,10 @@ Each worker thread repeatedly reads and lints a single file until all files have
 Errors in worker threads are not caught: they will be intercepted as error events by the controlling thread where they will trigger an abort signal that causes all other threads to exit.
 
 The controlling thread itself does not lint any files: it waits until all files are linter or an error occurs.
-When a worker thread terminates successfully it submits a list of `LintReport`s to the controlling thread. Each result is enriched with the index of the associated file.
-The controlling thread collects the lists of `LintReport`s and merges them in the expected order, then populates `lintResultCache` with cache information (**note**: this is different from the single-thread implementation where the cache is populated progressively as files are being linted).
+When a worker thread terminates successfully it submits a list of lint results to the controlling thread.
+Each result in this list is enriched with the index of its respective file in the list of enumerated file paths.
+The controlling thread collects the lists of lint results and merges them in the order determined by the index values.
+In the next step, `lintResultCache` gets populated with cache information for each file (**note**: this is different from the single-thread implementation where the cache is populated progressively as files are being linted).
 From this point onwards the multithread implementation converges with the single-thread one.
 The next common step is saving the cache to a file.
 
