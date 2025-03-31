@@ -1,6 +1,6 @@
 - Repo: eslint/rewrite (`@eslint/config-array`), eslint/eslint
 - Start Date: 2025-03-31
-- RFC PR: (leave this empty, to be filled in later)
+- RFC PR: https://github.com/eslint/rfcs/pull/131
 - Authors: Milos Djermanovic
 
 # Support `basePath` property in config objects
