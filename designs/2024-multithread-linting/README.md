@@ -464,6 +464,12 @@ The disadvantage of this solution is that it will always cause additional work i
 Apart from `getRulesMetaForResults()` config files are used (and loaded) when the cache is enabled.
 This means that if the cache is not enabled and `getRulesMetaForResults()` is never called, the config files will be loaded unnecessarily.
 
+**Pros**
+* Best compatibility with current implementation
+
+**Cons**
+* Config files must be loaded in the controlling thread even when not necessary
+
 #### Solution 2: Merge precalculated rules meta in the controlling thread
 
 Another possible solution is retrieving rules `meta` objects in each worker thread and returning this information to the controlling thread.
@@ -476,12 +482,25 @@ Another limitation is that rules `meta` objects for custom rules aren't always s
 In order for `meta` objects to be passed to the controlling thread, unserializable properties will need to be stripped off.
 Common plugins such as `typescript-eslint`, `eslint-plugin-unicorn`, `eslint-plugin-n`, `eslint-plugin-import` and `eslint-plugin-react` do not include any unserializable properties in their rules `meta` objects.
 
+**Pros**
+* Maintains copatibility without loading config files unnecessarily in the controlling thread
+
+**Cons**
+* Rule meta objects and `usedDeprecatedRules` must be calculated even when not necessary
+* Unserializable values in rule meta objects will be stripped off
+
 #### Solution 3: Provide an async alternative to `getRulesMetaForResults()`
 
 An async variant of `getRulesMetaForResults()`, call it `getRulesMetaForResultsAsync()`, could load config files asynchronously as required before calculating rules `meta` objects.
 
 Using this async method would avoid the need to do potentially useless work in advance which is expected by the other solutions.
 The drawback is that consumers that call `getRulesMetaForResults()` will need to switch to `getRulesMetaForResultsAsync()` if they want to support the new multithread mode.
+
+**Pros**
+* Most performant solution
+
+**Cons**
+* Breaks compatibility with existing consumers when the `concurrency` option is used
 
 ### Error Management
 
