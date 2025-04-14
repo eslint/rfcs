@@ -210,10 +210,43 @@ Multithread linting is controlled by a new `concurrency` option of the `ESLint` 
 
 When `auto` concurrency is selected, ESLint will use a heuristic to determine the best concurrency setting, which could be any number of threads or also `"off"`.
 An approach I have tested is using half the number of available CPU cores, which is a reasonable starting point for modern machines with many (4 or more) cores and fast I/O peripherals to access the file system.
-But linting time also depends on the features of the project like the configuration or the number of files.
-Some plugins like typescript-eslint with type-aware linting can increase the time required to initialize a linting thread resulting in additional per-thread overhead.
+In order to account for the overhead of initializing a worker thread, the heuristic could limit the number of threads depending of the number of files to be linted.
+This will require defining a relationship between the number of files and the maximum number of threads.
 
 We can start by using this heuristic, and indicate in the documentation that manually adjusting the concurrency level may yield better performance.
+
+#### Number of Worker Threads
+
+The following code shows how the effective number of worker threads could be determined given a `concurrency` setting and the number of files to be linted.
+
+```js
+const os = require("node:os");
+
+/** Maximum number of files assumed to be best handled by one worker thread. */
+const AUTO_FILES_PER_THREAD = 35; // Exact value to be determined.
+
+/**
+ * Determines the effective number of worker threads to be started.
+ * @param {"off" | "auto" | number} concurrency The normalized concurrency setting. One of `"off"`, `"auto"`, or a positive integer.
+ * @param {number} fileCount The number of files to be linted.
+ * @returns {number} The effective number of worker threads to be started. A value of zero disables multithread linting.
+ */
+function getThreadCount(concurrency, fileCount) {
+	switch (concurrency) {
+		case "off":
+			return 0;
+		case "auto": {
+			let threadCount = Math.min(
+				os.availableParallelism() >> 1,
+				Math.ceil(fileCount / AUTO_FILES_PER_THREAD),
+			);
+			return threadCount > 1 ? threadCount : 0;
+		}
+		default:
+			return Math.min(concurrency, fileCount);
+	}
+}
+```
 
 ### ESLint Constructor
 
