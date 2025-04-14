@@ -717,6 +717,7 @@ This tool only supports eslintrc configuration which makes it challenging to dir
     you can remove this section.
 -->
 
+* Are there any viable alternatives to [option modules](#option-modules)?
 * How to serialize CLI options? (see [Solution for CLI Options](#solution-for-cli-options) for a proposed solutions).
 * How to fix `ESLint#getRulesMetaForResults()` to support multithreading? (see proposed solutions in [`ESLint#getRulesMetaForResults()`](#eslintgetrulesmetaforresults)).
 
@@ -728,6 +729,18 @@ This tool only supports eslintrc configuration which makes it challenging to dir
     Are you able to implement this RFC on your own? If not, what kind
     of help would you need from the team?
 -->
+
+### Identify Test Projects
+
+This RFC has received some suggestions that aim to improve the performance of the proposed implementation.
+In order to test and compare these suggestions on a shared basis, it would be helpful to identify several canonical projects that use ESLint v9 in different ways.
+I would like to receive input from the community for this purpose.
+What should be probably included:
+
+* A very large project (≥ 10,000 files)
+* An average TypeScript project
+* A project that invokes ESLint using the Node.js API (possibly through another tool like `eslint-webpack-plugin` or similar)
+* …
 
 ## Frequently Asked Questions
 
