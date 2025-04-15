@@ -36,7 +36,7 @@ Most of the changes will be in the `@eslint/config-array` package.
 - `filesAndIgnoresSchema` will be updated to validate that the new `basePath` property, if present, has a string value.
 - `normalizeConfigPatterns()` will be updated to normalize the `basePath` property value to an equivalent namespace-prefixed path, for consistency with the config array's `basePath` property value.
 - `META_FIELDS` will be updated to include `"basePath"`, in order to treat config objects with `basePath` + `ignores` as global ignores.
-- `get ignores()` will be updated to return an array of config objects instead of an array of ignore patterns.
+- `get ignores()` will be updated to return an array of config objects instead of an array of ignore patterns. This is because some of the patterns may be defined in config objects that have the `basePath` property and are therefore relative to different paths, so combining all patterns into one array would no longer be useful for users of this package.
 - `getConfigWithStatus()` will be updated to use config objects' `basePath` when present.
 - `shouldIgnorePath()` will be updated to take an array of config objects instead of ignore patterns, and use config objects' `basePath` when present.
 
