@@ -849,6 +849,22 @@ A CLI-only wrapper around ESLint v9 that adds multithread linting support, autho
 After starting a worker thread pool, eslint-p uses a non-blocking mechanism to ensure that every file is linted by the next available thread.
 When a worker thread exits, it submits its lint results to the controlling thread.
 
+## Other Tools
+
+The following tools for Node.js have implemented parallelization using concurrent threads or processes for various purposes.
+While not comparable to ESLint, they can provide insights on how to address common problem.
+
+**[Jest](https://jestjs.io/)**
+
+Jest is a popular testing framework written in TypeScript that runs tests using a pool of concurrent processes by default.
+Concurrency can be turned off by explicitly specifying the CLI option `--runInBand`.
+New versions include an experimental feature to parallelize execution using worker threads rather than processes with the `workerThreads` configuration option.
+Both worker processes and threads share a common abstraction (the `WorkerAbstract` class and several interfaces) that mediates all interactions with the controlling thread.
+Tests in a single file are run sequentially in the same process/thread, whereas different test files can be assigned different workers and thus run concurrently.
+In the present implementation, a fixed-size pool of worker processes or threads is created in advance (in fact, if a worker terminates unexpectedly, Jest will start a new one, but this functionality doesn't seem relevant to ESLint), and each test file is assigned dynamically as a worker becomes available.
+
+<!-- TODO: add Ava -->
+
 [^1]: https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm#things_that_dont_work_with_structured_clone
 [^2]: https://nodejs.org/docs/latest-v18.x/api/esm.html#urls
 [^3]: https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm#error_types
