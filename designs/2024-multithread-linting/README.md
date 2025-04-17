@@ -861,6 +861,7 @@ Concurrency can be turned off by explicitly specifying the CLI option `--runInBa
 New versions include an experimental feature to parallelize execution using worker threads rather than processes with the `workerThreads` configuration option.
 Both worker processes and threads share a common abstraction (the `WorkerAbstract` class and several interfaces) that mediates all interactions with the controlling thread.
 Tests in a single file are run sequentially in the same process/thread, whereas different test files can be assigned different workers and thus run concurrently.
+The maximum number of concurrent workers can be configured with the `maxWorkers` configuration option, it defaults to the number of available CPUs cores minus one in normal mode.
 In the present implementation, a fixed-size pool of worker processes or threads is created in advance (in fact, if a worker terminates unexpectedly, Jest will start a new one, but this functionality doesn't seem relevant to ESLint), and each test file is assigned dynamically as a worker becomes available.
 
 <!-- TODO: add Ava -->
