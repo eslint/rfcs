@@ -864,7 +864,15 @@ Tests in a single file are run sequentially in the same process/thread, whereas 
 The maximum number of concurrent workers can be configured with the `maxWorkers` configuration option, it defaults to the number of available CPUs cores minus one in normal mode.
 In the present implementation, a fixed-size pool of worker processes or threads is created in advance (in fact, if a worker terminates unexpectedly, Jest will start a new one, but this functionality doesn't seem relevant to ESLint), and each test file is assigned dynamically as a worker becomes available.
 
-<!-- TODO: add Ava -->
+**[AVA](https://github.com/avajs/ava/)**
+
+AVA is a testing framework that runs in Node.js.
+Ava runs each test file in a new worker thread by default.
+It is also possible to run tests concurrently in new processes instead of threads by setting the configuration option `workerThreads: false` or with the CLI option `--no-worker-threads`.
+The maximum number of concurrent worker threads or processes can be configured with the `concurrency` option, and it defaults to half the number of available CPUs cores.
+To achieve better test isolation, AVA deliberately does not use a thread pool, a rationale that has no equivalent for ESLint.
+An interesting feature of AVA is the ability to automatically split test files across multiple CI runners to speed up a build.
+This behavior can be turned off by setting the configuration option `utilizeParallelBuilds: false`.
 
 [^1]: https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm#things_that_dont_work_with_structured_clone
 [^2]: https://nodejs.org/docs/latest-v18.x/api/esm.html#urls
