@@ -1,6 +1,6 @@
 - Repo: eslint/rewrite
 - Start Date: 2025-04-23
-- RFC PR:
+- RFC PR: <https://github.com/eslint/rfcs/pull/132>
 - Authors: [JoshuaKGoldberg](https://github.com/JoshuaKGoldberg)
 
 # Exporting a `definePlugin` function
@@ -46,7 +46,7 @@ Without a standardize factory function to define a plugin:
     });
     ```
 
-  - Other plugins use a single `Object.defineProperty`-style getter [^eslint-plugin-package-json-recommended-plugin]:
+  - Other plugins use [a single computed `get()` for `plugins`](https://github.com/facebook/react/blob/914319ae595010cd5d3f0e277c77eb86da18e4f0/packages/eslint-plugin-react-hooks/src/index.ts#L30):
 
     ```js
     export const plugin = {
@@ -76,7 +76,8 @@ It would provide a single recommended factory for defining the structure of a ty
 - Generating `configs.recommended` and other configurations based on rule metadata
 
 It would also allow definition styles that allow internal optimizations.
-Most notably, it would allow lazy-loading rules if provided as functions.
+Most notably, it would allow lazy-loading rules if provided as functions and manually listed in `configs`.
+An `eslint-plugin-eslint-plugin` lint rule will be created that keeps `configs` and `rules` in sync.
 
 As with `defineConfig`, `definePlugin` would be a purely optional, additive change.
 Existing and future plugins would continue to work as-is without a `definePlugin` call.
@@ -395,7 +396,17 @@ module.exports = new LazyLoadingRuleMap(
 `definePlugin` will use similar strategies internally.
 
 An `eslint-plugin-eslint-plugin` lint rule will also be created that enforces lazy-loading rules.
-It will come with an auto-fixer that adds the requisite `createRequire()` and `require()` calls.
+It will come with an auto-fixer that:
+
+- Adds the requisite `createRequire()` and `require()` calls to the `definePlugin` file
+- Keeps `configs` in sync with rule `meta.docs.recommended` values corresponding to existing common community conventions:
+  - falsy: only in an `all` config, if it exists
+  - `string | string[]`: in config(s) of the same name(s)
+  - `true`: in a `recommended` config
+
+Note that this lint rule would need to inspect each rule file to determine rules' `meta.docs.recommended` values.
+
+Running the lint rule with `--fix` would accomplish the same automation work a many common community "update" scripts under [Design Pattern Analysis](#design-pattern-analysis).
 
 ## Documentation
 
@@ -436,63 +447,64 @@ Emoji key:
 - 🛠️: Exposes multiple configs that could be represented this way by adding 1-2 properties to `meta.rule.docs`
 - ❎: Does not export configs with its own rules to begin with
 
-| Plugin                                                                                            | Representable |
-| ------------------------------------------------------------------------------------------------- | ------------- |
-| [@graphql-eslint](https://github.com/graphql-hive/graphql-eslint)                                 | ✔️            |
-| [@nuxt/eslint](https://github.com/nuxt/eslint)                                                    | ❎            |
-| [@redwoodjs/eslint-plugin](https://github.com/redwoodjs/redwood/tree/main/packages/eslint-plugin) | ❎            |
-| [@typescript-eslint](https://github.com/typescript-eslint/typescript-eslint)                      | ✔️            |
-| [angular](https://github.com/angular-eslint/angular-eslint)                                       | ☑️            |
-| [astro](https://github.com/ota-meshi/eslint-plugin-astro)                                         | ✔️            |
-| [check-file](https://github.com/amilajack/eslint-plugin-check-file)                               | ❎            |
-| [compat](https://github.com/amilajack/eslint-plugin-compat)                                       | ☑️            |
-| [cypress](https://github.com/cypress-io/eslint-plugin-cypress)                                    | ✔️            |
-| [ember](https://github.com/ember-cli/eslint-plugin-ember)                                         | ✔️            |
-| [es-x](https://github.com/eslint-community/eslint-plugin-es-x)                                    | ✔️            |
-| [eslint-comments](https://github.com/eslint-community/eslint-plugin-eslint-comments)              | ☑️            |
-| [eslint-plugin](https://github.com/eslint-community/eslint-plugin-eslint-plugin)                  | ✔️            |
-| [expect-type](https://github.com/JoshuaKGoldberg/eslint-plugin-expect-type)                       | ☑️            |
-| [functional](https://github.com/eslint-functional/eslint-plugin-functional)                       | ✔️            |
-| [import-x](https://github.com/un-ts/eslint-plugin-import-x)                                       | 🛠️            |
-| [import](https://github.com/import-js/eslint-plugin-import)                                       | 🛠️            |
-| [jest](https://github.com/jest-community/eslint-plugin-jest)                                      | 🛠️            |
-| [jsdoc](https://github.com/gajus/eslint-plugin-jsdoc)                                             | 🛠️            |
-| [jsonc](https://github.com/ota-meshi/eslint-plugin-jsonc)                                         | ✔️            |
-| [jsx-a11y](https://github.com/jsx-eslint/eslint-plugin-jsx-a11y)                                  | 🛠️            |
-| [markdown](https://github.com/eslint/eslint-plugin-markdown)                                      | ✔️            |
-| [mocha](https://github.com/lo1tuma/eslint-plugin-mocha)                                           | 🛠️            |
-| [n](https://github.com/eslint-community/eslint-plugin-n)                                          | ✔️            |
-| [nx](https://github.com/nrwl/nx)                                                                  | ❎            |
-| [package-json](https://github.com/JoshuaKGoldberg/eslint-plugin-package-json)                     | ☑️            |
-| [perfectionist](https://github.com/azat-io/eslint-plugin-perfectionist)                           | ✔️            |
-| [playwright](https://github.com/playwright-community/eslint-plugin-playwright)                    | ✔️            |
-| [prettier](https://github.com/prettier/eslint-plugin-prettier)                                    | 🛠️            |
-| [promise](https://github.com/eslint-community/eslint-plugin-promise)                              | 🛠️            |
-| [qunit](https://github.com/platinumazure/eslint-plugin-qunit)                                     | 🛠️            |
-| [react-hooks](https://github.com/facebook/react/tree/main/packages/eslint-plugin-react-hooks)     | ✔️            |
-| [react-refresh](https://github.com/ArnaudBarre/eslint-plugin-react-refresh)                       | ☑️            |
-| [react](https://github.com/jsx-eslint/eslint-plugin-react)                                        | ✔️            |
-| [regexp](https://github.com/ota-meshi/eslint-plugin-regexp)                                       | ✔️            |
-| [security](https://github.com/eslint-community/eslint-plugin-security)                            | ☑️            |
-| [simple-import-sort](https://github.com/lydell/eslint-plugin-simple-import-sort)                  | ❎            |
-| [solid](https://github.com/solidjs-community/eslint-plugin-solid)                                 | 🛠️            |
-| [sonarjs](https://github.com/SonarSource/SonarJS/blob/master/packages/jsts/src/rules/README.md)   | ☑️            |
-| [storybook](https://github.com/storybookjs/eslint-plugin-storybook)                               | ✔️            |
-| [stylistic](https://github.com/eslint-stylistic/eslint-stylistic)                                 | ✔️            |
-| [svelte](https://github.com/sveltejs/eslint-plugin-svelte)                                        | ✔️            |
-| [tailwindcss](https://github.com/francoismassart/eslint-plugin-tailwindcss)                       | ☑️            |
-| [TanStack Query](https://github.com/TanStack/query)                                               | ☑️            |
-| [testing-library](https://github.com/testing-library/eslint-plugin-testing-library)               | ✔️            |
-| [turbo](https://github.com/vercel/turbo)                                                          | ✔️            |
-| [unicorn](https://github.com/sindresorhus/eslint-plugin-unicorn)                                  | ✔️            |
-| [vitest](https://github.com/veritem/eslint-plugin-vitest)                                         | ✔️            |
-| [vue-i18n](https://github.com/intlify/eslint-plugin-vue-i18n)                                     | ✔️            |
-| [vue](https://github.com/vuejs/eslint-plugin-vue)                                                 | 🛠️            |
-| [vuejs-accessibility](https://github.com/vue-a11y/eslint-plugin-vuejs-accessibility)              | ☑️            |
-| [wdio](https://github.com/webdriverio/webdriverio)                                                | ☑️            |
-| [yml](https://github.com/ota-meshi/eslint-plugin-yml)                                             | ✔️            |
+| Plugin                                                                                            | Config(s)                      | Generation Notes                                                 | Representable |
+| ------------------------------------------------------------------------------------------------- | ------------------------------ | ---------------------------------------------------------------- | ------------- |
+| [@graphql-eslint](https://github.com/graphql-hive/graphql-eslint)                                 | Multiple                       | generated by `pnpm generate:configs`                             | ✔️            |
+| [@nuxt/eslint](https://github.com/nuxt/eslint)                                                    | _(none)_                       |                                                                  | ❎            |
+| [@redwoodjs/eslint-plugin](https://github.com/redwoodjs/redwood/tree/main/packages/eslint-plugin) | _(none)_                       |                                                                  | ❎            |
+| [@typescript-eslint](https://github.com/typescript-eslint/typescript-eslint)                      | Multiple                       | generated by `yarn generate:configs`                             | ✔️            |
+| [angular](https://github.com/angular-eslint/angular-eslint)                                       | `all`, `recommended`           | manually matched to `meta.docs.recommended`                      | ☑️            |
+| [astro](https://github.com/ota-meshi/eslint-plugin-astro)                                         | Multiple                       | generated by `npm run update`                                    | ✔️            |
+| [check-file](https://github.com/dukeluo/eslint-plugin-check-file)                                 | _(none)_                       |                                                                  | ❎            |
+| [compat](https://github.com/amilajack/eslint-plugin-compat)                                       | `recommended`, `flat/*`        | one plugin rule                                                  | ☑️            |
+| [cypress](https://github.com/cypress-io/eslint-plugin-cypress)                                    | `all`, `recommended`           | manually matched to `meta.docs.recommended`                      | ☑️            |
+| [ember](https://github.com/ember-cli/eslint-plugin-ember)                                         | `base`, `recommended`          | manually authored with external rules                            | ✔️            |
+| [es-x](https://github.com/eslint-community/eslint-plugin-es-x)                                    | Multiple                       | generated by `scripts/update-lib-configs.js`                     | ✔️            |
+| [eslint-comments](https://github.com/eslint-community/eslint-plugin-eslint-comments)              | `recommended`                  | generated by `scripts/update.js`                                 | ☑️            |
+| [eslint-plugin](https://github.com/eslint-community/eslint-plugin-eslint-plugin)                  | Multiple                       | dynamically based on `meta.docs.recommended`                     | ✔️            |
+| [expect-type](https://github.com/JoshuaKGoldberg/eslint-plugin-expect-type)                       | `recommended`                  | dynamically based on `meta.docs.recommended`                     | ☑️            |
+| [functional](https://github.com/eslint-functional/eslint-plugin-functional)                       | Multiple                       | dynamically based on `meta.docs.recommended` with external rules | ✔️            |
+| [import-x](https://github.com/un-ts/eslint-plugin-import-x)                                       | Multiple                       | manually authored                                                | 🛠️            |
+| [import](https://github.com/import-js/eslint-plugin-import)                                       | Multiple                       | manually authored                                                | 🛠️            |
+| [jest](https://github.com/jest-community/eslint-plugin-jest)                                      | Multiple                       | manually authored                                                | 🛠️            |
+| [jsdoc](https://github.com/gajus/eslint-plugin-jsdoc)                                             | Multiple                       | manually authored                                                | 🛠️            |
+| [jsonc](https://github.com/ota-meshi/eslint-plugin-jsonc)                                         | Multiple                       | generated by `npm run update`                                    | ✔️            |
+| [jsx-a11y](https://github.com/jsx-eslint/eslint-plugin-jsx-a11y)                                  | Multiple                       | manually authored                                                | 🛠️            |
+| [markdown](https://github.com/eslint/eslint-plugin-markdown)                                      | Multiple                       | generated by `tools/build-rules.js`                              | ✔️            |
+| [mocha](https://github.com/lo1tuma/eslint-plugin-mocha)                                           | `all`, `recommended`           | manually authored                                                | 🛠️            |
+| [n](https://github.com/eslint-community/eslint-plugin-n)                                          | `recommended`, `recommended-*` | manually matched to `meta.docs.recommended`                      | ✔️            |
+| [nx](https://github.com/nrwl/nx)                                                                  | Multiple                       | manually authored configs that only provide external rules       | ❎            |
+| [package-json](https://github.com/JoshuaKGoldberg/eslint-plugin-package-json)                     | `recommended`, `legacy-*`      | dynamically based on `meta.docs.recommended`                     | ☑️            |
+| [perfectionist](https://github.com/azat-io/eslint-plugin-perfectionist)                           | Multiple                       | dynamically with different options per config                    | ✔️            |
+| [playwright](https://github.com/playwright-community/eslint-plugin-playwright)                    | Multiple                       | manually matched to `meta.docs.recommended`                      | ✔️            |
+| [prettier](https://github.com/prettier/eslint-plugin-prettier)                                    | `recommended`                  | one plugin rule with external rules                              | ✔️            |
+| [promise](https://github.com/eslint-community/eslint-plugin-promise)                              | `recommended`, `flat/*`        | manually authored                                                | 🛠️            |
+| [qunit](https://github.com/platinumazure/eslint-plugin-qunit)                                     | `recommended`                  | manually matched to `meta.docs.recommended`                      | ✔️            |
+| [react-hooks](https://github.com/facebook/react/tree/main/packages/eslint-plugin-react-hooks)     | `recommended`, `recommended-*` | manually authored                                                | 🛠️            |
+| [react-refresh](https://github.com/ArnaudBarre/eslint-plugin-react-refresh)                       | Multiple                       | one rule with different options                                  | ✔️            |
+| [react](https://github.com/jsx-eslint/eslint-plugin-react)                                        | Multiple                       | partially dynamically based on `meta.docs.recommended`           | ✔️            |
+| [regexp](https://github.com/ota-meshi/eslint-plugin-regexp)                                       | Multiple                       | generated by `npm run update`                                    | ✔️            |
+| [security](https://github.com/eslint-community/eslint-plugin-security)                            | `recommended`, `legacy-*`      | manually matched to `meta.docs.recommended`                      | ☑️            |
+| [simple-import-sort](https://github.com/lydell/eslint-plugin-simple-import-sort)                  | _(none)_                       |                                                                  | ❎            |
+| [solid](https://github.com/solidjs-community/eslint-plugin-solid)                                 | Multiple                       | manually authored                                                | 🛠️            |
+| [sonarjs](https://github.com/SonarSource/SonarJS/blob/master/packages/jsts/src/rules/README.md)   | `recommended`, `*-legacy`      | dynamically based on `meta.docs.recommended`                     | ☑️            |
+| [storybook](https://github.com/storybookjs/eslint-plugin-storybook)                               | Multiple                       | generated by `pnpm run update-all`                               | ✔️            |
+| [stylistic](https://github.com/eslint-stylistic/eslint-stylistic)                                 | Multiple                       | dynamically based on `meta.docs.recommended`                     | ✔️            |
+| [svelte](https://github.com/sveltejs/eslint-plugin-svelte)                                        | Multiple                       | manually matched to `meta.docs.recommended`                      | ✔️            |
+| [tailwindcss](https://github.com/francoismassart/eslint-plugin-tailwindcss)                       | `recommended`, `flat/*`        | manually matched to `meta.docs.recommended`                      | ☑️            |
+| [TanStack Query](https://github.com/TanStack/query)                                               | `recommended`, `flat/*`        | manually matched to `meta.docs.recommended`                      | ☑️            |
+| [testing-library](https://github.com/testing-library/eslint-plugin-testing-library)               | Multiple                       | dynamically based on `meta.docs.recommended`                     | ✔️            |
+| [turbo](https://github.com/vercel/turbo)                                                          | `recommended`, `flat/*`        | manually matched to `meta.docs.recommended`                      | ✔️            |
+| [unicorn](https://github.com/sindresorhus/eslint-plugin-unicorn)                                  | `all`, `recommended`, `flat/*` | dynamically based on `meta.docs.recommended`                     | ☑️            |
+| [vitest](https://github.com/veritem/eslint-plugin-vitest)                                         | Multiple                       | manually matched to `meta.docs.recommended`                      | ✔️            |
+| [vue-i18n](https://github.com/intlify/eslint-plugin-vue-i18n)                                     | Multiple                       | generated by `jiti scripts/update.ts`                            | ✔️            |
+| [vue](https://github.com/vuejs/eslint-plugin-vue)                                                 | Multiple                       | generated by `npm run update`                                    | ✔️            |
+| [vuejs-accessibility](https://github.com/vue-a11y/eslint-plugin-vuejs-accessibility)              | `recommended`, `flat/*`        | manually authored                                                | ☑️            |
+| [wdio](https://github.com/webdriverio/webdriverio)                                                | `recommended`, `flat/*`        | manually authored                                                | ☑️            |
+| [yml](https://github.com/ota-meshi/eslint-plugin-yml)                                             | Multiple                       | generated by `npm run update`                                    | ✔️            |
 
-> ⚠️ NOTE: These statuses need to be double-checked.
+> Note: this summary table was hand-authored, although it was double-checked, it is susceptible to human error.
+> This RFC believes slight inaccuracies in the table do not invalidate its general conclusion: that a most plugins would benefit from a `definePlugin`.
 
 ## Alternatives
 
@@ -637,5 +649,3 @@ However:
 - [typescript-eslint/typescript-eslint#11029 Enhancement: Support Lazy Loading Rules](https://github.com/typescript-eslint/typescript-eslint/issues/11029)
 - [vuejs/eslint-plugin-vue#2732](https://github.com/vuejs/eslint-plugin-vue/issues/2732)
 - [typescript-eslint/typescript-eslint#10383 Enhancement: Move RuleCreator into its own package with fewer dependencies than utils](https://github.com/typescript-eslint/typescript-eslint/issues/10383)
-
-[^eslint-plugin-package-json-recommended-plugin]: [`eslint-plugin-package-json`'s `recommended.plugins`](https://github.com/JoshuaKGoldberg/eslint-plugin-package-json/blob/f2d1070433a488a8bd34ad2a40a3337b218bc358/src/plugin.ts#L76)
