@@ -11,11 +11,12 @@ Adds a `definePlugin` function to `@eslint/plugin-kit` as a recommended way to g
 
 ## Motivation
 
-Defining the internals an ESLint plugin is a "loose" process right now: although ESLint provides recommendations and the community has centralized on common patterns, nothing in code explicitly defines many of those recommendations or patterns.
+Defining the internals an ESLint plugin is a "loose" process right now.
+ESLint core provides only recommendations, not standardized factory functions; the community also has centralized only on common patterns.
 Several dozen variations in how plugins are defined have evolved, ranging from manual declarations of `configs` to custom scripts to auto-generated JavaScript or TypeScript files.
 
 This divergence in implementation details results in conceptual and practical overhead for plugin authors.
-Without a standardize factory function to define a plugin:
+Without a standardized factory function to define a plugin:
 
 - There is no first-party way for plugins to receive type hints during development the way [`eslint/config`'s `defineConfig`](https://eslint.org/docs/latest/use/configure/configuration-files#configuration-file) assists in authoring configs
 - Plugin names are often defined in at least four separate places:
@@ -75,8 +76,8 @@ It would provide a single recommended factory for defining the structure of a ty
 - Using the same name in multiple places
 - Generating `configs.recommended` and other configurations based on rule metadata
 
-It would also allow definition styles that allow internal optimizations.
-Most notably, it would allow lazy-loading rules if provided as functions and manually listed in `configs`.
+`definePlugin` would also allow plugins to ergonomically set up rules to be lazy-loaded.
+It will allow plugin authors to provide rules either as direct rule objects or as functions that return rules.
 An `eslint-plugin-eslint-plugin` lint rule will be created that keeps `configs` and `rules` in sync.
 
 As with `defineConfig`, `definePlugin` would be a purely optional, additive change.
@@ -85,7 +86,7 @@ Existing and future plugins would continue to work as-is without a `definePlugin
 ## Detailed Design
 
 The `@eslint/plugin-kit` package would export a `definePlugin` function that takes in a single required options object.
-The options properties would require two properties:
+The options properties would require authors specify at least the following two properties:
 
 - `meta`: The same `name` as [Meta Data in Plugins](https://eslint.org/docs/latest/extend/plugins#meta-data-in-plugins), along with an optional `version`
 - `rules`: The same object as [Rules in Plugins](https://eslint.org/docs/latest/extend/plugins#rules-in-plugins), but also allowing functions that return a rule
@@ -95,7 +96,7 @@ It would return a plugin with:
 - `configs`: by default, an object containing:
   - `recommended`: a config array of a single object containing:
     - `name`: per [configuration naming conventions](https://eslint.org/docs/latest/use/configure/configuration-files#configuration-naming-conventions)
-    - `plugins`: an object assigning `meta.name` to the plugin
+    - `plugins`: an object keying `meta.name` to the plugin object
     - `rules`: all rules whose `meta.docs?.recommended === true`, with severity set to `"error"`
 - all other provided properties as-is
 
@@ -112,6 +113,8 @@ export const plugin = definePlugin({
   rules,
 });
 ```
+
+> `rules` is assumed to be a common rules object like `{ "example/a": ... }`.
 
 That definition would be the equivalent of:
 
@@ -135,38 +138,42 @@ Object.assign(plugin.configs, {
         example: plugin,
       },
       rules: Object.from(
-        Object.entries(rules)
+        Object.entries(plugin.rules)
           .filter(([, rule]) => rule.meta.docs?.recommended)
-          .map(([ruleName]) => [`example/${ruleName}`, "error"]),
+          .map(([ruleName]) => [ruleName, "error"]),
       ),
     },
   ],
 });
 ```
 
-`definePlugin` should allow plugin authors to avoid repeating the plugin's name or repeatedly referring to a `plugin` value.
+`definePlugin`'s design intentionally avoids referring to a `plugin` value.
 No `Object.assign()`, `Object.defineProperty()`, or `get()` should be required in the making of an ESLint plugin.
 
 ### Configs
 
-`configs` is the only property `definePlugin` changes from the current form of definitions.
-Its properties are modified in the following ways:
+`configs` is the only property `definePlugin` requires with a different shape for.
+Each config's `rules` must be provided either as:
 
-- `name` will default to the plugin's name + `"/"` + the config's name
-- `plugins` may not be provided; instead, `definePlugin` will add a `plugins` object property defining the plugin under its name
-- `rules` must be provided as an array of rules, each of which is either:
-  - A rule object included in the plugin's `rules`, in which case it will be turned into a namespace based on the plugin's `meta.name`
+- `null | undefined`: to preserve that value
+- an array containing any amount of:
+  - A rule object included in the plugin's `rules`, in which case it will be turned into a namespaced rule based on the plugin's `meta.name`
   - A tuple array containing a rule and a severity to specify that rule as
   - An object with string keys and rule severity values, which will be directly merged into the resultant config `rules`
 
-Defining the `name` and `rules` from the earlier example plugin manually would look approximately like:
+`definePlugin` will add two properties by default to config objects:
+
+- `name`: will default to the plugin's name + `"/"` + the config's key
+- `plugin`: merged with an object defining the plugin under its name
+
+The following definition redundantly defines its `recommended` config's `name` and `rules` the same as the earlier example plugin:
 
 ```js
 const plugin = definePlugin({
   configs: {
     recommended: {
       name: "example/recommended",
-      rules: rules.filter((rule) => rule.meta.docs?.recommended),
+      rules: Object.values(rules).filter((rule) => rule.meta.docs?.recommended),
     },
   },
   meta,
@@ -175,6 +182,7 @@ const plugin = definePlugin({
 ```
 
 If any `config` value is provided as an array instead of an object, `name` and `plugins` will be added to its first element only.
+This allows plugin authors to define longer plugins with arrays of config objects.
 
 #### Configs Examples
 
@@ -184,8 +192,7 @@ A plugin whose `meta.docs.recommended` is `'error' | 'warning'` could specify ru
 const plugin = definePlugin({
   configs: {
     recommended: {
-      name: "example/recommended",
-      rules: rules
+      rules: Object.values(rules)
         .filter((rule) => rule.meta.docs?.recommended)
         .map((rule) => [rule, rule.meta.docs.recommended]),
     },
@@ -195,7 +202,7 @@ const plugin = definePlugin({
 });
 ```
 
-A plugin that defines additional properties such as `languageOptions` would also define them in its `configs.recommended`:
+A plugin that provides additional properties such as `languageOptions` would also define them in its `configs.recommended`:
 
 ```js
 definePlugin({
@@ -206,7 +213,6 @@ definePlugin({
           myGlobal: "readonly",
         },
       },
-      rules: rules.filter((rule) => rule.meta.docs?.recommended),
     },
   },
   meta,
@@ -214,7 +220,7 @@ definePlugin({
 });
 ```
 
-A plugin akin to `eslint-plugin-markdown` with multiple entries in its `recommended` config could override the `name` and `rules` of the first entry, leaving `rules` for the last:
+A plugin akin to `eslint-plugin-markdown` with multiple entries in its `recommended` config could override the `name` and `rules` of the first element, leaving `rules` for the last element:
 
 ```js
 definePlugin({
@@ -258,13 +264,13 @@ definePlugin({
   configs: {
     recommended: {
       rules: [
-        ...rules: rules.filter((rule) => rule.meta.docs?.recommended),
+        ...Object.values(rules).filter((rule) => rule.meta.docs?.recommended),
         {
-          'import/no-anonymous-default-export': 'off',
-          'react-hooks/rules-of-hooks': 'off',
-        }
-      ]
-    }
+          "import/no-anonymous-default-export": "off",
+          "react-hooks/rules-of-hooks": "off",
+        },
+      ],
+    },
   },
   meta,
   rules,
@@ -277,22 +283,24 @@ A plugin akin to `typescript-eslint` with `recommended`, `strict`, and `*TypeChe
 definePlugin({
   configs: {
     recommended: {
-      rules: rules.filter((rule) => rule.meta.docs.recommended),
+      rules: Object.values(rules).filter((rule) => rule.meta.docs.recommended),
     },
     recommendedTypeChecked: {
-      rules: rules.filter(
+      rules: Object.values(rules).filter(
         (rule) =>
-          rule.meta.docs.recommended && rule.meta.docs.requiresTypeChecking
+          rule.meta.docs.recommended && rule.meta.docs.requiresTypeChecking,
       ),
     },
     strict: {
-      rules: rules.filter((rule) => rule.meta.docs.recommended === "strict"),
+      rules: Object.values(rules).filter(
+        (rule) => rule.meta.docs.recommended === "strict",
+      ),
     },
     strictTypeChecked: {
-      rules: rules.filter(
+      rules: Object.values(rules).filter(
         (rule) =>
           rule.meta.docs.recommended === "strict" &&
-          rule.meta.docs.requiresTypeChecking
+          rule.meta.docs.requiresTypeChecking,
       ),
     },
   },
@@ -303,17 +311,17 @@ definePlugin({
 
 ### Lazy-Loading Rules
 
-[vuejs/eslint-plugin-vue#2732](https://github.com/vuejs/eslint-plugin-vue/issues/2732) and [typescript-eslint/typescript-eslint#11029 Enhancement: Support Lazy Loading Rules](https://github.com/typescript-eslint/typescript-eslint/issues/11029) ask that plugins lazy-load their rules the way the core ESLint configs are lazy-loaded.
+Feature requests such as [vuejs/eslint-plugin-vue#2732](https://github.com/vuejs/eslint-plugin-vue/issues/2732) and [typescript-eslint/typescript-eslint#11029 Enhancement: Support Lazy Loading Rules](https://github.com/typescript-eslint/typescript-eslint/issues/11029) ask for plugins to lazy-load their rules the way the core ESLint configs are lazy-loaded.
 Doing so would allow plugins with many dozens or more rules to avoid the cost of loading those rules unnecessarily.
 
 `definePlugin` can enable lazy-loaded rules by allowing elements in `rules` arrays to each be provided as either:
 
-- A rule itself
+- A rule object itself
 - A function that synchronously returns a rule
 
-However, lazy-loading rules conflicts with auto-generating `configs`.
+Note that lazy-loading rules conflicts with auto-generating `configs`.
 Knowing which rules are to be included in a config requires loading the rule itself.
-`definePlugin` will throw an error if any rule function is provided and `configs` is not specified.
+`definePlugin` will need to throw an error if any rule function is provided and `configs` is not specified.
 
 A plugin definition that uses lazy-loaded rules would look like:
 
@@ -327,24 +335,26 @@ const require = createRequire(import.meta.url);
 
 export const plugin = definePlugin({
   configs: {
-    recommended: [
-      "a",
-      "b",
-      "c",
-      // ...
-    ],
+    recommended: {
+      rules: {
+        "example/a": "error",
+        "example/b": "error",
+        "example/c": "error",
+        // ...
+      },
+    },
   },
   meta: { name: packageData.name, version: packageData.version },
-  rules: [
-    () => require("./rules/a"),
-    () => require("./rules/b"),
-    () => require("./rules/c"),
+  rules: {
+    "example/a": () => require("./rules/a"),
+    "example/b": () => require("./rules/b"),
+    "example/c": () => require("./rules/c"),
     // ...
-  ],
+  },
 });
 ```
 
-`definePlugin` would internally use a modified version of [ESLint core's `LazyLoadingRuleMap`](https://github.com/eslint/eslint/blob/129882d2fdb4e7f597ed78eeadd86377f3d6b078/lib/rules/utils/lazy-loading-rule-map.js) to only load rules as necessary.
+`definePlugin` will internally use a modified version of [ESLint core's `LazyLoadingRuleMap`](https://github.com/eslint/eslint/blob/129882d2fdb4e7f597ed78eeadd86377f3d6b078/lib/rules/utils/lazy-loading-rule-map.js) to only load rules as necessary.
 For reference: [ESLint core implements lazy-loaded configs with a `LazyLoadingRuleMap` and `Proxy`](https://github.com/eslint/eslint/blob/129882d2fdb4e7f597ed78eeadd86377f3d6b078/lib/config/default-config.js#L46):
 
 ```js
@@ -372,7 +382,7 @@ exports.defaultConfig = Object.freeze([
             has(target, property) {
               return Rules.has(property);
             },
-          }
+          },
         ),
       },
     },
@@ -389,24 +399,29 @@ module.exports = new LazyLoadingRuleMap(
   Object.entries({
     "accessor-pairs": () => require("./accessor-pairs"),
     // ...
-  })
+  }),
 );
 ```
 
-`definePlugin` will use similar strategies internally.
+`definePlugin` will implement similar strategies internally, but use [`module.createRequire()`](https://nodejs.org/api/module.html#modulecreaterequirefilename) to work in both CommonJS and ECMAScript Modules packages.
 
-An `eslint-plugin-eslint-plugin` lint rule will also be created that enforces lazy-loading rules.
-It will come with an auto-fixer that:
+Two new `eslint-plugin-eslint-plugin` lint rules will be added:
 
-- Adds the requisite `createRequire()` and `require()` calls to the `definePlugin` file
-- Keeps `configs` in sync with rule `meta.docs.recommended` values corresponding to existing common community conventions:
+1. Enforcing using `definePlugin` to define a plugin
+2. Enforces lazy-loading rules and automates keeping `configs` up-to-date with lazy-loaded rules.
+
+The latter rule's auto-fixer will:
+
+- Adds the requisite `createRequire()` and `require()` calls to the `definePlugin` file if missing
+- Align `configs` with rule `meta.docs.recommended` values corresponding to existing common community conventions:
   - falsy: only in an `all` config, if it exists
   - `string | string[]`: in config(s) of the same name(s)
   - `true`: in a `recommended` config
 
-Note that this lint rule would need to inspect each rule file to determine rules' `meta.docs.recommended` values.
+That lint rule would need to inspect rule files to determine those `meta.docs.recommended` values.
+It can do so by reading the file from disk, parsing it as an AST, and finding the first instance of a `meta.docs.recommended`.
 
-Running the lint rule with `--fix` would accomplish the same automation work a many common community "update" scripts under [Design Pattern Analysis](#design-pattern-analysis).
+Running the lint rules with `--fix` would accomplish the same automation seen in many common community "update" scripts under [Design Pattern Analysis](#design-pattern-analysis).
 
 ## Documentation
 
@@ -414,6 +429,7 @@ Running the lint rule with `--fix` would accomplish the same automation work a m
 - The existing [Create Plugins](https://eslint.org/docs/latest/extend/plugins) page will be updated to use the new helper
   - It can also link to the `@eslint/plugin-kit` README.md section for expanded documentation
   - It will also explicitly note that the helper is optional
+- Explanatory documentation in the new `eslint-plugin-eslint-plugin` lint rule
 
 ## Drawbacks
 
@@ -503,7 +519,8 @@ Emoji key:
 | [wdio](https://github.com/webdriverio/webdriverio)                                                | `recommended`, `flat/*`        | manually authored                                                | ☑️            |
 | [yml](https://github.com/ota-meshi/eslint-plugin-yml)                                             | Multiple                       | generated by `npm run update`                                    | ✔️            |
 
-> Note: this summary table was hand-authored, although it was double-checked, it is susceptible to human error.
+> Note: this summary table was hand-authored.
+> Although it was double-checked, it is susceptible to human error.
 > This RFC believes slight inaccuracies in the table do not invalidate its general conclusion: that a most plugins would benefit from a `definePlugin`.
 
 ## Alternatives
@@ -532,10 +549,7 @@ However, configs that don't want adopting `definePlugin` to be a breaking change
 Plugin developers can work around that lack of support by manually adding those config properties:
 
 ```js
-const plugin = definePlugin({
-  meta,
-  rules,
-});
+const plugin = definePlugin({ meta, rules });
 
 // TODO: Remove when we drop support for ESLint <=9 / eslintrc
 plugin.configs["legacy-recommended"] = {
@@ -543,7 +557,7 @@ plugin.configs["legacy-recommended"] = {
   rules: Object.fromEntries(
     Object.entries(rules)
       .filter(([, rule]) => rule.meta.docs?.recommended)
-      .map(([name]) => ["example/" + name, "error"])
+      .map(([name]) => ["example/" + name, "error"]),
   ),
 };
 ```
@@ -571,6 +585,12 @@ Creating such a factory in ESLint could be useful but is not required for any of
 ## Help Needed
 
 I would love to implement this RFC.
+
+I can also:
+
+- Post this RFC in relevant Discords to draw plugin author attention to it
+- Work with `eslint-plugin-eslint-plugin` on feature requests for the proposed lint rules as part of this RFC
+- Send draft PRs to community plugins to help onboard them to the new `definePlugin`
 
 ## Frequently Asked Questions
 
