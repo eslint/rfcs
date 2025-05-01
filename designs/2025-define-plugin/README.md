@@ -164,7 +164,7 @@ It is the same as before, but each config's `rules` must be provided either as:
 
 `definePlugin` will add two properties by default to config objects:
 
-- `name`: will default to the plugin's name + `"/"` + the config's key
+- `name`: will default to the plugin's namespace + `"/"` + the config's key
 - `plugin`: merged with an object defining the plugin under its name
 
 The following definition redundantly defines its `recommended` config's `name` and `rules` the same as the earlier example plugin:
