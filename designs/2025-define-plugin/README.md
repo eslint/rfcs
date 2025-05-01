@@ -312,8 +312,8 @@ definePlugin({
 
 ### Lazy-Loading Rules
 
-[ESLint core implements lazy-loaded configs with a `LazyLoadingRuleMap` and `Proxy`](https://github.com/eslint/eslint/blob/129882d2fdb4e7f597ed78eeadd86377f3d6b078/lib/config/default-config.js#L46)
-[vuejs/eslint-plugin-vue#2732](https://github.com/vuejs/eslint-plugin-vue/issues/2732) and [typescript-eslint/typescript-eslint#11029 Enhancement: Support Lazy Loading Rules](https://github.com/typescript-eslint/typescript-eslint/issues/11029) ask for plugins to lazy-load their rules too.
+[ESLint core implements lazy-loaded configs with a `LazyLoadingRuleMap` and `Proxy`](https://github.com/eslint/eslint/blob/129882d2fdb4e7f597ed78eeadd86377f3d6b078/lib/config/default-config.js#L46).
+[vuejs/eslint-plugin-vue#2732](https://github.com/vuejs/eslint-plugin-vue/issues/2732) and [typescript-eslint/typescript-eslint#11029](https://github.com/typescript-eslint/typescript-eslint/issues/11029) ask for plugins to lazy-load their rules too.
 Doing so would allow plugins with many dozens or more rules to avoid the cost of loading those rules unnecessarily.
 
 `definePlugin` can enable lazy-loaded rules by allowing elements in `rules` arrays to each be provided as either:
