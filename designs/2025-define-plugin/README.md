@@ -645,6 +645,17 @@ However:
 - `configs` would still need to load the rules to be automatically generated, so string rule paths would not allow automatic configs with lazy-loaded rules
 - Third-party tools such as bundlers would not be able to easily perform analyzing techniques such as tree-shaking on those "magical" string paths
 
+### `rules`: Why `createRequire()` to lazy-load rules?
+
+Or: instead of `() => require('./rules/a')`, could `() => import('./rules/a.js')` be provided?
+
+ESLint does not currently support asynchronously loading rules.
+Only synchronous `require()`s are supported.
+
+[`module.createRequire()`](https://nodejs.org/api/module.html#modulecreaterequirefilename) allows for synchronous `require()` in both CommonJS and ECMAScript Modules packages.
+As of Node.js `^20.19.0 || >=22.12.0`, `require()`s can also load ECMAScript modules from CommonJS files.
+This allows plugins to be both consumed by and developed in both CommonJS and ECMAScript (in those Node.js versions).
+
 ## Related Discussions
 
 - [eslint#14862 Support Lazy Loading Rules from 3rd Party Plugins](https://github.com/eslint/eslint/issues/14862)
