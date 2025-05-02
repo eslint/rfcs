@@ -87,19 +87,18 @@ Existing and future plugins would continue to work as-is without a `definePlugin
 ## Detailed Design
 
 The `@eslint/plugin-kit` package would export a `definePlugin` function that takes in a single required options object.
-The options properties would require authors specify at least the following two properties:
+The options properties would allow authors to specify:
 
-- `meta`: The same `name` as [Meta Data in Plugins](https://eslint.org/docs/latest/extend/plugins#meta-data-in-plugins), along with an optional `version`
-- `rules`: The same object as [Rules in Plugins](https://eslint.org/docs/latest/extend/plugins#rules-in-plugins), but also allowing functions that return a rule
+- `meta` _(required)_: The same `name` as [Meta Data in Plugins](https://eslint.org/docs/latest/extend/plugins#meta-data-in-plugins), along with an optional `version`
+- `rules` _(optional)_: The same object as [Rules in Plugins](https://eslint.org/docs/latest/extend/plugins#rules-in-plugins), but also allowing functions that return a rule
+- any other plugin properties
 
-It would return a plugin with:
+It would return a plugin:
 
-- `configs`: by default, an object containing:
-  - `recommended`: a config array of a single object containing:
-    - `name`: per [configuration naming conventions](https://eslint.org/docs/latest/use/configure/configuration-files#configuration-naming-conventions)
-    - `plugins`: an object keying `meta.name` to the plugin object
-    - `rules`: all rules whose `meta.docs?.recommended === true`, with severity set to `"error"`
-- all other provided properties as-is
+- If `rules` is provided, all provided properties as-is
+- If `rules` is provided, then an object with:
+  - `configs`: if not provided, the [default generated config](#default-generated-config)
+  - all other provided properties as-is
 
 The following code block creates a standard plugin:
 
@@ -120,6 +119,7 @@ export const plugin = definePlugin({
 That definition would be the equivalent of:
 
 ```js
+// (equivalent to the previous example)
 import { definePlugin } from "@eslint/plugin-kit";
 
 import packageData from "../package.json" with { type: "json" };
@@ -140,8 +140,9 @@ Object.assign(plugin.configs, {
       },
       rules: Object.fromEntries(
         Object.entries(plugin.rules)
-          .filter(([, rule]) => rule.meta.docs?.recommended)
-          .map(([ruleName]) => [ruleName, "error"]),
+          .filter((rule) => rule.meta.docs?.recommended)
+          // (see #### Default Generated Config later for rule severities)
+          .map((rule) => [rule, getRuleSeverity(rule)]),
       ),
     },
   ],
@@ -185,17 +186,41 @@ const plugin = definePlugin({
 If any `config` value is provided as an array instead of an object, `name` and `plugins` will be added to its first element only.
 This allows plugin authors to define longer plugins with arrays of config objects.
 
+#### Default Generated Config
+
+If `configs` is not provided, then `definePlugin` will create a `recommended` config with the following properties:
+
+- `name`: per [configuration naming conventions](https://eslint.org/docs/latest/use/configure/configuration-files#configuration-naming-conventions)
+- `plugins`: an object keying `meta.name` to the plugin object
+- `rules`: setting severities for rules whose `meta.docs?.recommended` is one of the following values:
+  - `true`: set to `"error"`
+  - any valid rule severity: that severity
+
 #### Configs Examples
 
-A plugin whose `meta.docs.recommended` is `'error' | 'warning'` could specify rule severities from that metadata:
+A plugin whose `meta.docs.recommended` is `'error' | 'warn'` would have a `configs.recommended` generated natively for it:
 
 ```js
+const plugin = definePlugin({
+  meta,
+  rules,
+});
+```
+
+That snippet would be equivalent to manually filtering rules on `rule.mta.docs?.recommended` and using their recommended severity:
+
+```js
+function getRuleSeverity(rule) {
+  return rule.meta.docs.severity === true ? "error" : rule.meta.docs.severity;
+}
+
+// (equivalent to the previous example)
 const plugin = definePlugin({
   configs: {
     recommended: {
       rules: Object.values(rules)
         .filter((rule) => rule.meta.docs?.recommended)
-        .map((rule) => [rule, rule.meta.docs.recommended]),
+        .map((rule) => [rule, getRuleSeverity(rule)]),
     },
   },
   meta,
