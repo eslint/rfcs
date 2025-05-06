@@ -443,10 +443,12 @@ if (file) {
 }
 ```
 
-This counter is the only means to track the progress during linting: no other information is shared across worker threads or with the controlling thread until the linting terminates or an error occurs.
-This design ensures that no thread needs to block waiting for information from another thread.
+This counter is the only means to track the progress during linting.
+Information between a worker thread and the controlling thread is only shared when the worker thread terminates successfully or with an error, and when application warnings are generated.
+No information is shared across worker threads directly.
+This design ensures that no thread is left in a blocked state while awaiting information from another thread.
 
-It isn't necessary to create a new `ESLint` instance from the options, in fact worker threads will not use the `ESLint` class.
+Worker threads will not create a new `ESLint` instance from the options, in fact they will not use the `ESLint` class.
 Instead, in order to lint the content of file, only the function `verifyText()` will be called, as it is currently the case.
 
 ```js
