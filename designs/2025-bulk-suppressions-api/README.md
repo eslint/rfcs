@@ -54,6 +54,10 @@ This proposal integrates the existing bulk suppression functionality into the `E
     - This method takes the raw linting results and the loaded suppressions (from the resolved file path) and returns the results with suppressions applied, along with any unused suppressions.
     - The final, suppression-applied results will be returned to the user.
 
+4. Changes to ESLint CLI
+    - With the integration of suppression handling into the `ESLint` and `LegacyESLint` APIs, the ESLint CLI (`lib/cli.js`) will be updated.
+    - Specifically, direct calls to `SuppressionsService` within the CLI will be removed. The CLI will now leverage the updated API methods to handle bulk suppressions, ensuring that the CLI's behavior is consistent with the API's new capabilities. This change simplifies the CLI's implementation by delegating suppression logic to the core API.
+
 ### Example code of `lib/eslint/eslint.js`
 
 ```javascript
