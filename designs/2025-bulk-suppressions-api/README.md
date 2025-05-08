@@ -1,6 +1,6 @@
 - Repo: eslint/eslint
 - Start Date: 2025-05-06
-- RFC PR: (leave this empty, to be filled in later)
+- RFC PR: https://github.com/eslint/rfcs/pull/133
 - Authors: [Kentaro Suzuki](https://github.com/sushichan044)
 
 # Add support for bulk suppressions in `ESLint` and `LegacyESLint` classes
