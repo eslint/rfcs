@@ -296,7 +296,7 @@ All worker threads receive the same parameters from the controlling thread:
 Each worker thread repeatedly reads and lints a single file until all files have been linted or an abort signal is triggered.
 Errors in worker threads are not caught: they will be intercepted as error events by the controlling thread where they will trigger an abort signal that causes all other threads to exit.
 
-The controlling thread itself does not lint any files: it waits until all files are linter or an error occurs.
+The controlling thread itself does not lint any files: it waits until all files are linted or an error occurs.
 When a worker thread terminates successfully it submits a list of lint results to the controlling thread.
 Each result in this list is enriched with the index of its respective file in the list of enumerated file paths.
 The controlling thread collects the lists of lint results and merges them in the order determined by the index values.
