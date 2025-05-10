@@ -719,9 +719,7 @@ This tool only supports eslintrc configuration which makes it challenging to dir
     you can remove this section.
 -->
 
-* Are there any viable alternatives to [option modules](#option-modules)?
 * How to serialize CLI options? (see [Solution for CLI Options](#solution-for-cli-options) for a proposed solutions).
-* How to fix `ESLint#getRulesMetaForResults()` to support multithreading? (see proposed solutions in [`ESLint#getRulesMetaForResults()`](#eslintgetrulesmetaforresults)).
 
 ## Help Needed
 
