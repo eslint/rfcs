@@ -719,7 +719,7 @@ This tool only supports eslintrc configuration which makes it challenging to dir
     you can remove this section.
 -->
 
-* How to serialize CLI options? (see [Solution for CLI Options](#solution-for-cli-options) for a proposed solutions).
+* Are there any viable alternatives to [option modules](#option-modules)?
 
 ## Help Needed
 
