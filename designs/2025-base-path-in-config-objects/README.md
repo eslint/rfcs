@@ -9,7 +9,7 @@
 
 Currently, config array has a single property `basePath` (string) at the top level. When used from `eslint`, this property is set to the location of the config file, or the current working directory (when `--no-config-lookup` or `--config` options are used). `files` and `ignores` patterns in all config objects are treated as relative to the config array's `basePath`.
 
-This RFC proposes allowing config objects to specify their own `basePath` property. When present, config object's `basePath` overrides config array's `basePath`, meaning that `files` and `ignores` patterns in that config object should be treated as relative to the config object's `basePath` instead of the config array's `basePath`.
+This RFC proposes allowing config objects to specify their own `basePath` property. When present, config object's `basePath` overrides config array's `basePath`, meaning that `files` and `ignores` patterns in that config object should be treated as relative to the config object's `basePath` instead of the config array's `basePath`. Also, when `basePath` is present in a config object that has neither `files` nor `ignores`, then the config object applies to files in `basePath` and its subdirectories only.
 
 The new `basePath` property of config objects can be an absolute path, which is primarily intended for internal use by `eslint`, or a relative path, which is primarily intended for end users. A relative path is interpreted as relative to the config array's `basePath`.
 
