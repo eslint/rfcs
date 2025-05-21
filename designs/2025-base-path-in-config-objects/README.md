@@ -1,4 +1,4 @@
-- Repo: eslint/rewrite (`@eslint/config-array`), eslint/eslint
+- Repo: eslint/rewrite (`@eslint/config-array` and `@eslint/config-helpers`), eslint/eslint
 - Start Date: 2025-03-31
 - RFC PR: https://github.com/eslint/rfcs/pull/131
 - Authors: Milos Djermanovic
@@ -51,6 +51,7 @@ Most of the changes will be in the `@eslint/config-array` package.
 
 - In `lib/config/flat-config-array.js`, `META_FIELDS` will be updated to include `"basePath"`, in order to treat config objects with `basePath` + `ignores` as global ignores while preprocessing config array to remove global ignores when the `--no-ignore` option is used.
 - In `lib/config/config-loader.js`, the code that handles `ignorePatterns` (`--ignore-pattern`) will be updated to add them to the config array with `basePath` set to `cwd`, without any transformations.
+- In `lib/types/index.d.ts`, `Linter.Config` type will be updated with the `basePath` property.
 
 ## Documentation
 
