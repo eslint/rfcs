@@ -13,7 +13,7 @@ This RFC proposes allowing config objects to specify their own `basePath` proper
 
 The new `basePath` property of config objects can be an absolute path, which is primarily intended for internal use by `eslint`, or a relative path, which is primarily intended for end users. A relative path is interpreted as relative to the config array's `basePath`.
 
-`defineConfig()` will be updated to apply base config's `basePath` to extended configs, meaning that all `files` and `ignores` patterns in extended configs become relative to the base config's `basePath`. This includes global ignores in extended configs. Specifying `basePath` in extended configs is not allowed. If `defineConfig()` encounters `basePath` property in an extended config, it will throw an error.
+`defineConfig()` will be updated to apply base config's `basePath` to extended configs, meaning that all `files` and `ignores` patterns in extended configs become relative to the base config's `basePath`. This includes global ignores in extended configs. Extended config objects that have neither `files` nor `ignores` will apply to files in `basePath` and its subdirectories only. Specifying `basePath` in extended configs is not allowed. If `defineConfig()` encounters `basePath` property in an extended config, it will throw an error.
 
 ## Motivation
 
