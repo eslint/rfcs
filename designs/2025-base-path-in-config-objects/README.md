@@ -13,6 +13,8 @@ This RFC proposes allowing config objects to specify their own `basePath` proper
 
 The new `basePath` property of config objects can be an absolute path, which is primarily intended for internal use by `eslint`, or a relative path, which is primarily intended for end users. A relative path is interpreted as relative to the config array's `basePath`.
 
+`defineConfig()` will be updated to apply base config's `basePath` to extended configs, meaning that all `files` and `ignores` patterns in extended configs become relative to the base config's `basePath`. This includes global ignores in extended configs. Specifying `basePath` in extended configs is not allowed. If `defineConfig()` encounters `basePath` property in an extended config, it will throw an error.
+
 ## Motivation
 
 Patterns passed through the `--ignore-pattern` CLI option / `ignorePatterns` API option should be treated as relative to the current working directory. When the current working directory must be the same or descendant of the base path directory, it is easy to transform the patterns by prepending the relative path from the base path directory to the current working directory, which is how it is [currently implemented](https://github.com/eslint/eslint/blob/03fb0bca2be41597fcea7c0e84456bbaf2e5acca/lib/config/config-loader.js#L568-L604).
@@ -25,7 +27,7 @@ Additional use cases may include user-specific scenarios, like manually merging 
 
 Proof of concept:
 
-- `@eslint/config-array` changes: https://github.com/mdjermanovic/rewrite/pull/1
+- `@eslint/config-array` and `@eslint/config-helpers` changes: https://github.com/mdjermanovic/rewrite/pull/1
 - `eslint` changes: https://github.com/mdjermanovic/eslint/pull/6
 
 Most of the changes will be in the `@eslint/config-array` package.
@@ -39,6 +41,11 @@ Most of the changes will be in the `@eslint/config-array` package.
 - `get ignores()` will be updated to return an array of config objects instead of an array of ignore patterns. This is because some of the patterns may be defined in config objects that have the `basePath` property and are therefore relative to different paths, so combining all patterns into one array would no longer be useful for users of this package.
 - `getConfigWithStatus()` will be updated to use config objects' `basePath` when present.
 - `shouldIgnorePath()` will be updated to take an array of config objects instead of ignore patterns, and use config objects' `basePath` when present.
+
+### Changes in `@eslint/config-helpers`
+
+- `extendConfig()` will be updated to copy `basePath` from the base config to the resulting extended config.
+- `processExtends()` will be updated to throw an error if any of the extended configs contains `basePath` property.
 
 ### Changes in `eslint`
 
