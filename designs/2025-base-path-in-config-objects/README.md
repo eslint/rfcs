@@ -80,8 +80,6 @@ The `--ignore-pattern` / `ignorePatterns` problem could _maybe_ be solved by tra
 
 ## Open Questions
 
-Should this RFC include the `--basePath` feature (https://github.com/eslint/eslint/issues/19118)? I didn't see a relation between config-level base paths and ability to override config array's base path, so I didn't include it in this RFC.
-
 ## Help Needed
 
 I can implement this RFC.
@@ -90,7 +88,11 @@ I can implement this RFC.
 
 ### Does this allow linting files outside config array's `basePath`?
 
-No. This use case would be covered by the `--basePath` feature.
+No. This use case would be covered by the [`--base-path` feature](https://github.com/eslint/eslint/issues/19118).
+
+### How would the new `basePath` property interact with `--base-path`?
+
+`--base-path` value replaces config array's `basePath`, so any relative `basePath`s in config objects would be interpreted as relative to the `--base-path` value.
 
 ## Related Discussions
 
