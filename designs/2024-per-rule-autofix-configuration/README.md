@@ -1,6 +1,6 @@
 - Repo: <https://github.com/eslint/eslint>
 - Start Date: 2024-10-22
-- RFC PR:
+- RFC PR: https://github.com/eslint/rfcs/pull/134
 - Authors: 
   - [Samuel Therrien](https://github.com/Samuel-Therrien-Beslogic) (aka [@Avasam](https://github.com/Avasam))
   - [Maxim Morev](https://github.com/MorevM)
