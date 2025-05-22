@@ -59,7 +59,7 @@ The documentation for this feature will be added to the [Configuration Files](ht
 
 ## Drawbacks
 
-This add more complexity to the `@eslint/config-array` package.
+This will add more complexity to the `@eslint/config-array` package.
 
 ## Backwards Compatibility Analysis
 
