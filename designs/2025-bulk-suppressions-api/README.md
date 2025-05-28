@@ -66,6 +66,12 @@ import { getCacheFile } from "./eslint-helpers.js";
 import { SuppressionsService } from "../services/suppressions-service.js";
 
 class ESLint {
+    /**
+    * The suppressions service to use for suppressing messages.
+    * @type {SuppressionsService}
+    */
+    #suppressionsService;
+
     constructor(options = {}) {
         const processedOptions = processOptions(options);
 
@@ -77,17 +83,21 @@ class ESLint {
             { prefix: "suppressions_" }
          );
 
+        this.#suppressionsService = new SuppressionsService({
+            filepath: suppressionsFilePath,
+            cwd: processedOptions.cwd,
+        })
+
         privateMembers.set(this, {
             options: processedOptions,
             linter: /* ... */,
             lintResultCache: /* ... */,
             configLoader: /* ... */
-            suppressionsFilePath,
         });
     }
 
     async lintFiles(patterns) {
-        const { options, suppressionsFilePath, lintResultCache, /* ... other needed members */ } = privateMembers.get(this);
+        const { option, lintResultCache, /* ... other needed members */ } = privateMembers.get(this);
         let suppressionResults = null;
 
         // Existing lint logic to get initial `results` (LintResult[])
@@ -104,12 +114,7 @@ class ESLint {
             return finalResults;
          }
 
-        const suppressions = new SuppressionsService({
-            filePath: suppressionsFilePath,
-            cwd: options.cwd,
-        });
-
-        return suppressions.applySuppressions(
+        return this.#suppressionsService.applySuppressions(
             finalResults,
             await suppressions.load(),
         );
@@ -118,7 +123,6 @@ class ESLint {
     async lintText(code, options = {}) {
         const {
             options: eslintOptions, // Renamed to avoid conflict with method options
-            suppressionsFilePath,
             linter,
             configLoader
         } = privateMembers.get(this);
@@ -150,12 +154,7 @@ class ESLint {
             return processLintReport(this, { results });
         }
 
-        const suppressions = new SuppressionsService({
-            filePath: suppressionsFilePath,
-            cwd: eslintOptions.cwd,
-        });
-
-        const suppressedResults = suppressions.applySuppressions(
+        const suppressedResults = this.#suppressionsService.applySuppressions(
             results,
             await suppressions.load(),
         );
