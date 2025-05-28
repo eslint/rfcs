@@ -1,15 +1,17 @@
 - Repo: eslint/eslint
 - Start Date: 2025-05-06
-- RFC PR: https://github.com/eslint/rfcs/pull/133
+- RFC PR: <https://github.com/eslint/rfcs/pull/133>
 - Authors: [Kentaro Suzuki](https://github.com/sushichan044)
 
-# Add support for bulk suppressions in `ESLint` and `LegacyESLint` classes
+# Consider bulk suppressions when running Lint via the Node.js API
 
 ## Summary
 
 <!-- One-paragraph explanation of the feature. -->
 
-This RFC proposes extending the bulk suppressions feature, introduced in ESLint 9.24.0 for CLI usage, to be available through the Node.js API via the `ESLint` and `LegacyESLint` classes.
+This RFC proposes integrating bulk suppressions support into the Node.js API via the `ESLint` and `LegacyESLint` classes, specifically focusing on considering existing bulk suppressions when linting files or text through the API. This change ensures that suppression files (`eslint-suppressions.json`) created via CLI commands are automatically respected when using the programmatic API, maintaining consistency between CLI and API behavior.
+
+The scope is limited to applying existing suppressions during linting and does not include suppression file manipulation features (such as `--suppress-all`, `--suppress-rule`, or `--prune-suppressions`), which remain CLI-exclusive functionalities.
 
 ## Motivation
 
