@@ -218,6 +218,7 @@ Relevant starting points:
 * [types/index.d.ts > RuleEntry](https://github.com/eslint/eslint/blob/0f49329b4a7f91714f2cd1e9ce532d32202c47f4/lib/types/index.d.ts#L1377)
 * [types/index.d.ts > LinterOptions](https://github.com/eslint/eslint/blob/0f49329b4a7f91714f2cd1e9ce532d32202c47f4/lib/types/index.d.ts#L1876)
 * ---
+* [@eslint/plugin-kit > isSeverityValid](https://github.com/eslint/rewrite/blob/88525272b717efea7cae1d5ea2429d6343a7e066/packages/plugin-kit/src/config-comment-parser.js#L30-L37)
 * [flat-config-schema.js > rulesSchema](https://github.com/eslint/eslint/blob/0f49329b4a7f91714f2cd1e9ce532d32202c47f4/lib/config/flat-config-schema.js#L450)
 * [flat-config-schema.js > disableDirectiveSeveritySchema](https://github.com/eslint/eslint/blob/0f49329b4a7f91714f2cd1e9ce532d32202c47f4/lib/config/flat-config-schema.js#L298)
 * [flat-config-schema.js > normalizeRuleOptions](https://github.com/eslint/eslint/blob/0f49329b4a7f91714f2cd1e9ce532d32202c47f4/lib/config/flat-config-schema.js#L132)
