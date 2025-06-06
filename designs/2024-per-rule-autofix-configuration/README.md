@@ -324,10 +324,14 @@ It's important to ensure nothing breaks during this transition.
     to existing users?
 -->
 
-This feature is fully backwards compatible:
+This feature is fully backwards compatible for end users:
 
 * `autofix` defaults to `true`, matching current behavior; 
 * Internal normalization does not affect user configurations or existing workflows.
+
+However, this can be a breaking change for authors of solutions on top of ESLint
+(e.g. a wrapper function for configuration(s), since the new config format is just JS),
+or those that rely on ESLint's public API (like [`eslint.calculateConfigForFile()`](https://eslint.org/docs/latest/integrate/nodejs-api#-eslintcalculateconfigforfilefilepath))
 
 ## Alternatives
 
