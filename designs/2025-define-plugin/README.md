@@ -117,7 +117,8 @@ export const plugin = definePlugin({
 That definition would be the equivalent of:
 
 ```js
-// (equivalent to the previous example)
+// (equivalent to the previous snippet)
+
 import { definePlugin } from "@eslint/plugin-kit";
 
 import packageData from "../package.json" with { type: "json" };
@@ -883,7 +884,7 @@ This RFC prefers making the function first-party for visibility and to encourage
 - `name` with `/plugin` at the end
 - `rules` in the last config object rather than the first
 
-Is it acceptable to change `eslint-plugin-markdown`'s implementation to what's suggested under _[Configs Examples](#configs-examples)_?
+Is it acceptable to change `eslint-plugin-markdown`'s structure to what's suggested under [Example: Multiple Config Elements](#example-multiple-config-elements)
 
 ### Legacy Configs
 
@@ -988,6 +989,72 @@ Plugin authors can always opt out of using `definePlugin` if they want their own
 ### `meta`: Why is `meta.name` required?
 
 It's used to generate keys in `configs[string].rules` objects.
+
+### `configs`: Why generate at all?
+
+The majority of described logic in this RFC is to support automatically generating `configs` for users.
+An alternative, leaner approach would be to omit any kind of config generation logic.
+Doing so would keep `definePlugin` as a type system / editor Intellisense helper akin to `defineConfig()`.
+
+However, because plugins' `configs[string].plugins` properties may refer to the plugin, there is no way to create a `definePlugin` function that both:
+
+- Allows users to generate a plugin in one statement (i.e. without an `Object.assign` or equivalent)
+- Avoids any kind of dynamic `configs` generation (e.g. adding in `plugins` to a config)
+
+The leanest possible approach that keeps plugin generation to one statement would be to only add in the `plugins` property.
+For example, this plugin with a single rule could use a version of `definePlugin` that doesn't modify any `rules` properties:
+
+```ts
+export const plugin = definePlugin({
+  configs: {
+    recommended: {
+      rules: {
+        "example/my-rule": myRule,
+      },
+    },
+  },
+  meta: {
+    name: "example",
+  },
+  rules: {
+    "my-rule": myRule,
+  },
+});
+```
+
+It might then generate the equivalent config with `plugins`:
+
+```js
+// (equivalent to the previous snippet)
+
+import { definePlugin } from "@eslint/plugin-kit";
+
+const plugin = {
+  meta: {
+    name: "example",
+  },
+  rules: {
+    "my-rule": myRule,
+  },
+};
+
+Object.assign(plugin.configs, {
+  recommended: [
+    {
+      name: "example/recommended",
+      plugins: {
+        example: plugin,
+      },
+      rules: {
+        "example/my-rule": myRule,
+      },
+    },
+  ],
+});
+```
+
+This RFC believes that including automatic `rule` generation is worth inclusion.
+It allows for even more straightforward, simpler plugin definitions.
 
 ### `rules`: Could plugins be forced to enable lazy-loading?
 
