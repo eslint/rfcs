@@ -68,18 +68,12 @@ Without a standardized factory function to define a plugin:
     };
     ```
 
-  - Optimization requests such as [typescript-eslint/typescript-eslint#11029 Enhancement: Support Lazy Loading Rules](https://github.com/typescript-eslint/typescript-eslint/issues/11029) must be implemented per-plugin
-
 This RFC proposes creating a `definePlugin` function to be exported from `@eslint/plugin-kit`.
 It would provide a single recommended factory for defining the structure of a typical ESLint plugin.
 `definePlugin` would automate the parts of plugin definitions that many plugins manually redefine:
 
 - Using the same name in multiple places
 - Generating `configs.recommended` and other configurations based on rule metadata
-
-`definePlugin` would also allow plugins to ergonomically set up rules to be lazy-loaded.
-It would allow plugin authors to provide rules either as direct rule objects or as functions that return rules.
-An `eslint-plugin-eslint-plugin` lint rule would be created that keeps `configs` and `rules` in sync.
 
 As with `defineConfig`, `definePlugin` would be a purely optional, additive change.
 Existing and future plugins would continue to work as-is without a `definePlugin` call.
@@ -702,72 +696,6 @@ Object.assign(plugin.configs, {
 });
 ```
 
-### Lazy-Loading Rules
-
-[ESLint core implements lazy-loaded configs with a `LazyLoadingRuleMap` and `Proxy`](https://github.com/eslint/eslint/blob/129882d2fdb4e7f597ed78eeadd86377f3d6b078/lib/config/default-config.js#L46).
-[vuejs/eslint-plugin-vue#2732](https://github.com/vuejs/eslint-plugin-vue/issues/2732) and [typescript-eslint/typescript-eslint#11029](https://github.com/typescript-eslint/typescript-eslint/issues/11029) ask for plugins to lazy-load their rules too.
-Doing so would allow plugins with many dozens or more rules to avoid the cost of loading those rules unnecessarily.
-
-`definePlugin` can enable lazy-loaded rules by allowing elements in `rules` arrays to each be provided as either:
-
-- A rule object itself
-- A function that synchronously returns a rule
-
-A plugin definition that uses lazy-loaded rules could look like:
-
-```js
-import { definePlugin } from "@eslint/plugin-kit";
-import { createRequire } from "node:module";
-
-import packageData from "../package.json" with { type: "json" };
-
-const require = createRequire(import.meta.url);
-
-export const plugin = definePlugin({
-  configs: {
-    recommended: {
-      rules: {
-        "example/a": "error",
-        "example/b": "error",
-        "example/c": "error",
-        // ...
-      },
-    },
-  },
-  meta: { name: packageData.name, version: packageData.version },
-  rules: {
-    "example/a": () => require("./rules/a"),
-    "example/b": () => require("./rules/b"),
-    "example/c": () => require("./rules/c"),
-    // ...
-  },
-});
-```
-
-`definePlugin` will implement similar strategies internally to ESLint core, using [`module.createRequire()`](https://nodejs.org/api/module.html#modulecreaterequirefilename) to `require()` in both CommonJS and ECMAScript Modules packages.
-
-Note that lazy-loading rules conflicts with auto-generating `configs`.
-Knowing which rules are to be included in a config requires loading the rule itself.
-`definePlugin` will need to throw an error if any rule function is provided and `configs` is not specified.
-
-Two new `eslint-plugin-eslint-plugin` lint rules will be added:
-
-1. Enforcing using `definePlugin` to define a plugin
-2. Enforces lazy-loading rules and automates keeping `configs` up-to-date with lazy-loaded rules.
-
-The latter rule's auto-fixer will:
-
-- Adds the requisite `createRequire()` and `require()` calls to the `definePlugin` file if missing
-- Align `configs` with rule `meta.docs.recommended` values corresponding to existing common community conventions:
-  - falsy: only in an `all` config, if it exists
-  - `string | string[]`: in config(s) of the same name(s)
-  - `true`: in a `recommended` config
-
-That lint rule would need to inspect rule files to determine those `meta.docs.recommended` values.
-It can do so by reading the file from disk, parsing it as an AST, and finding the first instance of a `meta.docs.recommended`.
-
-Running the lint rules with `--fix` would accomplish the same automation seen in many common community "update" scripts under [Design Pattern Analysis](#design-pattern-analysis).
-
 ## Documentation
 
 - The README.md for [`@eslint/plugin-kit`](https://www.npmjs.com/package/@eslint/plugin-kit) will have a section added for `definePlugin`
@@ -874,6 +802,15 @@ It might be preferable to release `definePlugin` as a community-authored plugin 
 Doing so could allow for more rapid changes as community plugins adopt it.
 This RFC prefers making the function first-party for visibility and to encourage confidence in plugin author adoption.
 
+### Lazy-Loading Rules
+
+This RFC previously suggested providing features and lint rules around lazy-loading rules.
+Doing so would allow plugins to reduce their startup times.
+However, lazy-loading requires a non-trivial increase in design complexity.
+This RFC now treats lazy-loading as out of scope.
+
+See [5d2557 > 2025-define-plugin/README.md#L705](https://github.com/eslint/rfcs/blob/5d2557787574e85c0e9413ba8cfa75f9215673b8/designs/2025-define-plugin/README.md?plain=1#L705) for the latest version of the RFC that proposed lazy-loading rules.
+
 ## Open Questions
 
 ### Config Arrays
@@ -909,20 +846,6 @@ plugin.configs["legacy-recommended"] = {
 ```
 
 Is this an acceptable workaround strategy?
-
-### Rule Loading
-
-Rules are allowed to be directly provided or lazy-loaded.
-However, knowing that lazy-loading is possible -and determining when to make the switch- is an extra challenge.
-
-This RFC expects:
-
-- Allowing directly passing rules benefits plugin authors by making the initial scaffolding for plugins as simple as possible
-- Most plugins will start small and not benefit from lazy-loading
-- The plugins that scale to the point of benefiting from lazy-loading are likely to enable `eslint-plugin-eslint-plugin`
-
-However, removing support for directly provided rules would reduce the differences between small and large plugins.
-Should plugins be required to always provide lazy-loading rule functions?
 
 ### Rule Creators
 
@@ -1056,42 +979,7 @@ Object.assign(plugin.configs, {
 This RFC believes that including automatic `rule` generation is worth inclusion.
 It allows for even more straightforward, simpler plugin definitions.
 
-### `rules`: Could plugins be forced to enable lazy-loading?
-
-Or: why allow `rules` values to be either the rule or a function, rather than always the function form?
-
-Requiring getter functions is mildly inconvenient.
-Not being able to automatically generate `configs` is more inconvenient.
-
-Most community plugins load fewer than a dozen rules and enable most or all of those rules in their `recommended` configs.
-For those plugins, lazy-loading rules would be added authoring overhead for little-to-no-gain.
-
-This RFC believes that allowing automatic `configs` generation and the more succinct inline `rules` is worth the complexity and performance tradeoffs.
-
-### `rules`: Could rules be provided as string paths to be loaded?
-
-Or: instead of `() => require('./rules/a')`, could just `'./rules/a'` be provided?
-
-This could technically be supported.
-However:
-
-- `configs` would still need to load the rules to be automatically generated, so string rule paths would not allow automatic configs with lazy-loaded rules
-- Third-party tools such as bundlers would not be able to easily perform analyzing techniques such as tree-shaking on those "magical" string paths
-
-### `rules`: Why `createRequire()` to lazy-load rules?
-
-Or: instead of `() => require('./rules/a')`, could `() => import('./rules/a.js')` be provided?
-
-ESLint does not currently support asynchronously loading rules.
-Only synchronous `require()`s are supported.
-
-[`module.createRequire()`](https://nodejs.org/api/module.html#modulecreaterequirefilename) allows for synchronous `require()` in both CommonJS and ECMAScript Modules packages.
-As of Node.js `^20.19.0 || >=22.12.0`, `require()`s can also load ECMAScript modules from CommonJS files.
-This allows plugins to be both consumed by and developed in both CommonJS and ECMAScript (in those Node.js versions).
-
 ## Related Discussions
 
-- [eslint#14862 Support Lazy Loading Rules from 3rd Party Plugins](https://github.com/eslint/eslint/issues/14862)
-- [typescript-eslint/typescript-eslint#11029 Enhancement: Support Lazy Loading Rules](https://github.com/typescript-eslint/typescript-eslint/issues/11029)
 - [vuejs/eslint-plugin-vue#2732](https://github.com/vuejs/eslint-plugin-vue/issues/2732)
 - [typescript-eslint/typescript-eslint#10383 Enhancement: Move RuleCreator into its own package with fewer dependencies than utils](https://github.com/typescript-eslint/typescript-eslint/issues/10383)
