@@ -89,13 +89,6 @@ class ESLint {
             filepath: suppressionsFilePath,
             cwd: processedOptions.cwd,
         })
-
-        privateMembers.set(this, {
-            options: processedOptions,
-            linter: /* ... */,
-            lintResultCache: /* ... */,
-            configLoader: /* ... */
-        });
     }
 
     async lintFiles(patterns) {
