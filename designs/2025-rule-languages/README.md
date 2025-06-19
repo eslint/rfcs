@@ -43,14 +43,16 @@ module.exports = {
 };
 ```
 
-The `languages` array will contain strings that identify the specific language plugins the rule is designed to work with. Each string follows the standardized format `"plugin/language"` to uniquely identify the language plugin.
+The `languages` array will contain strings that identify the specific language plugins the rule is designed to work with. Each string follows the standardized format `"plugin/language"` to uniquely identify the language plugin. To specify that a rule works with any language in a plugin, the format of `"plugin/*"` is used.
 
 For backward compatibility, if `languages` is not specified, the rule will be assumed to work with all languages.
+
+For rules meant to work only with JavaScript, the `"js/js"` string is used. In the short-term, we'll need to special case this to match `"@/js"`, which is how the JavaScript language is defined right now. In the long-term, once `@eslint/js` fully contains the language, we can remove the check.
 
 ### Implementation Approach
 
 1. Update the `RuleMeta` interface in `@eslint/core` to accept `languages`. Deprecate the `language` and `dialects` properties.
-2. Update the `validateRulesConfig()` function in `lib/config/config.js` to validate each rule's `languages` property against the language specified in the `Config` instance. When a rule doesn't match the language, set it's severity to `0`.
+2. Update the `validateRulesConfig()` function in `lib/config/config.js` to validate each rule's `languages` property against the language specified in the `Config` instance. When a rule doesn't match the language, set it's severity to `0`. Normalize `"js/js"` to `"@/js"`.
 
 ## Documentation
 
