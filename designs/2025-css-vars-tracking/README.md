@@ -22,11 +22,24 @@ By building this functionality directly into `CSSSourceCode`, we can provide a c
 
 This change is based on the discussion in [eslint/css#160](https://github.com/eslint/css/issues/160).
 
+**Note:** The logic described in this RFC is already implemented in the [`no-invalid-properties`](https://github.com/eslint/css/blob/main/docs/rules/no-invalid-properties.md) rule. This proposal wants to standardize the logic and make it available to all rules.
+
 ## Detailed Design
 
 The proposed changes are implemented in the [`CSSSourceCode`](https://github.com/eslint/css/blob/main/src/languages/css-source-code.js) class.
 
 ### `customProperties` Map
+
+```ts
+interface CustomPropertyUses {
+    declarations: Array<DeclarationPlain>;
+    references: Array<FunctionNode>;
+}
+
+interface CSSSourceCode {
+    customProperties: Map<string, CustomPropertyUses>
+}
+```
 
 A new public property, `customProperties`, will be added to `CSSSourceCode`. This will be a `Map` where the keys are the custom property names (e.g., `--my-color`) and the values are `CustomPropertyUses` objects. The `CustomPropertyUses` class will have two properties:
 
@@ -35,15 +48,27 @@ A new public property, `customProperties`, will be added to `CSSSourceCode`. Thi
 
 ### `getDeclarationVariables()` Method
 
+```ts
+interface CSSSourceCode {
+    getDeclarationVariables(declaration: DeclarationPlain): Array<Function>;
+}
+```
+
 A new public method, `getDeclarationVariables(declaration)`, will be added to `CSSSourceCode`. This method will take a `Declaration` node as an argument and return an array of `Function` nodes representing the `var()` functions used in that declaration's value.
 
 ### `getVariableValue()` Method
+
+```ts
+interface CSSSourceCode {
+    getVariableValue(func: FunctionNode): Raw;
+}
+```
 
 A new public method, `getVariableValue(node)`, will be added to `CSSSourceCode`. This method will take a `var()` `Function` node as an argument and return the computed value of the custom property (which is currently always a `Raw` node). It will do this by searching for the last declaration of the custom property that appears before the given `Function` node in the source code. This also leaves open the possibility that we could change how this value is calculated to be more accurate in the future.
 
 ### Initialization
 
-The `traverse()` method in `CSSSourceCode` will be updated to populate the `customProperties` map and the internal data structure used by `getDeclarationVariables()`. During traversal, it will identify `Declaration` nodes that define custom properties and `Function` nodes that are `var()` calls.
+The `traverse()` method in `CSSSourceCode` will be updated to populate the `customProperties` map and the internal data structure (`WeakMap<DeclarationPlain, Array<FunctionNode>>`) used by `getDeclarationVariables()`. During traversal, it will identify `Declaration` nodes that define custom properties and `Function` nodes that are `var()` calls.
 
 ## Documentation
 
