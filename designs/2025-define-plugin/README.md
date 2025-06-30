@@ -113,8 +113,6 @@ That definition would be the equivalent of:
 ```js
 // (equivalent to the previous snippet)
 
-import { definePlugin } from "@eslint/plugin-kit";
-
 import packageData from "../package.json" with { type: "json" };
 import { rules } from "./rules/index.js";
 
@@ -133,9 +131,9 @@ Object.assign(plugin.configs, {
       },
       rules: Object.fromEntries(
         Object.entries(plugin.rules)
-          .filter((rule) => rule.meta.docs?.recommended)
+          .filter(([, rule]) => rule.meta.docs?.recommended)
           // (see #### Default Generated Config later for rule severities)
-          .map((rule) => [rule, getRuleSeverity(rule)]),
+          .map(([ruleName, rule]) => [ruleName, getRuleSeverity(rule)]),
       ),
     },
   ],
@@ -251,8 +249,8 @@ Object.assign(plugin.configs, {
         example: plugin,
       },
       rules: Object.fromEntries(
-        rules
-          .filter((rule) => rule.meta.docs?.recommended)
+        Object.entries(rules)
+          .filter(([, rule]) => rule.meta.docs?.recommended)
           .map(([ruleName, rule]) => [
             `${meta.name}/${ruleName}`,
             getRuleSeverity(rule),
