@@ -153,8 +153,7 @@ No `Object.assign()`, `Object.defineProperty()`, or `get()` will be required in 
 `configs` is the only property `definePlugin` receives with a different shape than the output plugin object.
 
 - If `configs` is not provided, a default config is generated.
-- `configs` may be provided as a shape that does not include the plugin's name.
-  In this case, its values will be transformed to have the plugin's name added.
+- `configs` may be provided as an object whose properties describe the configs to create.
 
 The following two sections describe those two behaviors.
 
@@ -263,7 +262,12 @@ Object.assign(plugin.configs, {
 
 #### Generated Configs
 
-If `configs` is provided, each of its objects' `rules` must be provided either as:
+If `configs` is provided, its key-value pairs will describe the configs to be created.
+
+`configs` keys are the names of the configs, minus the plugin name and `/` prefix.
+For example, if the plugin name is `example`, then a `configs: { recommended: { ... } }` will generate a single config named `example/recommended`.
+
+`configs` values are the same as normal configs, except `rules` must be provided either as:
 
 - `null | undefined`: to preserve that value.
 - An array containing any number of elements.
@@ -277,7 +281,7 @@ Each `rules` element will be transformed into key-value pairs.
 - Each key will be `${meta.name}/${ruleName}`.
 - Each value will be the provided severity if it exists, or `"error"` if not
 
-Those key-value pairs will be merged into into one final `rules` object.
+Those `rules` key-value pairs will be merged into into one final `rules` object.
 
 | Element Type                                | Example Input                   | Example Output                               |
 | ------------------------------------------- | ------------------------------- | -------------------------------------------- |
