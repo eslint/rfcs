@@ -866,6 +866,17 @@ I can also:
 - Work with `eslint-plugin-eslint-plugin` on feature requests for the proposed lint rules as part of this RFC
 - Send draft PRs to community plugins to help onboard them to the new `definePlugin`
 
+### Plugin Testing
+
+`definePlugin` should be tested before release on at least the plugins defined in [2024-repo-ecosystem-plugin-tests](../2024-repo-ecosystem-plugin-tests/README.md).
+This will ensure coverage of at least the following cases:
+
+- `.js` files with `.d.ts` siblings
+  - Test cases should be added to ensure [eslint/markdown#402 bug: `exactOptionalPropertyTypes` causes type errors when using plugins that were not built with this option](https://github.com/eslint/markdown/issues/402) is fixed and does not regress
+- `.ts` files
+
+If other plugin authors would like to test it out, that would be appreciated and helpful.
+
 ## Frequently Asked Questions
 
 ### `configs`: Can config generation be made more automatic based on `meta.docs`?
