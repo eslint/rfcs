@@ -54,8 +54,8 @@ For rules meant to work only with JavaScript, the `"js/js"` string is used. In t
 
 ### Implementation Approach
 
-1. Update the `RuleMeta` interface in `@eslint/core` to accept `languages`. Deprecate the `language` and `dialects` properties.
-2. Update the `validateRulesConfig()` function in `lib/config/config.js` to validate each rule's `languages` property against the language specified in the `Config` instance. When a rule doesn't match the language, set it's severity to `0`. Normalize `"js/js"` to `"@/js"`.
+1. Update the `RuleMeta` interface in `@eslint/core` to accept `languages`. Deprecate the `language` and `dialects` properties. Add `meta.docs.dialects` property.
+2. Update the `validateRulesConfig()` function in `lib/config/config.js` to validate each rule's `languages` property against the language specified in the `Config` instance. When a rule doesn't match the language, add to an array of invalid rules. When all validation is complete, if there is an array of invalid rules, throw an error. Normalize `"js/js"` to `"@/js"`.
 
 ## Documentation
 
@@ -92,12 +92,11 @@ This RFC is designed to be fully backward compatible:
 
 1. We could keep the existing `language` and `dialects` properties and then add keys to plugin metadata specifying the languages and dialects they support. This has compatibility issues as two plugins could provide languages that say they support Markdown but do so in completely different ways. Thus, we can't guarantee the rule will work in both plugins if we just go by the language and dialect.
 
-2. We could throw an error when a rule doesn't match the language instead of turning it off. This would give the user more information about what's happening but could also lead to frustration if they can't figure out where a rule is configured.
+2. We could disable any rule that doesn't match the language instead of throwing an error. The downside is that this doesn't inform the user of any problem and they might wonder why a rule wasn't executed even though it was configured to do so.
 
 ## Open Questions
 
-1. What should we do about `meta.dialects`? Assuming we still want some way to programmatically know which rules support which languages for documentation purposes, should we just move this into `meta.docs`?
-
+None.
 
 ## Help Needed
 
@@ -111,7 +110,7 @@ No, this feature only provides metadata about compatibility; it doesn't make inc
 
 **How will this affect existing ESLint configs?**  
 
-Existing configs will continue to work as before. However, users may notice that some rules are automatically disabled when linting files with language plugins that those rules don't support.
+Existing configs will continue to work as before.
 
 **How are language identifiers determined?**  
 
