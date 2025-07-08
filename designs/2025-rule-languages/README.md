@@ -1,6 +1,6 @@
 - Repo: eslint/eslint
 - Start Date: 2025-06-11
-- RFC PR: (leave this empty, to be filled in later)
+- RFC PR: https://github.com/eslint/rfcs/pull/135
 - Authors: Nicholas C. Zakas
 
 # Allow rules to specify the languages/dialects they work on
