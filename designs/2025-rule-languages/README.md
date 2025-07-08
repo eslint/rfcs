@@ -15,7 +15,7 @@ Currently, an ESLint rule has no way to indicate which languages or language dia
 
 1. **Documentation purposes** - Users have no easy way to determine which JavaScript rules have been updated to support TypeScript syntax, for example. This makes it harder to understand which rules can be safely enabled when linting TypeScript code.
 
-2. **Runtime purposes** - ESLint cannot automatically disable rules that don't apply to a given language. For instance, when linting CSS files, JavaScript-specific rules should ideally be automatically turned off, but currently there's no mechanism to do this.
+2. **Runtime purposes** - Currently, rules that don't apply to a given language crash in unpredictable ways, causing confusion for users. Ideally, ESLint would throw an error with a descriptive message stating that these rules cannot be used with the given language.
 
 As ESLint's ecosystem expands to support more languages beyond JavaScript (such as TypeScript, CSS, and potentially others), having a standardized way to specify language compatibility becomes increasingly important for both users and maintainers.
 
