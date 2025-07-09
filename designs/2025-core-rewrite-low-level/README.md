@@ -302,13 +302,6 @@ interface FileReport {
     addError(descriptor: LintProblem): LintMessage;
 
     /**
-     * Adds multiple error messages to the report. Meant to be called outside of rules.
-     * @param descriptors The descriptors for the error messages.
-     * @returns The created problem objects.
-     */
-    addErrors(descriptors: LintProblem[]): LintMessage[];
-
-    /**
      * Adds a fatal error message to the report. Meant to be called outside of rules.
      * @param descriptor The descriptor for the fatal error message.
      * @returns The created problem object.
@@ -316,25 +309,11 @@ interface FileReport {
     addFatal(descriptor: LintProblem): LintMessage;
 
     /**
-     * Adds multiple fatal error messages to the report. Meant to be called outside of rules.
-     * @param descriptors The descriptors for the fatal error messages.
-     * @returns The created problem objects.
-     */
-    addFatals(descriptors: LintProblem[]): LintMessage[];
-
-    /**
      * Adds a warning message to the report. Meant to be called outside of rules.
      * @param descriptor The descriptor for the warning message.
      * @returns The created problem object.
      */
     addWarning(descriptor: LintProblem): LintMessage;
-
-    /**
-     * Adds multiple warning messages to the report. Meant to be called outside of rules.
-     * @param descriptors The descriptors for the warning messages.
-     * @returns The created problem objects.
-     */
-    addWarnings(descriptors: LintProblem[]): LintMessage[];
 }
 ```
 
@@ -400,7 +379,7 @@ In general, the only time we output anything to the console is either using `con
 
 ### Is it confusing that `language` and `processor` are normalized to objects in `Config`?
 
-In a user-facing config, `language` is always a string while `processor` can be a string or object. We could leave these keys as their original values and add more properties for the normalized ones. I'm not sure which option is better.
+In a user-facing config, `language` is always a string while `processor` can be a string or object. We could leave these keys as their original values and add more properties for the normalized ones (i.e., `languageInstance` and `processorInstance`). I'm not sure which option is better.
 
 ### How to handle statistics with `Session`?
 
