@@ -33,18 +33,20 @@ The proposed changes are implemented in the [`CSSSourceCode`](https://github.com
 ```ts
 interface CustomPropertyUses {
     declarations: Array<DeclarationPlain>;
+    definitions: Array<AtrulePlain>;
     references: Array<FunctionNode>;
 }
 
 interface CSSSourceCode {
-    customProperties: Map<string, CustomPropertyUses>
+    #customProperties: Map<string, CustomPropertyUses>
 }
 ```
 
-A new public property, `customProperties`, will be added to `CSSSourceCode`. This will be a `Map` where the keys are the custom property names (e.g., `--my-color`) and the values are `CustomPropertyUses` objects. The `CustomPropertyUses` class will have two properties:
+A new public property, `#customProperties`, will be added to `CSSSourceCode`. This will be a `Map` where the keys are the custom property names (e.g., `--my-color`) and the values are `CustomPropertyUses` objects. The `CustomPropertyUses` class will have two properties:
 
-*   `declarations`: An array of `Declaration` nodes where the custom property is defined.
-*   `references`: An array of `Function` nodes (specifically `var()` functions) where the custom property is used.
+*   `declarations`: An array of `DeclarationPlain` nodes where the custom property value is declared.
+*   `definitions`: Array of `AtrulePlain` nodes where the custom property is defined using an [`@property`](https://developer.mozilla.org/en-US/docs/Web/CSS/@property) rule.
+*   `references`: An array of `FunctionNode` nodes (specifically `var()` functions) where the custom property is used.
 
 ### `getDeclarationVariables()` Method
 
@@ -56,19 +58,29 @@ interface CSSSourceCode {
 
 A new public method, `getDeclarationVariables(declaration)`, will be added to `CSSSourceCode`. This method will take a `Declaration` node as an argument and return an array of `Function` nodes representing the `var()` functions used in that declaration's value.
 
-### `getVariableValue()` Method
+### `getClosestVariableValue()` Method
 
 ```ts
 interface CSSSourceCode {
-    getVariableValue(func: FunctionNode): Raw;
+    getClosestVariableValue(func: FunctionNode): Raw;
 }
 ```
 
-A new public method, `getVariableValue(node)`, will be added to `CSSSourceCode`. This method will take a `var()` `Function` node as an argument and return the computed value of the custom property (which is currently always a `Raw` node). It will do this by searching for the last declaration of the custom property that appears before the given `Function` node in the source code. This also leaves open the possibility that we could change how this value is calculated to be more accurate in the future.
+A new public method, `getClosestVariableValue(node)`, will be added to `CSSSourceCode`. This method will take a `var()` `Function` node as an argument and return the computed value of the custom property (which is currently always a `Raw` node). It will do this by searching for the last declaration of the custom property that appears before the given `Function` node in the source code. This also leaves open the possibility that we could change how this value is calculated to be more accurate in the future.
+
+### `getVariableValues()` Method
+
+```ts
+interface CSSSourceCode {
+    getVariableValues(func: FunctionNode): Array<Raw>;
+}
+```
+
+A new public method, `getVariableValues(func)`, will be added to `CSSSourceCode`. This method will take a `var()` `Function` node as an argument and return an array of `Raw` nodes representing the declared values of the custom property. The fallback value, if specified in the `FunctionNode`, is returned as the last element of the array. 
 
 ### Initialization
 
-The `traverse()` method in `CSSSourceCode` will be updated to populate the `customProperties` map and the internal data structure (`WeakMap<DeclarationPlain, Array<FunctionNode>>`) used by `getDeclarationVariables()`. During traversal, it will identify `Declaration` nodes that define custom properties and `Function` nodes that are `var()` calls.
+The `traverse()` method in `CSSSourceCode` will be updated to populate the `#customProperties` map and the internal data structure (`WeakMap<DeclarationPlain, Array<FunctionNode>>`) used by `getDeclarationVariables()`. During traversal, it will identify `Declaration` nodes that define custom properties and `Function` nodes that are `var()` calls.
 
 ## Documentation
 
@@ -88,12 +100,6 @@ The primary alternative is to have each rule implement its own custom property t
 
 ## Open Questions
 
-**Should we expose `customProperties` publicly?**
-
-It's unclear if this is useful to rules directly. The primary use case for this data is through the provided methods (`getDeclarationVariables()` and `getVariableValue()`), which offer a more controlled and convenient interface. 
-
-So far, we don't have any use cases for rules accessing `customProperties` directly, so perhaps it's better to keep it private until we have a use case it solves?
-
 **Should we use "var" instead of "variable" in function names?**
 
 The proposed API includes methods like `getDeclarationVariables()` and `getVariableValue()`. Since CSS custom properties are commonly referred to as "CSS variables" in the community, there's a question about whether the method names should use the shorter "var" terminology instead. For example:
@@ -102,6 +108,10 @@ The proposed API includes methods like `getDeclarationVariables()` and `getVaria
 - `getVarValue()` instead of `getVariableValue()`
 
 Using "var" would be more concise and align with the CSS `var()` function syntax that developers are already familiar with. However, "variable" is more explicit and follows common naming conventions in programming APIs.
+
+**Should `getVariableValues()` return the fallback value?**
+
+The fallback value is already available in the `FunctionNode` passed into `getVariableValues()`, so rule authors can still get access to that value easily. It seems like a nice touch to always have it as the last element of the returned array, but that also means that a non-declared value is present in the array, which could potentially be confusing.
 
 ## Help Needed
 
