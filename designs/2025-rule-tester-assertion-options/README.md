@@ -23,12 +23,16 @@ The options could be defined on two levels. On `RuleTester`'s `constructor` effe
 new RuleTester(testerConfig: {...}, assertionOptions: {
     /**
      * Require message assertion for each invalid test case.
+     * If `true`, errors must extend `string | Array<{ message: string } | { messageId: string }>`.
+     * If `'message'`, errors must extend `string | Array<{ message: string }>`.
+     * If `'messageId'`, errors must extend `Array<{ messageId: string }>`.
      * 
      * @default false
      */
-    requireMessage: boolean;
+    requireMessage: boolean | 'message' | 'messageId';
     /**
      * Require full location assertions for each invalid test case.
+     * If `true`, errors must extend `Array<{ line: number, column: number, endLine: number, endColumn: number }>`.
      * 
      * @default false
      */
@@ -42,12 +46,16 @@ new RuleTester(testerConfig: {...}, assertionOptions: {
 ruleTester.run("rule-name", rule, tests, assertionOptions: {
     /**
      * Require message assertion for each invalid test case.
+     * If `true`, errors must extend `string | Array<{ message: string } | { messageId: string }>`.
+     * If `'message'`, errors must extend `string | Array<{ message: string }>`.
+     * If `'messageId'`, errors must extend `Array<{ messageId: string }>`.
      * 
      * @default false
      */
-    requireMessage: boolean;
+    requireMessage: boolean | 'message' | 'messageId';
     /**
      * Require full location assertions for each invalid test case.
+     * If `true`, errors must extend `Array<{ line: number, column: number, endLine: number, endColumn: number }>`.
      * 
      * @default false
      */
@@ -65,9 +73,7 @@ ruleTester.run("rule-name", rule, tests, assertionOptions: {
 ### Shared Logic
 
 If `requireMessage` is set to `true`, the invalid test case cannot consist of an error count assertion only, but must also include a message assertion.
-This can be done either by providing a only message, or by using the `message` property of the error object in the assertion (Same as the current behavior).
-We could enable this property by default, but it would be a breaking change.
-If we add a `requireMessageId` option, it would be mutually exclusive with `requireMessage`, and the invalid test case cannot consist of an error count or message assertion only, but must also include a messageId assertion.
+This can be done either by providing only a `string` message, or by using the `message` property of the error object in the assertion (Same as the current behavior).
 Alternatively, we could alter the `requireMessage` option to `false | true | "message" | "messageId"` (`true` => `"message"`).
 
 ````ts
@@ -97,8 +103,7 @@ ruleTester.run("rule-name", rule, {
 });
 ````
 
-If `requireLocation` is set to `true`, the invalid test case cannot consist of an error count or errorMessage assertion only, but must also include a full location assertion.
-We could enable this property by default, but it would be a breaking change.
+If `requireLocation` is set to `true`, the invalid test case's error validation must include all location assertions such as `line`, `column`, `endLine`, and `endColumn`.
 
 ````ts
 ruleTester.run("rule-name", rule, {
@@ -186,16 +191,20 @@ Additionally, we should write a short blog post to announce for plugin maintaine
 This proposal adds slightly more complexity to the RuleTester logic, as it needs to handle the new options and enforce the assertions based on them.
 Currently, the RuleTester logic is already deeply nested, so adding more options may make it harder to read and maintain.
 
+Due to limitations of the `RuleTester`, the error message does not point to the correct location of the test case.
+While this is true already, it gets slightly more relevant, since now it might report missing properties, that cannot be searched for in the test file.
+
+See also: https://github.com/eslint/eslint/issues/19936
+
 Additionally, since we add the options as a second parameter it might interfere with future additions to the parameters.
 This could by eleviated by renaming the parameter from `assertionOptions` to `options` (either from the start or when the need for different type of options arises).
 
 If we enable the `requireMessage` and `requireLocation` options by default, it would be a breaking change for existing tests that do not follow these assertion requirements yet.
+It is not planned to enable `requireMessage` or `requireLocation` by default.
 
 ## Backwards Compatibility Analysis
 
 This change should not affect existing ESLint users or plugin developers, as it only adds new options to the RuleTester and does not change any existing behavior.
-If we enable the `requireMessage` and `requireLocation` options by default, it would be a breaking change for existing tests that do not follow these assertion requirements yet.
-If we want to enable them by default, we should do so in a major release and communicate the upcoming change to the users early via blog post.
 
 ## Alternatives
 
@@ -207,8 +216,8 @@ it requires identifying the RuleTester calls in the codebase and might run into 
 
 1. Is there a need for disabling scenarios like `valid` or `invalid`?
 2. Should we use constructor-based options or test method-based options? Do we support both? Or global options so it applies to all test files?
-3. Should we enable the `requireMessage` and `requireLocation` options by default? (Breaking change)
-4. Do we add a `requireMessageId` option or should we alter the `requireMessage` option to support both message and messageId assertions?
+3. ~~Should we enable the `requireMessage` and `requireLocation` options by default? (Breaking change)~~ No
+4. ~~Do we add a `requireMessageId` option or should we alter the `requireMessage` option to support both message and messageId assertions?~~ Just `requireMessage: boolean | 'message' | 'messageid'`
 5. Should we add a `strict` option that enables all assertion options by default?
 
 ## Help Needed
