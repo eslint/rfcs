@@ -72,28 +72,30 @@ ruleTester.run("rule-name", rule, tests, assertionOptions: {
 
 ### Shared Logic
 
-If `requireMessage` is set to `true`, the invalid test case cannot consist of an error count assertion only, but must also include a message assertion.
-This can be done either by providing only a `string` message, or by using the `message` property of the error object in the assertion (Same as the current behavior).
-Alternatively, we could alter the `requireMessage` option to `false | true | "message" | "messageId"` (`true` => `"message"`).
+If `requireMessage` is set to `true`, the invalid test case cannot consist of an error count assertion only, but must also include a message assertion. (See below)
+This can be done either by providing only a `string` message, or by using the `message`/`messageId` property of the error object in the `TestCaseError` (Same as the current behavior).
+If `true`, errors must extend `string | Array<{ message: string } | { messageId: string }>`.
+If `'message'`, errors must extend `string | Array<{ message: string }>`.
+If `'messageId'`, errors must extend `Array<{ messageId: string }>`.
 
 ````ts
 ruleTester.run("rule-name", rule, {
     invalid: [
         {
             code: "const a = 1;",
-            errors: 1, // ❌
+            errors: 1, // ❌ Message isn't being checked here
         },
         {
             code: "const a = 2;",
             errors: [
-                "Error message here.", // ✅
+                "Error message here.", // ✅ we only check the error message
             ]
         },
         {
             code: "const a = 3;",
             errors: [
                 {
-                    message: "Error message here.", // ✅
+                    message: "Error message here.", // ✅ we check the error message and potentially other properties
                 }
             ]
         }
@@ -110,19 +112,19 @@ ruleTester.run("rule-name", rule, {
     invalid: [
         {
             code: "const a = 1;",
-            errors: 1, // ❌
+            errors: 1, // ❌ Location isn't checked here
         },
         {
             code: "const a = 2;",
             errors: [
-                "Error message here.", // ❌
+                "Error message here.", // ❌ Location isn't checked here
             ]
         },
         {
             code: "const a = 3;",
             errors: [
                 {
-                    line: 1, // ❌
+                    line: 1, // ❌ Location isn't fully checked here
                     column: 1, 
                     
                 }
@@ -132,7 +134,7 @@ ruleTester.run("rule-name", rule, {
             code: "const a = 4;",
             errors: [
                 {
-                    line: 1, // ✅
+                    line: 1, // ✅ All location properties have been checked
                     column: 1,
                     endLine: 1,
                     endColumn: 12,
