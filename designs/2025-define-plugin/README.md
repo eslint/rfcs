@@ -165,7 +165,7 @@ If `configs` is not provided, then `definePlugin` will create a `recommended` co
 - `plugins`: an object keying `meta.name` to the plugin object
 - `rules`: setting severities for rules whose `meta.docs?.recommended` is one of the following values:
   - `true`: set to `"error"`
-  - any valid rule severity: that severity
+  - any valid rule severity/options: that severity/options
 
 For example, given this plugin with two rules:
 
@@ -274,7 +274,7 @@ For example, if the plugin name is `example`, then a `configs: { recommended: { 
   Each element may be either:
   - The rule object itself
   - An array containing a rule object and severity
-  - An object with string keys and severity values
+  - An object with string keys and rule severity/option values
 
 Each `rules` element will be transformed into key-value pairs.
 
@@ -283,12 +283,14 @@ Each `rules` element will be transformed into key-value pairs.
 
 Those `rules` key-value pairs will be merged into into one final `rules` object.
 
-| Element Type                                | Example Input                   | Example Output                               |
-| ------------------------------------------- | ------------------------------- | -------------------------------------------- |
-| Rule object                                 | `myRule`                        | `{ "example/my-rule": "error" }`             |
-| Object with string keys and severity values | `{ "example/my-rule": "warn" }` | `{ "example/my-rule": "warn" }`              |
-| Tuple containing rule object and severity   | `[myRule, "warn"]`              | `{ "example/my-rule": "warn" }`              |
-| Array of objects                            | `[ { ... }, { ... } ]`          | `[ { name, plugins, ... }, { ... } ]` **\*** |
+| Element Type                                       | Example Input                              | Example Output                               |
+| -------------------------------------------------- | ------------------------------------------ | -------------------------------------------- |
+| Rule object                                        | `myRule`                                   | `{ "example/my-rule": "error" }`             |
+| Object with string key and severity value          | `{ "example/my-rule": "warn" }`            | `{ "example/my-rule": "warn" }`              |
+| Object with string key and severity & option       | `{ "example/my-rule": ["warn", "never"] }` | `{ "example/my-rule": ["warn", "never"] }`   |
+| Tuple containing rule object and severity          | `[myRule, "warn"]`                         | `{ "example/my-rule": "warn" }`              |
+| Tuple containing rule object and severity & option | `[myRule, ["warn", "never"]]`              | `{ "example/my-rule": ["warn", "never"] }`   |
+| Array of objects                                   | `[ { ... }, { ... } ]`                     | `[ { name, plugins, ... }, { ... } ]` **\*** |
 
 **\***For a `config` value provided as an array of objects, `name` and `plugins` will be set as default values on only the first element.
 This allows plugin authors to define longer plugins with arrays of config objects.
@@ -633,7 +635,7 @@ Object.assign(plugin.configs, {
 
 ##### Example: Referencing Other Plugins' Rules
 
-If a `config` value contains an objects with string keys and severity values, those objects' keys will not be modified.
+If a `config` value contains an objects with string keys and severity/option values, those objects' keys will not be modified.
 This means objects can refer to other plugins' rules.
 
 For example, this plugin sets three rules:
