@@ -148,6 +148,7 @@ No `Object.assign()`, `Object.defineProperty()`, or `get()` will be required in 
 `definePlugin` will add two properties to all generated `configs` objects:
 
 - `name`: will default to the plugin's namespace + `"/"` + the config's key
+  - Plugin namespaces will be equal to the plugin's `meta.namespace ?? meta.name`
 - `plugin`: merged with an object defining the plugin under its name
 
 `configs` is the only property `definePlugin` receives with a different shape than the output plugin object.
@@ -163,9 +164,7 @@ If `configs` is not provided, then `definePlugin` will create a `recommended` co
 
 - `name`: per [configuration naming conventions](https://eslint.org/docs/latest/use/configure/configuration-files#configuration-naming-conventions)
 - `plugins`: an object keying `meta.name` to the plugin object
-- `rules`: setting severities for rules whose `meta.docs?.recommended` is one of the following values:
-  - `true`: set to `"error"`
-  - any valid rule severity/options: that severity/options
+- `rules`: severities/options for rules whose `meta.docs?.recommended` is truthy
 
 For example, given this plugin with two rules:
 
@@ -221,10 +220,6 @@ The internal logic would be equivalent to filtering the rules on whether they ar
 ```js
 // (equivalent to the two previous snippets)
 
-function getRuleSeverity(rule) {
-  return rule.meta.docs.severity === true ? "error" : rule.meta.docs.severity;
-}
-
 const meta = {
   name: "example",
 };
@@ -250,10 +245,7 @@ Object.assign(plugin.configs, {
       rules: Object.fromEntries(
         Object.entries(rules)
           .filter(([, rule]) => rule.meta.docs?.recommended)
-          .map(([ruleName, rule]) => [
-            `${meta.name}/${ruleName}`,
-            getRuleSeverity(rule),
-          ])
+          .map(([ruleName, value]) => [`${meta.name}/${ruleName}`, value])
       ),
     },
   ],
@@ -306,9 +298,9 @@ const plugin = definePlugin({
   configs: {
     recommended: [
       myRuleA,
-      [myRuleB, true],
-      [myRuleC, "error"],
-      [myRuleD, "warn"],
+      [myRuleB, "error"],
+      [myRuleC, "warn"],
+      [myRuleD, ["error", "never"]],
     ],
   },
   meta: {
@@ -351,8 +343,8 @@ Object.assign(plugin.configs, {
       rules: {
         "example/my-rule-a": "error",
         "example/my-rule-b": "error",
-        "example/my-rule-c": "error",
-        "example/my-rule-d": "warn",
+        "example/my-rule-c": "warn",
+        "example/my-rule-d": ["error", "never"],
       },
     },
   ],
@@ -486,7 +478,7 @@ Object.assign(plugin.configs, {
 A plugin that provides additional properties such as `languageOptions` could define them in its `configs.recommended`.
 This plugin provides:
 
-- A single rule, `myRule`, with `meta.docs.recommended = true`:
+- A single rule, `myRule`, with `meta.docs.recommended = "error"`:
 - `languageOptions`: as part of its `recommended` config
 
 ```js
@@ -888,10 +880,7 @@ That would suggest using something the following function by default:
 
 ```js
 definePlugin({
-  configs: (rule) =>
-    rule.meta.docs.recommended === true
-      ? "recommended"
-      : rule.meta.docs.recommended,
+  configs: (rule) => rule.meta.docs.recommended,
   meta,
   rules,
 });
