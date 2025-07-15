@@ -278,7 +278,7 @@ For example, if the plugin name is `example`, then a `configs: { recommended: { 
 
 Each `rules` element will be transformed into key-value pairs.
 
-- Each key will be `${meta.name}/${ruleName}`.
+- Each key will be `${meta.namespace}/${ruleName}`.
 - Each value will be the provided severity if it exists, or `"error"` if not
 
 Those `rules` key-value pairs will be merged into into one final `rules` object.
@@ -817,7 +817,7 @@ See [5d2557 > 2025-define-plugin/README.md#L705](https://github.com/eslint/rfcs/
 
 ### Config Arrays
 
-`eslint-plugin-markdown` defines an unusual `plugin.configs.recommended`:
+`eslint-plugin-markdown` defines an unusual `plugin.configs.processor`:
 
 - An array of config objects instead of just one
 - `name` with `/plugin` at the end
