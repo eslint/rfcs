@@ -147,9 +147,10 @@ ruleTester.run("rule-name", rule, {
 });
 ````
 
+Having this option is optional.
 If `requiredScenarios` is set, the `run` will only require and expect the given scenarios.
-This can only be used for the `run` method, not the constructor, because there should always be at least one valid and one invalid test case.
-The `requiredScenarios` option can be used to omit certain scenarios from the run, e.g. if the user wants to import a set of tests from a different source, that may have other assertion requirements or haven't achieved the quality needed to require the same assertion strictness.
+This can only be used for the `run` method, not the constructor, because there should always be at least one valid and one invalid test case (potentially spread over multiple run calls).
+The `requiredScenarios` option can be used to disable having to provide `valid`/`invalid` scenarios.
 
 ````ts
 ruleTester.run("rule-name", rule, {
@@ -179,6 +180,27 @@ ruleTester.run("rule-name", rule, {
     invalid: [...],
 }, {
     requiredScenarios: ["invalid"]
+});
+````
+
+This option is meant to be combined with the other options, to make sure each test set applies the best applicable assertion coverage.
+
+````ts
+ruleTester.run("rule-name", rule, {
+    valid: [...],
+    invalid: [...],
+};
+ruleTester.run("rule-name", rule, {
+    invalid: [...],
+}, {
+    requiredScenarios: ["invalid"],
+    requireMessage: true,
+});
+ruleTester.run("rule-name", rule, {
+    invalid: [...],
+}, {
+    requiredScenarios: ["invalid"],
+    requireLocation: true,
 });
 ````
 
