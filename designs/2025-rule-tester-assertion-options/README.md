@@ -23,8 +23,8 @@ The options could be defined on two levels. On `RuleTester`'s `constructor` effe
 new RuleTester(testerConfig: {...}, assertionOptions: {
     /**
      * Require message assertion for each invalid test case.
-     * If `true`, errors must extend `string | Array<{ message: string } | { messageId: string }>`.
-     * If `'message'`, errors must extend `string | Array<{ message: string }>`.
+     * If `true`, errors must extend `string | RegExp | Array<{ message: string | RegExp } | { messageId: string }>`.
+     * If `'message'`, errors must extend `string | RegExp | Array<{ message: string | RegExp }>`.
      * If `'messageId'`, errors must extend `Array<{ messageId: string }>`.
      * 
      * @default false
@@ -46,8 +46,8 @@ new RuleTester(testerConfig: {...}, assertionOptions: {
 ruleTester.run("rule-name", rule, tests, assertionOptions: {
     /**
      * Require message assertion for each invalid test case.
-     * If `true`, errors must extend `string | Array<{ message: string } | { messageId: string }>`.
-     * If `'message'`, errors must extend `string | Array<{ message: string }>`.
+     * If `true`, errors must extend `string | RegExp | Array<{ message: string | RegExp } | { messageId: string }>`.
+     * If `'message'`, errors must extend `string | RegExp | Array<{ message: string | RegExp }>`.
      * If `'messageId'`, errors must extend `Array<{ messageId: string }>`.
      * 
      * @default false
@@ -68,9 +68,9 @@ ruleTester.run("rule-name", rule, tests, assertionOptions: {
 #### requireMessage
 
 If `requireMessage` is set to `true`, the invalid test case cannot consist of an error count assertion only, but must also include a message assertion. (See below)
-This can be done either by providing only a `string` message, or by using the `message`/`messageId` property of the error object in the `TestCaseError` (Same as the current behavior).
-If `true`, errors must extend `string | Array<{ message: string | RegExp } | { messageId: string }>`.
-If `'message'`, errors must extend `string | Array<{ message: string | RegExp }>`.
+This can be done either by providing only a `string`/`RegExp` message, or by using the `message`/`messageId` property of the error object in the `TestCaseError` (Same as the current behavior).
+If `true`, errors must extend `string | RegExp | Array<{ message: string | RegExp } | { messageId: string }>`.
+If `'message'`, errors must extend `string | RegExp | Array<{ message: string | RegExp }>`.
 If `'messageId'`, errors must extend `Array<{ messageId: string }>`.
 
 ````ts
