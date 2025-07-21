@@ -148,109 +148,112 @@ ruleTester.run("rule-name", rule, {
 
 ````patch
 diff --git a/lib/rule-tester/rule-tester.js b/lib/rule-tester/rule-tester.js
-index dbd8c274f..f02d34d95 100644
+index dbd8c274f..412090df0 100644
 --- a/lib/rule-tester/rule-tester.js
 +++ b/lib/rule-tester/rule-tester.js
-@@ -558,13 +558,22 @@ class RuleTester {
-         *   valid: (ValidTestCase | string)[],
-         *   invalid: InvalidTestCase[]
-         * }} test The collection of tests to run.
-+        * @param {{
-+        *   requireMessage: boolean | "message" | "messageId",
-+        *   requireLocation: boolean
-+        * }} [options] Options for the test.
-         * @throws {TypeError|Error} If `rule` is not an object with a `create` method,
-         * or if non-object `test`, or if a required scenario of the given type is missing.
-         * @returns {void}
-         */
--       run(ruleName, rule, test) {
-+       run(ruleName, rule, test, options = {}) {
-+               const {
-+                       requireMessage = false,
-+                       requireLocation = false,
-+               } = options;
-                const testerConfig = this.testerConfig,
-                        requiredScenarios = ["valid", "invalid"],
-                        scenarioErrors = [],
-                        linter = this.linter,
-                        ruleId = `rule-to-test/${ruleName}`;
-@@ -1092,6 +1101,10 @@ class RuleTester {
-                        }
-
-                        if (typeof item.errors === "number") {
-+                               assert.ok(
-+                                       !requireMessage && !requireLocation,
-+                                       "Invalid cases must have 'errors' value as an array",
-+                               );
-                                if (item.errors === 0) {
-                                        assert.fail(
-                                                "Invalid cases must have 'error' value greater than 0",
-@@ -1137,6 +1150,10 @@ class RuleTester {
-
-                                        if (typeof error === "string" || error instanceof RegExp) {
-                                                // Just an error message.
-+                                               assert.ok(
-+                                                       requireMessage !== 'messageId' && !requireLocation,
-+                                                       "Invalid cases must have 'errors' value as an array of objects e.g. { message: 'error message' }",
-+                                               );
-                                                assertMessageMatches(message.message, error);
-                                                assert.ok(
-                                                        message.suggestions === void 0,
-@@ -1157,6 +1174,10 @@ class RuleTester {
-                                                });
-
-                                                if (hasOwnProperty(error, "message")) {
-+                                                       assert.ok(
-+                                                               requireMessage !== "messageId",
-+                                                               "The test run requires 'messageId' but the error (also) uses 'message'.",
-+                                                       );
-                                                        assert.ok(
-                                                                !hasOwnProperty(error, "messageId"),
-                                                                "Error should not specify both 'message' and a 'messageId'.",
-@@ -1165,11 +1186,16 @@ class RuleTester {
-                                                                !hasOwnProperty(error, "data"),
-                                                                "Error should not specify both 'data' and 'message'.",
-                                                        );
-+
-                                                        assertMessageMatches(
-                                                                message.message,
-                                                                error.message,
-                                                        );
-                                                } else if (hasOwnProperty(error, "messageId")) {
-+                                                       assert.ok(
-+                                                               requireMessage !== "message",
-+                                                               "The test run requires 'message' but the error (also) uses 'messageId'.",
-+                                                       );
-                                                        assert.ok(
-                                                                ruleHasMetaMessages,
-                                                                "Error can not use 'messageId' if rule under test doesn't define 'meta.messages'.",
-@@ -1239,22 +1265,22 @@ class RuleTester {
-                                                const actualLocation = {};
-                                                const expectedLocation = {};
-
--                                               if (hasOwnProperty(error, "line")) {
-+                                               if (hasOwnProperty(error, "line") || requireLocation) {
-                                                        actualLocation.line = message.line;
-                                                        expectedLocation.line = error.line;
-                                                }
-
--                                               if (hasOwnProperty(error, "column")) {
-+                                               if (hasOwnProperty(error, "column") || requireLocation) {
-                                                        actualLocation.column = message.column;
-                                                        expectedLocation.column = error.column;
-                                                }
-
--                                               if (hasOwnProperty(error, "endLine")) {
-+                                               if (hasOwnProperty(error, "endLine") || requireLocation) {
-                                                        actualLocation.endLine = message.endLine;
-                                                        expectedLocation.endLine = error.endLine;
-                                                }
-
--                                               if (hasOwnProperty(error, "endColumn")) {
-+                                               if (hasOwnProperty(error, "endColumn") || requireLocation) {
-                                                        actualLocation.endColumn = message.endColumn;
-                                                        expectedLocation.endColumn = error.endColumn;
-                                                }
+@@ -558,11 +558,19 @@ class RuleTester {
+ 	 *   valid: (ValidTestCase | string)[],
+ 	 *   invalid: InvalidTestCase[]
+ 	 * }} test The collection of tests to run.
++	 * @param {{
++	 *   requireMessage: boolean | "message" | "messageId",
++	 *   requireLocation: boolean,
++	 * }} [options] Options for the test.
+ 	 * @throws {TypeError|Error} If `rule` is not an object with a `create` method,
+ 	 * or if non-object `test`, or if a required scenario of the given type is missing.
+ 	 * @returns {void}
+ 	 */
+-	run(ruleName, rule, test) {
++	run(ruleName, rule, test, options = {}) {
++		const {
++			requireMessage = false,
++			requireLocation = false,
++		} = options;
+ 		const testerConfig = this.testerConfig,
+ 			requiredScenarios = ["valid", "invalid"],
+ 			scenarioErrors = [],
+@@ -1092,6 +1100,10 @@ class RuleTester {
+ 			}
+ 
+ 			if (typeof item.errors === "number") {
++				assert.ok(
++					!requireMessage && !requireLocation,
++					"Invalid cases must have 'errors' value as an array",
++				);
+ 				if (item.errors === 0) {
+ 					assert.fail(
+ 						"Invalid cases must have 'error' value greater than 0",
+@@ -1137,6 +1149,10 @@ class RuleTester {
+ 
+ 					if (typeof error === "string" || error instanceof RegExp) {
+ 						// Just an error message.
++						assert.ok(
++							requireMessage !== 'messageId' && !requireLocation,
++							"Invalid cases must have 'errors' value as an array of objects e.g. { message: 'error message' }",
++						);
+ 						assertMessageMatches(message.message, error);
+ 						assert.ok(
+ 							message.suggestions === void 0,
+@@ -1157,6 +1173,10 @@ class RuleTester {
+ 						});
+ 
+ 						if (hasOwnProperty(error, "message")) {
++							assert.ok(
++								requireMessage !== "messageId",
++								"The test run requires 'messageId' but the error (also) uses 'message'.",
++							);
+ 							assert.ok(
+ 								!hasOwnProperty(error, "messageId"),
+ 								"Error should not specify both 'message' and a 'messageId'.",
+@@ -1170,6 +1190,10 @@ class RuleTester {
+ 								error.message,
+ 							);
+ 						} else if (hasOwnProperty(error, "messageId")) {
++							assert.ok(
++								requireMessage !== "message",
++								"The test run requires 'message' but the error (also) uses 'messageId'.",
++							);
+ 							assert.ok(
+ 								ruleHasMetaMessages,
+ 								"Error can not use 'messageId' if rule under test doesn't define 'meta.messages'.",
+@@ -1242,21 +1266,37 @@ class RuleTester {
+ 						if (hasOwnProperty(error, "line")) {
+ 							actualLocation.line = message.line;
+ 							expectedLocation.line = error.line;
++						} else if (requireLocation) {
++							assert.fail(
++								"Test error must specify a 'line' property.",
++							);
+ 						}
+ 
+ 						if (hasOwnProperty(error, "column")) {
+ 							actualLocation.column = message.column;
+ 							expectedLocation.column = error.column;
++						} else if (requireLocation) {
++							assert.fail(
++								"Test error must specify a 'column' property.",
++							);
+ 						}
+ 
+ 						if (hasOwnProperty(error, "endLine")) {
+ 							actualLocation.endLine = message.endLine;
+ 							expectedLocation.endLine = error.endLine;
++						} else if (requireLocation) {
++							assert.fail(
++								"Test error must specify an 'endLine' property.",
++							);
+ 						}
+ 
+ 						if (hasOwnProperty(error, "endColumn")) {
+ 							actualLocation.endColumn = message.endColumn;
+ 							expectedLocation.endColumn = error.endColumn;
++						} else if (requireLocation) {
++							assert.fail(
++								"Test error must specify an 'endColumn' property.",
++							);
+ 						}
+ 
+ 						if (Object.keys(expectedLocation).length > 0) {
 ````
 
 ## Documentation
