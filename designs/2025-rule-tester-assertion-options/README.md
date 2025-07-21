@@ -60,13 +60,6 @@ ruleTester.run("rule-name", rule, tests, assertionOptions: {
      * @default false
      */
     requireLocation: boolean;
-    /**
-     * Require and expect only the given test scenarios.
-     * This allows omitting certain scenarios from this run with the current options.
-     * 
-     * @default ["valid","invalid"]
-     */
-    requiredScenarios: ReadonlyArray<'valid' | 'invalid'>;
 });
 ````
 
@@ -76,8 +69,8 @@ ruleTester.run("rule-name", rule, tests, assertionOptions: {
 
 If `requireMessage` is set to `true`, the invalid test case cannot consist of an error count assertion only, but must also include a message assertion. (See below)
 This can be done either by providing only a `string` message, or by using the `message`/`messageId` property of the error object in the `TestCaseError` (Same as the current behavior).
-If `true`, errors must extend `string | Array<{ message: string } | { messageId: string }>`.
-If `'message'`, errors must extend `string | Array<{ message: string }>`.
+If `true`, errors must extend `string | Array<{ message: string | RegExp } | { messageId: string }>`.
+If `'message'`, errors must extend `string | Array<{ message: string | RegExp }>`.
 If `'messageId'`, errors must extend `Array<{ messageId: string }>`.
 
 ````ts
@@ -151,65 +144,6 @@ ruleTester.run("rule-name", rule, {
 });
 ````
 
-#### requiredScenarios
-
-Having this option is optional.
-If `requiredScenarios` is set, the `run` will only require and expect the given scenarios.
-This can only be used for the `run` method, not the constructor, because there should always be at least one valid and one invalid test case (potentially spread over multiple run calls).
-The `requiredScenarios` option can be used to disable having to provide `valid`/`invalid` scenarios.
-
-````ts
-ruleTester.run("rule-name", rule, {
-    valid: [...], // ✅
-    invalid: [...],
-}, {
-    // Default is ["valid", "invalid"]
-});
-ruleTester.run("rule-name", rule, {
-    valid: [...], // ❌
-}, {
-    // Default is ["valid", "invalid"]
-});
-ruleTester.run("rule-name", rule, {
-    valid: [...], // ✅
-    invalid: [...],
-}, {
-    requiredScenarios: ["valid", "invalid"]
-});
-ruleTester.run("rule-name", rule, {
-    valid: [...], // ✅
-}, {
-    requiredScenarios: ["valid"]
-});
-ruleTester.run("rule-name", rule, {
-    valid: [...], // ❌
-    invalid: [...],
-}, {
-    requiredScenarios: ["invalid"]
-});
-````
-
-This option is meant to be combined with the other options, to make sure each test set applies the best applicable assertion coverage.
-
-````ts
-ruleTester.run("rule-name", rule, {
-    valid: [...],
-    invalid: [...],
-};
-ruleTester.run("rule-name", rule, {
-    invalid: [...],
-}, {
-    requiredScenarios: ["invalid"],
-    requireMessage: true,
-});
-ruleTester.run("rule-name", rule, {
-    invalid: [...],
-}, {
-    requiredScenarios: ["invalid"],
-    requireLocation: true,
-});
-````
-
 ## Implementation Hint
 
 ````patch
@@ -224,21 +158,19 @@ index dbd8c274f..f02d34d95 100644
 +        * @param {{
 +        *   requireMessage: boolean | "message" | "messageId",
 +        *   requireLocation: boolean
-+        *   requiredScenarios: ["valid" | "invalid"],
 +        * }} [options] Options for the test.
          * @throws {TypeError|Error} If `rule` is not an object with a `create` method,
          * or if non-object `test`, or if a required scenario of the given type is missing.
          * @returns {void}
          */
 -       run(ruleName, rule, test) {
--               const testerConfig = this.testerConfig,
 +       run(ruleName, rule, test, options = {}) {
 +               const {
 +                       requireMessage = false,
 +                       requireLocation = false,
-                        requiredScenarios = ["valid", "invalid"],
 +               } = options;
-+               const testerConfig = this.testerConfig,
+                const testerConfig = this.testerConfig,
+                        requiredScenarios = ["valid", "invalid"],
                         scenarioErrors = [],
                         linter = this.linter,
                         ruleId = `rule-to-test/${ruleName}`;
@@ -360,6 +292,7 @@ it requires identifying the RuleTester calls in the codebase and might run into 
 3. ~~Should we enable the `requireMessage` and `requireLocation` options by default? (Breaking change)~~ No
 4. ~~Do we add a `requireMessageId` option or should we alter the `requireMessage` option to support both message and messageId assertions?~~ Just `requireMessage: boolean | 'message' | 'messageid'`
 5. Should we add a `strict` option that enables all assertion options by default?
+6. ~~Should we expose `requiredScenarios` as option?~~ No, the users can just use empty arrays.
 
 ## Help Needed
 
