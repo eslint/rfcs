@@ -295,7 +295,6 @@ it requires identifying the RuleTester calls in the codebase and might run into 
 3. ~~Should we enable the `requireMessage` and `requireLocation` options by default? (Breaking change)~~ No
 4. ~~Do we add a `requireMessageId` option or should we alter the `requireMessage` option to support both message and messageId assertions?~~ Just `requireMessage: boolean | 'message' | 'messageid'`
 5. Should we add a `strict` option that enables all assertion options by default?
-6. ~~Should we expose `requiredScenarios` as option?~~ No, the users can just use empty arrays.
 
 ## Help Needed
 
