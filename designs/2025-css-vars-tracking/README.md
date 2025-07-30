@@ -42,7 +42,7 @@ interface CSSSourceCode {
 }
 ```
 
-A new public property, `#customProperties`, will be added to `CSSSourceCode`. This will be a `Map` where the keys are the custom property names (e.g., `--my-color`) and the values are `CustomPropertyUses` objects. The `CustomPropertyUses` class will have three properties:
+A new private property, `#customProperties`, will be added to `CSSSourceCode`. This will be a `Map` where the keys are the custom property names (e.g., `--my-color`) and the values are `CustomPropertyUses` objects. The `CustomPropertyUses` class will have three properties:
 
 *   `declarations`: An array of `DeclarationPlain` nodes where the custom property value is declared.
 *   `definitions`: Array of `AtrulePlain` nodes where the custom property is defined using an [`@property`](https://developer.mozilla.org/en-US/docs/Web/CSS/@property) rule.
