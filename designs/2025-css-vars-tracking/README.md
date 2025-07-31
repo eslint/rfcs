@@ -62,11 +62,17 @@ A new public method, `getDeclarationVariables(declaration)`, will be added to `C
 
 ```ts
 interface CSSSourceCode {
-    getClosestVariableValue(func: FunctionNode): Raw;
+    getClosestVariableValue(func: FunctionNode): Raw | undefined;
 }
 ```
 
-A new public method, `getClosestVariableValue(node)`, will be added to `CSSSourceCode`. This method will take a `var()` `Function` node as an argument and return the computed value of the custom property (which is currently always a `Raw` node). It will do this by searching for the last declaration of the custom property that appears before the given `Function` node in the source code. This also leaves open the possibility that we could change how this value is calculated to be more accurate in the future.
+A new public method, `getClosestVariableValue(node)`, will be added to `CSSSourceCode`. This method will take a `var()` `Function` node as an argument and return the computed value of the custom property (which is currently always a `Raw` node). It will do this by:
+
+1. If the current rule block has one or more custom properties declaration for the variable, then return the value of the last custom property declaration in the block. This mimics the way CSS calculates custom property values.
+2. If `var()` has a fallback value, return the fallback value.
+3. If one of the previous rules had a custom property declaration, then return the last value of the custom property.
+4. If there's a `@property` block for the custom property that has an `initial-value`, return the `initial-value`.
+5. Otherwise, return `undefined`.
 
 ### `getVariableValues()` Method
 
