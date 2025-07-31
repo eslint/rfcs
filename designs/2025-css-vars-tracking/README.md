@@ -82,7 +82,11 @@ interface CSSSourceCode {
 }
 ```
 
-A new public method, `getVariableValues(func)`, will be added to `CSSSourceCode`. This method will take a `var()` `Function` node as an argument and return an array of `Raw` nodes representing the declared values of the custom property. The fallback value, if specified in the `FunctionNode`, is returned as the last element of the array. 
+A new public method, `getVariableValues(func)`, will be added to `CSSSourceCode`. This method will take a `var()` `FunctionNode` as an argument and return an array of `Raw` nodes representing the declared values of the custom property. The returned array is made up of the following:
+
+1. If there is a `@property` for the custom property that has an `initial-value`, then the `initial-value` is the first element in the array.
+2. The `Raw` values defined in custom property declarations throughout the file, both before and after the `FunctionNode` come next in source order.
+3. The fallback value, if specified in the `FunctionNode`, is returned as the last element of the array. 
 
 ### Initialization
 
