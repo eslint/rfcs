@@ -100,18 +100,7 @@ The primary alternative is to have each rule implement its own custom property t
 
 ## Open Questions
 
-**Should we use "var" instead of "variable" in function names?**
-
-The proposed API includes methods like `getDeclarationVariables()` and `getVariableValue()`. Since CSS custom properties are commonly referred to as "CSS variables" in the community, there's a question about whether the method names should use the shorter "var" terminology instead. For example:
-
-- `getDeclarationVars()` instead of `getDeclarationVariables()`
-- `getVarValue()` instead of `getVariableValue()`
-
-Using "var" would be more concise and align with the CSS `var()` function syntax that developers are already familiar with. However, "variable" is more explicit and follows common naming conventions in programming APIs.
-
-**Should `getVariableValues()` return the fallback value?**
-
-The fallback value is already available in the `FunctionNode` passed into `getVariableValues()`, so rule authors can still get access to that value easily. It seems like a nice touch to always have it as the last element of the returned array, but that also means that a non-declared value is present in the array, which could potentially be confusing.
+n/a
 
 ## Help Needed
 
