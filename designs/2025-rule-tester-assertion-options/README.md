@@ -43,23 +43,27 @@ new RuleTester(testerConfig: {...}, assertionOptions: {
 ### Variant 2 - Test method based options
 
 ````ts
-ruleTester.run("rule-name", rule, tests, assertionOptions: {
-    /**
-     * Require message assertion for each invalid test case.
-     * If `true`, errors must extend `string | RegExp | Array<{ message: string | RegExp } | { messageId: string }>`.
-     * If `'message'`, errors must extend `string | RegExp | Array<{ message: string | RegExp }>`.
-     * If `'messageId'`, errors must extend `Array<{ messageId: string }>`.
-     * 
-     * @default false
-     */
-    requireMessage: boolean | 'message' | 'messageId';
-    /**
-     * Require full location assertions for each invalid test case.
-     * If `true`, errors must extend `Array<{ line: number, column: number, endLine: number, endColumn: number }>`.
-     * 
-     * @default false
-     */
-    requireLocation: boolean;
+ruleTester.run("rule-name", rule, {
+    assertionOptions?: {
+        /**
+         * Require message assertion for each invalid test case.
+         * If `true`, errors must extend `string | RegExp | Array<{ message: string | RegExp } | { messageId: string }>`.
+         * If `'message'`, errors must extend `string | RegExp | Array<{ message: string | RegExp }>`.
+         * If `'messageId'`, errors must extend `Array<{ messageId: string }>`.
+         * 
+         * @default false
+         */
+        requireMessage?: boolean | 'message' | 'messageId';
+        /**
+         * Require full location assertions for each invalid test case.
+         * If `true`, errors must extend `Array<{ line: number, column: number, endLine: number, endColumn: number }>`.
+         * 
+         * @default false
+         */
+        requireLocation?: boolean;
+    },
+    valid: [ /* ... */ ],
+    invalid: [ /* ... */ ],
 });
 ````
 
@@ -75,6 +79,9 @@ If `'messageId'`, errors must extend `Array<{ messageId: string }>`.
 
 ````ts
 ruleTester.run("rule-name", rule, {
+    assertionOptions: {
+        requireMessage: true
+    },
     invalid: [
         {
             code: "const a = 1;",
@@ -95,8 +102,6 @@ ruleTester.run("rule-name", rule, {
             ]
         }
     ]
-}, {
-    requireMessage: true
 });
 ````
 
@@ -106,6 +111,9 @@ If `requireLocation` is set to `true`, the invalid test case's error validation 
 
 ````ts
 ruleTester.run("rule-name", rule, {
+    assertionOptions: {
+        requireLocation: true
+    },
     invalid: [
         {
             code: "const a = 1;",
@@ -139,8 +147,6 @@ ruleTester.run("rule-name", rule, {
             ]
         }
     ]
-}, {
-    requireLocation: true
 });
 ````
 
@@ -148,31 +154,48 @@ ruleTester.run("rule-name", rule, {
 
 ````patch
 diff --git a/lib/rule-tester/rule-tester.js b/lib/rule-tester/rule-tester.js
-index dbd8c274f..412090df0 100644
+index dbd8c274f..c7a076021 100644
 --- a/lib/rule-tester/rule-tester.js
 +++ b/lib/rule-tester/rule-tester.js
-@@ -558,11 +558,19 @@ class RuleTester {
+@@ -555,6 +555,10 @@ class RuleTester {
+ 	 * @param {string} ruleName The name of the rule to run.
+ 	 * @param {RuleDefinition} rule The rule to test.
+ 	 * @param {{
++	 *   assertionOptions?: {
++	 *     requireMessage?: boolean | "message" | "messageId",
++	 *     requireLocation?: boolean
++	 *   },
  	 *   valid: (ValidTestCase | string)[],
  	 *   invalid: InvalidTestCase[]
  	 * }} test The collection of tests to run.
-+	 * @param {{
-+	 *   requireMessage: boolean | "message" | "messageId",
-+	 *   requireLocation: boolean,
-+	 * }} [options] Options for the test.
- 	 * @throws {TypeError|Error} If `rule` is not an object with a `create` method,
- 	 * or if non-object `test`, or if a required scenario of the given type is missing.
+@@ -563,6 +567,13 @@ class RuleTester {
  	 * @returns {void}
  	 */
--	run(ruleName, rule, test) {
-+	run(ruleName, rule, test, options = {}) {
-+		const {
-+			requireMessage = false,
-+			requireLocation = false,
-+		} = options;
+ 	run(ruleName, rule, test) {
++		if (!test || typeof test !== "object") {
++			throw new TypeError(
++				`Test Scenarios for rule ${ruleName} : Could not find test scenario object`,
++			);
++		}
++
++		const { requireMessage = false, requireLocation = false } = test.assertionOptions ?? {};
  		const testerConfig = this.testerConfig,
  			requiredScenarios = ["valid", "invalid"],
  			scenarioErrors = [],
-@@ -1092,6 +1100,10 @@ class RuleTester {
+@@ -582,12 +593,6 @@ class RuleTester {
+ 			);
+ 		}
+ 
+-		if (!test || typeof test !== "object") {
+-			throw new TypeError(
+-				`Test Scenarios for rule ${ruleName} : Could not find test scenario object`,
+-			);
+-		}
+-
+ 		requiredScenarios.forEach(scenarioType => {
+ 			if (!test[scenarioType]) {
+ 				scenarioErrors.push(
+@@ -1092,6 +1097,10 @@ class RuleTester {
  			}
  
  			if (typeof item.errors === "number") {
@@ -183,18 +206,18 @@ index dbd8c274f..412090df0 100644
  				if (item.errors === 0) {
  					assert.fail(
  						"Invalid cases must have 'error' value greater than 0",
-@@ -1137,6 +1149,10 @@ class RuleTester {
+@@ -1137,6 +1146,10 @@ class RuleTester {
  
  					if (typeof error === "string" || error instanceof RegExp) {
  						// Just an error message.
 +						assert.ok(
-+							requireMessage !== 'messageId' && !requireLocation,
++							requireMessage !== "messageId" && !requireLocation,
 +							"Invalid cases must have 'errors' value as an array of objects e.g. { message: 'error message' }",
 +						);
  						assertMessageMatches(message.message, error);
  						assert.ok(
  							message.suggestions === void 0,
-@@ -1157,6 +1173,10 @@ class RuleTester {
+@@ -1157,6 +1170,10 @@ class RuleTester {
  						});
  
  						if (hasOwnProperty(error, "message")) {
@@ -205,7 +228,7 @@ index dbd8c274f..412090df0 100644
  							assert.ok(
  								!hasOwnProperty(error, "messageId"),
  								"Error should not specify both 'message' and a 'messageId'.",
-@@ -1170,6 +1190,10 @@ class RuleTester {
+@@ -1170,6 +1187,10 @@ class RuleTester {
  								error.message,
  							);
  						} else if (hasOwnProperty(error, "messageId")) {
@@ -216,7 +239,7 @@ index dbd8c274f..412090df0 100644
  							assert.ok(
  								ruleHasMetaMessages,
  								"Error can not use 'messageId' if rule under test doesn't define 'meta.messages'.",
-@@ -1242,21 +1266,37 @@ class RuleTester {
+@@ -1242,21 +1263,37 @@ class RuleTester {
  						if (hasOwnProperty(error, "line")) {
  							actualLocation.line = message.line;
  							expectedLocation.line = error.line;
