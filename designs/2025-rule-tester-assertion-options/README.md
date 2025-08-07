@@ -1,6 +1,6 @@
 - Repo: https://github.com/eslint/eslint
 - Start Date: 2025-07-10
-- RFC PR: (leave this empty, to be filled in later)
+- RFC PR: https://github.com/eslint/rfcs/pull/137
 - Authors: ST-DDT
 
 # Rule Tester Assertions Options
