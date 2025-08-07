@@ -19,53 +19,53 @@ The options could be defined on two levels. On `RuleTester`'s `constructor` effe
 
 ### Variant 1 - Constructor based options
 
-````ts
+```ts
 new RuleTester(testerConfig: {...}, assertionOptions: {
+  /**
+   * Require message assertion for each invalid test case.
+   * If `true`, errors must extend `string | RegExp | Array<{ message: string | RegExp } | { messageId: string }>`.
+   * If `'message'`, errors must extend `string | RegExp | Array<{ message: string | RegExp }>`.
+   * If `'messageId'`, errors must extend `Array<{ messageId: string }>`.
+   *
+   * @default false
+   */
+  requireMessage: boolean | 'message' | 'messageId';
+  /**
+   * Require full location assertions for each invalid test case.
+   * If `true`, errors must extend `Array<{ line: number, column: number, endLine: number, endColumn: number }>`.
+   *
+   * @default false
+   */
+  requireLocation: boolean;
+} = {});
+```
+
+### Variant 2 - Test method based options
+
+```ts
+ruleTester.run("rule-name", rule, {
+  assertionOptions?: {
     /**
      * Require message assertion for each invalid test case.
      * If `true`, errors must extend `string | RegExp | Array<{ message: string | RegExp } | { messageId: string }>`.
      * If `'message'`, errors must extend `string | RegExp | Array<{ message: string | RegExp }>`.
      * If `'messageId'`, errors must extend `Array<{ messageId: string }>`.
-     * 
+     *
      * @default false
      */
-    requireMessage: boolean | 'message' | 'messageId';
+    requireMessage?: boolean | 'message' | 'messageId';
     /**
      * Require full location assertions for each invalid test case.
      * If `true`, errors must extend `Array<{ line: number, column: number, endLine: number, endColumn: number }>`.
-     * 
+     *
      * @default false
      */
-    requireLocation: boolean;
-} = {});
-````
-
-### Variant 2 - Test method based options
-
-````ts
-ruleTester.run("rule-name", rule, {
-    assertionOptions?: {
-        /**
-         * Require message assertion for each invalid test case.
-         * If `true`, errors must extend `string | RegExp | Array<{ message: string | RegExp } | { messageId: string }>`.
-         * If `'message'`, errors must extend `string | RegExp | Array<{ message: string | RegExp }>`.
-         * If `'messageId'`, errors must extend `Array<{ messageId: string }>`.
-         * 
-         * @default false
-         */
-        requireMessage?: boolean | 'message' | 'messageId';
-        /**
-         * Require full location assertions for each invalid test case.
-         * If `true`, errors must extend `Array<{ line: number, column: number, endLine: number, endColumn: number }>`.
-         * 
-         * @default false
-         */
-        requireLocation?: boolean;
-    },
-    valid: [ /* ... */ ],
-    invalid: [ /* ... */ ],
+    requireLocation?: boolean;
+  },
+  valid: [ /* ... */ ],
+  invalid: [ /* ... */ ],
 });
-````
+```
 
 ### Shared Logic
 
@@ -77,82 +77,81 @@ If `true`, errors must extend `string | RegExp | Array<{ message: string | RegEx
 If `'message'`, errors must extend `string | RegExp | Array<{ message: string | RegExp }>`.
 If `'messageId'`, errors must extend `Array<{ messageId: string }>`.
 
-````ts
+```ts
 ruleTester.run("rule-name", rule, {
-    assertionOptions: {
-        requireMessage: true
+  assertionOptions: {
+    requireMessage: true,
+  },
+  invalid: [
+    {
+      code: "const a = 1;",
+      errors: 1, // ❌ Message isn't being checked here
     },
-    invalid: [
+    {
+      code: "const a = 2;",
+      errors: [
+        "Error message here.", // ✅ we only check the error message
+      ],
+    },
+    {
+      code: "const a = 3;",
+      errors: [
         {
-            code: "const a = 1;",
-            errors: 1, // ❌ Message isn't being checked here
+          message: "Error message here.", // ✅ we check the error message and potentially other properties
         },
-        {
-            code: "const a = 2;",
-            errors: [
-                "Error message here.", // ✅ we only check the error message
-            ]
-        },
-        {
-            code: "const a = 3;",
-            errors: [
-                {
-                    message: "Error message here.", // ✅ we check the error message and potentially other properties
-                }
-            ]
-        }
-    ]
+      ],
+    },
+  ],
 });
-````
+```
 
 #### requireLocation
 
 If `requireLocation` is set to `true`, the invalid test case's error validation must include all location assertions such as `line`, `column`, `endLine`, and `endColumn`.
 
-````ts
+```ts
 ruleTester.run("rule-name", rule, {
-    assertionOptions: {
-        requireLocation: true
+  assertionOptions: {
+    requireLocation: true,
+  },
+  invalid: [
+    {
+      code: "const a = 1;",
+      errors: 1, // ❌ Location isn't checked here
     },
-    invalid: [
+    {
+      code: "const a = 2;",
+      errors: [
+        "Error message here.", // ❌ Location isn't checked here
+      ],
+    },
+    {
+      code: "const a = 3;",
+      errors: [
         {
-            code: "const a = 1;",
-            errors: 1, // ❌ Location isn't checked here
+          line: 1, // ❌ Location isn't fully checked here
+          column: 1,
         },
+      ],
+    },
+    {
+      code: "const a = 4;",
+      errors: [
         {
-            code: "const a = 2;",
-            errors: [
-                "Error message here.", // ❌ Location isn't checked here
-            ]
+          line: 1, // ✅ All location properties have been checked
+          column: 1,
+          endLine: 1,
+          endColumn: 12,
         },
-        {
-            code: "const a = 3;",
-            errors: [
-                {
-                    line: 1, // ❌ Location isn't fully checked here
-                    column: 1, 
-                    
-                }
-            ]
-        },
-        {
-            code: "const a = 4;",
-            errors: [
-                {
-                    line: 1, // ✅ All location properties have been checked
-                    column: 1,
-                    endLine: 1,
-                    endColumn: 12,
-                }
-            ]
-        }
-    ]
+      ],
+    },
+  ],
 });
-````
+```
 
 ## Implementation Hint
 
-````patch
+```patch
 diff --git a/lib/rule-tester/rule-tester.js b/lib/rule-tester/rule-tester.js
 index dbd8c274f..c7a076021 100644
 --- a/lib/rule-tester/rule-tester.js
@@ -277,7 +276,7 @@ index dbd8c274f..c7a076021 100644
  						}
  
  						if (Object.keys(expectedLocation).length > 0) {
-````
+```
 
 ## Documentation
 
@@ -308,12 +307,12 @@ This change should not affect existing ESLint users or plugin developers, as it 
 ## Alternatives
 
 As an alternative to this proposal, we could add a eslint rule that applies the same assertions, but uses the central eslint config.
-While this would apply the same assertions for all rule testers, it would be a lot more complex to implement and maintain, 
+While this would apply the same assertions for all rule testers, it would be a lot more complex to implement and maintain,
 it requires identifying the RuleTester calls in the codebase and might run into issues if the assertions aren't specified inline but via a variable or transformation.
 
 ## Open Questions
 
-~~1. Is there a need for disabling scenarios like `valid` or `invalid`?~~ No, unused scenarios can be omitted using empty arrays. If needed, this option can be added later on.
+1. ~~Is there a need for disabling scenarios like `valid` or `invalid`?~~ No, unused scenarios can be omitted using empty arrays. If needed, this option can be added later on.
 2. Should we use constructor-based options or test method-based options? Do we support both? Or global options so it applies to all test files?
 3. ~~Should we enable the `requireMessage` and `requireLocation` options by default? (Breaking change)~~ No
 4. ~~Do we add a `requireMessageId` option or should we alter the `requireMessage` option to support both message and messageId assertions?~~ Just `requireMessage: boolean | 'message' | 'messageid'`
