@@ -201,6 +201,24 @@ TODO
 ---
 
 ```md
+<div>
+
+> [!NOTE]
+> Useful information that users should know, even when skimming content.
+
+</div>
+```
+
+<div>
+
+> [!NOTE]
+> Useful information that users should know, even when skimming content.
+
+</div>
+
+---
+
+```md
 <details>
 <summary>Details</summary>
 > [!NOTE]
@@ -212,6 +230,26 @@ TODO
 <summary>Details</summary>
 > [!NOTE]
 > Useful information that users should know, even when skimming content.
+</details>
+
+---
+
+```md
+<details>
+<summary>Details</summary>
+
+> [!NOTE]
+> Useful information that users should know, even when skimming content.
+
+</details>
+```
+
+<details>
+<summary>Details</summary>
+
+> [!NOTE]
+> Useful information that users should know, even when skimming content.
+
 </details>
 
 ## Documentation
