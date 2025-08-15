@@ -7,12 +7,52 @@
 
 ## Summary
 
-This RFC proposes adding support for GFM Alert syntax parsing to the `@eslint/markdown` package by implementing custom [`micromark-extension-gfm-alert`](https://github.com/micromark/micromark-extension-gfm?tab=readme-ov-file#when-to-use-this) and [`mdast-util-gfm-alert`](https://github.com/syntax-tree/mdast-util-gfm?tab=readme-ov-file#when-to-use-this) logic, and also includes the formal specification based on the [CommonMark spec](https://spec.commonmark.org/) and the [GitHub Flavored Markdown spec](https://github.github.com/gfm/).
+This RFC proposes adding support for GFM Alert syntax parsing to the `@eslint/markdown` package by implementing custom `micromark-extension-gfm-alert` and `mdast-util-gfm-alert` logic, and also includes the formal specification based on the [CommonMark spec](https://spec.commonmark.org/) and the [GitHub Flavored Markdown spec](https://github.github.com/gfm/).
 
 ## Motivation
 
-<!-- Why are we doing this? What use cases does it support? What is the expected
-outcome? -->
+The motivation for this RFC comes from [eslint/markdown#294](https://github.com/eslint/markdown/issues/294) and [eslint/markdown#449](https://github.com/eslint/markdown/issues/449).
+
+Currently, GitHub supports a special syntax for alerts that isn't mentioned in the [GitHub Flavored Markdown spec](https://github.github.com/gfm/) and isn't parsed by the existing [`micromark-extension-gfm`](https://github.com/micromark/micromark-extension-gfm?tab=readme-ov-file#when-to-use-this) or [`mdast-util-gfm`](https://github.com/syntax-tree/mdast-util-gfm?tab=readme-ov-file#when-to-use-this) packages, which are used internally by `@eslint/markdown` to parse Markdown content and create AST nodes.
+
+This RFC aims to address that gap by introducing the necessary parsing logic and formal specification for GFM Alert syntax.
+
+GFM Alert syntax is a way to create attention-grabbing blocks in Markdown content. It uses a specific syntax to denote different types of alerts, such as notes, tips, warnings, and more. The basic structure of a GFM Alert is as follows:
+
+```md
+> [!NOTE]
+> Useful information that users should know, even when skimming content.
+
+> [!TIP]
+> Helpful advice for doing things better or more easily.
+
+> [!IMPORTANT]
+> Key information users need to know to achieve their goal.
+
+> [!WARNING]
+> Urgent info that needs immediate user attention to avoid problems.
+
+> [!CAUTION]
+> Advises about risks or negative outcomes of certain actions.
+```
+
+Which is being rendered on GitHub as:
+
+> [!NOTE]
+> Useful information that users should know, even when skimming content.
+
+> [!TIP]
+> Helpful advice for doing things better or more easily.
+
+> [!IMPORTANT]
+> Key information users need to know to achieve their goal.
+
+> [!WARNING]
+> Urgent info that needs immediate user attention to avoid problems.
+
+> [!CAUTION]
+> Advises about risks or negative outcomes of certain actions.
+
 
 ## Detailed Design
 
