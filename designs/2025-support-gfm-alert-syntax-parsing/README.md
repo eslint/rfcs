@@ -65,6 +65,130 @@ Which is being rendered on GitHub as:
    used. Be sure to define any new terms in this section.
 -->
 
+### Valid Syntax
+
+#### Labels are case-insensitive
+
+<details>
+<summary>Details</summary>
+
+```md
+> [!NOTE]
+> Useful information that users should know, even when skimming content.
+```
+
+> [!NOTE]
+> Useful information that users should know, even when skimming content.
+
+---
+
+```md
+> [!note]
+> Useful information that users should know, even when skimming content.
+```
+
+> [!note]
+> Useful information that users should know, even when skimming content.
+
+---
+
+```md
+> [!Note]
+> Useful information that users should know, even when skimming content.
+```
+
+> [!Note]
+> Useful information that users should know, even when skimming content.
+
+---
+
+```md
+> [!NoTe]
+> Useful information that users should know, even when skimming content.
+```
+
+> [!NoTe]
+> Useful information that users should know, even when skimming content.
+
+---
+
+```md
+> [!nOtE]
+> Useful information that users should know, even when skimming content.
+```
+
+> [!nOtE]
+> Useful information that users should know, even when skimming content.
+
+</details>
+
+### Invalid Syntax
+
+#### `!` prefix should not be surrounded by any spaces (U+0020) or tabs (U+0009).
+
+<details>
+<summary>Details</summary>
+
+```md
+> [ !NOTE]
+> Useful information that users should know, even when skimming content.
+```
+
+> [ !NOTE]
+> Useful information that users should know, even when skimming content.
+
+---
+
+```md
+> [    !NOTE]
+> Useful information that users should know, even when skimming content.
+```
+
+> [    !NOTE]
+> Useful information that users should know, even when skimming content.
+
+---
+
+```md
+> [! NOTE]
+> Useful information that users should know, even when skimming content.
+```
+
+> [! NOTE]
+> Useful information that users should know, even when skimming content.
+
+---
+
+```md
+> [!    NOTE]
+> Useful information that users should know, even when skimming content.
+```
+
+> [!    NOTE]
+> Useful information that users should know, even when skimming content.
+
+---
+
+```md
+> [ ! NOTE]
+> Useful information that users should know, even when skimming content.
+```
+
+> [ ! NOTE]
+> Useful information that users should know, even when skimming content.
+
+---
+
+```md
+> [    !    NOTE]
+> Useful information that users should know, even when skimming content.
+```
+
+> [    !    NOTE]
+> Useful information that users should know, even when skimming content.
+
+</details>
+
 ## Documentation
 
 <!--
@@ -142,3 +266,10 @@ Which is being rendered on GitHub as:
     If there is an issue, pull request, or other URL that provides useful
     context for this proposal, please include those links here.
 -->
+
+- The reasons why GitHub Alert syntax is not included in Mdast: 
+    - https://github.com/syntax-tree/mdast-util-gfm/issues/2
+    - https://github.com/orgs/syntax-tree/discussions/144
+
+- `rehype-github-alert` library:
+    - https://github.com/rehypejs/rehype-github/tree/main/packages/alert#rehype-github-alert
