@@ -272,6 +272,8 @@ TODO
     implementing this RFC as possible.
 -->
 
+1. It's not an official GitHub Flavored Markdown specification.
+
 ## Backwards Compatibility Analysis
 
 <!--
@@ -279,6 +281,33 @@ TODO
     change for them? If so, how are you going to minimize the disruption
     to existing users?
 -->
+
+Adding the `alert` option to the [Language Options](https://github.com/eslint/markdown?tab=readme-ov-file#language-options) field will not affect existing functionality in `@eslint/markdown@7`.
+
+This option can be enabled by default when `@eslint/markdown@8` is released.
+
+```diff
+// eslint.config.js
+import { defineConfig } from "eslint/config";
+import markdown from "@eslint/markdown";
+
+export default defineConfig([
+    {
+        files: ["**/*.md"],
+        plugins: {
+            markdown
+        },
+        language: "markdown/gfm",
+        languageOptions: {
+            frontmatter: "yaml", // Or pass `"toml"` or `"json"` to enable TOML or JSON front matter parsing.
++           alert: true // Enable GFM Alert syntax parsing
+        },
+        rules: {
+            "markdown/no-html": "error"
+        }
+    }
+]);
+```
 
 ## Alternatives
 
@@ -334,5 +363,11 @@ TODO
     - https://github.com/syntax-tree/mdast-util-gfm/issues/2
     - https://github.com/orgs/syntax-tree/discussions/144
 
-- `rehype-github-alert` library:
+- `micromark-util` library reference:
+    - TODO
+
+- `mdast-util` library reference:
+    - `mdast-util-math`: https://github.com/syntax-tree/mdast-util-math
+
+- `rehype-github-alert` library reference:
     - https://github.com/rehypejs/rehype-github/tree/main/packages/alert#rehype-github-alert
