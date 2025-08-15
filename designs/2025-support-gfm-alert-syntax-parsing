@@ -7,7 +7,7 @@
 
 ## Summary
 
-<!-- One-paragraph explanation of the feature. -->
+This RFC proposes adding support for GFM Alert syntax parsing to the `@eslint/markdown` package by implementing custom [`micromark-extension-gfm-alert`](https://github.com/micromark/micromark-extension-gfm?tab=readme-ov-file#when-to-use-this) and [`mdast-util-gfm-alert`](https://github.com/syntax-tree/mdast-util-gfm?tab=readme-ov-file#when-to-use-this) logic, and also includes the formal specification based on the [CommonMark spec](https://spec.commonmark.org/) and the [GitHub Flavored Markdown spec](https://github.github.com/gfm/).
 
 ## Motivation
 
