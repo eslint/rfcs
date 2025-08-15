@@ -70,6 +70,56 @@ TODO
 
 ### Valid Syntax
 
+#### `NOTE`, `TIP`, `IMPORTANT`, `WARNING` and `CAUTION` are valid labels
+
+```md
+> [!NOTE]
+> Useful information that users should know, even when skimming content.
+```
+
+> [!NOTE]
+> Useful information that users should know, even when skimming content.
+
+---
+
+```md
+> [!TIP]
+> Helpful advice for doing things better or more easily.
+```
+
+> [!TIP]
+> Helpful advice for doing things better or more easily.
+
+---
+
+```md
+> [!IMPORTANT]
+> Key information users need to know to achieve their goal.
+```
+
+> [!IMPORTANT]
+> Key information users need to know to achieve their goal.
+
+---
+
+```md
+> [!WARNING]
+> Urgent info that needs immediate user attention to avoid problems.
+```
+
+> [!WARNING]
+> Urgent info that needs immediate user attention to avoid problems.
+
+---
+
+```md
+> [!CAUTION]
+> Advises about risks or negative outcomes of certain actions.
+```
+
+> [!CAUTION]
+> Advises about risks or negative outcomes of certain actions.
+
 #### Labels are case-insensitive
 
 ```md
@@ -120,7 +170,7 @@ TODO
 > [!nOtE]
 > Useful information that users should know, even when skimming content.
 
-#### Upto 4 indented space (U+0009) is allowed before the `[` bracket.
+#### Upto 4 indented space (U+0009) is allowed before the `[` bracket
 
 ```md
 >[!NOTE]
@@ -172,7 +222,7 @@ TODO
 
 ### Invalid Syntax
 
-#### `!` prefix should not be surrounded by any spaces (U+0020) or tabs (U+0009).
+#### `!` prefix should not be surrounded by any spaces (U+0020) or tabs (U+0009)
 
 ```md
 > [ !NOTE]
@@ -232,7 +282,7 @@ TODO
 > [    !    NOTE]
 > Useful information that users should know, even when skimming content.
 
-#### Labels should not end with spaces (U+0020) or tabs (U+0009).
+#### Labels should not end with spaces (U+0020) or tabs (U+0009)
 
 ```md
 > [!NOTE ]
@@ -252,7 +302,27 @@ TODO
 > [!NOTE    ]
 > Useful information that users should know, even when skimming content.
 
-#### Alert syntax should not be enclosed in HTML opening or closing tags.
+#### Only spaces (U+0020), tabs (U+0009), and [line ending](https://spec.commonmark.org/0.31.2/#line-ending) are allowed after the `]` bracket
+
+```md
+> [!NOTE]hi
+> Useful information that users should know, even when skimming content.
+```
+
+> [!NOTE]hi
+> Useful information that users should know, even when skimming content.
+
+---
+
+```md
+> [!NOTE] hi
+> Useful information that users should know, even when skimming content.
+```
+
+> [!NOTE] hi
+> Useful information that users should know, even when skimming content.
+
+#### Alert syntax should not be enclosed in HTML opening or closing tags
 
 ```md
 <div>
