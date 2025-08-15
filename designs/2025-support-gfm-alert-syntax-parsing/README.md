@@ -64,8 +64,31 @@ TODO
 
 ### Type Interface
 
+`Alert` interface extends [`Blockquote`](https://github.com/syntax-tree/mdast?tab=readme-ov-file#blockquote) node type of Mdast.
+
 ```ts
-TODO
+import type { Blockquote } from "mdast";
+
+interface Alert extends Blockquote {
+    /**
+     * Node type of mdast GFM alert.
+     */
+    type: "alert";
+    /**
+     * The label of the alert. It determines the style and semantics of the alert.
+     * 
+     * Its value should remain in its parsed form and should not be normalized.
+     *
+     * You can normalize its value by converting it to lowercase.
+     * The normalized value should be one of the following:
+     * - `"note"`
+     * - `"tip"`
+     * - `"important"`
+     * - `"warning"`
+     * - `"caution"`
+     */
+    label: string;
+}
 ```
 
 ### Valid Syntax
