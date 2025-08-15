@@ -56,21 +56,21 @@ Which is being rendered on GitHub as:
 
 ## Detailed Design
 
-<!--
-   This is the bulk of the RFC.
+### Terms
 
-   Explain the design with enough detail that someone familiar with ESLint
-   can implement it by reading this document. Please get into specifics
-   of your approach, corner cases, and examples of how the change will be
-   used. Be sure to define any new terms in this section.
--->
+Before explaining the design, it's important to define some key terms:
+
+TODO
+
+### Type Interface
+
+```ts
+TODO
+```
 
 ### Valid Syntax
 
 #### Labels are case-insensitive
-
-<details>
-<summary>Details</summary>
 
 ```md
 > [!NOTE]
@@ -126,67 +126,92 @@ Which is being rendered on GitHub as:
 
 #### `!` prefix should not be surrounded by any spaces (U+0020) or tabs (U+0009).
 
+```md
+> [ !NOTE]
+> Useful information that users should know, even when skimming content.
+```
+
+> [ !NOTE]
+> Useful information that users should know, even when skimming content.
+
+---
+
+```md
+> [    !NOTE]
+> Useful information that users should know, even when skimming content.
+```
+
+> [    !NOTE]
+> Useful information that users should know, even when skimming content.
+
+---
+
+```md
+> [! NOTE]
+> Useful information that users should know, even when skimming content.
+```
+
+> [! NOTE]
+> Useful information that users should know, even when skimming content.
+
+---
+
+```md
+> [!    NOTE]
+> Useful information that users should know, even when skimming content.
+```
+
+> [!    NOTE]
+> Useful information that users should know, even when skimming content.
+
+---
+
+```md
+> [ ! NOTE]
+> Useful information that users should know, even when skimming content.
+```
+
+> [ ! NOTE]
+> Useful information that users should know, even when skimming content.
+
+---
+
+```md
+> [    !    NOTE]
+> Useful information that users should know, even when skimming content.
+```
+
+> [    !    NOTE]
+> Useful information that users should know, even when skimming content.
+
+#### Alert syntax should not be enclosed in HTML opening or closing tags.
+
+```md
+<div>
+> [!NOTE]
+> Useful information that users should know, even when skimming content.
+</div>
+```
+
+<div>
+> [!NOTE]
+> Useful information that users should know, even when skimming content.
+</div>
+
+---
+
+```md
 <details>
 <summary>Details</summary>
-
-```md
-> [ !NOTE]
+> [!NOTE]
 > Useful information that users should know, even when skimming content.
+</details>
 ```
 
-> [ !NOTE]
+<details>
+<summary>Details</summary>
+> [!NOTE]
 > Useful information that users should know, even when skimming content.
-
----
-
-```md
-> [    !NOTE]
-> Useful information that users should know, even when skimming content.
-```
-
-> [    !NOTE]
-> Useful information that users should know, even when skimming content.
-
----
-
-```md
-> [! NOTE]
-> Useful information that users should know, even when skimming content.
-```
-
-> [! NOTE]
-> Useful information that users should know, even when skimming content.
-
----
-
-```md
-> [!    NOTE]
-> Useful information that users should know, even when skimming content.
-```
-
-> [!    NOTE]
-> Useful information that users should know, even when skimming content.
-
----
-
-```md
-> [ ! NOTE]
-> Useful information that users should know, even when skimming content.
-```
-
-> [ ! NOTE]
-> Useful information that users should know, even when skimming content.
-
----
-
-```md
-> [    !    NOTE]
-> Useful information that users should know, even when skimming content.
-```
-
-> [    !    NOTE]
-> Useful information that users should know, even when skimming content.
-
 </details>
 
 ## Documentation
