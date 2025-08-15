@@ -120,7 +120,55 @@ TODO
 > [!nOtE]
 > Useful information that users should know, even when skimming content.
 
-</details>
+#### Upto 4 indented space (U+0009) is allowed before the `[` bracket.
+
+```md
+>[!NOTE]
+> Useful information that users should know, even when skimming content.
+```
+
+>[!NOTE]
+> Useful information that users should know, even when skimming content.
+
+---
+
+```md
+> [!NOTE]
+> Useful information that users should know, even when skimming content.
+```
+
+> [!NOTE]
+> Useful information that users should know, even when skimming content.
+
+---
+
+```md
+>  [!NOTE]
+> Useful information that users should know, even when skimming content.
+```
+
+>  [!NOTE]
+> Useful information that users should know, even when skimming content.
+
+---
+
+```md
+>   [!NOTE]
+> Useful information that users should know, even when skimming content.
+```
+
+>   [!NOTE]
+> Useful information that users should know, even when skimming content.
+
+---
+
+```md
+>    [!NOTE]
+> Useful information that users should know, even when skimming content.
+```
+
+>    [!NOTE]
+> Useful information that users should know, even when skimming content.
 
 ### Invalid Syntax
 
@@ -182,6 +230,26 @@ TODO
 ```
 
 > [    !    NOTE]
+> Useful information that users should know, even when skimming content.
+
+#### Labels should not end with spaces (U+0020) or tabs (U+0009).
+
+```md
+> [!NOTE ]
+> Useful information that users should know, even when skimming content.
+```
+
+> [!NOTE ]
+> Useful information that users should know, even when skimming content.
+
+---
+
+```md
+> [!NOTE    ]
+> Useful information that users should know, even when skimming content.
+```
+
+> [!NOTE    ]
 > Useful information that users should know, even when skimming content.
 
 #### Alert syntax should not be enclosed in HTML opening or closing tags.
