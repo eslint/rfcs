@@ -1,6 +1,6 @@
 - Repo: eslint/markdown
 - Start Date: 2025-08-15
-- RFC PR: TODO
+- RFC PR: https://github.com/eslint/rfcs/pull/138
 - Authors: 루밀LuMir(lumirlumir)
 
 # Support GFM Alert syntax parsing
