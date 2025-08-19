@@ -414,7 +414,7 @@ Here are some examples of invalid GFM Alert syntax:
 > [!NOTE] hi
 > Useful information that users should know, even when skimming content.
 
-#### Single-line GFM Alert syntax (without content) isn't working
+#### GFM Alert syntax without content isn't working
 
 ```md
 > [!NOTE]
@@ -431,6 +431,30 @@ Here are some examples of invalid GFM Alert syntax:
 
 > [!NOTE]
 >
+
+#### Multi-line GFM Alert syntax isn't working
+
+```md
+> [
+> !NOTE]
+> Useful information that users should know, even when skimming content.
+```
+
+> [
+> !NOTE]
+> Useful information that users should know, even when skimming content.
+
+---
+
+```md
+> [!NOTE
+> ]
+> Useful information that users should know, even when skimming content.
+```
+
+> [!NOTE
+> ]
+> Useful information that users should know, even when skimming content.
 
 #### Nested GFM Alert syntax isn't working
 
