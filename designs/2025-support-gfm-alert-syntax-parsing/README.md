@@ -374,6 +374,26 @@ Here are some examples of invalid GFM Alert syntax:
 > [!NOTE    ]
 > Useful information that users should know, even when skimming content.
 
+#### Only ***space***s and ***tab***s are allowed before the ***opening square bracket***
+
+```md
+> hi[!NOTE]
+> Useful information that users should know, even when skimming content.
+```
+
+> hi[!NOTE]
+> Useful information that users should know, even when skimming content.
+
+---
+
+```md
+> hi [!NOTE]
+> Useful information that users should know, even when skimming content.
+```
+
+> hi [!NOTE]
+> Useful information that users should know, even when skimming content.
+
 #### Only ***space***s, ***tab***s, and ***line ending***s are allowed after the ***closing square bracket***
 
 ```md
