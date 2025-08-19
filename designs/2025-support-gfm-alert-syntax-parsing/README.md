@@ -424,10 +424,7 @@ Here are some examples of invalid GFM Alert syntax:
 
 ## Documentation
 
-<!--
-    How will this RFC be documented? Does it need a formal announcement
-    on the ESLint blog to explain the motivation?
--->
+We need to update the [`README.md`](https://github.com/eslint/markdown?tab=readme-ov-file#eslint-markdown-language-plugin) for `@eslint/markdown` to include details about the new GFM Alert syntax parsing feature. In particular, we should document the new `alert` option under the [Language Options](https://github.com/eslint/markdown?tab=readme-ov-file#language-options) section.  
 
 ## Drawbacks
 
