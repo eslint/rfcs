@@ -555,7 +555,7 @@ We need to update the [`README.md`](https://github.com/eslint/markdown?tab=readm
 
 ## Backwards Compatibility Analysis
 
-Adding the `alert` option to the [Language Options](https://github.com/eslint/markdown?tab=readme-ov-file#language-options) field will not affect existing functionality in `@eslint/markdown@7`.
+Adding the `alert` option to the [Language Options](https://github.com/eslint/markdown?tab=readme-ov-file#language-options) and set it to `false` by default will not affect existing functionality in `@eslint/markdown@7`.
 
 If desired, this option could be enabled by default in `@eslint/markdown@8`.
 
