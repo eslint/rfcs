@@ -573,7 +573,7 @@ export default defineConfig([
         language: "markdown/gfm",
         languageOptions: {
             frontmatter: "yaml", // Or pass `"toml"` or `"json"` to enable TOML or JSON front matter parsing.
-+           alert: true // Enable GFM alert syntax parsing
++           alert: true // Enable GFM alert syntax parsing (default: `false`)
         },
         rules: {
             "markdown/no-html": "error"
