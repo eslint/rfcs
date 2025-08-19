@@ -250,6 +250,46 @@ Here are some examples of valid GFM Alert syntax:
 >    [!NOTE]
 > Useful information that users should know, even when skimming content.
 
+#### Upto 3 indented ***space*** is allowed before the ***closing angle bracket***
+
+```md
+> [!NOTE]
+> Useful information that users should know, even when skimming content.
+```
+
+> [!NOTE]
+> Useful information that users should know, even when skimming content.
+
+---
+
+```md
+ > [!NOTE]
+ > Useful information that users should know, even when skimming content.
+```
+
+ > [!NOTE]
+ > Useful information that users should know, even when skimming content.
+
+---
+
+```md
+  > [!NOTE]
+  > Useful information that users should know, even when skimming content.
+```
+
+  > [!NOTE]
+  > Useful information that users should know, even when skimming content.
+
+---
+
+```md
+   > [!NOTE]
+   > Useful information that users should know, even when skimming content.
+```
+
+   > [!NOTE]
+   > Useful information that users should know, even when skimming content.
+
 ### Invalid Syntax
 
 Here are some examples of invalid GFM Alert syntax:
