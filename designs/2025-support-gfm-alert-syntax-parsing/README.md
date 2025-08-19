@@ -7,7 +7,7 @@
 
 ## Summary
 
-This RFC proposes adding support for GFM Alert syntax parsing to the `@eslint/markdown` package by implementing `micromark-extension-gfm-alert` and `mdast-util-gfm-alert` custom plugin logic, and also includes the formal specification based on the [CommonMark spec](https://spec.commonmark.org/) and the [GitHub Flavored Markdown spec](https://github.github.com/gfm/).
+This RFC proposes adding support for GFM Alert syntax parsing to the [`@eslint/markdown`](https://github.com/eslint/markdown) package by implementing `micromark-extension-gfm-alert` and `mdast-util-gfm-alert` custom plugin logic, and also includes the formal specification based on the [CommonMark spec](https://spec.commonmark.org/) and the [GitHub Flavored Markdown spec](https://github.github.com/gfm/).
 
 ## Motivation
 
@@ -15,7 +15,7 @@ The motivation for this RFC comes from [eslint/markdown#294](https://github.com/
 
 Currently, GitHub supports a special syntax for alerts that isn't mentioned in the [GitHub Flavored Markdown spec](https://github.github.com/gfm/) and isn't parsed by the existing [`micromark-extension-gfm`](https://github.com/micromark/micromark-extension-gfm?tab=readme-ov-file#when-to-use-this) and [`mdast-util-gfm`](https://github.com/syntax-tree/mdast-util-gfm?tab=readme-ov-file#when-to-use-this) packages, which are used internally by `@eslint/markdown` to parse Markdown content and create AST nodes.
 
-Inconsistencies between GitHub's GFM alert syntax and existing Markdown parsers cause false positives and false negatives in some situations, especially when writing rules whose syntax overlaps with GitHub's alert syntax.
+Inconsistencies between GitHub's GFM alert syntax and existing Markdown parsers can cause false positives and false negatives in some cases, especially when writing rules that detect error-prone syntax and when the syntax overlaps with GitHub's alert syntax.
 
 This RFC aims to address that gap by introducing the necessary parsing logic and formal specification for GFM Alert syntax.
 
