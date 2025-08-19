@@ -354,6 +354,36 @@ Here are some examples of invalid GFM Alert syntax:
 > [!NOTE] hi
 > Useful information that users should know, even when skimming content.
 
+#### Single-line GFM Alert syntax (without content) isn't working
+
+```md
+> [!NOTE]
+```
+
+> [!NOTE]
+
+---
+
+```md
+> [!NOTE]
+>
+```
+
+> [!NOTE]
+>
+
+#### Nested GFM Alert syntax isn't working
+
+```md
+> > [!NOTE]
+> > Useful information that users should know, even when skimming content.
+```
+
+---
+
+> > [!NOTE]
+> > Useful information that users should know, even when skimming content.
+
 #### GFM Alert syntax should not be enclosed in HTML opening or closing tags
 
 ```md
