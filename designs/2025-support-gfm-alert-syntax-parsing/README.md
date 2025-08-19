@@ -3,11 +3,11 @@
 - RFC PR: https://github.com/eslint/rfcs/pull/138
 - Authors: 루밀LuMir(lumirlumir)
 
-# Support GFM Alert syntax parsing
+# Support GFM alert syntax parsing
 
 ## Summary
 
-This RFC proposes adding support for GFM Alert syntax parsing to the [`@eslint/markdown`](https://github.com/eslint/markdown) package by implementing `micromark-extension-gfm-alert` and `mdast-util-gfm-alert` custom plugin logic, and also includes the formal specification based on the [CommonMark spec](https://spec.commonmark.org/) and the [GitHub Flavored Markdown spec](https://github.github.com/gfm/).
+This RFC proposes adding support for GFM alert syntax parsing to the [`@eslint/markdown`](https://github.com/eslint/markdown) package by implementing `micromark-extension-gfm-alert` and `mdast-util-gfm-alert` custom plugin logic, and also includes the formal specification based on the [CommonMark spec](https://spec.commonmark.org/) and the [GitHub Flavored Markdown spec](https://github.github.com/gfm/).
 
 ## Motivation
 
@@ -17,9 +17,9 @@ Currently, GitHub supports a special syntax for alerts that isn't mentioned in t
 
 Inconsistencies between GitHub's GFM alert syntax and existing Markdown parsers can cause false positives and false negatives in some cases, especially when writing rules that detect error-prone syntax and when the syntax overlaps with GitHub's alert syntax.
 
-This RFC aims to address that gap by introducing the necessary parsing logic and formal specification for GFM Alert syntax.
+This RFC aims to address that gap by introducing the necessary parsing logic and formal specification for GFM alert syntax.
 
-GFM Alert syntax is a way to create attention-grabbing blocks in Markdown content. It uses a specific syntax to denote different types of alerts, such as notes, tips, warnings, and more. The basic structure of a GFM Alert is as follows:
+GFM alert syntax is a way to create attention-grabbing blocks in Markdown content. It uses a specific syntax to denote different types of alerts, such as notes, tips, warnings, and more. The basic structure of a GFM alert is as follows:
 
 ```md
 > [!NOTE]
@@ -73,7 +73,7 @@ Before explaining the design, it's important to define some key terms:
 
 ### Type Interface
 
-Since GFM Alert syntax is part of blockquote syntax from Markdown, `Alert` interface extends [`Blockquote`](https://github.com/syntax-tree/mdast?tab=readme-ov-file#blockquote) node type of Mdast.
+Since GFM alert syntax is part of blockquote syntax from Markdown, `Alert` interface extends [`Blockquote`](https://github.com/syntax-tree/mdast?tab=readme-ov-file#blockquote) node type of Mdast.
 
 ```ts
 import type { Blockquote } from "mdast";
@@ -98,7 +98,7 @@ interface Alert extends Blockquote {
 
 ### Valid Syntax
 
-Here are some examples of valid GFM Alert syntax:
+Here are some examples of valid GFM alert syntax:
 
 #### `NOTE`, `TIP`, `IMPORTANT`, `WARNING` and `CAUTION` are valid ***label***s
 
@@ -292,7 +292,7 @@ Here are some examples of valid GFM Alert syntax:
 
 ### Invalid Syntax
 
-Here are some examples of invalid GFM Alert syntax:
+Here are some examples of invalid GFM alert syntax:
 
 #### ***exclamation mark*** should not be surrounded by any ***space***s or ***tab***s
 
@@ -414,7 +414,7 @@ Here are some examples of invalid GFM Alert syntax:
 > [!NOTE] hi
 > Useful information that users should know, even when skimming content.
 
-#### GFM Alert syntax without content isn't working
+#### GFM alert syntax without content isn't working
 
 ```md
 > [!NOTE]
@@ -432,7 +432,7 @@ Here are some examples of invalid GFM Alert syntax:
 > [!NOTE]
 >
 
-#### Multi-line GFM Alert syntax isn't working
+#### Multi-line GFM alert syntax isn't working
 
 ```md
 > [
@@ -456,7 +456,7 @@ Here are some examples of invalid GFM Alert syntax:
 > ]
 > Useful information that users should know, even when skimming content.
 
-#### Nested GFM Alert syntax isn't working
+#### Nested GFM alert syntax isn't working
 
 ```md
 > > [!NOTE]
@@ -476,7 +476,7 @@ Here are some examples of invalid GFM Alert syntax:
 - > [!NOTE]
 - > Useful information that users should know, even when skimming content.
 
-#### GFM Alert syntax should not be enclosed in HTML opening or closing tags
+#### GFM alert syntax should not be enclosed in HTML opening or closing tags
 
 ```md
 <div>
@@ -546,7 +546,7 @@ Here are some examples of invalid GFM Alert syntax:
 
 ## Documentation
 
-We need to update the [`README.md`](https://github.com/eslint/markdown?tab=readme-ov-file#eslint-markdown-language-plugin) for `@eslint/markdown` to include details about the new GFM Alert syntax parsing feature. In particular, we should document the new `alert` option under the [Language Options](https://github.com/eslint/markdown?tab=readme-ov-file#language-options) section.  
+We need to update the [`README.md`](https://github.com/eslint/markdown?tab=readme-ov-file#eslint-markdown-language-plugin) for `@eslint/markdown` to include details about the new GFM alert syntax parsing feature. In particular, we should document the new `alert` option under the [Language Options](https://github.com/eslint/markdown?tab=readme-ov-file#language-options) section.  
 
 ## Drawbacks
 
@@ -573,7 +573,7 @@ export default defineConfig([
         language: "markdown/gfm",
         languageOptions: {
             frontmatter: "yaml", // Or pass `"toml"` or `"json"` to enable TOML or JSON front matter parsing.
-+           alert: true // Enable GFM Alert syntax parsing
++           alert: true // Enable GFM alert syntax parsing
         },
         rules: {
             "markdown/no-html": "error"
@@ -588,7 +588,7 @@ I cannot find any significant alternatives to this proposal. but I am open to su
 
 ### Pre-existing Implementations
 
-There are existing implementations of GFM Alert syntax parsing in other Markdown and HTML parsers:
+There are existing implementations of GFM alert syntax parsing in other Markdown and HTML parsers:
 
 - `rehype-github-alert`: https://github.com/rehypejs/rehype-github/tree/main/packages/alert#rehype-github-alert
 - `markdown-it-github-alert`: https://github.com/antfu/markdown-it-github-alerts
@@ -609,7 +609,7 @@ N/A
 
 ## Related Discussions
 
-### The reasons why GitHub Alert syntax is not included in Mdast
+### The reasons why GitHub alert syntax is not included in Mdast
 
 - https://github.com/syntax-tree/mdast-util-gfm/issues/2
 - https://github.com/orgs/syntax-tree/discussions/144
