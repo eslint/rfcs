@@ -439,10 +439,18 @@ Here are some examples of invalid GFM Alert syntax:
 > > Useful information that users should know, even when skimming content.
 ```
 
----
-
 > > [!NOTE]
 > > Useful information that users should know, even when skimming content.
+
+---
+
+```md
+- > [!NOTE]
+- > Useful information that users should know, even when skimming content.
+```
+
+- > [!NOTE]
+- > Useful information that users should know, even when skimming content.
 
 #### GFM Alert syntax should not be enclosed in HTML opening or closing tags
 
