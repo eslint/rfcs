@@ -1,5 +1,5 @@
 - Repo: eslint/markdown
-- Start Date: 2025-08-15
+- Start Date: 2025-08-19
 - RFC PR: https://github.com/eslint/rfcs/pull/138
 - Authors: 루밀LuMir(lumirlumir)
 
@@ -7,13 +7,15 @@
 
 ## Summary
 
-This RFC proposes adding support for GFM Alert syntax parsing to the `@eslint/markdown` package by implementing custom `micromark-extension-gfm-alert` and `mdast-util-gfm-alert` logic, and also includes the formal specification based on the [CommonMark spec](https://spec.commonmark.org/) and the [GitHub Flavored Markdown spec](https://github.github.com/gfm/).
+This RFC proposes adding support for GFM Alert syntax parsing to the `@eslint/markdown` package by implementing `micromark-extension-gfm-alert` and `mdast-util-gfm-alert` custom plugin logic, and also includes the formal specification based on the [CommonMark spec](https://spec.commonmark.org/) and the [GitHub Flavored Markdown spec](https://github.github.com/gfm/).
 
 ## Motivation
 
 The motivation for this RFC comes from [eslint/markdown#294](https://github.com/eslint/markdown/issues/294) and [eslint/markdown#449](https://github.com/eslint/markdown/issues/449).
 
-Currently, GitHub supports a special syntax for alerts that isn't mentioned in the [GitHub Flavored Markdown spec](https://github.github.com/gfm/) and isn't parsed by the existing [`micromark-extension-gfm`](https://github.com/micromark/micromark-extension-gfm?tab=readme-ov-file#when-to-use-this) or [`mdast-util-gfm`](https://github.com/syntax-tree/mdast-util-gfm?tab=readme-ov-file#when-to-use-this) packages, which are used internally by `@eslint/markdown` to parse Markdown content and create AST nodes.
+Currently, GitHub supports a special syntax for alerts that isn't mentioned in the [GitHub Flavored Markdown spec](https://github.github.com/gfm/) and isn't parsed by the existing [`micromark-extension-gfm`](https://github.com/micromark/micromark-extension-gfm?tab=readme-ov-file#when-to-use-this) and [`mdast-util-gfm`](https://github.com/syntax-tree/mdast-util-gfm?tab=readme-ov-file#when-to-use-this) packages, which are used internally by `@eslint/markdown` to parse Markdown content and create AST nodes.
+
+Inconsistencies between GitHub's GFM alert syntax and existing Markdown parsers cause false positives and false negatives in some situations, especially when writing rules whose syntax overlaps with GitHub's alert syntax.
 
 This RFC aims to address that gap by introducing the necessary parsing logic and formal specification for GFM Alert syntax.
 
@@ -60,11 +62,18 @@ Which is being rendered on GitHub as:
 
 Before explaining the design, it's important to define some key terms:
 
-TODO
+- ***closing angle bracket***: The `>` (U+003E) character that denotes a block quote in Markdown.
+- ***opening square bracket***: The `[` (U+005B) character that starts the alert syntax.
+- ***closing square bracket***: The `]` (U+005D) character that ends the alert syntax.
+- ***exclamation mark***: The `!` (U+0021) character is used as a prefix to denote the alert type.
+- ***space***: The ` ` (U+0020) character that separates the block quote marker from the alert syntax.
+- ***tab***: The `\t` (U+0009) character that represents a tab.
+- ***line ending***: According to the [CommonMark spec](https://spec.commonmark.org/0.31.2/#line-ending), A line ending is a line feed (U+000A), a carriage return (U+000D) not followed by a line feed, or a carriage return and a following line feed.
+- ***label***: The text that appears inside the ***opening square bracket*** and ***closing square bracket*** and is prefixed by an ***exclamation mark***. It determines the style and semantics of the alert.
 
 ### Type Interface
 
-`Alert` interface extends [`Blockquote`](https://github.com/syntax-tree/mdast?tab=readme-ov-file#blockquote) node type of Mdast.
+Since GFM Alert syntax is part of blockquote syntax from Markdown, `Alert` interface extends [`Blockquote`](https://github.com/syntax-tree/mdast?tab=readme-ov-file#blockquote) node type of Mdast.
 
 ```ts
 import type { Blockquote } from "mdast";
@@ -73,27 +82,25 @@ interface Alert extends Blockquote {
     /**
      * Node type of mdast GFM alert.
      */
-    type: "alert";
+    type: "alert",
+
     /**
      * The label of the alert. It determines the style and semantics of the alert.
      * 
      * Its value should remain in its parsed form and should not be normalized.
      *
      * You can normalize its value by converting it to lowercase.
-     * The normalized value should be one of the following:
-     * - `"note"`
-     * - `"tip"`
-     * - `"important"`
-     * - `"warning"`
-     * - `"caution"`
+     * The normalized value should be one of the following: `"note"`, `"tip"`, `"important"`, `"warning"`, `"caution"`
      */
-    label: string;
+    label: string,
 }
 ```
 
 ### Valid Syntax
 
-#### `NOTE`, `TIP`, `IMPORTANT`, `WARNING` and `CAUTION` are valid labels
+Here are some examples of valid GFM Alert syntax:
+
+#### `NOTE`, `TIP`, `IMPORTANT`, `WARNING` and `CAUTION` are valid ***label***s
 
 ```md
 > [!NOTE]
@@ -143,7 +150,7 @@ interface Alert extends Blockquote {
 > [!CAUTION]
 > Advises about risks or negative outcomes of certain actions.
 
-#### Labels are case-insensitive
+#### ***Label***s are case-insensitive
 
 ```md
 > [!NOTE]
@@ -193,7 +200,7 @@ interface Alert extends Blockquote {
 > [!nOtE]
 > Useful information that users should know, even when skimming content.
 
-#### Upto 4 indented space (U+0009) is allowed before the `[` bracket
+#### Upto 4 indented ***space*** is allowed before the ***opening square bracket***
 
 ```md
 >[!NOTE]
@@ -245,7 +252,9 @@ interface Alert extends Blockquote {
 
 ### Invalid Syntax
 
-#### `!` prefix should not be surrounded by any spaces (U+0020) or tabs (U+0009)
+Here are some examples of invalid GFM Alert syntax:
+
+#### ***exclamation mark*** should not be surrounded by any ***space***s or ***tab***s
 
 ```md
 > [ !NOTE]
@@ -305,7 +314,7 @@ interface Alert extends Blockquote {
 > [    !    NOTE]
 > Useful information that users should know, even when skimming content.
 
-#### Labels should not end with spaces (U+0020) or tabs (U+0009)
+#### ***Label***s should not end with ***space***s or ***tab***s
 
 ```md
 > [!NOTE ]
@@ -325,7 +334,7 @@ interface Alert extends Blockquote {
 > [!NOTE    ]
 > Useful information that users should know, even when skimming content.
 
-#### Only spaces (U+0020), tabs (U+0009), and [line ending](https://spec.commonmark.org/0.31.2/#line-ending) are allowed after the `]` bracket
+#### Only ***space***s, ***tab***s, and ***line ending***s are allowed after the ***closing square bracket***
 
 ```md
 > [!NOTE]hi
@@ -345,7 +354,7 @@ interface Alert extends Blockquote {
 > [!NOTE] hi
 > Useful information that users should know, even when skimming content.
 
-#### Alert syntax should not be enclosed in HTML opening or closing tags
+#### GFM Alert syntax should not be enclosed in HTML opening or closing tags
 
 ```md
 <div>
@@ -422,30 +431,14 @@ interface Alert extends Blockquote {
 
 ## Drawbacks
 
-<!--
-    Why should we *not* do this? Consider why adding this into ESLint
-    might not benefit the project or the community. Attempt to think 
-    about any opposing viewpoints that reviewers might bring up. 
-
-    Any change has potential downsides, including increased maintenance
-    burden, incompatibility with other tools, breaking existing user
-    experience, etc. Try to identify as many potential problems with
-    implementing this RFC as possible.
--->
-
-1. It's not an official GitHub Flavored Markdown specification.
+1. This is not part of the official CommonMark or GitHub Flavored Markdown specifications.
+2. It may not be widely adopted outside of GitHub, which could lead to inconsistencies in Markdown parsing across different platforms.
 
 ## Backwards Compatibility Analysis
 
-<!--
-    How does this change affect existing ESLint users? Will any behavior
-    change for them? If so, how are you going to minimize the disruption
-    to existing users?
--->
-
 Adding the `alert` option to the [Language Options](https://github.com/eslint/markdown?tab=readme-ov-file#language-options) field will not affect existing functionality in `@eslint/markdown@7`.
 
-This option can be enabled by default when `@eslint/markdown@8` is released.
+If desired, this option could be enabled by default in `@eslint/markdown@8`.
 
 ```diff
 // eslint.config.js
@@ -472,63 +465,41 @@ export default defineConfig([
 
 ## Alternatives
 
-<!--
-    What other designs did you consider? Why did you decide against those?
+I cannot find any significant alternatives to this proposal. but I am open to suggestions.
 
-    This section should also include prior art, such as whether similar
-    projects have already implemented a similar feature.
--->
+### Pre-existing Implementations
+
+There are existing implementations of GFM Alert syntax parsing in other Markdown and HTML parsers:
+
+- `rehype-github-alert`: https://github.com/rehypejs/rehype-github/tree/main/packages/alert#rehype-github-alert
+- `markdown-it-github-alert`: https://github.com/antfu/markdown-it-github-alerts
 
 ## Open Questions
 
-<!--
-    This section is optional, but is suggested for a first draft.
-
-    What parts of this proposal are you unclear about? What do you
-    need to know before you can finalize this RFC?
-
-    List the questions that you'd like reviewers to focus on. When
-    you've received the answers and updated the design to reflect them, 
-    you can remove this section.
--->
+1. Will the `micromark-extension-gfm-alert` and `mdast-util-gfm-alert` plugins be published as separate packages?
 
 ## Help Needed
 
-<!--
-    This section is optional.
+I've been reviewing the `micromark-extension` and `mdast-util` guides and implementations, but I'm not sure how best to implement the `micromark-extension-gfm-alert` and `mdast-util-gfm-alert` plugins.
 
-    Are you able to implement this RFC on your own? If not, what kind
-    of help would you need from the team?
--->
+I'd appreciate any guidance while I work on this, or help from anyone willing to take it on.
 
 ## Frequently Asked Questions
 
-<!--
-    This section is optional but suggested.
-
-    Try to anticipate points of clarification that might be needed by
-    the people reviewing this RFC. Include those questions and answers
-    in this section.
--->
+N/A
 
 ## Related Discussions
 
-<!--
-    This section is optional but suggested.
+### The reasons why GitHub Alert syntax is not included in Mdast
 
-    If there is an issue, pull request, or other URL that provides useful
-    context for this proposal, please include those links here.
--->
+- https://github.com/syntax-tree/mdast-util-gfm/issues/2
+- https://github.com/orgs/syntax-tree/discussions/144
 
-- The reasons why GitHub Alert syntax is not included in Mdast: 
-    - https://github.com/syntax-tree/mdast-util-gfm/issues/2
-    - https://github.com/orgs/syntax-tree/discussions/144
+### `micromark-extension` references
 
-- `micromark-util` library reference:
-    - TODO
+- Creating a micromark extension: https://github.com/micromark/micromark?tab=readme-ov-file#creating-a-micromark-extension
 
-- `mdast-util` library reference:
-    - `mdast-util-math`: https://github.com/syntax-tree/mdast-util-math
-
-- `rehype-github-alert` library reference:
-    - https://github.com/rehypejs/rehype-github/tree/main/packages/alert#rehype-github-alert
+### `mdast-util` references
+    
+- `mdast-util-math`: https://github.com/syntax-tree/mdast-util-math
+- `mdast-util-gfm-task-list-item`: https://github.com/syntax-tree/mdast-util-gfm-task-list-item
