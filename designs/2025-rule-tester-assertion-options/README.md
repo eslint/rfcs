@@ -32,7 +32,8 @@ new RuleTester(testerConfig: {...}, assertionOptions: {
   requireMessage: boolean | 'message' | 'messageId';
   /**
    * Require full location assertions for each invalid test case.
-   * If `true`, errors must extend `Array<{ line: number, column: number, endLine: number, endColumn: number }>`.
+   * If `true`, errors must extend `Array<{ line: number, column: number, endLine?: number | undefined, endColumn?: number | undefined }>`.
+   * `endLine` or `endColumn` may be absent, if the observed error does not contain these properties.
    *
    * @default false
    */
@@ -56,7 +57,8 @@ ruleTester.run("rule-name", rule, {
     requireMessage?: boolean | 'message' | 'messageId';
     /**
      * Require full location assertions for each invalid test case.
-     * If `true`, errors must extend `Array<{ line: number, column: number, endLine: number, endColumn: number }>`.
+     * If `true`, errors must extend `Array<{ line: number, column: number, endLine?: number | undefined, endColumn?: number | undefined }>`.
+     * `endLine` or `endColumn` may be absent or undefined, if the observed error does not contain these properties.
      *
      * @default false
      */
@@ -108,6 +110,7 @@ ruleTester.run("rule-name", rule, {
 #### requireLocation
 
 If `requireLocation` is set to `true`, the invalid test case's error validation must include all location assertions such as `line`, `column`, `endLine`, and `endColumn`.
+`endLine` or `endColumn` may be absent or `undefined`, if the observed error does not contain these properties.
 
 ```ts
 ruleTester.run("rule-name", rule, {
@@ -153,7 +156,7 @@ ruleTester.run("rule-name", rule, {
 
 ```patch
 diff --git a/lib/rule-tester/rule-tester.js b/lib/rule-tester/rule-tester.js
-index dbd8c274f..c7a076021 100644
+index dbd8c274f..b39631faa 100644
 --- a/lib/rule-tester/rule-tester.js
 +++ b/lib/rule-tester/rule-tester.js
 @@ -555,6 +555,10 @@ class RuleTester {
@@ -167,7 +170,7 @@ index dbd8c274f..c7a076021 100644
  	 *   valid: (ValidTestCase | string)[],
  	 *   invalid: InvalidTestCase[]
  	 * }} test The collection of tests to run.
-@@ -563,6 +567,13 @@ class RuleTester {
+@@ -563,6 +567,14 @@ class RuleTester {
  	 * @returns {void}
  	 */
  	run(ruleName, rule, test) {
@@ -177,11 +180,12 @@ index dbd8c274f..c7a076021 100644
 +			);
 +		}
 +
-+		const { requireMessage = false, requireLocation = false } = test.assertionOptions ?? {};
++		const { requireMessage = false, requireLocation = false } =
++			test.assertionOptions ?? {};
  		const testerConfig = this.testerConfig,
  			requiredScenarios = ["valid", "invalid"],
  			scenarioErrors = [],
-@@ -582,12 +593,6 @@ class RuleTester {
+@@ -582,12 +594,6 @@ class RuleTester {
  			);
  		}
  
@@ -194,7 +198,7 @@ index dbd8c274f..c7a076021 100644
  		requiredScenarios.forEach(scenarioType => {
  			if (!test[scenarioType]) {
  				scenarioErrors.push(
-@@ -1092,6 +1097,10 @@ class RuleTester {
+@@ -1092,6 +1098,10 @@ class RuleTester {
  			}
  
  			if (typeof item.errors === "number") {
@@ -205,7 +209,7 @@ index dbd8c274f..c7a076021 100644
  				if (item.errors === 0) {
  					assert.fail(
  						"Invalid cases must have 'error' value greater than 0",
-@@ -1137,6 +1146,10 @@ class RuleTester {
+@@ -1137,6 +1147,10 @@ class RuleTester {
  
  					if (typeof error === "string" || error instanceof RegExp) {
  						// Just an error message.
@@ -216,7 +220,7 @@ index dbd8c274f..c7a076021 100644
  						assertMessageMatches(message.message, error);
  						assert.ok(
  							message.suggestions === void 0,
-@@ -1157,6 +1170,10 @@ class RuleTester {
+@@ -1157,6 +1171,10 @@ class RuleTester {
  						});
  
  						if (hasOwnProperty(error, "message")) {
@@ -227,7 +231,7 @@ index dbd8c274f..c7a076021 100644
  							assert.ok(
  								!hasOwnProperty(error, "messageId"),
  								"Error should not specify both 'message' and a 'messageId'.",
-@@ -1170,6 +1187,10 @@ class RuleTester {
+@@ -1170,6 +1188,10 @@ class RuleTester {
  								error.message,
  							);
  						} else if (hasOwnProperty(error, "messageId")) {
@@ -238,7 +242,7 @@ index dbd8c274f..c7a076021 100644
  							assert.ok(
  								ruleHasMetaMessages,
  								"Error can not use 'messageId' if rule under test doesn't define 'meta.messages'.",
-@@ -1242,21 +1263,37 @@ class RuleTester {
+@@ -1242,21 +1264,43 @@ class RuleTester {
  						if (hasOwnProperty(error, "line")) {
  							actualLocation.line = message.line;
  							expectedLocation.line = error.line;
@@ -260,7 +264,10 @@ index dbd8c274f..c7a076021 100644
  						if (hasOwnProperty(error, "endLine")) {
  							actualLocation.endLine = message.endLine;
  							expectedLocation.endLine = error.endLine;
-+						} else if (requireLocation) {
++						} else if (
++							requireLocation &&
++							hasOwnProperty(message, "endLine")
++						) {
 +							assert.fail(
 +								"Test error must specify an 'endLine' property.",
 +							);
@@ -269,7 +276,10 @@ index dbd8c274f..c7a076021 100644
  						if (hasOwnProperty(error, "endColumn")) {
  							actualLocation.endColumn = message.endColumn;
  							expectedLocation.endColumn = error.endColumn;
-+						} else if (requireLocation) {
++						} else if (
++							requireLocation &&
++							hasOwnProperty(message, "endColumn")
++						) {
 +							assert.fail(
 +								"Test error must specify an 'endColumn' property.",
 +							);
