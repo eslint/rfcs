@@ -62,11 +62,11 @@ A new public method, `getDeclarationVariables(declaration)`, will be added to `C
 
 ```ts
 interface CSSSourceCode {
-    getClosestVariableValue(func: FunctionNode): Raw | undefined;
+    getClosestVariableValue(func: FunctionNode): Value | Raw | undefined;
 }
 ```
 
-A new public method, `getClosestVariableValue(node)`, will be added to `CSSSourceCode`. This method will take a `var()` `Function` node as an argument and return the computed value of the custom property (which is currently always a `Raw` node). It will do this by:
+A new public method, `getClosestVariableValue(node)`, will be added to `CSSSourceCode`. This method will take a `var()` `Function` node as an argument and return the computed value of the custom property. It will do this by:
 
 1. If the current rule block has one or more custom properties declaration for the variable, then return the value of the last custom property declaration in the block. This mimics the way CSS calculates custom property values.
 2. If `var()` has a fallback value, return the fallback value.
@@ -78,13 +78,13 @@ A new public method, `getClosestVariableValue(node)`, will be added to `CSSSourc
 
 ```ts
 interface CSSSourceCode {
-    getVariableValues(func: FunctionNode): Array<Raw>;
+    getVariableValues(func: FunctionNode): Array<Raw | Value>;
 }
 ```
 
-A new public method, `getVariableValues(func)`, will be added to `CSSSourceCode`. This method will take a `var()` `FunctionNode` as an argument and return an array of `Raw` nodes representing the declared values of the custom property. The returned array is made up of the following:
+A new public method, `getVariableValues(func)`, will be added to `CSSSourceCode`. This method will take a `var()` `FunctionNode` as an argument and return an array of nodes representing the declared values of the custom property. The returned array is made up of the following:
 
-1. If there is a `@property` for the custom property that has an `initial-value`, then the `initial-value` is the first element in the array.
+1. If there is a `@property` for the custom property that has an `initial-value`, then the `initial-value` is the first element in the array (a `Value` node).
 2. The `Raw` values defined in custom property declarations throughout the file, both before and after the `FunctionNode` come next in source order.
 3. The fallback value, if specified in the `FunctionNode`, is returned as the last element of the array. 
 
@@ -118,9 +118,9 @@ No help is needed to implement this RFC.
 
 ## Frequently Asked Questions
 
-**Why does `getVariableValue()` return a `Raw` instead of a string?**
+**Why does `getVariableValue()` return `Raw | Value` instead of a string?**
 
-The `getVariableValue()` method returns a `Raw` node instead of a string to preserve the original source information and maintain consistency with the AST structure. A `Raw` node contains not only the text value but also the location, which is valuable for rules that need to report issues or apply fixes at specific locations in the source code. Additionally, returning the actual AST node allows for future extensibility. If we later need to return more complex computed values or support different node types, the API won't need to change.
+The `getVariableValue()` method returns `Raw | Value` instead of a string to preserve the original source information and maintain consistency with the AST structure. A `Raw` or `Value` node contains not only the text value but also the location, which is valuable for rules that need to report issues or apply fixes at specific locations in the source code. Additionally, returning the actual AST node allows for future extensibility. If we later need to return more complex computed values or support different node types, the API won't need to change.
 
 ## Related Discussions
 
