@@ -124,4 +124,4 @@ The `getVariableValue()` method returns `Raw | Value` instead of a string to pre
 
 ## Related Discussions
 
-- [Change Request: Track variables on SourceCode #160](https.github.com/eslint/css/issues/160)
+- [Change Request: Track variables on SourceCode #160](https://github.com/eslint/css/issues/160)
