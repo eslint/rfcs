@@ -1,6 +1,6 @@
 - Repo: eslint/css
 - Start Date: 2025-06-24
-- RFC PR:
+- RFC PR: https://github.com/eslint/rfcs/pull/136
 - Authors: Nicholas C. Zakas
 
 # CSS Custom Property Tracking in SourceCode
