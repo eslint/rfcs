@@ -52,7 +52,7 @@ A new private property, `#customProperties`, will be added to `CSSSourceCode`. T
 
 ```ts
 interface CSSSourceCode {
-    getDeclarationVariables(declaration: DeclarationPlain): Array<Function>;
+    getDeclarationVariables(declaration: DeclarationPlain): Array<FunctionNode>;
 }
 ```
 
