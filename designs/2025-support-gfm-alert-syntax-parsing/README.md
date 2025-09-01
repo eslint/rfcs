@@ -593,6 +593,8 @@ There are existing implementations of GFM alert syntax parsing in other Markdown
 - `rehype-github-alert`: https://github.com/rehypejs/rehype-github/tree/main/packages/alert#rehype-github-alert
 - `markdown-it-github-alert`: https://github.com/antfu/markdown-it-github-alerts
 
+However, these plugins cannot be used in the `eslint/markdown` package, because `rehype-github-alert` is a plugin for `rehype` (which uses [HAST](https://github.com/syntax-tree/hast#readme) AST) and `markdown-it-github-alert` is a plugin for `markdown-it` (which uses its own Markdown AST), while `eslint/markdown` parses Markdown using `micromark` and `mdast` (which uses [MDAST](https://github.com/syntax-tree/mdast#readme) AST).
+
 ## Open Questions
 
 1. Will the `micromark-extension-gfm-alert` and `mdast-util-gfm-alert` plugins be published as separate packages?
