@@ -100,7 +100,7 @@ interface Alert extends Blockquote {
 
 Here are some examples of valid GFM alert syntax:
 
-#### `NOTE`, `TIP`, `IMPORTANT`, `WARNING` and `CAUTION` are valid ***label***s
+#### All of the following are valid ***label***s: `NOTE`, `TIP`, `IMPORTANT`, `WARNING` and `CAUTION`
 
 ```md
 > [!NOTE]
