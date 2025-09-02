@@ -204,6 +204,8 @@ The example below shows only `NOTE`, but it applies to all labels such as `TIP`,
 
 #### Upto 4 indented ***space*** is allowed before the ***opening square bracket***
 
+The example below shows only `NOTE`, but it applies to all labels such as `TIP`, `IMPORTANT`, `WARNING`, and `CAUTION`.
+
 ```md
 >[!NOTE]
 > Useful information that users should know, even when skimming content.
