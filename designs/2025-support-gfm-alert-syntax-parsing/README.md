@@ -71,6 +71,53 @@ Before explaining the design, it's important to define some key terms:
 - ***line ending***: According to the [CommonMark spec](https://spec.commonmark.org/0.31.2/#line-ending), A line ending is a line feed (U+000A), a carriage return (U+000D) not followed by a line feed, or a carriage return and a following line feed.
 - ***label***: The text that appears inside the ***opening square bracket*** and ***closing square bracket*** and is prefixed by an ***exclamation mark***. It determines the style and semantics of the alert.
 
+### GFM alert syntax in plugins and configs
+
+This suggestion requires adding an option to `languageOptions` in the `@eslint/markdown` to enable parsing of GFM alert syntax.
+
+`micromark-extension-gfm-alert` and `mdast-util-gfm-alert` complement each other and are intended to be used together to provide full support for the GFM alert syntax.
+
+To enable parsing of GFM alert syntax, set the `alert` option to `true`; set it to `false` to disable it. Only the boolean values `true` and `false` are accepted.
+
+Adding the `alert` option to the [Language Options](https://github.com/eslint/markdown?tab=readme-ov-file#language-options) and set it to `false` by default will not affect existing functionality in `@eslint/markdown@7` (version 7.x.x).
+
+If desired, this option could be enabled by default in `@eslint/markdown@8` (version 8.x.x).
+
+```diff
+// eslint.config.js
+import { defineConfig } from "eslint/config";
+import markdown from "@eslint/markdown";
+
+export default defineConfig([
+    {
+        files: ["**/*.md"],
+        plugins: {
+            markdown
+        },
+        language: "markdown/gfm",
+        languageOptions: {
+            frontmatter: "yaml", // Or pass `"toml"` or `"json"` to enable TOML or JSON front matter parsing.
++           alert: true // Enable GFM alert syntax parsing (default: `false`)
+        },
+        rules: {
+            "markdown/no-html": "error"
+        }
+    }
+]);
+```
+
+### Where would the `micromark-extension-gfm-alert` and `mdast-util-gfm-alert` packages live?
+
+#### `micromark-extension-gfm-alert`
+
+- `micromark-extension-gfm-alert` source code logic would be implemented in the `src/extensions/micromark-extension-gfm-alert.js` file.
+- `micromark-extension-gfm-alert` test files would be implemented in the `tests/extensions/micromark-extension-gfm-alert.test.js` file.
+
+#### `mdast-util-gfm-alert`
+
+- `mdast-util-gfm-alert` source code logic would be implemented in the `src/extensions/mdast-util-gfm-alert.js` file.
+- `mdast-util-gfm-alert` test files would be implemented in the `tests/extensions/mdast-util-gfm-alert.test.js` file.
+
 ### Type Interface
 
 Since GFM alert syntax is part of blockquote syntax from Markdown, `Alert` interface extends [`Blockquote`](https://github.com/syntax-tree/mdast?tab=readme-ov-file#blockquote) node type of Mdast.
@@ -559,32 +606,9 @@ We need to update the [`README.md`](https://github.com/eslint/markdown?tab=readm
 
 ## Backwards Compatibility Analysis
 
-Adding the `alert` option to the [Language Options](https://github.com/eslint/markdown?tab=readme-ov-file#language-options) and set it to `false` by default will not affect existing functionality in `@eslint/markdown@7`.
+This proposal is fully backward-compatible, as it only adds new options and does not remove or modify existing features.
 
-If desired, this option could be enabled by default in `@eslint/markdown@8`.
-
-```diff
-// eslint.config.js
-import { defineConfig } from "eslint/config";
-import markdown from "@eslint/markdown";
-
-export default defineConfig([
-    {
-        files: ["**/*.md"],
-        plugins: {
-            markdown
-        },
-        language: "markdown/gfm",
-        languageOptions: {
-            frontmatter: "yaml", // Or pass `"toml"` or `"json"` to enable TOML or JSON front matter parsing.
-+           alert: true // Enable GFM alert syntax parsing (default: `false`)
-        },
-        rules: {
-            "markdown/no-html": "error"
-        }
-    }
-]);
-```
+No changes are required from end users.
 
 ## Alternatives
 
