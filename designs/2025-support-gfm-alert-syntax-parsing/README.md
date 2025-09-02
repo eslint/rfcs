@@ -77,7 +77,7 @@ This suggestion requires adding an option to `languageOptions` in the `@eslint/m
 
 `micromark-extension-gfm-alert` and `mdast-util-gfm-alert` complement each other and are intended to be used together to provide full support for the GFM alert syntax.
 
-To enable parsing of GFM alert syntax, set the `alert` option to `true`; set it to `false` to disable it. Only the boolean values `true` and `false` are accepted.
+To enable parsing of GFM alert syntax, set the `languageOptions.alert` option to `true`; set it to `false` to disable it. Only the boolean values `true` and `false` are accepted.
 
 Adding the `alert` option to the [Language Options](https://github.com/eslint/markdown?tab=readme-ov-file#language-options) and set it to `false` by default will not affect existing functionality in `@eslint/markdown@7` (version 7.x.x).
 
