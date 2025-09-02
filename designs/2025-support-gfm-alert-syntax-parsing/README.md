@@ -597,7 +597,8 @@ However, these plugins cannot be used in the `eslint/markdown` package, because 
 
 ## Open Questions
 
-1. Will the `micromark-extension-gfm-alert` and `mdast-util-gfm-alert` plugins be published as separate packages?
+- Question 1. Will the `micromark-extension-gfm-alert` and `mdast-util-gfm-alert` plugins be published as separate packages?
+- Answer 1. According to the [comment](https://github.com/eslint/rfcs/pull/138#discussion_r2288501879), it is not preferred to have additional packages to maintain for this.
 
 ## Help Needed
 
