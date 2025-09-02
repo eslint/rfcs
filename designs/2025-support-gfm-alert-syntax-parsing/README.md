@@ -11,7 +11,7 @@ This RFC proposes adding support for GFM alert syntax parsing to the [`@eslint/m
 
 ## Motivation
 
-The motivation for this RFC comes from [eslint/markdown#294](https://github.com/eslint/markdown/issues/294) and [eslint/markdown#449](https://github.com/eslint/markdown/issues/449).
+The motivation for this RFC comes from [eslint/markdown#294](https://github.com/eslint/markdown/issues/294).
 
 Currently, GitHub supports a special syntax for alerts that isn't mentioned in the [GitHub Flavored Markdown spec](https://github.github.com/gfm/) and isn't parsed by the existing [`micromark-extension-gfm`](https://github.com/micromark/micromark-extension-gfm?tab=readme-ov-file#when-to-use-this) and [`mdast-util-gfm`](https://github.com/syntax-tree/mdast-util-gfm?tab=readme-ov-file#when-to-use-this) packages, which are used internally by `@eslint/markdown` to parse Markdown content and create AST nodes.
 
@@ -150,7 +150,9 @@ Here are some examples of valid GFM alert syntax:
 > [!CAUTION]
 > Advises about risks or negative outcomes of certain actions.
 
-#### ***Label***s are case-insensitive
+#### All of the following are case-insensitive ***label***s: `NOTE`, `TIP`, `IMPORTANT`, `WARNING` and `CAUTION`
+
+The example below shows only `NOTE`, but it applies to all labels such as `TIP`, `IMPORTANT`, `WARNING`, and `CAUTION`.
 
 ```md
 > [!NOTE]
