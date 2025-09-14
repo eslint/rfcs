@@ -17,6 +17,8 @@ The options could be defined on two levels. On `RuleTester`'s `constructor` effe
 
 ## Detailed Design
 
+Recommended variant => 2 - Test method based options
+
 ### Variant 1 - Constructor based options
 
 ```ts
