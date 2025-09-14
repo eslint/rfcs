@@ -320,6 +320,10 @@ As an alternative to this proposal, we could add a eslint rule that applies the 
 While this would apply the same assertions for all rule testers, it would be a lot more complex to implement and maintain,
 it requires identifying the RuleTester calls in the codebase and might run into issues if the assertions aren't specified inline but via a variable or transformation.
 
+The following issue makes it easier to identify the exact/estimated error location (outside of/more precise than `RuleTester#run`):
+
+- https://github.com/eslint/eslint/issues/19936
+
 ## Open Questions
 
 1. ~~Is there a need for disabling scenarios like `valid` or `invalid`?~~ No, unused scenarios can be omitted using empty arrays. If needed, this option can be added later on.
