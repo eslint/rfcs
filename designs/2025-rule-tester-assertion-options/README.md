@@ -25,16 +25,16 @@ Recommended variant => 2 - Test method based options
 new RuleTester(testerConfig: {...}, assertionOptions: {
   /**
    * Require message assertion for each invalid test case.
-   * If `true`, errors must extend `string | RegExp | Array<{ message: string | RegExp } | { messageId: string }>`.
-   * If `'message'`, errors must extend `string | RegExp | Array<{ message: string | RegExp }>`.
-   * If `'messageId'`, errors must extend `Array<{ messageId: string }>`.
+   * If `true`, each error must extend `string | RegExp | { message: string | RegExp } | { messageId: string }`.
+   * If `'message'`, each error must extend `string | RegExp | { message: string | RegExp }`.
+   * If `'messageId'`, each error must extend `{ messageId: string }`.
    *
    * @default false
    */
   requireMessage: boolean | 'message' | 'messageId';
   /**
    * Require full location assertions for each invalid test case.
-   * If `true`, errors must extend `Array<{ line: number, column: number, endLine?: number | undefined, endColumn?: number | undefined }>`.
+   * If `true`, each error must extend `{ line: number, column: number, endLine?: number | undefined, endColumn?: number | undefined }`.
    * `endLine` or `endColumn` may be absent, if the observed error does not contain these properties.
    *
    * @default false
@@ -50,16 +50,16 @@ ruleTester.run("rule-name", rule, {
   assertionOptions?: {
     /**
      * Require message assertion for each invalid test case.
-     * If `true`, errors must extend `string | RegExp | Array<{ message: string | RegExp } | { messageId: string }>`.
-     * If `'message'`, errors must extend `string | RegExp | Array<{ message: string | RegExp }>`.
-     * If `'messageId'`, errors must extend `Array<{ messageId: string }>`.
+     * If `true`, each error must extend `string | RegExp | { message: string | RegExp } | { messageId: string }`.
+     * If `'message'`, each error must extend `string | RegExp | { message: string | RegExp }`.
+     * If `'messageId'`, each error must extend `{ messageId: string }`.
      *
      * @default false
      */
     requireMessage?: boolean | 'message' | 'messageId';
     /**
      * Require full location assertions for each invalid test case.
-     * If `true`, errors must extend `Array<{ line: number, column: number, endLine?: number | undefined, endColumn?: number | undefined }>`.
+     * If `true`, each error must extend `{ line: number, column: number, endLine?: number | undefined, endColumn?: number | undefined }`.
      * `endLine` or `endColumn` may be absent or undefined, if the observed error does not contain these properties.
      *
      * @default false
@@ -77,9 +77,9 @@ ruleTester.run("rule-name", rule, {
 
 If `requireMessage` is set to `true`, the invalid test case cannot consist of an error count assertion only, but must also include a message assertion. (See below)
 This can be done either by providing only a `string`/`RegExp` message, or by using the `message`/`messageId` property of the error object in the `TestCaseError` (Same as the current behavior).
-If `true`, errors must extend `string | RegExp | Array<{ message: string | RegExp } | { messageId: string }>`.
-If `'message'`, errors must extend `string | RegExp | Array<{ message: string | RegExp }>`.
-If `'messageId'`, errors must extend `Array<{ messageId: string }>`.
+If `true`, each error must extend `string | RegExp | { message: string | RegExp } | { messageId: string }`.
+If `'message'`, each error must extend `string | RegExp | { message: string | RegExp }`.
+If `'messageId'`, each error must extend `{ messageId: string }`.
 
 ```ts
 ruleTester.run("rule-name", rule, {
