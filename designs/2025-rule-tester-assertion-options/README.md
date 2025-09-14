@@ -323,10 +323,12 @@ it requires identifying the RuleTester calls in the codebase and might run into 
 ## Open Questions
 
 1. ~~Is there a need for disabling scenarios like `valid` or `invalid`?~~ No, unused scenarios can be omitted using empty arrays. If needed, this option can be added later on.
-2. Should we use constructor-based options or test method-based options? Do we support both? Or global options so it applies to all test files?
+2. Should we use constructor-based options or test method-based options? Do we support both? Or global options so it applies to all test files? Currently, the method level options (variant 2) is the prefered one.
 3. ~~Should we enable the `requireMessage` and `requireLocation` options by default? (Breaking change)~~ No
 4. ~~Do we add a `requireMessageId` option or should we alter the `requireMessage` option to support both message and messageId assertions?~~ Just `requireMessage: boolean | 'message' | 'messageid'`
 5. ~~Should we add a `strict` option that enables all assertion options by default?~~ No, currently not planned.
+6. ~~Should we inline the options?~~ No, this might cause issues with alphabetical object properties.
+7. ~~What should the otpions be called?~~ We name it `assertionOptions` to avoid issues with alphabetical object properties. e.g. `invalid, options, valid`
 
 ## Help Needed
 
