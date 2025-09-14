@@ -326,7 +326,7 @@ it requires identifying the RuleTester calls in the codebase and might run into 
 2. Should we use constructor-based options or test method-based options? Do we support both? Or global options so it applies to all test files?
 3. ~~Should we enable the `requireMessage` and `requireLocation` options by default? (Breaking change)~~ No
 4. ~~Do we add a `requireMessageId` option or should we alter the `requireMessage` option to support both message and messageId assertions?~~ Just `requireMessage: boolean | 'message' | 'messageid'`
-5. Should we add a `strict` option that enables all assertion options by default?
+5. ~~Should we add a `strict` option that enables all assertion options by default?~~ No, currently not planned.
 
 ## Help Needed
 
