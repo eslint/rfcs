@@ -17,34 +17,6 @@ The options could be defined on two levels. On `RuleTester`'s `constructor` effe
 
 ## Detailed Design
 
-Recommended variant => 2 - Test method based options
-
-### Variant 1 - Constructor based options
-
-```ts
-new RuleTester(testerConfig: {...}, assertionOptions: {
-  /**
-   * Require message assertion for each invalid test case.
-   * If `true`, each error must extend `string | RegExp | { message: string | RegExp } | { messageId: string }`.
-   * If `'message'`, each error must extend `string | RegExp | { message: string | RegExp }`.
-   * If `'messageId'`, each error must extend `{ messageId: string }`.
-   *
-   * @default false
-   */
-  requireMessage: boolean | 'message' | 'messageId';
-  /**
-   * Require full location assertions for each invalid test case.
-   * If `true`, each error must extend `{ line: number, column: number, endLine?: number | undefined, endColumn?: number | undefined }`.
-   * `endLine` or `endColumn` may be absent, if the observed error does not contain these properties.
-   *
-   * @default false
-   */
-  requireLocation: boolean;
-} = {});
-```
-
-### Variant 2 - Test method based options
-
 ```ts
 ruleTester.run("rule-name", rule, {
   assertionOptions?: {
@@ -71,9 +43,7 @@ ruleTester.run("rule-name", rule, {
 });
 ```
 
-### Shared Logic
-
-#### requireMessage
+### requireMessage
 
 If `requireMessage` is set to `true`, the invalid test case cannot consist of an error count assertion only, but must also include a message assertion. (See below)
 This can be done either by providing only a `string`/`RegExp` message, or by using the `message`/`messageId` property of the error object in the `TestCaseError` (Same as the current behavior).
@@ -109,7 +79,7 @@ ruleTester.run("rule-name", rule, {
 });
 ```
 
-#### requireLocation
+### requireLocation
 
 If `requireLocation` is set to `true`, the invalid test case's error validation must include all location assertions such as `line`, `column`, `endLine`, and `endColumn`.
 `endLine` or `endColumn` may be absent or `undefined`, if the observed error does not contain these properties.
@@ -318,9 +288,37 @@ This change should not affect existing ESLint users or plugin developers, as it 
 
 ## Alternatives
 
+### Constructor based options
+
+```ts
+new RuleTester(testerConfig: {...}, assertionOptions: {
+  /**
+   * Require message assertion for each invalid test case.
+   * If `true`, each error must extend `string | RegExp | { message: string | RegExp } | { messageId: string }`.
+   * If `'message'`, each error must extend `string | RegExp | { message: string | RegExp }`.
+   * If `'messageId'`, each error must extend `{ messageId: string }`.
+   *
+   * @default false
+   */
+  requireMessage: boolean | 'message' | 'messageId';
+  /**
+   * Require full location assertions for each invalid test case.
+   * If `true`, each error must extend `{ line: number, column: number, endLine?: number | undefined, endColumn?: number | undefined }`.
+   * `endLine` or `endColumn` may be absent, if the observed error does not contain these properties.
+   *
+   * @default false
+   */
+  requireLocation: boolean;
+} = {});
+```
+
+### ESLint RuleTester Lint-Rule
+
 As an alternative to this proposal, we could add a eslint rule that applies the same assertions, but uses the central eslint config.
 While this would apply the same assertions for all rule testers, it would be a lot more complex to implement and maintain,
 it requires identifying the RuleTester calls in the codebase and might run into issues if the assertions aren't specified inline but via a variable or transformation.
+
+### RuleTester Estimated Error Location
 
 The following issue makes it easier to identify the exact/estimated error location (outside of/more precise than `RuleTester#run`):
 
@@ -329,7 +327,7 @@ The following issue makes it easier to identify the exact/estimated error locati
 ## Open Questions
 
 1. ~~Is there a need for disabling scenarios like `valid` or `invalid`?~~ No, unused scenarios can be omitted using empty arrays. If needed, this option can be added later on.
-2. Should we use constructor-based options or test method-based options? Do we support both? Or global options so it applies to all test files? Currently, the method level options (variant 2) is the prefered one.
+2. ~~Should we use constructor-based options or test method-based options? Do we support both? Or global options so it applies to all test files?~~ Currently, the method level options (variant 2) is the prefered one.
 3. ~~Should we enable the `requireMessage` and `requireLocation` options by default? (Breaking change)~~ No
 4. ~~Do we add a `requireMessageId` option or should we alter the `requireMessage` option to support both message and messageId assertions?~~ Just `requireMessage: boolean | 'message' | 'messageid'`
 5. ~~Should we add a `strict` option that enables all assertion options by default?~~ No, currently not planned.
