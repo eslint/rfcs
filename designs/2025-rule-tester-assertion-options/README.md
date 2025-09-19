@@ -312,6 +312,10 @@ new RuleTester(testerConfig: {...}, assertionOptions: {
 } = {});
 ```
 
+### Options Setter Method
+
+Alternatively add an `setAssertionOptions()` method independently of the constructor and test method.
+
 ### ESLint RuleTester Lint-Rule
 
 As an alternative to this proposal, we could add a eslint rule that applies the same assertions, but uses the central eslint config.
