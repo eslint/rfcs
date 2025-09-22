@@ -276,9 +276,6 @@ While this is true already, it gets slightly more relevant, since now it might r
 
 See also: https://github.com/eslint/eslint/issues/19936
 
-Additionally, since we add the options as a second parameter it might interfere with future additions to the parameters.
-This could by eleviated by renaming the parameter from `assertionOptions` to `options` (either from the start or when the need for different type of options arises).
-
 If we enable the `requireMessage` and `requireLocation` options by default, it would be a breaking change for existing tests that do not follow these assertion requirements yet.
 It is not planned to enable `requireMessage` or `requireLocation` by default.
 
