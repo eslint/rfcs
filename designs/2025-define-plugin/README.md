@@ -133,7 +133,7 @@ Object.assign(plugin.configs, {
         Object.entries(plugin.rules)
           .filter(([, rule]) => rule.meta.docs?.recommended)
           // (see #### Default Generated Config later for rule severities)
-          .map(([ruleName, rule]) => [ruleName, getRuleSeverity(rule)]),
+          .map(([ruleName, rule]) => [ruleName, rule]),
       ),
     },
   ],
