@@ -153,7 +153,7 @@ No `Object.assign()`, `Object.defineProperty()`, or `get()` will be required in 
 
 `configs` is the only property `definePlugin` receives with a different shape than the output plugin object.
 
-- If `configs` is not provided, a default config is generated.
+- If `configs` is not provided, a default recommended config is generated.
 - `configs` may be provided as an object whose properties describe the configs to create.
 
 The following two sections describe those two behaviors.
