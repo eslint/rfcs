@@ -252,6 +252,8 @@ Object.assign(plugin.configs, {
 });
 ```
 
+If no rules have `meta.docs.recommended`, then no recommended config will be generated.
+
 #### Generated Configs
 
 If `configs` is provided, its key-value pairs will describe the configs to be created.
