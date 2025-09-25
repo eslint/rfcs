@@ -158,7 +158,7 @@ No `Object.assign()`, `Object.defineProperty()`, or `get()` will be required in 
 
 The following two sections describe those two behaviors.
 
-#### Default Generated Config
+#### Default Generated Recommended Config
 
 If `configs` is not provided, then `definePlugin` will create a `recommended` config with the following properties:
 
