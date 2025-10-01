@@ -72,8 +72,8 @@ This RFC proposes creating a `definePlugin` function to be exported from `@eslin
 It would provide a single recommended factory for defining the structure of a typical ESLint plugin.
 `definePlugin` would automate the parts of plugin definitions that many plugins manually redefine:
 
-- Using the same name in multiple places
-- Generating `configs.recommended` and other configurations based on rule metadata
+- Using the plugin and rule names in multiple places
+- Populating config values based on lists of rules
 
 As with `defineConfig`, `definePlugin` would be a purely optional, additive change.
 Existing and future plugins would continue to work as-is without a `definePlugin` call.
@@ -106,7 +106,7 @@ export const plugin = definePlugin({
 });
 ```
 
-> `rules` is assumed to be a typical rules definition object like `{ "example/a": { ... }, ... }`.
+> `rules` is assumed to be a typical rules definition object like `{ "a": { ... }, ... }`.
 
 That definition would be the equivalent of:
 
@@ -116,66 +116,34 @@ That definition would be the equivalent of:
 import packageData from "../package.json" with { type: "json" };
 import { rules } from "./rules/index.js";
 
-const plugin = {
+export const plugin = {
   meta: { name: packageData.name, version: packageData.version },
-  configs: {},
   rules,
 };
-
-Object.assign(plugin.configs, {
-  recommended: [
-    {
-      name: "example/recommended",
-      plugins: {
-        example: plugin,
-      },
-      rules: Object.fromEntries(
-        Object.entries(plugin.rules)
-          .filter(([, rule]) => rule.meta.docs?.recommended)
-          // (see #### Default Generated Config later for rule severities)
-          .map(([ruleName, rule]) => [ruleName, rule]),
-      ),
-    },
-  ],
-});
 ```
-
-`definePlugin`'s design intentionally avoids referring to a `plugin` value.
-No `Object.assign()`, `Object.defineProperty()`, or `get()` will be required in the making of an ESLint plugin with `definePlugin`.
 
 ### Configs
 
-`definePlugin` will add two properties to all generated `configs` objects:
-
-- `name`: will default to the plugin's namespace + `"/"` + the config's key
-  - Plugin namespaces will be equal to the plugin's `meta.namespace ?? meta.name`
-- `plugin`: merged with an object defining the plugin under its name
+An optional `configs` object may be provided to `definePlugin`.
+If provided, it acts as a shorthand description of the plugin's exported `configs` property.
 
 `configs` is the only property `definePlugin` receives with a different shape than the output plugin object.
+`definePlugin` will apply the following two modifications:
 
-- If `configs` is not provided, a default recommended config is generated.
-- `configs` may be provided as an object whose properties describe the configs to create.
+- Keys will have the plugin's name + "/" prepended to them
+- Values will be transformed to objects per [Config Values Transformations](#config-values-transformations), and then two properties will be added if they are not present:
+  - `name`: the plugin's namespace + `"/"` + the config's key
+    - Plugin namespaces are the plugin's `meta.namespace ?? meta.name`
+  - `plugin`: merged with an object defining the plugin under its name
 
-The following two sections describe those two behaviors.
-
-#### Default Generated Recommended Config
-
-If `configs` is not provided, then `definePlugin` will create a `recommended` config with the following properties:
-
-- `name`: per [configuration naming conventions](https://eslint.org/docs/latest/use/configure/configuration-files#configuration-naming-conventions)
-- `plugins`: an object keying `meta.name` to the plugin object
-- `rules`: severities/options for rules whose `meta.docs?.recommended` is truthy
-
-For example, given this plugin with two rules:
-
-- `my-rule-a`: with `meta.docs.recommended = "error"`:
-- `my-rule-b`: with `meta.docs.recommended = "warn"`:
+The following snippet is what this RFC expects most common community plugins to be structured like:
 
 ```ts
-const plugin = definePlugin({
-  meta: {
-    name: "example",
+const examplePlugin = definePlugin({
+  configs: {
+    recommended: [myRuleA, myRuleB],
   },
+  meta: { name: "example" },
   rules: {
     "my-rule-a": myRuleA,
     "my-rule-b": myRuleB,
@@ -183,102 +151,51 @@ const plugin = definePlugin({
 });
 ```
 
-The equivalent generated plugin object would be:
+That plugin definition is equivalent to:
 
-```js
+```ts
 // (equivalent to the previous snippet)
-
 const plugin = {
-  configs: {},
-  meta: {
-    name: "example",
-  },
-  rules: {
-    "my-rule-a": myRuleA,
-    "my-rule-b": myRuleB,
-  },
-};
-
-Object.assign(plugin.configs, {
-  recommended: [
-    {
+  configs: {
+    recommended: {
       name: "example/recommended",
       plugins: {
-        example: plugin,
+        get example() {
+          return plugin;
+        },
       },
       rules: {
         "example/my-rule-a": "error",
-        "example/my-rule-b": "warn",
+        "example/my-rule-b": "error",
       },
     },
-  ],
+  },
+  meta: { name: "example" },
+  rules: {
+    "my-rule-a": myRuleA,
+    "my-rule-b": myRuleB,
+  },
 });
 ```
 
-The internal logic would be equivalent to filtering the rules on whether they are recommended:
+#### Config Values Transformations
 
-```js
-// (equivalent to the two previous snippets)
+The behavior of transforming values under `configs` properties depends on what type of value is provided:
 
-const meta = {
-  name: "example",
-};
+- If provided as an array, it will be transformed to an object with a `rules` property whose keys and values are generated as follows:
+  - If it is a rule object itself, the rule will be added with severity `"error"`
+  - If it is a tuple of a rule object and severity, the rule will be added with the provided severity
+  - If it is any other kind of object, it will be merged as-is
+- If provided as a non-array object:
+  - Its `rules` value will be transformed with the same logic
+  - All other properties will be merged as-is
 
-const rules = {
-  "my-rule-a": myRuleA,
-  "my-rule-b": myRuleB,
-};
+The following table contains examples of valid elements for `rules` arrays and their equivalent output.
 
-const plugin = {
-  configs: {},
-  meta,
-  rules: Object.values(rules),
-};
-
-Object.assign(plugin.configs, {
-  recommended: [
-    {
-      name: "example/recommended",
-      plugins: {
-        example: plugin,
-      },
-      rules: Object.fromEntries(
-        Object.entries(rules)
-          .filter(([, rule]) => rule.meta.docs?.recommended)
-          .map(([ruleName, value]) => [`${meta.name}/${ruleName}`, value])
-      ),
-    },
-  ],
-});
-```
-
-If no rules have `meta.docs.recommended`, then no recommended config will be generated.
-
-#### Generated Configs
-
-If `configs` is provided, its key-value pairs will describe the configs to be created.
-
-`configs` keys are the names of the configs, minus the plugin name and `/` prefix.
-For example, if the plugin name is `example`, then a `configs: { recommended: { ... } }` will generate a single config named `example/recommended`.
-
-`configs` values are the same as normal configs, except `rules` must be provided either as:
-
-- `null | undefined`: to preserve that value.
-- An array containing any number of elements.
-  Each element may be either:
-  - The rule object itself
-  - An array containing a rule object and severity
-  - An object with string keys and rule severity/option values
-
-Each `rules` element will be transformed into key-value pairs.
-
-- Each key will be `${meta.namespace}/${ruleName}`.
-- Each value will be the provided severity if it exists, or `"error"` if not
-
-Those `rules` key-value pairs will be merged into into one final `rules` object.
-
-| Element Type                                       | Example Input                              | Example Output                               |
+| Element Type                                       | Example Input Element                      | Example Merged Output                        |
 | -------------------------------------------------- | ------------------------------------------ | -------------------------------------------- |
+| `null`                                             | `null`                                     | `undefined`                                  |
+| `undefined`                                        | `undefined`                                | `undefined`                                  |
 | Rule object                                        | `myRule`                                   | `{ "example/my-rule": "error" }`             |
 | Object with string key and severity value          | `{ "example/my-rule": "warn" }`            | `{ "example/my-rule": "warn" }`              |
 | Object with string key and severity & option       | `{ "example/my-rule": ["warn", "never"] }` | `{ "example/my-rule": ["warn", "never"] }`   |
@@ -286,14 +203,14 @@ Those `rules` key-value pairs will be merged into into one final `rules` object.
 | Tuple containing rule object and severity & option | `[myRule, ["warn", "never"]]`              | `{ "example/my-rule": ["warn", "never"] }`   |
 | Array of objects                                   | `[ { ... }, { ... } ]`                     | `[ { name, plugins, ... }, { ... } ]` **\*** |
 
-**\***For a `config` value provided as an array of objects, `name` and `plugins` will be set as default values on only the first element.
-This allows plugin authors to define longer plugins with arrays of config objects.
+**\***If a `config` value is provided as an array of objects, `name` and `plugins` will be set as default values on only the first element.
+This allows plugin authors to define plugins with arrays of config objects.
 See [Example: Multiple Config Elements](#example-multiple-config-elements).
 
-##### Example: Custom `recommended` Config
+#### Example: Custom `recommended` Config
 
 This plugin has four rules, `myRuleA`, `myRuleB`, `myRuleC`, and `myRuleD`.
-It demonstrates using `definePlugin` to create a single config:
+`definePlugin` is used to create a single config containing those four rules with different severities and options:
 
 ```ts
 const plugin = definePlugin({
@@ -353,11 +270,7 @@ Object.assign(plugin.configs, {
 });
 ```
 
-Note that this plugin declaration is provided for explanatory purposes only.
-It would have been cleaner for it to set the `meta.docs.recommended` property in its rules.
-See [Default Generated Config](#default-generated-config) for a similar, more implicitly generated plugin.
-
-##### Example: Filtered Custom Configs
+#### Example: Filtered Custom Configs
 
 A plugin akin to `typescript-eslint` with `recommended`, `strict`, and `*TypeAware` configs could define those four configs by filtering the values of a `rules` object.
 Suppose this plugin's `rules` contains four rules:
@@ -370,37 +283,33 @@ Suppose this plugin's `rules` contains four rules:
 Its plugin definition could look like:
 
 ```js
+const rules = {
+  "my-rule-a": myRuleA,
+  "my-rule-b": myRuleB,
+  "my-rule-c": myRuleC,
+  "my-rule-d": myRuleD,
+};
+
 definePlugin({
   configs: {
-    recommended: {
-      rules: Object.values(rules).filter((rule) => rule.meta.docs.recommended),
-    },
-    recommendedTypeAware: {
-      rules: Object.values(rules).filter(
-        (rule) => rule.meta.docs.recommended && rule.meta.docs.typeAware
-      ),
-    },
-    strict: {
-      rules: Object.values(rules).filter(
-        (rule) => rule.meta.docs.recommended === "strict"
-      ),
-    },
-    strictTypeAware: {
-      rules: Object.values(rules).filter(
-        (rule) =>
-          rule.meta.docs.recommended === "strict" && rule.meta.docs.typeAware
-      ),
-    },
+    recommended: Object.values(rules).filter(
+      (rule) => rule.meta.docs.recommended
+    ),
+    recommendedTypeAware: Object.values(rules).filter(
+      (rule) => rule.meta.docs.recommended && rule.meta.docs.typeAware
+    ),
+    strict: Object.values(rules).filter(
+      (rule) => rule.meta.docs.recommended === "strict"
+    ),
+    strictTypeAware: Object.values(rules).filter(
+      (rule) =>
+        rule.meta.docs.recommended === "strict" && rule.meta.docs.typeAware
+    ),
   },
   meta: {
     name: "example",
   },
-  rules: {
-    "my-rule-a": myRuleA,
-    "my-rule-b": myRuleB,
-    "my-rule-c": myRuleC,
-    "my-rule-d": myRuleD,
-  },
+  rules,
 });
 ```
 
@@ -475,16 +384,16 @@ Object.assign(plugin.configs, {
 });
 ```
 
-##### Example: Including Additional Options
+#### Example: Including Additional Options
 
 A plugin that provides additional properties such as `languageOptions` could define them in its `configs.recommended`.
 This plugin provides:
 
-- A single rule, `myRule`, with `meta.docs.recommended = "error"`:
+- A single rule, `myRule`
 - `languageOptions`: as part of its `recommended` config
 
 ```js
-definePlugin({
+const plugin = definePlugin({
   configs: {
     recommended: {
       languageOptions: {
@@ -539,19 +448,18 @@ Object.assign(plugin.configs, {
 });
 ```
 
-##### Example: Multiple Config Elements
+#### Example: Multiple Config Elements
 
 If a plugin provides multiple objects in a `configs` array, only the first object will have `name` and `plugins` added in as defaults.
 For example, this plugin is set up akin to the current `eslint-plugin-markdown`.
 It provides multiple entries in its `recommended` config and only specifies `rules` in the last element:
 
 ```js
-definePlugin({
+const plugin = definePlugin({
   configs: {
     recommended: [
       {
         name: "example/recommended/plugin",
-        rules: null,
       },
       {
         name: "example/recommended/processor",
@@ -568,7 +476,7 @@ definePlugin({
             },
           },
         },
-        rules,
+        rules: [myRule],
       },
     ],
   },
@@ -576,7 +484,9 @@ definePlugin({
   processors: {
     markdown: processor,
   },
-  rules,
+  rules: {
+    "my-rule": myRule,
+  },
 });
 ```
 
@@ -602,7 +512,9 @@ Object.assign(plugin.configs, {
   recommended: [
     {
       name: "example/recommended/plugin",
-      rules: null,
+      plugins: {
+        example: plugin,
+      },
     },
     {
       name: "example/recommended/processor",
@@ -627,7 +539,7 @@ Object.assign(plugin.configs, {
 });
 ```
 
-##### Example: Referencing Other Plugins' Rules
+#### Example: Referencing Other Plugins' Rules
 
 If a `config` value contains an objects with string keys and severity/option values, those objects' keys will not be modified.
 This means objects can refer to other plugins' rules.
@@ -641,7 +553,7 @@ For example, this plugin sets three rules:
 Its definition is equivalent to the current `eslint-plugin-storybook`'s referencing of rules from other plugins:
 
 ```js
-definePlugin({
+const plugin = definePlugin({
   configs: {
     recommended: {
       rules: [
@@ -881,7 +793,7 @@ Or: why not define only one function that, given a rule, generates a config or a
 That would suggest using something the following function by default:
 
 ```js
-definePlugin({
+const plugin = definePlugin({
   configs: (rule) => rule.meta.docs.recommended,
   meta,
   rules,
@@ -897,6 +809,14 @@ Doing so would at the very least require `definePlugin` to have a type parameter
 Any operation beyond rudimentary boolean checks or string concatenation would be difficult or impossible to describe even with that information.
 
 This RFC believes requiring a single function per config makes for more clear, readable plugin definitions and is worth the -typically small- number of extra lines.
+
+### `configs`: Should a `recommended` config also be automatically generated?
+
+Earlier versions of this RFC suggested automatically adding a `recommended` config based on rules' `meta.docs.recommended` properties.
+This was removed to keep the RFC and `definePlugin` cleaner and simpler.
+
+A future version of `definePlugin` could add this feature.
+It would likely be discussed as part of a separate helper function or a new option like `autoConfig: true`.
 
 ### `configs`: Should an `all` config also be automatically generated?
 
