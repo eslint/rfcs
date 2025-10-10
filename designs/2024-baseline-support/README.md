@@ -1,6 +1,6 @@
 - Repo: eslint/eslint
 - Start Date: 2024-04-20
-- RFC PR: (https://github.com/eslint/rfcs/pull/119)
+- RFC PR: https://github.com/eslint/rfcs/pull/119
 - Authors: [Iacovos Constantinou](https://github.com/softius)
 
 # Introduce a way to suppress violations
