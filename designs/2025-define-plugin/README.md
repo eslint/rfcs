@@ -131,7 +131,7 @@ If provided, it acts as a shorthand description of the plugin's exported `config
 `definePlugin` will apply the following two modifications:
 
 - Keys will have the plugin's name + "/" prepended to them
-- Values will be transformed to objects per [Config Values Transformations](#config-values-transformations), and then two properties will be added if they are not present:
+- Configs will be transformed to objects per [Config Values Transformations](#config-values-transformations), and then two properties will be added if they are not present:
   - `name`: the plugin's namespace + `"/"` + the config's key
     - Plugin namespaces are the plugin's `meta.namespace ?? meta.name`
   - `plugin`: merged with an object defining the plugin under its name
