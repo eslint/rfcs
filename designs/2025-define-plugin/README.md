@@ -70,10 +70,11 @@ Without a standardized factory function to define a plugin:
 
 This RFC proposes creating a `definePlugin` function to be exported from `@eslint/plugin-kit`.
 It would provide a single recommended factory for defining the structure of a typical ESLint plugin.
-`definePlugin` would automate the parts of plugin definitions that many plugins manually redefine:
+`definePlugin` would provide three benefits:
 
-- Using the plugin and rule names in multiple places
-- Populating config values based on lists of rules
+- Throwing an error when expected fields do not exist or are an invalid type
+- Populating the `plugins` field on configs, so that a plugin can be defined within a single object literal
+- Types-based editing support in editors that support types
 
 As with `defineConfig`, `definePlugin` would be a purely optional, additive change.
 Existing and future plugins would continue to work as-is without a `definePlugin` call.
@@ -81,381 +82,133 @@ Existing and future plugins would continue to work as-is without a `definePlugin
 ## Detailed Design
 
 The `@eslint/plugin-kit` package would export a `definePlugin` function that takes in a single required options object.
-The options properties would allow authors to specify:
+The options object would allow authors to specify all the same properties as described in [Create Plugins > Creating a plugin](https://eslint.org/docs/latest/extend/plugins#creating-a-plugin).
+Out of those provided properties:
 
-- `meta` _(required)_: The same `name` as [Meta Data in Plugins](https://eslint.org/docs/latest/extend/plugins#meta-data-in-plugins), along with an optional `version`
-- `rules` _(optional)_: The same object as [Rules in Plugins](https://eslint.org/docs/latest/extend/plugins#rules-in-plugins), but also allowing functions that return a rule
-- any other plugin properties
+- `configs` will be modified as described in [`Configs`](#configs).
+- All other properties will be passed through without modification.
 
-It would return a plugin with:
+The only required property will be `meta.name`, which must be set to a `string`.
 
-- `configs`: configuration object(s) generated per [Configs](#configs)
-- all other provided properties as-is
-
-The following code block creates a standard plugin:
+The following code block creates a standard plugin with metadata and rules:
 
 ```js
 import { definePlugin } from "@eslint/plugin-kit";
 
-import packageData from "../package.json" with { type: "json" };
-import { rules } from "./rules/index.js";
+import ruleA from "./ruleA.js";
+import ruleB from "./ruleB.js";
 
 export const plugin = definePlugin({
-  meta: { name: packageData.name, version: packageData.version },
-  rules,
+  meta: {
+    name: "example",
+    version: 0.1.2,
+  },
+  rules: {
+    "a": ruleA,
+    "b": ruleB,
+  },
 });
 ```
-
-> `rules` is assumed to be a typical rules definition object like `{ "a": { ... }, ... }`.
 
 That definition would be the equivalent of:
 
 ```js
 // (equivalent to the previous snippet)
-
-import packageData from "../package.json" with { type: "json" };
-import { rules } from "./rules/index.js";
+import ruleA from "./ruleA.js";
+import ruleB from "./ruleB.js";
 
 export const plugin = {
-  meta: { name: packageData.name, version: packageData.version },
-  rules,
+  meta: {
+    name: "example",
+    version: 0.1.2,
+  },
+  rules: {
+    "a": ruleA,
+    "b": ruleB,
+  },
 };
 ```
+
+Note that there is no difference between the object literal provided to `definePlugin` in the first snippet compared to the equivalent object literal set to `plugin` in the second snippet.
 
 ### Configs
 
 An optional `configs` object may be provided to `definePlugin`.
-If provided, it acts as a shorthand description of the plugin's exported `configs` property.
+If provided, each property on it be merged with a `plugins` object specifying the current plugin by its `meta.name`.
 
-`configs` is the only property `definePlugin` receives with a different shape than the output plugin object.
-`definePlugin` will apply the following two modifications:
+For example, given this common definition style of a plugin with configs, metadata, and rules:
 
-- Keys will have the plugin's name + "/" prepended to them
-- Configs will be transformed to objects per [Config Values Transformations](#config-values-transformations), and then two properties will be added if they are not present:
-  - `name`: the plugin's namespace + `"/"` + the config's key
-    - Plugin namespaces are the plugin's `meta.namespace ?? meta.name`
-  - `plugin`: merged with an object defining the plugin under its name
+```js
+import { definePlugin } from "@eslint/plugin-kit";
 
-The following snippet is what this RFC expects most common community plugins to be structured like:
+import ruleA from "./ruleA.js";
+import ruleB from "./ruleB.js";
 
-```ts
-const examplePlugin = definePlugin({
-  configs: {
-    recommended: [myRuleA, myRuleB],
-  },
-  meta: { name: "example" },
-  rules: {
-    "my-rule-a": myRuleA,
-    "my-rule-b": myRuleB,
-  },
-});
-```
-
-That plugin definition is equivalent to:
-
-```ts
-// (equivalent to the previous snippet)
-const plugin = {
+export const plugin = definePlugin({
   configs: {
     recommended: {
-      name: "example/recommended",
-      plugins: {
-        get example() {
-          return plugin;
-        },
-      },
       rules: {
-        "example/my-rule-a": "error",
-        "example/my-rule-b": "error",
+        "example/a": "error",
+        "example/b": "error",
       },
     },
   },
-  meta: { name: "example" },
-  rules: {
-    "my-rule-a": myRuleA,
-    "my-rule-b": myRuleB,
-  },
-});
-```
-
-#### Config Values Transformations
-
-The behavior of transforming values under `configs` properties depends on what type of value is provided:
-
-- If provided as an array, it will be transformed to an object with a `rules` property whose keys and values are generated as follows:
-  - If it is a rule object itself, the rule will be added with severity `"error"`
-  - If it is a tuple of a rule object and severity, the rule will be added with the provided severity
-  - If it is any other kind of object, it will be merged as-is
-- If provided as a non-array object:
-  - Its `rules` value will be transformed with the same logic
-  - All other properties will be merged as-is
-
-The following table contains examples of valid elements for `rules` arrays and their equivalent output.
-
-| Element Type                                       | Example Input Element                      | Example Merged Output                        |
-| -------------------------------------------------- | ------------------------------------------ | -------------------------------------------- |
-| `null`                                             | `null`                                     | `undefined`                                  |
-| `undefined`                                        | `undefined`                                | `undefined`                                  |
-| Rule object                                        | `myRule`                                   | `{ "example/my-rule": "error" }`             |
-| Object with string key and severity value          | `{ "example/my-rule": "warn" }`            | `{ "example/my-rule": "warn" }`              |
-| Object with string key and severity & option       | `{ "example/my-rule": ["warn", "never"] }` | `{ "example/my-rule": ["warn", "never"] }`   |
-| Tuple containing rule object and severity          | `[myRule, "warn"]`                         | `{ "example/my-rule": "warn" }`              |
-| Tuple containing rule object and severity & option | `[myRule, ["warn", "never"]]`              | `{ "example/my-rule": ["warn", "never"] }`   |
-| Array of objects                                   | `[ { ... }, { ... } ]`                     | `[ { name, plugins, ... }, { ... } ]` **\*** |
-
-**\***If a `config` value is provided as an array of objects, `name` and `plugins` will be set as default values on only the first element.
-This allows plugin authors to define plugins with arrays of config objects.
-See [Example: Multiple Config Elements](#example-multiple-config-elements).
-
-#### Example: Custom `recommended` Config
-
-This plugin has four rules, `myRuleA`, `myRuleB`, `myRuleC`, and `myRuleD`.
-`definePlugin` is used to create a single config containing those four rules with different severities and options:
-
-```ts
-const plugin = definePlugin({
-  configs: {
-    recommended: [
-      myRuleA,
-      [myRuleB, "error"],
-      [myRuleC, "warn"],
-      [myRuleD, ["error", "never"]],
-    ],
-  },
   meta: {
     name: "example",
   },
   rules: {
-    "my-rule-a": myRuleA,
-    "my-rule-b": myRuleB,
-    "my-rule-c": myRuleC,
-    "my-rule-d": myRuleD,
+    a: ruleA,
+    b: ruleB,
   },
 });
 ```
 
-The equivalent generated plugin object would be:
+That definition would be the equivalent of:
 
 ```js
 // (equivalent to the previous snippet)
+import ruleA from "./ruleA.js";
+import ruleB from "./ruleB.js";
 
-const plugin = {
-  configs: {},
+export const plugin = {
   meta: {
     name: "example",
+    version: 0.1.2,
   },
   rules: {
-    "my-rule-a": myRuleA,
-    "my-rule-b": myRuleB,
-    "my-rule-c": myRuleC,
-    "my-rule-d": myRuleD,
+    "a": ruleA,
+    "b": ruleB,
   },
 };
 
 Object.assign(plugin.configs, {
   recommended: [
     {
-      name: "example/recommended",
       plugins: {
         example: plugin,
       },
       rules: {
-        "example/my-rule-a": "error",
-        "example/my-rule-b": "error",
-        "example/my-rule-c": "warn",
-        "example/my-rule-d": ["error", "never"],
+        "example/a": ruleA,
+        "example/b": ruleA,
       },
     },
   ],
 });
 ```
 
-#### Example: Filtered Custom Configs
-
-A plugin akin to `typescript-eslint` with `recommended`, `strict`, and `*TypeAware` configs could define those four configs by filtering the values of a `rules` object.
-Suppose this plugin's `rules` contains four rules:
-
-1. `my-rule-a`: with `meta.docs = { recommended: true, typeAware: false }`
-1. `my-rule-b`: with `meta.docs = { recommended: true, typeAware: true }`
-1. `my-rule-c`: with `meta.docs = { recommended: "strict", typeAware: false }`
-1. `my-rule-d`: with `meta.docs = { recommended: "strict", typeAware: true }`
-
-Its plugin definition could look like:
-
-```js
-const rules = {
-  "my-rule-a": myRuleA,
-  "my-rule-b": myRuleB,
-  "my-rule-c": myRuleC,
-  "my-rule-d": myRuleD,
-};
-
-definePlugin({
-  configs: {
-    recommended: Object.values(rules).filter(
-      (rule) => rule.meta.docs.recommended
-    ),
-    recommendedTypeAware: Object.values(rules).filter(
-      (rule) => rule.meta.docs.recommended && rule.meta.docs.typeAware
-    ),
-    strict: Object.values(rules).filter(
-      (rule) => rule.meta.docs.recommended === "strict"
-    ),
-    strictTypeAware: Object.values(rules).filter(
-      (rule) =>
-        rule.meta.docs.recommended === "strict" && rule.meta.docs.typeAware
-    ),
-  },
-  meta: {
-    name: "example",
-  },
-  rules,
-});
-```
-
-The equivalent generated plugin object would be:
-
-```js
-// (equivalent to the previous snippet)
-
-const plugin = {
-  configs: {},
-  meta: {
-    name: "example",
-  },
-  rules: {
-    "my-rule-a": myRuleA,
-    "my-rule-b": myRuleB,
-    "my-rule-c": myRuleC,
-    "my-rule-d": myRuleD,
-  },
-};
-
-Object.assign(plugin.configs, {
-  recommended: [
-    {
-      name: "example/recommended",
-      plugins: {
-        example: plugin,
-      },
-      rules: {
-        "example/my-rule-a": "error",
-      },
-    },
-  ],
-  recommendedTypeAware: [
-    {
-      name: "example/recommendedTypeAware",
-      plugins: {
-        example: plugin,
-      },
-      rules: {
-        "example/my-rule-a": "error",
-        "example/my-rule-b": "error",
-      },
-    },
-  ],
-  strict: [
-    {
-      name: "example/strict",
-      plugins: {
-        example: plugin,
-      },
-      rules: {
-        "example/my-rule-a": "error",
-        "example/my-rule-c": "error",
-      },
-    },
-  ],
-  strictTypeAware: [
-    {
-      name: "example/strictTypeAware",
-      plugins: {
-        example: plugin,
-      },
-      rules: {
-        "example/my-rule-a": "error",
-        "example/my-rule-b": "error",
-        "example/my-rule-c": "error",
-        "example/my-rule-d": "error",
-      },
-    },
-  ],
-});
-```
-
-#### Example: Including Additional Options
-
-A plugin that provides additional properties such as `languageOptions` could define them in its `configs.recommended`.
-This plugin provides:
-
-- A single rule, `myRule`
-- `languageOptions`: as part of its `recommended` config
-
-```js
-const plugin = definePlugin({
-  configs: {
-    recommended: {
-      languageOptions: {
-        globals: {
-          myGlobal: "readonly",
-        },
-      },
-      rules: [myRule],
-    },
-  },
-  meta: {
-    name: "example",
-  },
-  rules: {
-    "my-rule": myRule,
-  },
-});
-```
-
-The equivalent generated plugin object would be:
-
-```js
-// (equivalent to the previous snippet)
-
-const plugin = {
-  configs: {},
-  meta: {
-    name: "example",
-  },
-  rules: {
-    "my-rule": myRule,
-  },
-};
-
-Object.assign(plugin.configs, {
-  recommended: [
-    {
-      languageOptions: {
-        globals: {
-          myGlobal: "readonly",
-        },
-      },
-      name: "example/recommended",
-      plugins: {
-        example: plugin,
-      },
-      rules: {
-        "example/my-rule": "error",
-      },
-    },
-  ],
-});
-```
-
-#### Example: Multiple Config Elements
+#### Configs with Arrays
 
 If a plugin provides multiple objects in a `configs` array, only the first object will have `name` and `plugins` added in as defaults.
 For example, this plugin is set up akin to the current `eslint-plugin-markdown`.
 It provides multiple entries in its `recommended` config and only specifies `rules` in the last element:
 
 ```js
-const plugin = definePlugin({
+import { definePlugin } from "@eslint/plugin-kit";
+
+import ruleA from "./ruleA.js";
+import ruleB from "./ruleB.js";
+
+export const plugin = definePlugin({
   configs: {
     recommended: [
       {
@@ -476,16 +229,22 @@ const plugin = definePlugin({
             },
           },
         },
-        rules: [myRule],
+        rules: {
+          "example/a": "error",
+          "example/b": "error",
+        },
       },
     ],
   },
-  meta,
+  meta: {
+    name: "example",
+  },
   processors: {
     markdown: processor,
   },
   rules: {
-    "my-rule": myRule,
+    a: ruleA,
+    b: ruleB,
   },
 });
 ```
@@ -494,6 +253,8 @@ The equivalent generated plugin object would be:
 
 ```js
 // (equivalent to the previous snippet)
+import ruleA from "./ruleA.js";
+import ruleB from "./ruleB.js";
 
 const plugin = {
   configs: {},
@@ -504,7 +265,8 @@ const plugin = {
     markdown: processor,
   },
   rules: {
-    "my-rule": myRule,
+    a: ruleA,
+    b: ruleB,
   },
 };
 
@@ -532,74 +294,8 @@ Object.assign(plugin.configs, {
         },
       },
       rules: {
-        "example/my-rule": "error",
-      },
-    },
-  ],
-});
-```
-
-#### Example: Referencing Other Plugins' Rules
-
-If a `config` value contains an objects with string keys and severity/option values, those objects' keys will not be modified.
-This means objects can refer to other plugins' rules.
-
-For example, this plugin sets three rules:
-
-1. `myRule`: its own rule
-2. `import/no-anonymous-default-export`: from an external plugin
-3. `react-hooks/rules-of-hooks`: from an external plugin
-
-Its definition is equivalent to the current `eslint-plugin-storybook`'s referencing of rules from other plugins:
-
-```js
-const plugin = definePlugin({
-  configs: {
-    recommended: {
-      rules: [
-        myRule,
-        {
-          "import/no-anonymous-default-export": "off",
-          "react-hooks/rules-of-hooks": "off",
-        },
-      ],
-    },
-  },
-  meta: {
-    name: "example",
-  },
-  rules: {
-    "my-rule": myRule,
-  },
-});
-```
-
-The equivalent generated plugin object would be:
-
-```js
-// (equivalent to the previous snippet)
-
-const plugin = {
-  configs: {},
-  meta: {
-    name: "example",
-  },
-  rules: {
-    "my-rule": myRule,
-  },
-};
-
-Object.assign(plugin.configs, {
-  recommended: [
-    {
-      name: "example/recommended",
-      plugins: {
-        example: plugin,
-      },
-      rules: {
-        "example/my-rule": "error",
-        "import/no-anonymous-default-export": "off",
-        "react-hooks/rules-of-hooks": "off",
+        "example/a": "error",
+        "example/b": "error",
       },
     },
   ],
@@ -621,7 +317,7 @@ Developers may not want a helper that they need to understand alongside the exis
 Some might find that obfuscating plugin definitions in this way is conceptual overhead costlier than the current act of writing portions manually.
 
 Adding a first-party standardized config also runs the risk of forcing the community into patterns it does not want.
-Authors may find the `definePlugin`-style `configs` cumbersome, for example, and might opt not to use the helper factory as a result.
+Authors may find the `definePlugin` function cumbersome, for example, and might opt not to use the helper factory as a result.
 If a super-majority of plugin authors don't onboard to `definePlugin` then this RFC might lead to an increase in plugin definition styles.
 
 This RFC believes that the net benefits of a first-party `definePlugin` outweigh the risks.
@@ -632,85 +328,37 @@ Given how many existing plugins seem to adhere to similar patterns, it is likely
 Fully backward compatible with no breaking changes.
 The new `definePlugin` would be opt-in and optional.
 
-### Design Pattern Analysis
-
-Beyond technical breaking changes, this design also needs to work conceptually with how community authors want to define their plugins.
-`configs` in particular is a design change that needs to be not break existing patterns.
-
-All non-deprecated plugins with a ✅ _Status_ in [📈 Tracking: Flat Config Support](https://github.com/eslint/eslint/issues/18093) can be represented with the `configs` functions style of definition.
-
-Emoji key:
-
-- ☑️: Exposes just a `recommended` config, optionally alongside `all`, `flat/*`, `legacy-*`, and/or `*-legacy` variants
-- ✔️: Exposes multiple configs that are or could be auto-generated from existing values in code
-- 🛠️: Exposes multiple configs that could be represented this way by adding 1-2 properties to `meta.rule.docs`
-- ❎: Does not export configs with its own rules to begin with
-
-| Plugin                                                                                            | Config(s)                      | Generation Notes                                                 | Representable |
-| ------------------------------------------------------------------------------------------------- | ------------------------------ | ---------------------------------------------------------------- | ------------- |
-| [@graphql-eslint](https://github.com/graphql-hive/graphql-eslint)                                 | Multiple                       | generated by `pnpm generate:configs`                             | ✔️            |
-| [@nuxt/eslint](https://github.com/nuxt/eslint)                                                    | _(none)_                       |                                                                  | ❎            |
-| [@redwoodjs/eslint-plugin](https://github.com/redwoodjs/redwood/tree/main/packages/eslint-plugin) | _(none)_                       |                                                                  | ❎            |
-| [@typescript-eslint](https://github.com/typescript-eslint/typescript-eslint)                      | Multiple                       | generated by `yarn generate:configs`                             | ✔️            |
-| [angular](https://github.com/angular-eslint/angular-eslint)                                       | `all`, `recommended`           | manually matched to `meta.docs.recommended`                      | ☑️            |
-| [astro](https://github.com/ota-meshi/eslint-plugin-astro)                                         | Multiple                       | generated by `npm run update`                                    | ✔️            |
-| [check-file](https://github.com/dukeluo/eslint-plugin-check-file)                                 | _(none)_                       |                                                                  | ❎            |
-| [compat](https://github.com/amilajack/eslint-plugin-compat)                                       | `recommended`, `flat/*`        | one plugin rule                                                  | ☑️            |
-| [cypress](https://github.com/cypress-io/eslint-plugin-cypress)                                    | `all`, `recommended`           | manually matched to `meta.docs.recommended`                      | ☑️            |
-| [ember](https://github.com/ember-cli/eslint-plugin-ember)                                         | `base`, `recommended`          | manually authored with external rules                            | ✔️            |
-| [es-x](https://github.com/eslint-community/eslint-plugin-es-x)                                    | Multiple                       | generated by `scripts/update-lib-configs.js`                     | ✔️            |
-| [eslint-comments](https://github.com/eslint-community/eslint-plugin-eslint-comments)              | `recommended`                  | generated by `scripts/update.js`                                 | ☑️            |
-| [eslint-plugin](https://github.com/eslint-community/eslint-plugin-eslint-plugin)                  | Multiple                       | dynamically based on `meta.docs.recommended`                     | ✔️            |
-| [expect-type](https://github.com/JoshuaKGoldberg/eslint-plugin-expect-type)                       | `recommended`                  | dynamically based on `meta.docs.recommended`                     | ☑️            |
-| [functional](https://github.com/eslint-functional/eslint-plugin-functional)                       | Multiple                       | dynamically based on `meta.docs.recommended` with external rules | ✔️            |
-| [import-x](https://github.com/un-ts/eslint-plugin-import-x)                                       | Multiple                       | manually authored                                                | 🛠️            |
-| [import](https://github.com/import-js/eslint-plugin-import)                                       | Multiple                       | manually authored                                                | 🛠️            |
-| [jest](https://github.com/jest-community/eslint-plugin-jest)                                      | Multiple                       | manually authored                                                | 🛠️            |
-| [jsdoc](https://github.com/gajus/eslint-plugin-jsdoc)                                             | Multiple                       | manually authored                                                | 🛠️            |
-| [jsonc](https://github.com/ota-meshi/eslint-plugin-jsonc)                                         | Multiple                       | generated by `npm run update`                                    | ✔️            |
-| [jsx-a11y](https://github.com/jsx-eslint/eslint-plugin-jsx-a11y)                                  | Multiple                       | manually authored                                                | 🛠️            |
-| [markdown](https://github.com/eslint/eslint-plugin-markdown)                                      | Multiple                       | generated by `tools/build-rules.js`                              | ✔️            |
-| [mocha](https://github.com/lo1tuma/eslint-plugin-mocha)                                           | `all`, `recommended`           | manually authored                                                | 🛠️            |
-| [n](https://github.com/eslint-community/eslint-plugin-n)                                          | `recommended`, `recommended-*` | manually matched to `meta.docs.recommended`                      | ✔️            |
-| [nx](https://github.com/nrwl/nx)                                                                  | Multiple                       | manually authored configs that only provide external rules       | ❎            |
-| [package-json](https://github.com/JoshuaKGoldberg/eslint-plugin-package-json)                     | `recommended`, `legacy-*`      | dynamically based on `meta.docs.recommended`                     | ☑️            |
-| [perfectionist](https://github.com/azat-io/eslint-plugin-perfectionist)                           | Multiple                       | dynamically with different options per config                    | ✔️            |
-| [playwright](https://github.com/playwright-community/eslint-plugin-playwright)                    | Multiple                       | manually matched to `meta.docs.recommended`                      | ✔️            |
-| [prettier](https://github.com/prettier/eslint-plugin-prettier)                                    | `recommended`                  | one plugin rule with external rules                              | ✔️            |
-| [promise](https://github.com/eslint-community/eslint-plugin-promise)                              | `recommended`, `flat/*`        | manually authored                                                | 🛠️            |
-| [qunit](https://github.com/platinumazure/eslint-plugin-qunit)                                     | `recommended`                  | manually matched to `meta.docs.recommended`                      | ✔️            |
-| [react-hooks](https://github.com/facebook/react/tree/main/packages/eslint-plugin-react-hooks)     | `recommended`, `recommended-*` | manually authored                                                | 🛠️            |
-| [react-refresh](https://github.com/ArnaudBarre/eslint-plugin-react-refresh)                       | Multiple                       | one rule with different options                                  | ✔️            |
-| [react](https://github.com/jsx-eslint/eslint-plugin-react)                                        | Multiple                       | partially dynamically based on `meta.docs.recommended`           | ✔️            |
-| [regexp](https://github.com/ota-meshi/eslint-plugin-regexp)                                       | Multiple                       | generated by `npm run update`                                    | ✔️            |
-| [security](https://github.com/eslint-community/eslint-plugin-security)                            | `recommended`, `legacy-*`      | manually matched to `meta.docs.recommended`                      | ☑️            |
-| [simple-import-sort](https://github.com/lydell/eslint-plugin-simple-import-sort)                  | _(none)_                       |                                                                  | ❎            |
-| [solid](https://github.com/solidjs-community/eslint-plugin-solid)                                 | Multiple                       | manually authored                                                | 🛠️            |
-| [sonarjs](https://github.com/SonarSource/SonarJS/blob/master/packages/jsts/src/rules/README.md)   | `recommended`, `*-legacy`      | dynamically based on `meta.docs.recommended`                     | ☑️            |
-| [storybook](https://github.com/storybookjs/eslint-plugin-storybook)                               | Multiple                       | generated by `pnpm run update-all`                               | ✔️            |
-| [stylistic](https://github.com/eslint-stylistic/eslint-stylistic)                                 | Multiple                       | dynamically based on `meta.docs.recommended`                     | ✔️            |
-| [svelte](https://github.com/sveltejs/eslint-plugin-svelte)                                        | Multiple                       | manually matched to `meta.docs.recommended`                      | ✔️            |
-| [tailwindcss](https://github.com/francoismassart/eslint-plugin-tailwindcss)                       | `recommended`, `flat/*`        | manually matched to `meta.docs.recommended`                      | ☑️            |
-| [TanStack Query](https://github.com/TanStack/query)                                               | `recommended`, `flat/*`        | manually matched to `meta.docs.recommended`                      | ☑️            |
-| [testing-library](https://github.com/testing-library/eslint-plugin-testing-library)               | Multiple                       | dynamically based on `meta.docs.recommended`                     | ✔️            |
-| [turbo](https://github.com/vercel/turbo)                                                          | `recommended`, `flat/*`        | manually matched to `meta.docs.recommended`                      | ✔️            |
-| [unicorn](https://github.com/sindresorhus/eslint-plugin-unicorn)                                  | `all`, `recommended`, `flat/*` | dynamically based on `meta.docs.recommended`                     | ☑️            |
-| [vitest](https://github.com/veritem/eslint-plugin-vitest)                                         | Multiple                       | manually matched to `meta.docs.recommended`                      | ✔️            |
-| [vue-i18n](https://github.com/intlify/eslint-plugin-vue-i18n)                                     | Multiple                       | generated by `jiti scripts/update.ts`                            | ✔️            |
-| [vue](https://github.com/vuejs/eslint-plugin-vue)                                                 | Multiple                       | generated by `npm run update`                                    | ✔️            |
-| [vuejs-accessibility](https://github.com/vue-a11y/eslint-plugin-vuejs-accessibility)              | `recommended`, `flat/*`        | manually authored                                                | ☑️            |
-| [wdio](https://github.com/webdriverio/webdriverio)                                                | `recommended`, `flat/*`        | manually authored                                                | ☑️            |
-| [yml](https://github.com/ota-meshi/eslint-plugin-yml)                                             | Multiple                       | generated by `npm run update`                                    | ✔️            |
-
-> Note: this summary table was hand-authored.
-> Although it was double-checked, it is susceptible to human error.
-> This RFC believes slight inaccuracies in the table do not invalidate its general conclusion: that a most plugins would benefit from a `definePlugin`.
-
 ## Alternatives
 
 It might be preferable to release `definePlugin` as a community-authored plugin before standardizing it in `@eslint/plugin-kit`.
 Doing so could allow for more rapid changes as community plugins adopt it.
 This RFC prefers making the function first-party for visibility and to encourage confidence in plugin author adoption.
+
+### Config Generation
+
+This RFC originally included significant added logic around generating `configs` from different forms of input.
+The goal was to allow authors to define plugin configs without referencing the plugin name in multiple places.
+For example, a plugin might be allowed to provide an array of rules for a config:
+
+```js
+export const examplePlugin = definePlugin({
+  configs: {
+    recommended: [ruleA, ruleB],
+  },
+  meta: {
+    name: "example",
+  },
+  rules: {
+    a: ruleA,
+    b: ruleB,
+  },
+});
+```
+
+The `configs` generation feature was removed from the RFC to simplify its initial implementation.
+This RFC now treats `configs` generation as out of scope.
+
+See [112c47 > 2025-define-plugin/README.md](https://github.com/eslint/rfcs/blob/112c474a8d3af98359d5611dd7b0c8ce597f85bd/designs/2025-define-plugin/README.md?plain=1) for the latest version of the RFC that proposed `configs` generation.
 
 ### Lazy-Loading Rules
 
@@ -721,49 +369,6 @@ This RFC now treats lazy-loading as out of scope.
 
 See [5d2557 > 2025-define-plugin/README.md#L705](https://github.com/eslint/rfcs/blob/5d2557787574e85c0e9413ba8cfa75f9215673b8/designs/2025-define-plugin/README.md?plain=1#L705) for the latest version of the RFC that proposed lazy-loading rules.
 
-## Open Questions
-
-### Config Arrays
-
-`eslint-plugin-markdown` defines an unusual `plugin.configs.processor`:
-
-- An array of config objects instead of just one
-- `name` with `/plugin` at the end
-- `rules` in the last config object rather than the first
-
-Is it acceptable to change `eslint-plugin-markdown`'s structure to what's suggested under [Example: Multiple Config Elements](#example-multiple-config-elements)
-
-### Legacy Configs
-
-Many plugins include `legacy-*` eslintrc configs as suggested in [Backwards Compatibility for Legacy Configs](https://eslint.org/docs/latest/extend/plugins#backwards-compatibility-for-legacy-configs).
-Dropping those configs would be a breaking change that those plugins may want to avoid.
-This conflicts with `definePlugin` explicitly only supporting flat config definitions.
-
-Plugin developers can work around that lack of support by manually adding those config properties:
-
-```js
-const plugin = definePlugin({ meta, rules });
-
-// TODO: Remove when we drop support for ESLint <=9 / eslintrc
-plugin.configs["legacy-recommended"] = {
-  plugin: ["example"],
-  rules: Object.fromEntries(
-    Object.entries(rules)
-      .filter(([, rule]) => rule.meta.docs?.recommended)
-      .map(([ruleName]) => [ruleName, "error"])
-  ),
-};
-```
-
-Is this an acceptable workaround strategy?
-
-### Rule Creators
-
-This RFC's scope intentionally does include a "rule creator" factory akin to [`@typescript-eslint/rule-creator`](https://typescript-eslint.io/developers/custom-rules/#rulecreator).
-Creating such a factory in ESLint could be useful but does not seem to be required for any of the problems `definePlugin` aims to solve.
-
-Should a "rule creator" factory be tackled separately?
-
 ## Help Needed
 
 I would love to implement this RFC.
@@ -771,7 +376,7 @@ I would love to implement this RFC.
 I can also:
 
 - Post this RFC in relevant Discords to draw plugin author attention to it
-- Work with `eslint-plugin-eslint-plugin` on feature requests for the proposed lint rules as part of this RFC
+- Work with `eslint-plugin-eslint-plugin` on feature requests for proposed lint rules as part of this RFC
 - Send draft PRs to community plugins to help onboard them to the new `definePlugin`
 
 ### Plugin Testing
@@ -787,123 +392,9 @@ If other plugin authors would like to test it out, that would be appreciated and
 
 ## Frequently Asked Questions
 
-### `configs`: Can config generation be made more automatic based on `meta.docs`?
-
-Or: why not define only one function that, given a rule, generates a config or array of configs?
-That would suggest using something the following function by default:
-
-```js
-const plugin = definePlugin({
-  configs: (rule) => rule.meta.docs.recommended,
-  meta,
-  rules,
-});
-```
-
-This design would make it difficult to create additional properties for individual configs.
-For example, if a plugin exports two configs and only one adds `languageOptions`, it would require additional complexity added to the singular function.
-
-Furthermore, dynamically generating strings is a more complex mental model for plugin authors.
-As a result it's also a more complex system to model in type system types for `definePlugin`.
-Doing so would at the very least require `definePlugin` to have a type parameter representing the shape of `rule.meta.docs`.
-Any operation beyond rudimentary boolean checks or string concatenation would be difficult or impossible to describe even with that information.
-
-This RFC believes requiring a single function per config makes for more clear, readable plugin definitions and is worth the -typically small- number of extra lines.
-
-### `configs`: Should a `recommended` config also be automatically generated?
-
-Earlier versions of this RFC suggested automatically adding a `recommended` config based on rules' `meta.docs.recommended` properties.
-This was removed to keep the RFC and `definePlugin` cleaner and simpler.
-
-A future version of `definePlugin` could add this feature.
-It would likely be discussed as part of a separate helper function or a new option like `autoConfig: true`.
-
-### `configs`: Should an `all` config also be automatically generated?
-
-Not according to how plugins seem to be authored today.
-Some plugins do contain config(s) enabling all their rules in some way.
-However, no plugins prominently recommend those "all" configs, and many don't have one at all.
-
-### `configs`: Will the added restrictions break existing plugin design patterns?
-
-Not according to how plugins seem to be authored today.
-See [Design Pattern Analysis](#design-pattern-analysis).
-
-This RFC believes that the proposed style of definition directly maps to how users generally expect to understand configs.
-As in: each config represents a set of rules filtered from the full list of plugin rules.
-Standardizing config logic will encourage plugin authors to continue making predictable plugin config designs.
-
-Plugin authors can always opt out of using `definePlugin` if they want their own, very different style.
-
 ### `meta`: Why is `meta.name` required?
 
-It's used to generate keys in `configs[string].rules` objects.
-
-### `configs`: Why generate at all?
-
-The majority of described logic in this RFC is to support automatically generating `configs` for users.
-An alternative, leaner approach would be to omit any kind of config generation logic.
-Doing so would keep `definePlugin` as a type system / editor Intellisense helper akin to `defineConfig()`.
-
-However, because plugins' `configs[string].plugins` properties may refer to the plugin, there is no way to create a `definePlugin` function that both:
-
-- Allows users to generate a plugin in one statement (i.e. without an `Object.assign` or equivalent)
-- Avoids any kind of dynamic `configs` generation (e.g. adding in `plugins` to a config)
-
-The leanest possible approach that keeps plugin generation to one statement would be to only add in the `plugins` property.
-For example, this plugin with a single rule could use a version of `definePlugin` that doesn't modify any `rules` properties:
-
-```ts
-export const plugin = definePlugin({
-  configs: {
-    recommended: {
-      rules: {
-        "example/my-rule": myRule,
-      },
-    },
-  },
-  meta: {
-    name: "example",
-  },
-  rules: {
-    "my-rule": myRule,
-  },
-});
-```
-
-It might then generate the equivalent config with `plugins`:
-
-```js
-// (equivalent to the previous snippet)
-
-import { definePlugin } from "@eslint/plugin-kit";
-
-const plugin = {
-  meta: {
-    name: "example",
-  },
-  rules: {
-    "my-rule": myRule,
-  },
-};
-
-Object.assign(plugin.configs, {
-  recommended: [
-    {
-      name: "example/recommended",
-      plugins: {
-        example: plugin,
-      },
-      rules: {
-        "example/my-rule": myRule,
-      },
-    },
-  ],
-});
-```
-
-This RFC believes that including automatic `rule` generation is worth inclusion.
-It allows for even more straightforward, simpler plugin definitions.
+It's used to populate the `plugins` object in `configs[string][0]` objects.
 
 ## Related Discussions
 
