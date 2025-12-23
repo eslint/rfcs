@@ -1,13 +1,11 @@
 - Repo: eslint/eslint
 - Start Date: 2025-05-06
 - RFC PR: <https://github.com/eslint/rfcs/pull/133>
-- Authors: [Kentaro Suzuki](https://github.com/sushichan044)
+- Authors: [Kentaro Suzuki](https://github.com/sushichan044) [Blake Sager](https://github.com/adf0nt3s)
 
 # Consider bulk suppressions when running Lint via the Node.js API
 
 ## Summary
-
-<!-- One-paragraph explanation of the feature. -->
 
 This RFC proposes integrating bulk suppressions support into the Node.js API via the `ESLint` and `LegacyESLint` classes, specifically focusing on considering existing bulk suppressions when linting files or text through the API. This change ensures that suppression files (`eslint-suppressions.json`) created via CLI commands are automatically respected when using the programmatic API, maintaining consistency between CLI and API behavior.
 
@@ -15,26 +13,13 @@ The scope is limited to applying existing suppressions during linting and does n
 
 ## Motivation
 
-<!-- Why are we doing this? What use cases does it support? What is the expected
-outcome? -->
-
 Currently, the bulk suppression feature introduced in ESLint 9.24.0 is only available via the CLI.
-This leads to inconsistencies when ESLint is used programmatically via its Node.js API, such as in IDE integrations.
 
-This leads to inconsistencies when ESLint is used programmatically. Violations suppressed using `eslint-suppressions.json` (especially when using a custom location via the CLI) might not be recognized when using the Node.js API, leading to incorrect error reporting in environments like IDEs.
+This leads to inconsistencies when ESLint is used programmatically via its Node.js API, such as in IDE integrations. Violations suppressed using `eslint-suppressions.json` (especially when using a custom location via the CLI) might not be recognized when using the Node.js API, leading to incorrect error reporting in environments like IDEs.
 
 This RFC aims to resolve this discrepancy by adding support for bulk suppressions to the `ESLint` and `LegacyESLint` Node.js APIs, ensuring consistent linting results and configuration capabilities across both interfaces.
 
 ## Detailed Design
-
-<!--
-   This is the bulk of the RFC.
-
-   Explain the design with enough detail that someone familiar with ESLint
-   can implement it by reading this document. Please get into specifics
-   of your approach, corner cases, and examples of how the change will be
-   used. Be sure to define any new terms in this section.
--->
 
 This proposal integrates the existing bulk suppression functionality into the `ESLint` and `LegacyESLint` Node.js API classes by leveraging the internal `SuppressionsService`. A new `suppressionsLocation` option is introduced in the constructors.
 
@@ -47,7 +32,8 @@ This proposal integrates the existing bulk suppression functionality into the `E
 2. Service Instantiation and Configuration
     - Upon instantiation, the `ESLint` and `LegacyESLint` constructors will create an instance of `SuppressionsService`.
     - A new constructor option, `suppressionsLocation` (string, optional), will be added to both classes.
-    - If provided, this path (relative to `cwd`) specifies the suppression file.
+    - If provided and relative, this path (relative to `cwd`) specifies the suppression file.
+    - If provided and absolute, this path (relative to `/`) specifies the suppression file.
     - If not provided, ESLint defaults to searching for `eslint-suppressions.json` in the `cwd`.
     - The constructor will resolve the final absolute path to the suppression file (using `suppressionsLocation` or the default) and pass it to the `SuppressionsService` constructor.
 
@@ -162,11 +148,6 @@ class ESLint {
 
 ## Documentation
 
-<!--
-    How will this RFC be documented? Does it need a formal announcement
-    on the ESLint blog to explain the motivation?
--->
-
 The documentation updates will reflect that this change aligns the Node.js API behavior with the existing CLI functionality.
 
 1. API Documentation (`ESLint`/`LegacyESLint` classes):
@@ -183,28 +164,11 @@ The documentation updates will reflect that this change aligns the Node.js API b
 
 ## Drawbacks
 
-<!--
-    Why should we *not* do this? Consider why adding this into ESLint
-    might not benefit the project or the community. Attempt to think
-    about any opposing viewpoints that reviewers might bring up.
-
-    Any change has potential downsides, including increased maintenance
-    burden, incompatibility with other tools, breaking existing user
-    experience, etc. Try to identify as many potential problems with
-    implementing this RFC as possible.
--->
-
 - API Complexity: Introduces a new option (`suppressionsLocation`) to the constructor API surface for both `ESLint` and `LegacyESLint`, slightly increasing complexity compared to only supporting the default file location.
 - Performance: The overhead of potentially resolving `suppressionsLocation` and then searching for/parsing the suppression file is introduced. However, this aligns the API\'s behavior and capabilities with the CLI.
 - Complexity: Introduces `SuppressionsService` interaction into `ESLint`/`LegacyESLint`, but reuses existing internal logic.
 
 ## Backwards Compatibility Analysis
-
-<!--
-    How does this change affect existing ESLint users? Will any behavior
-    change for them? If so, how are you going to minimize the disruption
-    to existing users?
--->
 
 This change is designed to be backward-compatible.
 
@@ -215,13 +179,6 @@ This change is designed to be backward-compatible.
 
 ## Alternatives
 
-<!--
-    What other designs did you consider? Why did you decide against those?
-
-    This section should also include prior art, such as whether similar
-    projects have already implemented a similar feature.
--->
-
 - No `suppressionsLocation` API Option: The initial consideration was to *not* add the `suppressionsLocation` option to the API, only implementing the default lookup in `cwd`. This was simpler but rejected because it lacked full consistency with the CLI\'s `--suppressions-location` flag, preventing API users from specifying a custom file path. Adding the option provides greater flexibility and closer parity with the CLI.
 - Separate API Method for Applying Suppressions: Introducing new methods like `lintTextWithSuppressions()` was rejected as inconsistent and burdensome for users compared to automatic application within existing methods.
 - Including Suppression File Manipulation Options in `lintText`/`lintFiles`: The CLI includes flags like `--suppress-all`, `--suppress-rule <rule-name>`, and `--prune-suppressions` which generate, update, or prune the suppression file based on lint results. Adding corresponding options to the `lintText` and `lintFiles` API methods was considered. However, this approach was rejected because:
@@ -230,51 +187,16 @@ This change is designed to be backward-compatible.
 
 ## Open Questions
 
-<!--
-    This section is optional, but is suggested for a first draft.
-
-    What parts of this proposal are you unclear about? What do you
-    need to know before you can finalize this RFC?
-
-    List the questions that you'd like reviewers to focus on. When
-    you've received the answers and updated the design to reflect them,
-    you can remove this section.
--->
-
 - Specific implementation examples for the `LegacyESLint` class.
 - Should functionality equivalent to CLI flags like `--suppress-all` or `--suppress-rule` be supported via separate API methods in the future?
 
 ## Help Needed
 
-<!--
-    This section is optional.
-
-    Are you able to implement this RFC on your own? If not, what kind
-    of help would you need from the team?
--->
-
 I intend to implement this feature.
-
-## Frequently Asked Questions
-
-<!--
-    This section is optional but suggested.
-
-    Try to anticipate points of clarification that might be needed by
-    the people reviewing this RFC. Include those questions and answers
-    in this section.
--->
-
-Potential questions regarding alternative design approaches are addressed in the `Alternatives` section.
 
 ## Related Discussions
 
-<!--
-    This section is optional but suggested.
-
-    If there is an issue, pull request, or other URL that provides useful
-    context for this proposal, please include those links here.
--->
+* Original RFC PR: https://github.com/eslint/rfcs/pull/133/files
 
 ### Current Usage of ESLint Node.js API
 
