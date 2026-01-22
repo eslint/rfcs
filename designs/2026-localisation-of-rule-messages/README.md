@@ -61,7 +61,7 @@ If a plugin author wants to maintain translations themselves, they can define th
       messages: {
         avoidName: 'Avoid using variables named {{name}}',
       },
-+     message_translations: {
++     messageTranslations: {
 +       'es': {
 +         avoidName: 'Evite utilizar variables llamadas {{name}}',
 +       },
@@ -111,6 +111,17 @@ Potential repository structure:
 # only showing interesting files for brevity
 ```
 
+The files could be JSON or JS, and would export an object with the following structure:
+
+```js
+// es.json or es.js:
+export default {
+  example_rule_name: {
+    avoidName: 'Evite utilizar variables llamadas {{name}}',
+  },
+};
+```
+
 ### 3.3. Implementation for _eslint core_
 
 #### 3.3.1. Determining the user's locale
@@ -123,7 +134,7 @@ Intl.DateTimeFormat().resolvedOptions().locale; // -> 'es-419'
 
 Eslint could also support overriding the locale with a CLI argument like `--locale=de-DE` (further discussion in [§10.3](#10-3)).
 This CLI argument would be a comma-separated string, where each value is a valid [BCP 47 language tag](https://developer.mozilla.org/en-US/docs/Glossary/BCP_47_language_tag).
-If specified, the CLI argument will be the preferred locale, falling back to the OS' locale.
+If specified, the CLI argument will be the preferred locale, falling back to the OS' locale, and using the matching strategy in [§3.3.2](#332-matching-the-users-locale-to-available-translations).
 
 The locale would be exposed to rules via [`context`](https://eslint.org/docs/latest/extend/custom-rules#the-context-object)`.locale`, in case they need it for their own formatting (see [§8.1](#81-limitations-of-message-placeholders) for an example).
 This attribute would be an array of strings, to match [`navigator.languages`](https://developer.mozilla.org/en-US/docs/Web/API/Navigator/languages).
@@ -142,18 +153,13 @@ We would then follow the [lookup algorithm from RFC-4647](https://datatracker.ie
 > This ensures that eslint is not slowed down by this feature in CI environments, nor for users who expect English to be used.
 > This assumption is not always correct ([counterexample: `messages` in Chinese](https://github.com/LLLaiYoung/eslint-plugin-aegis/blob/9780cd87240e2bbe0c134b97b8776782fe9016e1/lib/rules/no-implicit-complex-object.js#L28)).
 
-**Case 1:** Resolving translations from the rule's source is trivial. [`computeMessageFromDescriptor()`](https://github.com/eslint/eslint/blob/23490b266276792896a0b7b43c49a1ce87bf8568/lib/linter/file-report.js#L440) would simply check `message_translations[locale][messageId]` before falling back to `messages[messageId]`.
+**Case 1:** Resolving translations from the rule's source is trivial. [`computeMessageFromDescriptor()`](https://github.com/eslint/eslint/blob/23490b266276792896a0b7b43c49a1ce87bf8568/lib/linter/file-report.js#L440) would simply check `messageTranslations[locale][messageId]` before falling back to `messages[messageId]`.
 
 **Case 2:** If translations cannot be found in the rule itself, we need to:
 
-- check if `@eslint-translations/{packageName}` exists with `require.resolve`
+- check if `@eslint-translations/{packageName}` exists with [`require.resolve`](https://nodejs.org/api/modules.html#requireresolverequest-options), similar to the method used [to load formatters](https://github.com/eslint/eslint/blob/b34b93852d014ebbcf3538d892b55e0216cdf681/lib/eslint/eslint.js#L1197).
 - if yes, read that package and check if it contains a matching language
 - return the `messages` from that package.
-
-> [!NOTE]
-> Searching `node_modules` doesn't align with the [flat config](https://eslint.org/blog/2022/08/new-config-system-part-2/)'s approach to configuration.
-> Nowadays, it might be preferred to define the external source of translations in `eslint.config.js`?
-> Needs discussion…
 
 ### 3.4. Prior Art
 
@@ -324,10 +330,10 @@ I would suggest **not** using a Translation Management System because:
 
 ---
 
-> <a name="10-2"></a>10.2. What about translations for the docs and [internal error messages](https://github.com/eslint/eslint/tree/main/messages)?
+> <a name="10-2"></a>10.2. What about translations for the docs and internal strings (such as [messages](https://github.com/eslint/eslint/tree/main/messages), [services](https://github.com/eslint/eslint/blob/43677de07ebd6e14bfac40a46ad749ba783c45f2/lib/services/warning-service.js#L33), and [inline configuration directives](https://github.com/eslint/eslint/blob/43677de07ebd6e14bfac40a46ad749ba783c45f2/lib/linter/linter.js#L1074))?
 
 This is considered out of scope.
-Docs translations are tracked by [eslint/eslint#11512](https://github.com/eslint/eslint/issues/11512), and internal error messages are not a public API, so translations can be implemented much more easily.
+Docs translations are tracked by [eslint/eslint#11512](https://github.com/eslint/eslint/issues/11512), and internal strings are not exposed as a public API, so translations can be implemented much more easily.
 
 ---
 
