@@ -1,6 +1,6 @@
 - Repo: eslint/eslint
 - Start Date: 2025-05-06
-- RFC PR: <https://github.com/eslint/rfcs/pull/133>
+- RFC PR: <https://github.com/eslint/rfcs/pull/142>
 - Authors: [Kentaro Suzuki](https://github.com/sushichan044) [Blake Sager](https://github.com/adf0nt3s)
 
 # Consider bulk suppressions when running Lint via the Node.js API
