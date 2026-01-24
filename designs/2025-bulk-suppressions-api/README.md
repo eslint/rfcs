@@ -7,7 +7,7 @@
 
 ## Summary
 
-This RFC proposes integrating bulk suppressions support into the Node.js API via the `ESLint` and `LegacyESLint` classes, specifically focusing on considering existing bulk suppressions when linting files or text through the API. This change ensures that suppression files (`eslint-suppressions.json`) created via CLI commands are automatically respected when using the programmatic API, maintaining consistency between CLI and API behavior.
+This RFC proposes integrating bulk suppressions support into the Node.js API via the `ESLint` class, specifically focusing on considering existing bulk suppressions when linting files or text through the API. This change ensures that suppression files (`eslint-suppressions.json`) created via CLI commands are automatically respected when using the programmatic API, maintaining consistency between CLI and API behavior.
 
 The scope is limited to applying existing suppressions during linting and does not include suppression file manipulation features (such as `--suppress-all`, `--suppress-rule`, or `--prune-suppressions`), which remain CLI-exclusive functionalities.
 
@@ -17,15 +17,15 @@ Currently, the bulk suppression feature introduced in ESLint 9.24.0 is only avai
 
 This leads to inconsistencies when ESLint is used programmatically via its Node.js API, such as in IDE integrations. Violations suppressed using `eslint-suppressions.json` (especially when using a custom location via the CLI) might not be recognized when using the Node.js API, leading to incorrect error reporting in environments like IDEs.
 
-This RFC aims to resolve this discrepancy by adding support for bulk suppressions to the `ESLint` and `LegacyESLint` Node.js APIs, ensuring consistent linting results and configuration capabilities across both interfaces.
+This RFC aims to resolve this discrepancy by adding support for bulk suppressions to the `ESLint` Node.js API, ensuring consistent linting results and configuration capabilities across both interfaces.
 
 ## Detailed Design
 
-This proposal integrates the existing bulk suppression functionality into the `ESLint` and `LegacyESLint` Node.js API classes by leveraging the internal `SuppressionsService`. A new `suppressionsLocation` option is introduced in the constructors.
+This proposal integrates the existing bulk suppression functionality into the `ESLint` Node.js API class by leveraging the internal `SuppressionsService`. A new `suppressionsLocation` option is introduced in the constructor.
 
 1. New Constructor Options 
     - `suppressionsLocation`
-        - Both `ESLintOptions` and `LegacyESLintOptions` will accept a new optional property: `suppressionsLocation`.
+        - `ESLintOptions` will accept a new optional property: `suppressionsLocation`.
         - `suppressionsLocation: string | undefined`: Specifies the path to the suppressions file (`eslint-suppressions.json`). This path can be absolute or relative to the `cwd`.
         - If `suppressionsLocation` is provided, ESLint will attempt to load suppressions from that specific file path.
         - If `suppressionsLocation` is not provided (or is `undefined`), ESLint will default to looking for `eslint-suppressions.json` in the `cwd`.
@@ -36,8 +36,8 @@ This proposal integrates the existing bulk suppression functionality into the `E
         - If not provided (or is `undefined`), defaults to `true`.
 
 2. Service Instantiation and Configuration
-    - Upon instantiation, the `ESLint` and `LegacyESLint` constructors will create an instance of `SuppressionsService`.
-    - 2 new constructor options will be added to both classes.
+    - Upon instantiation, the `ESLint` constructor will create an instance of `SuppressionsService`.
+    - 2 new constructor options will be added to the `ESLint` class.
         - `suppressionsLocation` (string, optional)
             - If provided and relative, this path (relative to `cwd`) specifies the suppression file.
             - If provided and absolute, this path (relative to `/`) specifies the suppression file.
@@ -161,15 +161,15 @@ class ESLint {
 
 The documentation updates will reflect that this change aligns the Node.js API behavior with the existing CLI functionality.
 
-1. API Documentation (`ESLint`/`LegacyESLint` classes):
-    - Add the new `suppressionsLocation` and `applySuppressions` options to the constructor options documentation for both `ESLint` and `LegacyESLint`.
+1. API Documentation (`ESLint` class):
+    - Add the new `suppressionsLocation` and `applySuppressions` options to the constructor options documentation for `ESLint`.
     - Document `suppressionsLocation`: its purpose (specifying the suppression file path) and behavior (relative to `cwd`, default lookup).
     - Document `applySuppressions`: controls whether suppressions are automatically applied (defaults to `true`).
     - Add a note to the descriptions of `lintText()` and `lintFiles()` methods stating that suppressions are automatically applied when `applySuppressions` is `true` (the default), based on the resolved suppression file path.
 
 2. Bulk Suppressions User Guide Page:
     - Update the existing user guide page for Bulk Suppressions.
-    - Add a section or note clarifying that the feature is now also available when using the `ESLint` and `LegacyESLint` Node.js APIs.
+    - Add a section or note clarifying that the feature is now also available when using the `ESLint` Node.js API.
     - Explicitly mention how the suppression file is located when using the API: "Note: When using the Node.js API, ESLint searches for the suppression file specified by the `suppressionsLocation` constructor option. If this option is not provided, it defaults to looking for `eslint-suppressions.json` in the `cwd` (current working directory)."
 
 3. Release Notes:
@@ -177,9 +177,9 @@ The documentation updates will reflect that this change aligns the Node.js API b
 
 ## Drawbacks
 
-- API Complexity: Introduces two new options (`suppressionsLocation` and `applySuppressions`) to the constructor API surface for both `ESLint` and `LegacyESLint`, slightly increasing complexity.
+- API Complexity: Introduces two new options (`suppressionsLocation` and `applySuppressions`) to the constructor API surface for `ESLint`, slightly increasing complexity.
 - Performance: The overhead of potentially resolving `suppressionsLocation` and then searching for/parsing the suppression file is introduced. However, this aligns the API\'s behavior and capabilities with the CLI.
-- Complexity: Introduces `SuppressionsService` interaction into `ESLint`/`LegacyESLint`, but reuses existing internal logic.
+- Complexity: Introduces `SuppressionsService` interaction into `ESLint`, but reuses existing internal logic.
 
 ## Backwards Compatibility Analysis
 
@@ -200,7 +200,6 @@ This change is designed to be backward-compatible.
 
 ## Open Questions
 
-- Specific implementation examples for the `LegacyESLint` class.
 - Should functionality equivalent to CLI flags like `--suppress-all` or `--suppress-rule` be supported via separate API methods in the future?
 
 ## Help Needed
@@ -217,7 +216,7 @@ While improving IDE support is not the primary goal of this RFC, the following i
 
 #### IDE Integrations
 
-- VSCode: Uses [`ESLint.lintText()` / `LegacyESLint.lintText()`](https://github.com/microsoft/vscode-eslint/blob/c0e753713ea9935667e849d91e549adbff213e7e/server/src/eslint.ts#L1192-L1243) for validation.
+- VSCode: Uses [`ESLint.lintText()`](https://github.com/microsoft/vscode-eslint/blob/c0e753713ea9935667e849d91e549adbff213e7e/server/src/eslint.ts#L1192-L1243) for validation.
 
 - Zed: Interacts with the `vscode-eslint` server via `--stdio`. No specific changes needed beyond updating `vscode-eslint`.
   - <https://github.com/zed-industries/zed/blob/d1ffda9bfeccfdf9bea3f76251350bf9cf7f6e1b/crates/languages/src/typescript.rs#L332-L354>
