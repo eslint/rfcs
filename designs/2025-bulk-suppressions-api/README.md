@@ -52,6 +52,7 @@ This proposal integrates the existing bulk suppression functionality into the `E
     - When `applySuppressions` is `true` (the default), the `lintFiles()` and `lintText()` methods will automatically apply suppressions to results before returning.
     - Within these methods, *after* the initial linting results are obtained, the `applySuppressions` method of the instantiated `SuppressionsService` will be called.
     - This method takes the raw linting results and the loaded suppressions (from the resolved file path) and returns the results with suppressions applied.
+    - When caching is enabled, the **original lint results** are stored in the cache. Suppressions are applied after cache retrieval, so that changes to the suppression file take effect without needing to bust the cache.
     - When `applySuppressions` is `false`, the raw linting results are returned without applying suppressions, allowing consumers to handle suppressions themselves.
 
 4. Changes to ESLint CLI
