@@ -1,6 +1,6 @@
 - Repo: <https://github.com/eslint/eslint>
 - Start Date: 2024-10-22
-- RFC PR: Leave blank until PR is created
+- RFC PR: [Leave blank until PR is created](https://github.com/eslint/rfcs/pull/143)
 - Authors:
   - [Samuel Therrien](https://github.com/Samuel-Therrien-Beslogic) (aka [@Avasam](https://github.com/Avasam))
   - [Maxim Morev](https://github.com/MorevM)
