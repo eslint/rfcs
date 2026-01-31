@@ -33,7 +33,7 @@ This proposal integrates the existing bulk suppression functionality into the `E
         - Controls whether suppressions are automatically applied to results from `lintText()` and `lintFiles()`.
         - If `true`, suppressions are automatically applied to lint results before returning.
         - If `false`, results are returned as-is without applying suppressions.
-        - If not provided (or is `undefined`), defaults to `true`.
+        - If not provided (or is `undefined`), defaults to `false`. (This is to preserve backwards compatibility for existing API users who may not expect suppressions to be applied automatically. We may consider changing this default to `true` in a future major release.)
 
 2. Service Instantiation and Configuration
     - Upon instantiation, the `ESLint` constructor will create an instance of `SuppressionsService`.
@@ -46,10 +46,10 @@ This proposal integrates the existing bulk suppression functionality into the `E
         - `applySuppressions` (boolean, optional)
             - If `true`, suppressions will be applied automatically in `lintText()` and `lintFiles()`.
             - If `false`, suppressions will not be applied.
-            - If not provided, defaults to `true`.
+            - If not provided, defaults to `false`.
 
 3. Applying Suppressions
-    - When `applySuppressions` is `true` (the default), the `lintFiles()` and `lintText()` methods will automatically apply suppressions to results before returning.
+    - When `applySuppressions` is `true`, the `lintFiles()` and `lintText()` methods will automatically apply suppressions to results before returning.
     - Within these methods, *after* the initial linting results are obtained, the `applySuppressions` method of the instantiated `SuppressionsService` will be called.
     - This method takes the raw linting results and the loaded suppressions (from the resolved file path) and returns the results with suppressions applied.
     - When caching is enabled, the **original lint results** are stored in the cache. Suppressions are applied after cache retrieval, so that changes to the suppression file take effect without needing to bust the cache.
@@ -165,8 +165,8 @@ The documentation updates will reflect that this change aligns the Node.js API b
 1. API Documentation (`ESLint` class):
     - Add the new `suppressionsLocation` and `applySuppressions` options to the constructor options documentation for `ESLint`.
     - Document `suppressionsLocation`: its purpose (specifying the suppression file path) and behavior (relative to `cwd`, default lookup).
-    - Document `applySuppressions`: controls whether suppressions are automatically applied (defaults to `true`).
-    - Add a note to the descriptions of `lintText()` and `lintFiles()` methods stating that suppressions are automatically applied when `applySuppressions` is `true` (the default), based on the resolved suppression file path.
+    - Document `applySuppressions`: controls whether suppressions are automatically applied (defaults to `false`).
+    - Add a note to the descriptions of `lintText()` and `lintFiles()` methods stating that suppressions are automatically applied when `applySuppressions` is `true`, based on the resolved suppression file path.
 
 2. Bulk Suppressions User Guide Page:
     - Update the existing user guide page for Bulk Suppressions.
@@ -186,8 +186,8 @@ The documentation updates will reflect that this change aligns the Node.js API b
 
 This change is designed to be backward-compatible.
 
-- New Options are Optional: The new `suppressionsLocation` and `applySuppressions` options are optional. Existing code that does not provide these options will continue to work, with `applySuppressions` defaulting to `true` and `suppressionsLocation` defaulting to looking for `eslint-suppressions.json` in the `cwd`.
-- Automatic Application: By integrating bulk suppression handling directly into the existing `lintText()` and `lintFiles()` methods, users who utilize a suppression file (either at the default location or specified via the new option) will automatically benefit simply by updating their ESLint version.
+- New Options are Optional: The new `suppressionsLocation` and `applySuppressions` options are optional. Existing code that does not provide these options will continue to work, with `applySuppressions` defaulting to `false` and `suppressionsLocation` defaulting to looking for `eslint-suppressions.json` in the `cwd`.
+- Opt-in Application: Bulk suppression handling is integrated directly into the existing `lintText()` and `lintFiles()` methods but is opt-in. Users who utilize a suppression file must set `applySuppressions: true` to have suppressions applied automatically. This preserves backwards compatibility for existing API consumers.
 - Alignment with CLI: This approach aligns the Node.js API behavior *and configuration options* more closely with the established CLI behavior.
 - Non-Breaking: Since the core change only alters behavior when a suppression file is found (based on the new option or default location), it is considered a non-breaking change for existing API consumers.
 
