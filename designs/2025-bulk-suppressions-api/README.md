@@ -106,7 +106,7 @@ class ESLint {
 
         const finalResults = results.filter(result => !!result);
 
-        if (!fs.existsSync(suppressionsFilePath) || options.applySuppressions === false) {
+        if (options.applySuppressions === false) {
             return finalResults;
         }
 
