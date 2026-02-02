@@ -188,7 +188,7 @@ The documentation updates will reflect that this change aligns the Node.js API b
 
 This change is designed to be backward-compatible.
 
-- New Options are Optional: The new `suppressionsLocation` and `applySuppressions` options are optional. Existing code that does not provide these options will continue to work, with `applySuppressions` defaulting to `true` and `suppressionsLocation` defaulting to looking for `eslint-suppressions.json` in the `cwd`.
+- New Options are Optional: The new `suppressionsLocation` and `applySuppressions` options are optional. Existing code that does not provide these options will continue to work, with `applySuppressions` defaulting to `false` and `suppressionsLocation` defaulting to looking for `eslint-suppressions.json` in the `cwd`.
 - Automatic Application: By integrating bulk suppression handling directly into the existing `lintText()` and `lintFiles()` methods, users who utilize a suppression file (either at the default location or specified via the new option) will automatically benefit simply by updating their ESLint version.
 - Alignment with CLI: This approach aligns the Node.js API behavior *and configuration options* more closely with the established CLI behavior.
 - Non-Breaking: Since the core change only alters behavior when a suppression file is found (based on the new option or default location), it is considered a non-breaking change for existing API consumers.
