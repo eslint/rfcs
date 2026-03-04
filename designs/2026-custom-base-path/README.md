@@ -1,6 +1,6 @@
 - Repo: `eslint/eslint`, possibly `eslint/rewrite`
 - Start Date: 2026-02-03
-- RFC PR: #131
+- RFC PR: eslint/rfcs#145
 - Authors: Francesco Trotta
 
 # Support `--base-path` Option
