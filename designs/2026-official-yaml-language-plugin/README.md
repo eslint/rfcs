@@ -24,7 +24,7 @@ This RFC proposes creating an official ESLint language plugin for YAML, publishe
 - **Repository:** New repository at [github.com/eslint/yaml](https://github.com/eslint/yaml), following the pattern of `eslint/json`, `eslint/markdown`, `eslint/css`.
 - **Module format:** ESM-only, in line with the TSC decision that new packages should be ESM-only (see [2026-01-08 TSC meeting](https://github.com/eslint/tsc-meetings/blob/main/notes/2026/2026-01-08.md)).
 - **Compatibility:** ESLint v9.15.0+ (flat config only). No eslintrc support.
-- **TypeScript types:** Built-in type definitions shipped with the package from v1, following the direction the team has taken with `espree`, `eslint-scope`, and other packages.
+- **TypeScript types:** Built-in type definitions shipped with the package from the initial release, following the direction the team has taken with `espree`, `eslint-scope`, and other packages.
 
 ### Plugin export shape
 
