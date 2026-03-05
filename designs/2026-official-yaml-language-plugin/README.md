@@ -12,7 +12,7 @@ This RFC proposes creating an official ESLint language plugin for YAML, publishe
 ## Motivation
 
 - **Demand:** YAML was one of the most requested languages alongside CSS (which now has official `@eslint/css` support). Many developers work with YAML daily for GitHub Actions, Kubernetes, Docker Compose, Ansible, Helm charts, and other tooling.
-- **Consistency:** ESLint has expanded into JSON, Markdown, CSS, and HTML with official plugins. An official YAML plugin completes the story for common config/data formats and establishes a reference implementation maintained by the team.
+- **Consistency:** ESLint has expanded into JSON, Markdown, and CSS with official plugins. An official YAML plugin completes the story for common config/data formats and establishes a reference implementation maintained by the team.
 - **Existing ecosystem:** Community plugins such as [eslint-plugin-yml](https://github.com/ota-meshi/eslint-plugin-yml) (by @ota-meshi, v3 supports the language plugin API) and [eslint-yaml](https://github.com/43081j/eslint-yaml) already exist and work well. The TSC has expressed interest in a team-maintained plugin (see [Discussion #20482](https://github.com/eslint/eslint/discussions/20482)) and @nzakas has welcomed an RFC to kickstart this effort. An official plugin would provide long-term maintenance, alignment with ESLint's release cycle, and a single recommended solution for YAML linting.
 - **Reference implementation:** A team-maintained plugin serves as a reference for the language plugin API applied to YAML and encourages best practices for parsing, rules, and editor integration.
 
