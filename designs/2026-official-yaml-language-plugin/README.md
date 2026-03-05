@@ -7,7 +7,7 @@
 
 ## Summary
 
-This RFC proposes creating an official ESLint language plugin for YAML, published as `@eslint/yaml`, under the ESLint organization. The plugin would allow users to lint YAML files (e.g. GitHub Actions workflows, Kubernetes manifests, Docker Compose, CI configs) using ESLint's flat config and the language plugin API established in [RFC #99 (2022-languages)](https://github.com/eslint/rfcs/blob/main/designs/2022-languages/README.md). It follows the same patterns as other official language plugins: `@eslint/json`, `@eslint/markdown`, `@eslint/css`, and `@eslint/html`.
+This RFC proposes creating an official ESLint language plugin for YAML, published as `@eslint/yaml`, under the ESLint organization. The plugin would allow users to lint YAML files (e.g. GitHub Actions workflows, Kubernetes manifests, Docker Compose, CI configs) using ESLint's flat config and the language plugin API established in [RFC #99 (2022-languages)](https://github.com/eslint/rfcs/blob/main/designs/2022-languages/README.md). It follows the same patterns as other official language plugins: `@eslint/json`, `@eslint/markdown`, `@eslint/css`, and `@html-eslint/eslint-plugin`.
 
 ## Motivation
 
