@@ -26,7 +26,7 @@ The base path is the directory that defines which files a `ConfigArray` can lint
 Files outside that base path cannot be linted, even if they are matched by a config object.
 
 Today, ESLint determines the base path as follows:
-- the current working directory, if either `--config` or `--no-config-lookup` is passed
+- the current working directory, if one of `--config` or `--no-config-lookup` is passed
 - otherwise, the directory where the config file is located. If a project contains different config files, each config file has its own base path.
 
 Internally, this value is stored as `basePath` on `ConfigArray`. It serves two purposes:
@@ -49,7 +49,7 @@ When `basePath` is specified and no file patterns are passed on the command line
 npx eslint --config=eslint.config.js --base-path=../src
 ```
 
-will behave the same as 
+will behave the same as
 
 ```shell
 npx eslint --config=eslint.config.js --base-path=../src ../src
@@ -74,7 +74,7 @@ For this case, `--base-path` should point to a parent of both directories, i.e. 
 npx eslint --config=eslint.config.mjs --base-path=.. . ../tmp
 ```
 
-Relative paths in the config file will now be resolved relative to `..`. This includes `files` and `ignores` settings in config objects that don't include a `basePath`, or the config object's `basePath` itself. So, a config object that specifies different settings for the current directory and its sibling would look for example like this:
+Relative paths in the config file will now be resolved relative to `..`. This includes `files` and `ignores` settings in config objects that don't include a `basePath`, or the config object's `basePath` itself. So, a config object that specifies different settings for the current directory and its sibling would look like this:
 
 <a name="example-1"></a>
 
@@ -82,12 +82,12 @@ Relative paths in the config file will now be resolved relative to `..`. This in
 export default defineConfig([
     {
         name: "app-config",
-        files: ["app/**/*.{,c,m}js"],
+        files: ["app/**/*.{js,cjs,mjs}"],
         ...myAppConfig
     },
     {
         name: "tmp-config",
-        files: ["tmp/**/*.{c,m}js"],
+        files: ["tmp/**/*.{js,cjs,mjs}"],
         ...myTmpConfig
     },
 ]);
@@ -102,13 +102,13 @@ export default defineConfig([
     {
         name: "app-config",
         basePath: "app",
-        files: ["**/*.{,c,m}js"],
+        files: ["**/*.{js,cjs,mjs}"],
         ...myAppConfig
     },
     {
         name: "tmp-config",
         basePath: "tmp",
-        files: ["**/*.{c,m}js"],
+        files: ["**/*.{js,cjs,mjs}"],
         ...myTmpConfig
     },
 ]);
@@ -116,7 +116,7 @@ export default defineConfig([
 
 ### Alternative: Maintain Reference Location
 
-The above solution is fully backwards-compatible but it's hard to extend to existing configurations because changing the base path also means that all relative paths and patterns in existing configs (in `files`, `ignores` and `basePath`) must be modified to be relative to the new base path.
+The above solution is fully backward-compatible but it's hard to extend to existing configurations because changing the base path also means that all relative paths and patterns in existing configs (in `files`, `ignores` and `basePath`) must be modified to be relative to the new base path.
 
 For example, in the example in the previous section, a project may already have a config that lints files in the current directory (`app`) like this:
 
@@ -124,7 +124,7 @@ For example, in the example in the previous section, a project may already have 
 export default defineConfig([
     {
         name: "app-config",
-        files: ["**/*.{,c,m}js"],
+        files: ["**/*.{js,cjs,mjs}"],
         ...myAppConfig
     },
 ]);
@@ -132,18 +132,18 @@ export default defineConfig([
 
 In order to extend this config to also lint files in `../tmp`, besides passing `--base-path=..`, the existing config object(s) in the config must be changed if they should still apply to the current directory only, either by modifying the `files` patterns as in [the first example](#example-1), or by adding an explicit `basePath` like in [the second example](#example-2). Note that in both cases, the name of the current working directory (`app`) must be explicitly added, because there is no longer an implicit way to reference it from the config.
 
-To avoid this inconvenience, we could add a new property to config arrays, tentatively name `referenceLocation`. This property will hold the value of what is currently the base path (CWD or config file location), and it will be used to resolve relative `basePath` values in config objects. This will ensure that existing config arrays can be extended to lint additional files with a new common directory root without changing existing config objects. For example, with this alternative, the example above can be extended to lint `../tmp` without changing the other config object(s), like this:
+To avoid this inconvenience, we could add a new property to config arrays, tentatively named `referenceLocation`. This property will hold the value of what is currently the base path (CWD or config file location), and it will be used to resolve relative `basePath` values in config objects. This will ensure that existing config arrays can be extended to lint additional files with a new common directory root without changing existing config objects. For example, with this alternative, the example above can be extended to lint `../tmp` without changing the other config object(s), like this:
 
 ```js
 export default defineConfig([
     {
         name: "app-config",
-        files: ["**/*.{,c,m}js"],
+        files: ["**/*.{js,cjs,mjs}"],
         ...myAppConfig
     },
     {
         name: "tmp-config",
-        files: ["../tmp/**/*.{c,m}js"],
+        files: ["../tmp/**/*.{js,cjs,mjs}"],
         ...myTmpConfig
     },
 ]);
@@ -151,7 +151,22 @@ export default defineConfig([
 
 With this alternative, `--base-path` would define which files are in scope for file enumeration and linting, but resolution of `basePath` values in config objects would remain unchanged.
 
-While still maintaining the changes non-breaking and backwards-compatible, this alternative solution requires changing `@eslint/config-array` to introduce a new property on `ConfigArray` instances. It will also add complexity to the implementation.
+While still maintaining the changes non-breaking and backward-compatible, this alternative solution requires changing `@eslint/config-array` to introduce a new property on `ConfigArray` instances. It will also add complexity to the implementation.
+
+### Testing Impact
+
+The implementation should include coverage for:
+- CLI `--base-path` validation (empty string, invalid values, relative and absolute paths)
+- file enumeration behavior when `--base-path` is provided and no file patterns are passed on the command line
+- interaction with `--config` and `--no-config-lookup`
+- interaction with the ESLint constructor `cwd` option when resolving a relative `basePath`
+- behavior when config lookup is enabled (depending on the decision for `--base-path` support in that mode)
+
+### Preview
+
+Prototype branches for the proposed implementations are available for testing and previewing:
+- [issue-19118](https://github.com/eslint/eslint/tree/issue-19118): prototype implementation for the main proposal
+- [issue-19118-alt](https://github.com/eslint/eslint/tree/issue-19118-alt): prototype implementation for the [alternative proposal](#alternative-maintain-reference-location)
 
 ## Documentation
 
@@ -206,7 +221,7 @@ Which model should ESLint adopt?
 
 ### `--base-path` with config lookup?
 
-Should `--base-path` be allowed when config lookup is enabled (i.e. neither `--config` nor `--no-config-lookup` is passed)? In that case, ESLint will search for a config file in a file's directory and its ancestors. This means that config files outside that line of search will not be considered, so that each file is required to have its associated config in an expected location. In this setup, I'm not sure how `--base-path` would be useful.
+Should `--base-path` be allowed when config lookup is enabled (i.e. neither `--config` nor `--no-config-lookup` is passed)? In that case, ESLint searches for a config file in a file's directory and its ancestors. This means that config files outside that line of search are not considered, so that each file is required to have its associated config in an expected location. In this setup, I'm not sure how `--base-path` would be useful.
 
 ## Help Needed
 
