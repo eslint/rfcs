@@ -170,9 +170,10 @@ Prototype branches for the proposed implementations are available for testing an
 
 ## Documentation
 
-- [CLI options](https://eslint.org/docs/latest/use/command-line-interface)
-- [`ESLint` constructor options](https://eslint.org/docs/latest/integrate/nodejs-api#-new-eslintoptions)
-- [`@eslint/config-array`](https://github.com/eslint/rewrite/tree/main/packages/config-array#readme) (if a new `ConfigArray` option is added)
+- [CLI options documentation](https://eslint.org/docs/latest/use/command-line-interface#options) needs to include the `--base-path` option
+- [`ESLint` constructor documentation](https://eslint.org/docs/latest/integrate/nodejs-api#-new-eslintoptions) needs to include `options.basePath`
+- [Configuration Migration Guide](https://eslint.org/docs/latest/use/configure/migration-guide) should mention the use case of linting files outside the current directory
+- if a new `ConfigArray` option is added, [`@eslint/config-array`](https://github.com/eslint/rewrite/tree/main/packages/config-array#readme) documentation should be updated
 
 ## Drawbacks
 
