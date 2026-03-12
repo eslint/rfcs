@@ -108,8 +108,7 @@ The RFC does not prescribe a specific parser. Candidates include:
 | Parser | YAML version | Comments | Location info | Notes |
 |---|---|---|---|---|
 | [yaml (eemeli/yaml)](https://github.com/eemeli/yaml) | 1.1 + 1.2 | Yes (CST) | Yes | Mature, actively maintained, CST → AST |
-| [yaml-ast-parser](https://github.com/mulesoft-labs/yaml-ast-parser) | 1.2 | No | Yes | Fork of js-yaml with AST |
-| Approach from eslint-plugin-yml | 1.2 | Yes | Yes | Uses yaml-eslint-parser |
+| [yaml-eslint-parser](https://github.com/ota-meshi/yaml-eslint-parser) | 1.2 | Yes | Yes | ESTree-compatible AST on top of eemeli/yaml; used by eslint-plugin-yml |
 
 The parser must:
 1. Produce a traversable AST with location info for every node.
@@ -149,6 +148,8 @@ Following the direction of the project — which is [moving away from formatting
 |---|---|---|
 | `no-duplicate-keys` | Disallow duplicate keys in mappings | No |
 | `no-empty-keys` | Disallow empty string keys | No |
+| `no-empty-values` | Disallow empty mapping values | No |
+| `no-empty-sequence-entry` | Disallow empty sequence entries | No |
 | `no-unsafe-values` | Disallow unquoted values that would be interpreted differently between YAML 1.1 and 1.2 (e.g. `yes`, `no`, `on`, `off` are booleans in 1.1 but plain strings in 1.2) | No |
 
 **Additional (not in recommended, opt-in):**
@@ -235,7 +236,7 @@ export default defineConfig([
 2. **Parser choice:** Which YAML parser best balances maintainability, comment support, location accuracy, and license compatibility? (See parser comparison table above.)
 3. **Initial rule set:** Are the proposed rules the right starting point? Should any be added or removed for v1?
 4. **Collaboration model:** Should the team formally invite @ota-meshi or other community maintainers as collaborators on the new repo?
-5. **Anchor / alias handling:** How deeply should v1 resolve anchors and aliases in the AST? Full resolution enables more rules but adds complexity.
+5. **Anchor / alias handling:** How deeply should v1 resolve anchors and aliases in the AST? Full resolution enables more rules but adds complexity. One approach is a `sourceCode.resolveAnchor(aliasNode)` method that keeps resolution opt-in for rule authors without complicating the AST.
 
 ## Help Needed
 
