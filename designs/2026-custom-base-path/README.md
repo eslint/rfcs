@@ -12,9 +12,9 @@ This document proposes a mechanism for configuring and linting files relative to
 ## Motivation
 
 In the legacy eslintrc configuration system, users could lint files in arbitrary locations by explicitly specifying a config file (for example, via `--config`).
-ESLint would resolve the target file paths relative to the current working directory and lint them, even though those files couldn’t be configured by that config.
+ESLint would resolve the target file paths relative to the current working directory and lint them, even though it wasn't possible to configure those files with the provided config.
 
-Flat config, on the other hand, enforces that only files under the current base path can be linted. When a config file is explicitly provided, the base path is the current working directory. This has caused problems for users migrating from legacy config to flat config, where linting files outside the current working directory previously worked. See [related discussions](#related-discussions) below for some examples.
+Flat config, on the other hand, enforces that only files under the current base path can be configured and linted. When a config file is explicitly provided, the base path is the current working directory. This has caused problems for users migrating from legacy config to flat config, where linting files outside the current working directory previously worked. See [related discussions](#related-discussions) below for some examples.
 
 To support the legacy use case while allowing users to configure files independently, we propose introducing a new option that will allow users to specify a custom base path.
 
@@ -29,9 +29,13 @@ Today, ESLint determines the base path as follows:
 - the current working directory, if one of `--config` or `--no-config-lookup` is passed
 - otherwise, the directory where the config file is located. If a project contains different config files, each config file has its own base path.
 
-Internally, this value is stored as `basePath` on `ConfigArray`. It serves two purposes:
+The main reason for using CWD as the base path when a config file is explicitly specified is to support configs files located in a different folder (e.g. with shared resources), from where they can be used to lint different directories in the codebase.
+
+Internally, the base path is stored as a `basePath` property on `ConfigArray` (not to be confused with [`basePath`](https://eslint.org/docs/latest/use/configure/configuration-files#specify-base-path) in config objects). It serves two purposes:
 - it limits which files can be linted
 - it provides the default `basePath` for config objects that don't have one explicitly set. The config object's base path is then used to resolve that object's `files` and `ignores`
+
+Note that this is different from other config systems where the two functions may be separate (for example, TypeScript separates concepts like `rootDir` from the location used to resolve relative paths).
 
 ### Proposed Change
 
@@ -130,9 +134,16 @@ export default defineConfig([
 ]);
 ```
 
-In order to extend this config to also lint files in `../tmp`, besides passing `--base-path=..`, the existing config object(s) in the config must be changed if they should still apply to the current directory only, either by modifying the `files` patterns as in [the first example](#example-1), or by adding an explicit `basePath` like in [the second example](#example-2). Note that in both cases, the name of the current working directory (`app`) must be explicitly added, because there is no longer an implicit way to reference it from the config.
+To extend this config to also lint files in `../tmp`, you must pass `--base-path=..`. If the existing config object(s) in the config should still apply only to the current directory, they must also be changed either by modifying the `files` patterns as in [the first example](#example-1), or by adding an explicit `basePath` as in [the second example](#example-2). Note that in both cases, the name of the current working directory (`app`) must be explicitly added, because there is no longer an implicit way to reference it from the config.
 
-To avoid this inconvenience, we could add a new property to config arrays, tentatively named `referenceLocation`. This property will hold the value of what is currently the base path (CWD or config file location), and it will be used to resolve relative `basePath` values in config objects. This will ensure that existing config arrays can be extended to lint additional files with a new common directory root without changing existing config objects. For example, with this alternative, the example above can be extended to lint `../tmp` without changing the other config object(s), like this:
+To avoid this inconvenience, we could add a new internal property to config arrays, tentatively named `referenceLocation`. This property is set once by ESLint, at the time a `ConfigArray` instance is created, and it holds the directory that is currently used as a `basePath` for the config array (CWD or config file location). When computing the effective `basePath` for each config object, ESLint would:
+
+1. First check whether the config object specifies an explicit `basePath`.
+  - If that `basePath` is absolute, it is used as-is.
+  - If that `basePath` is relative, it is resolved against `referenceLocation`.
+2. If the config object does not specify `basePath`, `referenceLocation` is used as its `basePath`.
+
+This solution will ensure that existing config arrays can be extended to lint additional files with a new common directory root without changing existing config objects. For example, with this alternative, the example above can be extended to lint `../tmp` without changing the other config object(s), like this:
 
 ```js
 export default defineConfig([
