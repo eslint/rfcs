@@ -100,9 +100,10 @@ That difference is intentional.
 
 The implementation would likely touch the following files:
 
-- `lib/cli.js`: for CLI runs that use suppressions, resolve the active suppressions file before linting and make that suppressions context available to the `ESLint` instance used for fix generation.
-- `lib/eslint/eslint.js`: initialize `SuppressionsService` when suppressions are needed for fix filtering as well as reporting, and load suppressions early enough in `lintFiles()` and `lintText()` for fix-producing runs.
-- `lib/eslint/eslint-helpers.js`: compose the existing fixer created in `lintFile()` and `verifyText()` with a suppressions-aware predicate. For the current file, if `message.ruleId` appears in that file's suppressions entry, return `false` so the fix is skipped.
+- `lib/cli.js`: for CLI runs with `--fix` or `--fix-dry-run`, resolve the active suppressions file before linting, load its current contents, and pass that suppressions snapshot into the `ESLint` instance used for fix generation. This makes autofix depend on the suppressions file contents loaded before linting begins.
+- `lib/shared/translate-cli-options.js`: pass that internal suppressions snapshot through CLI option translation so it reaches the `ESLint` instance.
+- `lib/eslint/eslint.js`: initialize `SuppressionsService` when suppressions are needed for fix filtering as well as reporting, and load suppressions early enough in `lintFiles()`. In `lintText()`, compute the suppressed rules for the current file and build the suppressions-aware fixer before passing it to `verifyText()`.
+- `lib/eslint/eslint-helpers.js`: extend the fixer-building logic used by `lintFile()` so it composes the existing fix predicate with a suppressions-aware predicate. For the current file, if `message.ruleId` appears in that file's suppressions entry, return `false` so the fix is skipped.
 - `lib/services/suppressions-service.js`: add a helper that maps a file path to the set of suppressed rule IDs for that file, reusing the existing relative-path normalization logic.
 - `lib/linter/linter.js`: no new suppression logic should be necessary. `verifyAndFix()` already passes `options.fix` through to `SourceCodeFixer.applyFixes()`, so the composed predicate from the higher layers should be enough.
 
