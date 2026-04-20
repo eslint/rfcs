@@ -231,9 +231,17 @@ Adding `basePath` to config objects (discussed in related design work, see [RFC 
 
 Which model should ESLint adopt?
 
+## Resolved questions
+
 ### `--base-path` with config lookup?
 
+#### Question
+
 Should `--base-path` be allowed when config lookup is enabled (i.e. neither `--config` nor `--no-config-lookup` is passed)? In that case, ESLint searches for a config file in a file's directory and its ancestors. This means that config files outside that line of search are not considered, so that each file is required to have its associated config in an expected location. In this setup, I'm not sure how `--base-path` would be useful.
+
+#### Resolution
+
+`--base-path` will require `--config` or `--no-config-lookup` to be specified. Correspondingly, in the Node.js API, `basePath` will require `overrideConfigFile` to be non-null. If this constraint isn't met, an error will be thrown. The alternative of silently ignoring `--base-path` when config lookup is enabled would be confusing.
 
 ## Help Needed
 
