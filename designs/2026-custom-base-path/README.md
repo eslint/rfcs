@@ -136,7 +136,19 @@ export default defineConfig([
 
 To extend this config to also lint files in `../tmp`, you must pass `--base-path=..`. If the existing config object(s) in the config should still apply only to the current directory, they must also be changed either by modifying the `files` patterns as in [the first example](#example-1), or by adding an explicit `basePath` as in [the second example](#example-2). Note that in both cases, the name of the current working directory (`app`) must be explicitly added, because there is no longer an implicit way to reference it from the config.
 
-To avoid this inconvenience, we could add a new internal property to config arrays, tentatively named `referenceLocation`. This property is set once by ESLint, at the time a `ConfigArray` instance is created, and it holds the directory that is currently used as a `basePath` for the config array (CWD or config file location). When computing the effective `basePath` for each config object, ESLint would:
+To avoid this inconvenience, we could separate these two concerns:
+- which directory defines the linting scope
+- which directory existing relative config paths resolve from
+
+Under this alternative, each config array would gain a new internal property, tentatively named `referenceLocation`. It would store the directory that ESLint would use today as the config array's `basePath`, i.e. either the CWD or the config file location. ESLint would set this property once, when the `ConfigArray` instance is created.
+
+The config array's `basePath` property, on the other hand, would become independently configurable via `--base-path`.
+
+In other words:
+- `basePath` would define which files are in scope for enumeration and linting
+- `referenceLocation` would define how relative config object paths are interpreted, keeping the current logic unchanged
+
+When computing the effective `basePath` for each config object, ESLint would:
 
 1. First check whether the config object specifies an explicit `basePath`.
   - If that `basePath` is absolute, it is used as-is.
