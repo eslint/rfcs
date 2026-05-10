@@ -17,7 +17,7 @@ Rule deprecation metadata is used by ESLint to populate `usedDeprecatedRules` an
 
 When `RuleTester#run()` is called, `RuleTester` will validate `rule.meta.deprecated` at the very beginning of the execution, before any valid or invalid test cases are run. This will be implemented as part of the existing `assertRule()` validation function, which runs early in the process. If `meta.deprecated` is omitted or set to `undefined`, no validation error is reported.
 
-The accepted values are:
+Examples of accepted values are:
 
 ```js
 meta: {
