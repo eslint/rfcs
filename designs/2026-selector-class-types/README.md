@@ -1,7 +1,7 @@
 - Repo: eslint/eslint
 - Start Date: 2026-05-23
 - RFC PR: https://github.com/eslint/rfcs/pull/148
-- Authors: [Kuldeep2822k](https://github.com/Kuldeep2822k)
+- Authors: Kuldeep2822k
 
 # Add `getPossibleTypesForSelectorClass` to the Language Interface
 
