@@ -252,24 +252,21 @@ This change is **fully backwards compatible**:
 
 ## Alternatives
 
-### 1. Do Nothing (Status Quo)
-
-Leave the hardcoded JS logic in `esquery.js` with the `TODO` comment. This is the simplest approach, and the maintainer has acknowledged the current state is acceptable. However, it leaves a known architectural debt and prevents other languages from benefiting from the same optimization.
-
-### 2. Move Logic Without a Language Interface Method
+### 1. Move Logic Without a Language Interface Method
 
 Move the hardcoded logic into a helper function that checks the language identity (e.g., `if (language === jsLanguage)`) rather than adding a generic interface method. This removes the hardcoding from `esquery.js` but doesn't provide a generic solution for other languages and still couples the core to the JS language.
 
-### 3. Use `matchesSelectorClass()` for Static Analysis
+### 2. Use `matchesSelectorClass()` for Static Analysis
 
 Instead of adding a new method, try to infer possible types by calling `matchesSelectorClass()` against a set of known node types. This is impractical because:
 - The set of possible node types is unbounded (any language can define any node types).
 - It would require instantiating dummy nodes for every possible type.
 - It conflates runtime matching with static analysis.
 
-### 4. Extend `matchesSelectorClass()` to Return Type Information
+### 3. Extend `matchesSelectorClass()` to Return Type Information
 
 Instead of a separate method, modify `matchesSelectorClass()` to optionally return type information. This was rejected because it changes the semantics of an existing method and makes the return type complex (boolean vs. type array).
+
 
 ## Open Questions
 
