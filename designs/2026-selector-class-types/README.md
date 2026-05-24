@@ -139,12 +139,12 @@ The `analyzeParsedSelector()` function (currently at [line 148](https://github.c
 -                ];
 -            }
 -            return null;
-+            return getSelectorClassNodeTypes?.(selector.name) ?? null;
++            return getSelectorClassNodeTypes(selector.name) ?? null;
      }
  }
 ```
 
-The optional chaining (`?.`) ensures that if `getSelectorClassNodeTypes` is `undefined` (i.e. the method wasn't provided), the result is `null` — meaning "any node type could match," which is the safe fallback.
+Because `parse()` defaults `getSelectorClassNodeTypes` to a shared no-op function (see "Method-Keyed Selector Cache" below), the method is always callable here — no optional chaining needed. The trailing `?? null` preserves the "any node type could match" fallback for the no-op case (which returns `null`) and for any language method that explicitly returns `null`.
 
 The exported `parse()` function (currently at [line 288](https://github.com/eslint/eslint/blob/main/lib/linter/esquery.js#L288)) is updated to accept an optional `getSelectorClassNodeTypes` parameter and pass it through:
 
@@ -152,7 +152,7 @@ The exported `parse()` function (currently at [line 288](https://github.com/esli
 -function parse(source) {
 -    if (selectorCache.has(source)) {
 -        return selectorCache.get(source);
-+function parse(source, getSelectorClassNodeTypes) {
++function parse(source, getSelectorClassNodeTypes = NO_OP_SELECTOR_CLASS) {
 +    const cache = getMethodCache(getSelectorClassNodeTypes);
 +
 +    if (cache.has(source)) {
@@ -189,28 +189,22 @@ The cache is replaced with a `WeakMap` keyed by the language's `getSelectorClass
 
 ```js
 // Replaces: const selectorCache = new Map();
+const NO_OP_SELECTOR_CLASS = () => null;
 const selectorCacheByMethod = new WeakMap();
-const noMethodCache = new Map();
 
 function getMethodCache(getSelectorClassNodeTypes) {
-    if (!getSelectorClassNodeTypes) {
-        return noMethodCache;
-    }
-
     let cache = selectorCacheByMethod.get(getSelectorClassNodeTypes);
-
     if (!cache) {
         cache = new Map();
         selectorCacheByMethod.set(getSelectorClassNodeTypes, cache);
     }
-
     return cache;
 }
 ```
 
 ESLint languages are exported as singleton object literals (e.g., `lib/languages/js/index.js` exports its language as a `module.exports` object literal), so the method reference is stable for the lifetime of the process. Keying on the method therefore gives each language its own cache bucket without requiring a language identifier on the `Language` interface.
 
-Using `WeakMap` ensures that if a language (and hence its method) is no longer reachable, it can be garbage collected, preventing memory leaks. The `noMethodCache` provides backwards compatibility for any code that calls `parse(source)` without providing a method.
+Using `WeakMap` ensures that if a language (and hence its method) is no longer reachable, it can be garbage collected, preventing memory leaks. Languages that do not implement `getSelectorClassNodeTypes` use a shared `NO_OP_SELECTOR_CLASS` function as the default at the `parse()` boundary. All such languages share one cache bucket, which is correct because they all produce the same (null) static-analysis result. This eliminates a separate fallback cache and keeps `getMethodCache` free of special cases.
 
 Note: In practice, ESLint currently only uses one language per file (see [source-code-traverser.js line 269-275](https://github.com/eslint/eslint/blob/main/lib/linter/source-code-traverser.js#L269-L275)), but a multi-language lint run will process different files with different languages sequentially, so the method-keyed cache prevents stale optimization data from being reused across languages.
 
@@ -265,7 +259,7 @@ This change is **fully backwards compatible**:
 
 2. **JS behavior is preserved.** The JavaScript language object will implement `getSelectorClassNodeTypes()` with the exact same mapping currently hardcoded in `esquery.js`. End users will see no behavioral difference.
 
-3. **`parse()` API is backwards compatible.** The `getSelectorClassNodeTypes` parameter is optional. Calling `parse(source)` without it continues to work, using the `noMethodCache` with `null` node types for class selectors.
+3. **`parse()` API is backwards compatible.** The `getSelectorClassNodeTypes` parameter is optional and defaults to a shared no-op function. Calling `parse(source)` without it continues to work; class selectors receive `null` node types, identical to the pre-change behavior for all non-`:function` selectors.
 
 4. **No breaking changes for language plugins.** Existing language plugins (CSS, Markdown, JSON, HTML, YAML) do not need to implement this method. They will simply not benefit from the optimization until they choose to.
 
@@ -295,7 +289,7 @@ Instead of a separate method, modify `matchesSelectorClass()` to optionally retu
 
 2. **Should language authors be encouraged to implement this for all their pseudo-classes?** For pseudo-classes defined by structural or naming conventions (like `:statement` matching `*Statement`), returning `null` is appropriate since the matching set is open-ended. Should the documentation explicitly guide authors on when to return `null` vs. an explicit list?
 
-3. **Cache eviction strategy.** The `WeakMap` approach means caches are evicted when a language's `getSelectorClassNodeTypes` method becomes unreachable. In practice, language objects (and their methods) are long-lived (often singletons). Should we consider adding a size limit to per-method caches, or is unbounded growth acceptable given the finite number of selectors in a typical lint run?
+3. **Cache eviction strategy.** The `WeakMap` approach means caches are evicted when a language's `getSelectorClassNodeTypes` method becomes unreachable. In practice, language objects (and their methods) are long-lived (often singletons). Languages without the method share a single cache bucket keyed on the module-level `NO_OP_SELECTOR_CLASS`. Should we consider adding a size limit to per-method caches, or is unbounded growth acceptable given the finite number of selectors in a typical lint run?
 
 ## Help Needed
 
