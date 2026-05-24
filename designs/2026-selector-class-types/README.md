@@ -121,11 +121,11 @@ Without this interface method, the CSS plugin would need to request a core chang
 
 ### Core `esquery.js` Changes
 
-The `analyzeParsedSelector()` function (currently at [line 148](https://github.com/eslint/eslint/blob/main/lib/linter/esquery.js#L148)) is updated to accept a `language` parameter, which is passed into the inner `analyzeSelector()` closure:
+The `analyzeParsedSelector()` function (currently at [line 148](https://github.com/eslint/eslint/blob/main/lib/linter/esquery.js#L148)) is updated to accept a `getSelectorClassNodeTypes` parameter, which is passed into the inner `analyzeSelector()` closure:
 
 ```diff
 -function analyzeParsedSelector(parsedSelector) {
-+function analyzeParsedSelector(parsedSelector, language) {
++function analyzeParsedSelector(parsedSelector, getSelectorClassNodeTypes) {
      // ...
      function analyzeSelector(selector) {
          // ...
@@ -139,21 +139,21 @@ The `analyzeParsedSelector()` function (currently at [line 148](https://github.c
 -                ];
 -            }
 -            return null;
-+            return language?.getSelectorClassNodeTypes?.(selector.name) ?? null;
++            return getSelectorClassNodeTypes?.(selector.name) ?? null;
      }
  }
 ```
 
-The optional chaining (`?.`) ensures that if `language` is `undefined` or doesn't implement the method, the result is `null` — meaning "any node type could match," which is the safe fallback.
+The optional chaining (`?.`) ensures that if `getSelectorClassNodeTypes` is `undefined` (i.e. the method wasn't provided), the result is `null` — meaning "any node type could match," which is the safe fallback.
 
-The exported `parse()` function (currently at [line 288](https://github.com/eslint/eslint/blob/main/lib/linter/esquery.js#L288)) is updated to accept an optional `language` parameter and pass it through:
+The exported `parse()` function (currently at [line 288](https://github.com/eslint/eslint/blob/main/lib/linter/esquery.js#L288)) is updated to accept an optional `getSelectorClassNodeTypes` parameter and pass it through:
 
 ```diff
 -function parse(source) {
 -    if (selectorCache.has(source)) {
 -        return selectorCache.get(source);
-+function parse(source, language) {
-+    const cache = getLanguageCache(language);
++function parse(source, getSelectorClassNodeTypes) {
++    const cache = getMethodCache(getSelectorClassNodeTypes);
 +
 +    if (cache.has(source)) {
 +        return cache.get(source);
@@ -164,7 +164,7 @@ The exported `parse()` function (currently at [line 288](https://github.com/esli
          trySimpleParseSelector(cleanSource) ?? tryParseSelector(cleanSource);
      const { nodeTypes, attributeCount, identifierCount } =
 -        analyzeParsedSelector(parsedSelector);
-+        analyzeParsedSelector(parsedSelector, language);
++        analyzeParsedSelector(parsedSelector, getSelectorClassNodeTypes);
 
      const result = new ESQueryParsedSelector(
          source,
@@ -181,42 +181,44 @@ The exported `parse()` function (currently at [line 288](https://github.com/esli
  }
 ```
 
-### Language-Aware Selector Cache
+### Method-Keyed Selector Cache
 
 Currently, `esquery.js` uses a single global `Map` ([line 114](https://github.com/eslint/eslint/blob/main/lib/linter/esquery.js#L114): `const selectorCache = new Map()`) to cache parsed selectors. Since `getSelectorClassNodeTypes()` can return different results for different languages, the same selector string (e.g., `:function`) may produce different `nodeTypes` arrays depending on which language is active.
 
-The cache is replaced with a `WeakMap` keyed by language object, so each language gets its own `Map<string, ESQueryParsedSelector>`:
+The cache is replaced with a `WeakMap` keyed by the language's `getSelectorClassNodeTypes` method reference, so each language gets its own `Map<string, ESQueryParsedSelector>`:
 
 ```js
 // Replaces: const selectorCache = new Map();
-const selectorCacheByLanguage = new WeakMap();
-const noLanguageCache = new Map();
+const selectorCacheByMethod = new WeakMap();
+const noMethodCache = new Map();
 
-function getLanguageCache(language) {
-    if (!language) {
-        return noLanguageCache;
+function getMethodCache(getSelectorClassNodeTypes) {
+    if (!getSelectorClassNodeTypes) {
+        return noMethodCache;
     }
 
-    let cache = selectorCacheByLanguage.get(language);
+    let cache = selectorCacheByMethod.get(getSelectorClassNodeTypes);
 
     if (!cache) {
         cache = new Map();
-        selectorCacheByLanguage.set(language, cache);
+        selectorCacheByMethod.set(getSelectorClassNodeTypes, cache);
     }
 
     return cache;
 }
 ```
 
-Using `WeakMap` ensures that language objects can be garbage collected when they're no longer in use, preventing memory leaks. Using object identity (rather than a nested `Map` keyed by language IDs) also avoids introducing a language identifier requirement into the `Language` interface. The `noLanguageCache` provides backwards compatibility for any code that calls `parse()` without a language argument.
+ESLint languages are exported as singleton object literals (e.g., `lib/languages/js/index.js` exports its language as a `module.exports` object literal), so the method reference is stable for the lifetime of the process. Keying on the method therefore gives each language its own cache bucket without requiring a language identifier on the `Language` interface.
 
-Note: In practice, ESLint currently only uses one language per file (see [source-code-traverser.js line 269-275](https://github.com/eslint/eslint/blob/main/lib/linter/source-code-traverser.js#L269-L275)), but a multi-language lint run will process different files with different languages sequentially, so the per-language cache prevents stale optimization data from being reused across languages.
+Using `WeakMap` ensures that if a language (and hence its method) is no longer reachable, it can be garbage collected, preventing memory leaks. The `noMethodCache` provides backwards compatibility for any code that calls `parse(source)` without providing a method.
+
+Note: In practice, ESLint currently only uses one language per file (see [source-code-traverser.js line 269-275](https://github.com/eslint/eslint/blob/main/lib/linter/source-code-traverser.js#L269-L275)), but a multi-language lint run will process different files with different languages sequentially, so the method-keyed cache prevents stale optimization data from being reused across languages.
 
 ### Source Code Traverser Changes
 
 The [`SourceCodeTraverser`](https://github.com/eslint/eslint/blob/main/lib/linter/source-code-traverser.js) already stores the language as a private field `#language` (set in the constructor at [line 249](https://github.com/eslint/eslint/blob/main/lib/linter/source-code-traverser.js#L249)). The only changes needed are:
 
-1. Pass the language through the `esqueryOptions` object when constructing `ESQueryHelper`:
+1. Pass the method directly through the `esqueryOptions` object when constructing `ESQueryHelper`, consistent with how `matchesSelectorClass`, `visitorKeys`, and `nodeTypeKey` are already passed individually:
 
 ```diff
  // In SourceCodeTraverser.traverseSync() (line 269)
@@ -226,20 +228,20 @@ The [`SourceCodeTraverser`](https://github.com/eslint/eslint/blob/main/lib/linte
          fallback: vk.getKeys,
          matchClass: this.#language.matchesSelectorClass ?? (() => false),
          nodeTypeKey: this.#language.nodeTypeKey,
-+        language: this.#language,
++        getSelectorClassNodeTypes: this.#language.getSelectorClassNodeTypes,
      });
 ```
 
-2. In the `ESQueryHelper` constructor, store the language and pass it to `parse()`:
+2. In the `ESQueryHelper` constructor, store the method and pass it to `parse()`:
 
 ```diff
  // In ESQueryHelper constructor (line 52)
  constructor(visitor, esqueryOptions) {
-+    this.language = esqueryOptions.language;
++    this.getSelectorClassNodeTypes = esqueryOptions.getSelectorClassNodeTypes;
      // ...
      visitor.forEachName(rawSelector => {
 -        const selector = parse(rawSelector);
-+        const selector = parse(rawSelector, this.language);
++        const selector = parse(rawSelector, this.getSelectorClassNodeTypes);
          // ... rest unchanged
      });
  }
@@ -263,7 +265,7 @@ This change is **fully backwards compatible**:
 
 2. **JS behavior is preserved.** The JavaScript language object will implement `getSelectorClassNodeTypes()` with the exact same mapping currently hardcoded in `esquery.js`. End users will see no behavioral difference.
 
-3. **`parse()` API is backwards compatible.** The `language` parameter is optional. Calling `parse(source)` without a language continues to work, using the `noLanguageCache` with `null` node types for class selectors.
+3. **`parse()` API is backwards compatible.** The `getSelectorClassNodeTypes` parameter is optional. Calling `parse(source)` without it continues to work, using the `noMethodCache` with `null` node types for class selectors.
 
 4. **No breaking changes for language plugins.** Existing language plugins (CSS, Markdown, JSON, HTML, YAML) do not need to implement this method. They will simply not benefit from the optimization until they choose to.
 
@@ -293,7 +295,7 @@ Instead of a separate method, modify `matchesSelectorClass()` to optionally retu
 
 2. **Should language authors be encouraged to implement this for all their pseudo-classes?** For pseudo-classes defined by structural or naming conventions (like `:statement` matching `*Statement`), returning `null` is appropriate since the matching set is open-ended. Should the documentation explicitly guide authors on when to return `null` vs. an explicit list?
 
-3. **Cache eviction strategy.** The `WeakMap` approach means caches are evicted when a language object is garbage collected. In practice, language objects are long-lived (often singletons). Should we consider adding a size limit to per-language caches, or is unbounded growth acceptable given the finite number of selectors in a typical lint run?
+3. **Cache eviction strategy.** The `WeakMap` approach means caches are evicted when a language's `getSelectorClassNodeTypes` method becomes unreachable. In practice, language objects (and their methods) are long-lived (often singletons). Should we consider adding a size limit to per-method caches, or is unbounded growth acceptable given the finite number of selectors in a typical lint run?
 
 ## Help Needed
 
