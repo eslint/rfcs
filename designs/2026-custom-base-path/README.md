@@ -118,7 +118,7 @@ export default defineConfig([
 ]);
 ```
 
-### Alternative: Maintain Reference Location
+### Alternative 1: Maintain Reference Location
 
 The above solution is fully backward-compatible but it's hard to extend to existing configurations because changing the base path also means that all relative paths and patterns in existing configs (in `files`, `ignores` and `basePath`) must be modified to be relative to the new base path.
 
@@ -185,11 +185,29 @@ The implementation should include coverage for:
 - interaction with the ESLint constructor `cwd` option when resolving a relative `basePath`
 - behavior when config lookup is enabled (depending on the decision for `--base-path` support in that mode)
 
+### Alternative 2: External File Matching
+
+Another suggested alternative is to avoid introducing a `--base-path` option and instead allow matching files outside the base path behind a feature flag.
+This approach requires changes to `@eslint/config-array`: it introduces a new `ConfigArray` constructor option, `matchExternal`.
+When this option is `true`, files outside the base path will no longer have the status `"external"`.
+In addition, if those files are not matched by a non-universal `files` pattern, they will no longer have the status `"unconfigured"`.
+As a result, files outside the base path will always have either status `"matched"` or `"ignored"`.
+Another effect of `matchExternal: true` is that directories outside the base path will never be considered ignored (when calling `configArray.isDirectoryIgnored()`).
+In the ESLint repository, a new feature flag, `unstable_external_file_matching`, will set `matchExternal: true` on all config arrays.
+With these changes, users will be able to lint files outside the location of a specified config file by providing a path or pattern for those files on the command line, for example:
+
+```shell
+npx eslint --flag=unstable_external_file_matching --config=eslint.config.js "../**/*.js"
+```
+
+Config objects without `files` or `ignores` will apply to these files as well.
+
 ### Preview
 
 Prototype branches for the proposed implementations are available for testing and previewing:
 - [issue-19118](https://github.com/eslint/eslint/tree/issue-19118): prototype implementation for the main proposal
-- [issue-19118-alt](https://github.com/eslint/eslint/tree/issue-19118-alt): prototype implementation for the [alternative proposal](#alternative-maintain-reference-location)
+- [issue-19118-alt](https://github.com/eslint/eslint/tree/issue-19118-alt): prototype implementation for the [first alternative proposal](#alternative-1-maintain-reference-location)
+- [issue-19118-exp](https://github.com/eslint/eslint/tree/issue-19118-exp): prototype implementation for the [second alternative proposal](#alternative-2-external-file-matching)
 
 ## Documentation
 
