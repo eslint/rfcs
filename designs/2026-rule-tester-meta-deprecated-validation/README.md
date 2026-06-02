@@ -11,7 +11,7 @@
 
 ## Motivation
 
-Rule deprecation metadata is used by ESLint to populate `usedDeprecatedRules` and by integrations to explain replacement rules. Today, malformed `meta.deprecated` values can pass through rule tests unnoticed, which allows invalid metadata to reach users and downstream tools. `RuleTester` already catches common rule authoring mistakes such as invalid option schemas, missing `meta.fixable`, and missing `meta.hasSuggestions`; deprecation metadata should receive the same early feedback.
+Rule deprecation metadata is used by ESLint to populate `LintResult#usedDeprecatedRules` and by integrations to explain replacement rules. Today, malformed `meta.deprecated` values can pass through rule tests unnoticed, which allows invalid metadata to reach users and downstream tools. `RuleTester` already catches common rule authoring mistakes such as invalid option schemas, missing `meta.fixable`, and missing `meta.hasSuggestions`; deprecation metadata should receive the same early feedback.
 
 ## Detailed Design
 
