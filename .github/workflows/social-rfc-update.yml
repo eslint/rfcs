@@ -3,6 +3,10 @@ on:
   # Can't use pull_request because it won't have access to secrets
   pull_request_target:
     types: [labeled, closed]
+
+permissions:
+  contents: read
+
 jobs:
   tweetStateChange:
     runs-on: ubuntu-latest
