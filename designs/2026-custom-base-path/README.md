@@ -140,22 +140,27 @@ To avoid this inconvenience, we could separate these two concerns:
 - which directory defines the linting scope
 - which directory existing relative config paths resolve from
 
-Under this alternative, each config array would gain a new internal property, tentatively named `referenceLocation`. It would store the directory that ESLint would use today as the config array's `basePath`, i.e. either the CWD or the config file location. ESLint would set this property once, when the `ConfigArray` instance is created.
+Under this alternative, each config array would gain a new internal property named `defaultBasePath`.
+It would store the directory that ESLint uses today as the config array's `basePath`, i.e. either the CWD or the config file location.
+ESLint would set this property once, when the `ConfigArray` instance is created.
 
 The config array's `basePath` property, on the other hand, would become independently configurable via `--base-path`.
 
 In other words:
 - `basePath` would define which files are in scope for enumeration and linting
-- `referenceLocation` would define how relative config object paths are interpreted, keeping the current logic unchanged
+- `defaultBasePath` would define how relative config object paths are interpreted, keeping the current logic unchanged
 
 When computing the effective `basePath` for each config object, ESLint would:
 
 1. First check whether the config object specifies an explicit `basePath`.
   - If that `basePath` is absolute, it is used as-is.
-  - If that `basePath` is relative, it is resolved against `referenceLocation`.
-2. If the config object does not specify `basePath`, `referenceLocation` is used as its `basePath`.
+  - If that `basePath` is relative, it is resolved against `defaultBasePath`.
+2. If a config object does not specify `basePath`, `defaultBasePath` is used as its `basePath`.
 
-This solution will ensure that existing config arrays can be extended to lint additional files with a new common directory root without changing existing config objects. For example, with this alternative, the example above can be extended to lint `../tmp` without changing the other config object(s), like this:
+For predefined config objects, i.e. config objects from ESLint's default config, `basePath` is never set.
+This ensures that default config settings are applied to all files, even those outside the base path.
+
+This solution would ensure that existing config arrays can be extended to lint additional files with a new common directory root without changing existing config objects. For example, with this alternative, the example above can be extended to lint `../tmp` without changing the other config object(s), like this:
 
 ```js
 export default defineConfig([
@@ -174,7 +179,8 @@ export default defineConfig([
 
 With this alternative, `--base-path` would define which files are in scope for file enumeration and linting, but resolution of `basePath` values in config objects would remain unchanged.
 
-While still maintaining the changes non-breaking and backward-compatible, this alternative solution requires changing `@eslint/config-array` to introduce a new property on `ConfigArray` instances. It will also add complexity to the implementation.
+While still maintaining the changes non-breaking and backward-compatible, this alternative solution requires changing `@eslint/config-array` to introduce a new property on `ConfigArray` instances.
+It would also add complexity to the implementation.
 
 ### Testing Impact
 
@@ -257,7 +263,7 @@ Adding `basePath` to config objects (discussed in related design work, see [RFC 
 ### Path-resolution model when `--base-path` is provided
 
 - Main proposal: relative config paths (`files`, `ignores`, and config-object `basePath`) resolve from `--base-path`.
-- Alternative proposal: `--base-path` defines linting scope, while relative config-object `basePath` values resolve from `referenceLocation` (CWD or config file location).
+- Alternative proposal: `--base-path` defines linting scope, while relative config-object `basePath` values resolve from `defaultBasePath` (CWD or config file location).
 
 Which model should ESLint adopt?
 
