@@ -212,6 +212,7 @@ npx eslint --flag=unstable_external_file_matching --config=eslint.config.js "../
 Config objects without `files` or `ignores` will apply to these files as well.
 
 In a config object, `files` and `ignores` patterns and `basePath` values will continue to resolve relative to the current working directory, as they do today, even if they reference files outside of it.
+This is an improvement over the eslintrc behavior, where relative `files` patterns in config objects could not target directories outside the current working directory.
 
 ### Preview
 
