@@ -12,7 +12,8 @@ This document proposes a mechanism for configuring and linting files relative to
 ## Motivation
 
 In the legacy eslintrc configuration system, users could lint files in arbitrary locations by explicitly specifying a config file (for example, via `--config`).
-ESLint would resolve the target file paths relative to the current working directory and lint them, even though it wasn't possible to configure those files with the provided config.
+ESLint resolved file paths relative to the current working directory and linted them, but the ability to target those files via configuration was limited.
+In particular, it wasn't possible to apply configuration settings only to specific files outside the current working directory.
 
 Flat config, on the other hand, enforces that only files under the current base path can be configured and linted. When a config file is explicitly provided, the base path is the current working directory. This has caused problems for users migrating from legacy config to flat config, where linting files outside the current working directory previously worked. See [related discussions](#related-discussions) below for some examples.
 
@@ -194,11 +195,13 @@ The implementation should include coverage for:
 ### Alternative 2: External File Matching
 
 Another suggested alternative is to avoid introducing a `--base-path` option and instead allow matching files outside the base path behind a feature flag.
+
 This approach requires changes to `@eslint/config-array`: it introduces a new `ConfigArray` constructor option, `matchExternal`.
 When this option is `true`, files outside the base path will no longer have the status `"external"`.
 In addition, if those files are not matched by a non-universal `files` pattern, they will no longer have the status `"unconfigured"`.
 As a result, files outside the base path will always have either status `"matched"` or `"ignored"`.
 Another effect of `matchExternal: true` is that directories outside the base path will never be considered ignored (when calling `configArray.isDirectoryIgnored()`).
+
 In the ESLint repository, a new feature flag, `unstable_external_file_matching`, will set `matchExternal: true` on all config arrays.
 With these changes, users will be able to lint files outside the location of a specified config file by providing a path or pattern for those files on the command line, for example:
 
@@ -207,6 +210,8 @@ npx eslint --flag=unstable_external_file_matching --config=eslint.config.js "../
 ```
 
 Config objects without `files` or `ignores` will apply to these files as well.
+
+In a config object, `files` and `ignores` patterns and `basePath` values will continue to resolve relative to the current working directory, as they do today, even if they reference files outside of it.
 
 ### Preview
 
