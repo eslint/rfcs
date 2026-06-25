@@ -238,22 +238,6 @@ This proposal is backward-compatible and does not introduce any breaking changes
 
 ## Alternatives
 
-### Change `**/` semantics to match outside the base path
-
-One proposal was to make patterns prefixed with `**/` (such as `**/*.js`) match files regardless of base path.
-
-This approach has some drawbacks:
-
-- it creates edge cases for `ignores` (for example, `**/foo/` might unexpectedly match ancestor path segments)
-- it does not provide a clear way to target only specific paths outside the base path
-- it would require matching against absolute paths in some cases, which is harder to reason about
-- it changes established glob semantics and is potentially breaking
-
-To address the last point and avoid a breaking change, additional solutions have been proposed:
-
-- adding a feature flag `v10_file_matching` for changed glob semantics
-- adding a dedicated config key `matchAbsolute` for absolute matching
-
 ### Rely on config lookup improvements only
 
 The `unstable_config_lookup_from_file` / `v10_config_lookup_from_file` flag was considered as a possible way to cover these scenarios.
