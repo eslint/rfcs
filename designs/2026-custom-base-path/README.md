@@ -203,7 +203,7 @@ As a result, files outside the base path will always have either status `"matche
 Another effect of `matchExternal: true` is that directories outside the base path will never be considered ignored (when calling `configArray.isDirectoryIgnored()`).
 
 In the ESLint repository, a new feature flag, `unstable_external_file_matching`, will set `matchExternal: true` on all config arrays.
-With these changes, users will be able to lint files outside the location of a specified config file by providing a path or pattern for those files on the command line, for example:
+With these changes, users will be able to lint files outside `cwd` by providing a path or pattern for those files on the command line, for example:
 
 ```shell
 npx eslint --flag=unstable_external_file_matching --config=eslint.config.js "../**/*.js"
@@ -213,6 +213,13 @@ Config objects without `files` or `ignores` will apply to these files as well.
 
 In a config object, `files` and `ignores` patterns and `basePath` values will continue to resolve relative to the current working directory, as they do today, even if they reference files outside of it.
 This is an improvement over the eslintrc behavior, where relative `files` patterns in config objects could not target directories outside the current working directory.
+
+A limitation of this approach is that `files` and `ignores` patterns that start with `**/` will only apply to files inside `cwd`.
+To match files outside `cwd`, users would need to use a pattern such as `../**/*.js`.
+
+This also means that ESLint's default config settings will not apply automatically to files outside `cwd`.
+One possible workaround would be to enable the [`matchBase`](https://github.com/isaacs/minimatch?tab=readme-ov-file#matchbase) option in minimatch so that certain patterns can match files regardless of directory.
+We could apply that to all patterns without a slash, or only to patterns in ESLint's predefined config objects.
 
 ### Preview
 
