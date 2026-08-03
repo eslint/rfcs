@@ -24,9 +24,33 @@ The proposed change is to standardize comment extraction and handle the varying 
 
 Specifically:
 
-1. **Standardize `comments` property on `SourceCode`:** - A `comments` property is to be added to the JavaScript `SourceCode` class. The `CSSSourceCode` and `JSONSourceCode` classes already expose this property. `MarkdownSourceCode` does not expose it, as Markdown does not have a direct equivalent to comments.
+1. **Add `comments` property to `SourceCode` and `TextSourceCodeBase`:** A `comments` property will be added to the JavaScript `SourceCode` class. Simultaneously, `TextSourceCodeBase` from `@eslint/plugin-kit` will define an optional `comments` property. `CSSSourceCode` and `JSONSourceCode` will populate this inherited property, while `MarkdownSourceCode` will leave it undefined.
 
-2. **Update `no-irregular-whitespace` Comment Extraction:** - The rule is to be updated to access the `sourceCode.comments` property, with a fallback to an empty array for languages like Markdown that lack comments.
+2. **Calculate irregular-character locations from source indices:** The rule will replace `checkForIrregularWhitespace` and `checkForIrregularLineTerminators` with a single scan of `sourceCode.text`. Each match's start and end indices will be converted with `sourceCode.getLocFromIndex()`. This is necessary because JavaScript treats `\u2028` and `\u2029` as line separators, while CSS, JSON, and Markdown do not. `getLocFromIndex()` already applies the active language's line-ending rules, so the rule does not need the JavaScript-specific `LINE_BREAK` or `IRREGULAR_LINE_TERMINATORS` regular expressions.
+
+```js
+const IRREGULAR_CHARACTERS = /[\f\v\u0085\ufeff\u00a0\u1680\u180e\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u200b\u202f\u205f\u3000]+|[\u2028\u2029]/gu;
+
+function checkForIrregularCharacters(node) {
+	let match;
+
+	while ((match = IRREGULAR_CHARACTERS.exec(sourceCode.text)) !== null) {
+		const start = match.index;
+		const end = start + match[0].length;
+
+		errors.push({
+			node,
+			messageId: "noIrregularWhitespace",
+			loc: {
+				start: sourceCode.getLocFromIndex(start),
+				end: sourceCode.getLocFromIndex(end),
+			},
+		});
+	}
+}
+```
+
+3. **Update `no-irregular-whitespace` comment extraction:** The rule will use the `sourceCode.comments` property, with a fallback to an empty array for languages like Markdown that lack comments.
 
 ```js
 const commentNodes = sourceCode.comments || [];
@@ -42,7 +66,7 @@ function removeInvalidNodeErrorsInComment(node) {
 }
 ```
 
-3. **Generic Syntax Exclusion via `skipNodes` Option:** - A new configuration option, `skipNodes`, will be added. This option will accept an array of ESQuery selectors. The rule will dynamically register traversal listeners for these selectors and strip any irregular whitespace errors found within their boundaries. For example, a user linting CSS or JSON could set `skipNodes: ["String"]`.
+4. **Generic syntax exclusion via `skipNodes`:** A new configuration option, `skipNodes`, will be added. This option will accept an array of ESQuery selectors. The rule will dynamically register traversal listeners for these selectors and strip any irregular whitespace errors found within their boundaries. For example, a user linting CSS or JSON could set `skipNodes: ["String"]`.
 
 ```js
 // In schema:
@@ -62,16 +86,15 @@ skipNodes.forEach(selector => {
 });
 ```
 
-The existing JS-specific options (`skipStrings`, `skipRegExps`, etc.) will be retained and continue to function alongside `skipNodes` for backwards compatibility.
+The existing JavaScript-specific options (`skipStrings`, `skipRegExps`, `skipTemplates`, and `skipJSXText`) will be retained for backwards compatibility, but their documentation and type declarations will be marked deprecated. `skipNodes` is the preferred way to exclude syntax going forward.
 
-4. **Root Node Listener:** - The rule is to be updated to attach the main traversal to the root node type of the current AST, rather than the hardcoded `Program` node. This will accommodate different language plugins that use different root nodes (e.g., `StyleSheet` for CSS, `Document` for JSON, and `root` for Markdown).
+5. **Root node listener:** The rule will attach the main traversal to the root node type of the current AST, rather than the hardcoded `Program` node. This will accommodate different language plugins that use different root nodes (e.g., `StyleSheet` for CSS, `Document` for JSON, and `root` for Markdown).
 
 ```js
 const rootNodeType = sourceCode.ast.type;
 
 nodes[rootNodeType] = function (node) {
-	checkForIrregularWhitespace(node);
-	checkForIrregularLineTerminators(node);
+	checkForIrregularCharacters(node);
 };
 
 nodes[`${rootNodeType}:exit`] = function () {
