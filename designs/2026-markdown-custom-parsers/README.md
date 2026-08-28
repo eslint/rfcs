@@ -248,9 +248,9 @@ Only configurations using the new option are affected by the new validation and 
 
 ## Open Questions
 
-1. `parseForESLint()`-style API? TODO
+1. Does the Markdown parser contract need a `parseForESLint()`-style method? ESLint parsers can use `parseForESLint()` to return additional values such as parser services along with the AST. In this proposal, `MarkdownLanguage` creates `MarkdownSourceCode`, and the current integration only needs the parser to produce an mdast syntax tree. The current view is therefore that `parse()` is sufficient and `parseForESLint()` is unnecessary. Is there a concrete use case that requires including it in the initial contract?
 
-1. `NonMdastParser`? TODO
+1. Does the Markdown parser contract need a `NonMdastParser` type analogous to ESLint's [`NonESTreeParser`](https://github.com/eslint/eslint/blob/v10.9.1/lib/types/index.d.ts#L1021)? ESLint's JavaScript parser types distinguish parsers that return ESTree from parsers that may return another AST format. This initial proposal intentionally supports only parsers that return a compatible mdast `Root`, because `MarkdownSourceCode`, traversal, and the bundled rules are built around the mdast contract. The current view is therefore that `NonMdastParser` should not be included. Is there a concrete use case for a non-mdast parser that should be supported by this language rather than provided through a separate ESLint language?
 
 ## Help Needed
 
