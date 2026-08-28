@@ -32,11 +32,11 @@ This proposal has the following goals:
 
 This proposal does not:
 
-- add a Rust parser to `@eslint/markdown` by default.
-- change the default parser.
-- define how native or WebAssembly parser packages are built or distributed.
-- support asynchronous parsers.
-- guarantee that every `@eslint/markdown` rule works with every custom parser.
+1. Add a Rust parser to `@eslint/markdown` by default.
+2. Change the default parser.
+3. Define how native or WebAssembly parser packages are built or distributed.
+4. Support asynchronous parsers.
+5. Guarantee that every `@eslint/markdown` rule works with every custom parser.
 
 ### New Language Options
 
