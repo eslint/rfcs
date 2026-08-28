@@ -16,11 +16,8 @@ This RFC proposes replacing ESLint's JavaScript analysis stack (`espree`, `eslin
 In August 2024, I opened [Rethinking TypeScript support in ESLint](https://github.com/eslint/eslint/discussions/18830) to describe a problem I kept hearing about from users, plugin developers, and commercial integrators: linting TypeScript with ESLint works, but almost nobody describes it as a good experience. The problems I listed then are the same ones we have today:
 
 * **Requiring a separate plugin.** TypeScript is the majority dialect in the ecosystem, and yet ESLint out of the box can't parse it. Users have to find typescript-eslint, understand it, and configure it before they can lint the code they actually write.
-* **Performance.** The parse step is backed by `tsc`, which is optimized for incremental IDE use and error recovery rather than for throughput. When type-aware linting is enabled, the cost grows substantially.
-* **Lack of cacheability.** With type-aware linting enabled, the parser works across the whole project, which defeats ESLint's file-level cache.
-* **Requiring a file system.** With type-aware linting enabled, `tsc` needs a file system. Integrators who embed ESLint in cloud products have their own virtual file systems and consistently tell us that wiring `tsc` into them is more coordination than they want.
+* **Lack of cacheability with type-aware linting.** With type-aware linting enabled, the parser works across the whole project, which defeats ESLint's file-level cache. It's not always obvious to users when they have opted-in to type-aware linting by enabling a rule that uses it, and then are surprised when caching doesn't work.
 * **Requiring `tsc`.** Integrators who embed the ESLint API in a product, rather than shipping the CLI, don't want to also embed and version the `typescript` package.
-* **Confusing duplication of rules.** typescript-eslint reimplements a large set of core rules so they behave correctly on TypeScript syntax. Users routinely don't know which of the two rules they've enabled, and search results lead to either one. The wrapping also couples those rules to core implementation details, which breaks in ways that confuse everyone ([eslint/eslint#19173](https://github.com/eslint/eslint/issues/19173) is the long-running conversation about that).
 * **Too much parser responsibility.** typescript-eslint hooks in through `parseForESLint()`, which predates language plugins. That makes parsing, scope analysis, and type-service setup a single black box to the core, so we can't reason about or measure what's actually happening during a lint run.
 
 None of this is a criticism of typescript-eslint or the people who maintain it. They built dependable TypeScript support inside the constraints the ESLint core gave them, and they did it well. The reason those constraints exist is that the core was slow to treat TypeScript as anything other than someone else's problem.
@@ -39,12 +36,12 @@ The ESLint team was broadly supportive of treating TypeScript syntax as a first-
 
 1. **A new parser cuts you off from type-aware linting**, because TypeScript's type APIs only accept nodes from a `ts.SourceFile` they produced.
 2. **Maintenance burden.** TypeScript ships every three months, and each release may add syntax the parser must learn.
-3. **AST compatibility risk.** The ecosystem is written against the typescript-eslint AST. A second implementation that differs anywhere breaks rules, and there is no ESTree-style specification body to keep the two honest.
+3. **AST compatibility risk.** The ecosystem is written against the typescript-eslint AST. A second implementation that differs anywhere breaks rules, and there is no ESTree-style specification body to keep the two honest. There is an [AST specification](https://github.com/typescript-eslint/typescript-eslint/tree/main/packages/ast-spec) that typescript-eslint itself maintains.
 4. **Existing parsers already exist** (swc, oxc, Babel, hermes-parser), so the effort is redundant.
 
 There was also a disagreement about whether depending on `typescript` is a risk worth caring about. My position hasn't changed: ESLint needs control over its core dependencies. We learned that lesson when `esprima` went unmaintained, which is why `espree` exists, and why we deliberately built on Acorn as a pluggable base we could replace. Being unable to fix or route around a core dependency is a risk regardless of who maintains it or how well.
 
-That risk stopped being hypothetical while this RFC was being written. TypeScript 7.0 has shipped, and `@typescript-eslint/parser` does not yet accept it (the recommended arrangement is to keep the TypeScript 6.0 API installed alongside it and point the parser at that). The new toolkit's benchmark carries a row for TypeScript 7 that currently reports itself skipped for exactly this reason. This is not a criticism of typescript-eslint; keeping up with a compiler release of that size is genuinely hard work, and they are doing it. It is a demonstration of the coupling: when the dependency moves, everything downstream of it waits, and neither we nor our users have any way to move first.
+That risk stopped being hypothetical while this RFC was being written. TypeScript 7.0 has shipped and doesn't have a JS API to hook into, meaning that `@typescript-eslint/parser` cannot yet use it directly (the recommended arrangement is to keep the TypeScript 6.0 API installed alongside it and point the parser at that). The new toolkit's benchmark carries a row for TypeScript 7 that currently reports itself skipped for exactly this reason. This is not a criticism of typescript-eslint; keeping up with a compiler release of that size is genuinely hard work, and they are doing it. It is a demonstration of the coupling: when the dependency moves, everything downstream of it waits, and neither we nor our users have any way to move first.
 
 I think objections 2, 3, and 4 are answerable, and this RFC answers them with the design below rather than with argument: the maintenance burden is real but bounded, AST compatibility is enforced by differential testing against `@typescript-eslint/parser` on every file we can find rather than asserted, and the existing parsers were evaluated and don't produce the AST or the analyses we need. Objection 1 is correct, we lose type-aware linting, but I don't think that is necessarily a terminal state. Rather, it's something we can build towards on top of this new tooling foundation.
 
@@ -227,7 +224,7 @@ Scope analysis, measured separately by running `benchmarks/scope/benchmark.js` w
 
 Three caveats worth stating, because I'd rather set expectations correctly:
 
-1. **Parsing is roughly 15% of the time ESLint spends on a file.** Rules and traversal are the rest, and they cost the same on either tree. There are, however, opportunities to rethink how we implement and execute rules to speed things up in the future.
+1. **Parsing is a small percentage of the time ESLint spends on a file.** Rules and traversal are the rest, and they cost the same on either tree. In some of my local testing this came out to around 15% but it's highly variable based on the ESLint configuration. There are, however, opportunities to rethink how we implement and execute rules to speed things up in the future.
 2. **The comparison against `@typescript-eslint/parser` is against its non-type-aware mode**, which is already its fast path. As noted in the 2024 discussion, that mode is single-file and cacheable today.
 3. **These ratios are not stable across machines.** This toolkit allocates far less than the implementations it's compared against, so a throttled machine slows it down proportionally more and *deflates* its ratios. Two runs of the same benchmark on the same laptop can disagree by a third.
 
@@ -452,9 +449,17 @@ Not in either phase of this RFC, and not in the way that question usually means.
 
 Because the browser, and because bootstrapping. `@eslint/jskit-inspect` runs all three analyses in a browser tab, and a lot of what ESLint's ecosystem does with a parser happens somewhere a `.node` file can't be loaded. The TypeScript implementation is also what the Rust implementation is checked against — it came first, it's the one with the full test suite, and byte-for-byte differential parity against it is how I know the Rust is right. A Rust-only toolkit would have neither of those.
 
+**What about drift between the TypeScript and Rust parsers?**
+
+This is where AI makes the maintenance easier. We start with a conformance test then get AI to implement the changes in both parsers.
+
+**Did you "vibe code" the new toolkit?**
+
+I used AI to create the new toolkit, but I did not "vibe code" it. I started with a design and architecture that I wanted. I outlined the approach I wanted the package to follow, the primary external APIs, and where the seams were between different phases of logic. That approach included separating out the phases of parsing, validation, scope analysis, and control flow. I outlined the conformance tests against Espree and `@typescript-eslint/parser` and how to resolve conflicts between the two. The actual code was written by AI.
+
 **Why not use oxc, since it's already a fast Rust parser?**
 
-It's the closest existing thing and it's in the benchmark, so this is a fair question. It produces its own AST rather than `espree`'s or `@typescript-eslint/parser`'s, reports syntax errors as data rather than the way ESLint expects, emits no token list, and stops at parsing (no scope analysis, no control flow analysis). The compatibility work and the two analyses are most of what this RFC is, so adopting it would leave nearly all of the work in place while adding a dependency we don't control. See the alternatives.
+It's the closest existing thing and it's in the benchmark, so this is a fair question. It produces compatible ASTs but we'd still need the two analyses described in the RFC, so adopting it would leave nearly all of the work in place while adding a dependency we don't control. See the alternatives.
 
 **What happens to `espree`?**
 
