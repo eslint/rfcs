@@ -1,7 +1,7 @@
 - Repo: eslint/markdown
 - Start Date: 2026-08-04
 - RFC PR: https://github.com/eslint/rfcs/pull/152
-- Authors: lumirlumir
+- Authors: lumir(lumirlumir)
 
 # Support `languageOptions.parser` for Markdown
 
