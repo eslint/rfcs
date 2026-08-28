@@ -17,7 +17,7 @@ Markdown parsing can dominate the time spent linting Markdown. In the prototypes
 
 Changing the default parser to `satteri` is not currently suitable. Although `satteri` provides a browser-targeted WebAssembly binding, adopting it as the default would add platform-specific native binaries to the default Node.js dependency graph and a WebAssembly artifact and initialization path to the default browser dependency graph. This would increase distribution size and introduce additional runtime and bundler compatibility requirements for every user, including users who do not need the performance improvement.
 
-A parser option solves this by keeping the current portable parser as the default while allowing users to opt into another implementation. It also allows users to provide their own mdast-related parser with the syntax plugins they need. This proposal adds the option specifically to the Markdown language implementation. It does not propose a new parser mechanism for every ESLint language plugins such as JSON and CSS.
+A parser option solves this by keeping the current portable parser as the default while allowing users to opt into another implementation. It also allows users to provide their own mdast-related parser with the syntax plugins they need. This proposal adds the option specifically to the Markdown language implementation. It does not propose a new parser mechanism for other ESLint language plugins, such as JSON and CSS.
 
 ## Detailed Design
 
@@ -73,6 +73,8 @@ export type MarkdownParser = ObjectMetaProperties & {
 	): Root;
 };
 ```
+
+`ParserMode` was already exported, so it remains as a deprecated alias for backwards compatibility. New code should use `MarkdownParserMode`.
 
 Parser metadata is optional and informational. `@eslint/markdown` does not change parsing behavior based on `meta`.
 
@@ -169,7 +171,7 @@ export default [
             frontmatter: "yaml",
             math: true,
             parser,
-            implementationOption: true,
+            parserSpecificOption: true, // Parser-specific option
         },
     },
 ];
@@ -306,7 +308,7 @@ No. Matching node types and properties does not guarantee identical parsing sema
 
 ### Can a rule use `meta.languages` to require a particular parser?
 
-No. `meta.languages` describes compatibility with the selected ESLint language, not with a particular parser implementation. Because a custom parser is required to produce a compatible mdast `Root`, rules that declare support for `markdown/commonmark` or `markdown/gfm` are expected to work with any conforming parser. A parser that exposes a different AST contract should be provided through a separate ESLint language rather than through `languageOptions.parser`.
+No. `meta.languages` describes compatibility with the selected ESLint language, not with a particular parser implementation, so it cannot express parser-specific compatibility. Parser and rule authors must document any such requirements or edge-case differences. A parser that exposes a different AST contract should be provided through a separate ESLint language rather than through `languageOptions.parser`.
 
 ## Related Discussions
 
