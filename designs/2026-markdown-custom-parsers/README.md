@@ -268,9 +268,29 @@ The initial plan was to use [`markdown-rs`](https://github.com/wooorm/markdown-r
 
 [`satteri`](https://github.com/bruits/satteri) instead stores the parsed tree in a Rust arena, transfers it through a compact binary buffer, and materializes the mdast nodes in JavaScript using a binary reader. This avoids the full-tree JSON serialization and deserialization used by the earlier `markdown-rs` integration design and was substantially faster in the prototype. For this reason, the implementation of `@eslint-markdown/parser` was changed to use `satteri`.
 
-### Will the Rust parser become the default?
+### How can the synchronous Markdown parsing API call into Rust?
 
-Not as part of this RFC. `mdast-util-from-markdown` remains the default. Replacing it would require separate compatibility, distribution, browser, and maintenance analysis.
+`@eslint-markdown/parser` loads `satteri` through its Node-API binding and invokes it directly on the Node.js main thread. The call remains synchronous from `MarkdownLanguage#parse()` through the parser wrapper and native binding.
+
+### Does the integration invoke Rust through `execSync()`?
+
+No. It neither spawns a Rust executable nor creates a child process for each parse. Node.js loads the compiled `.node` addon as a dynamic library, and JavaScript calls its exported function directly.
+
+### Did `markdown-rs` provide a synchronous Node.js API directly?
+
+No. `markdown-rs` is a Rust crate rather than a ready-made Node.js package, so the earlier design required a Node-API binding layer. The current prototype instead uses `satteri`, which already provides Node-API and WebAssembly bindings, behind the ESLint-compatible `@eslint-markdown/parser` wrapper.
+
+### Why add `languageOptions.parser` instead of replacing the default parser?
+
+Replacing `mdast-util-from-markdown` may be appropriate later if the Rust-based parser becomes sufficiently compatible and mature, but it is not part of this RFC. Making it the default now would add platform-specific native binaries to the default Node.js dependency graph and a WebAssembly artifact and initialization path for browser consumers. A parser option keeps the current installation and portability characteristics for existing users while allowing the experimental parser to be evaluated through explicit opt-in.
+
+### Why add a parser option when ESLint languages supersede the older parser abstraction?
+
+The two abstractions operate at different boundaries in this proposal. `markdown/commonmark` and `markdown/gfm` remain the ESLint languages and continue to define the `MarkdownSourceCode` and rule contract. `languageOptions.parser` selects only the implementation that produces the compatible mdast `Root` for one of those languages. A parser that exposes a different AST contract should be implemented as a separate ESLint language instead.
+
+### Why not add a `useNativeRustParser` language option instead?
+
+A dedicated boolean would couple `@eslint/markdown` to the experimental `@eslint-markdown/parser` package. A regular dependency would add the Rust parser and its platform-specific artifacts to every user's dependency tree, even when unused. Making it an optional peer would still require conditional loading, and asynchronous dynamic imports do not fit the current synchronous parsing path. Accepting a parser object instead keeps the dependency explicitly opt-in and supports future mdast-compatible parsers through the same API.
 
 ### Can a parser return a non-mdast AST?
 
@@ -282,7 +302,7 @@ No. The language parsing API is synchronous, and native Node.js addons can expos
 
 ### Are existing rules guaranteed to work with every custom parser?
 
-No. They should work when the parser produces the mdast node shapes and positions described by the compatibility contract. Parser authors and users are responsible for differences in syntax support or edge-case behavior.
+No. Matching node types and properties does not guarantee identical parsing semantics. For example, parsers may disagree about whether a list marker without following whitespace starts a list or a paragraph, so a rule may observe a different node even though both parsers produce valid mdast. Existing rules should work when a parser follows the documented mdast shapes, positions, and Markdown semantics, but parser authors must document relevant syntax and edge-case differences.
 
 ### Can a rule use `meta.languages` to require a particular parser?
 
