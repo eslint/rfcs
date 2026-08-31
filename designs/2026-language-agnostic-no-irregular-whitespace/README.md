@@ -24,7 +24,7 @@ The proposed change is to standardize comment extraction and handle the varying 
 
 Specifically:
 
-1. **Add `comments` property to `SourceCode` and `TextSourceCodeBase`:** A `comments` property will be added to the JavaScript `SourceCode` class. Simultaneously, `TextSourceCodeBase` from `@eslint/plugin-kit` will define an optional `comments` property. `CSSSourceCode` and `JSONSourceCode` will populate this inherited property, while `MarkdownSourceCode` will leave it undefined.
+1. **Add `comments` property to `SourceCode` and `TextSourceCodeBase`:** A `comments` property will be added to the JavaScript `SourceCode` class. Simultaneously, `TextSourceCodeBase` from `@eslint/plugin-kit` will define an optional `comments` property, typed as `Array<Options['SyntaxElementWithLoc']>|undefined`. `CSSSourceCode` and `JSONSourceCode` will populate this inherited property, while `MarkdownSourceCode` will leave it undefined.
 
 2. **Calculate irregular-character locations from source indices:** The rule will replace `checkForIrregularWhitespace` and `checkForIrregularLineTerminators` with a single scan of `sourceCode.text`. Each match's start and end indices will be converted with `sourceCode.getLocFromIndex()`. This is necessary because JavaScript treats `\u2028` and `\u2029` as line separators, while CSS, JSON, and Markdown do not. `getLocFromIndex()` already applies the active language's line-ending rules, so the rule does not need the JavaScript-specific `LINE_BREAK` or `IRREGULAR_LINE_TERMINATORS` regular expressions.
 
