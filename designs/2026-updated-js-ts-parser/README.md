@@ -278,7 +278,7 @@ Configuration is deliberately minimal, because the file name already says most o
 
 Because the extension answers them, the parser resolves `dialect` and `jsx` up front and hands them to `parse()` as well as to `validate()`, so the speculative `<` path above is never taken on a file whose kind is known. The two are passed differently, though, and the difference is the phase split showing through: `dialect` goes to phase 1 both ways, because a permissive middle already exists there and `dialect: "js"` only declines to read type arguments in text that JavaScript reads as comparisons anyway. `jsx` goes to phase 1 only when it is on. Turning it off would make JSX in a `.ts` file a thrown `ParseError`, when it should be a problem `validate()` reports like any other syntax that isn't allowed here — so for a non-JSX file the option is left unset and the parser accepts JSX in order to report it.
 
-Because `parseForESLint()` predates language plugins, this phase inherits the "too much parser responsibility" problem I explained earlier. I think that's a fair tradeoff to start getting the performance imThat's accepted deliberately: `parseForESLint()` is the only hook that works with ESLint today, and Phase 1 is about getting the toolkit into people's hands, not about fixing the integration point. Phase 2 fixes the integration point.
+Because `parseForESLint()` predates language plugins, this phase inherits the "too much parser responsibility" problem I explained earlier. I think that's a fair tradeoff to start getting the performance improvement. That's accepted deliberately: `parseForESLint()` is the only hook that works with ESLint today, and Phase 1 is about getting the toolkit into people's hands, not about fixing the integration point. Phase 2 fixes the integration point.
 
 Phase 1 allows us to start switching smaller projects (like `@eslint/config-array`) to TypeScript code to really exercise the new parser. We can do this package-by-package, checking our work as we go.
 
@@ -305,10 +305,10 @@ A language plugin, rather than a parser, is what lets the rest of the problems g
 
 1. **The core stops guessing.** Under `parseForESLint()`, ESLint can't tell parsing from scope analysis from anything else the parser decided to do. As a language, each of those is a separate, measurable step with a defined interface.
 2. **`SourceCode` is ours.** That's where the new control flow analysis is exposed. Rules get a real reachability query instead of hand-maintaining a segment set, and the fifteen core rules that use code path analysis today can be rewritten against something that isn't known-buggy.
-3. **TypeScript-specific rules can exist.** Rules for TypeScript syntax, the ones core has never accepted because core doesn't parse TypeScript, belong here.
+3. **TypeScript-specific rules can exist alongside JavaScript rules.** Rules for TypeScript syntax, the ones core has never accepted because core doesn't parse TypeScript, belong here.
 4. **Core rule behavior can be corrected per dialect.** The work already happening in [eslint/eslint#19173](https://github.com/eslint/eslint/issues/19173) has a home, and `meta.languages` from [RFC 135](https://github.com/eslint/rfcs/blob/main/designs/2025-rule-languages/README.md) is how a rule declares where it applies.
 
-The deduplication question that [Josh Goldberg raised in the 2024 discussion](https://github.com/eslint/eslint/discussions/18830) is the one to get right here. If the syntax-only extension rules move into the core rules and the type-aware ones don't, we've moved the boundary rather than removed it, from "ESLint syntax vs. TypeScript syntax and types" to "ESLint syntax and TypeScript syntax vs. types." That's a real improvement, and it's also not the end state. The end state requires typed linting, which is Phase 3 and not in this RFC.
+The deduplication question that [Josh Goldberg raised in the 2024 discussion](https://github.com/eslint/eslint/discussions/18830) is the one to get right here. If the syntax-only extension rules move into the core rules and the type-aware ones don't, we've moved the boundary rather than removed it, from "ESLint syntax vs. TypeScript syntax and types" to "ESLint syntax and TypeScript syntax vs. types." That's a real improvement, and it's also not the end state. The end state requires typed linting, which is future Phase 3 and not in this RFC.
 
 We will also use Phase 2 as a time to evaluate the APIs that we expose to rules related to scopes and control flow. A lot of the patterns we use in ESLint's core rules are very inefficient (i.e., `prefer-const` walking through the scope tree to figure out if something is writable). There are a lot of questions about scope we can answer during the analysis phase and have that data prepared and easily retrievable by the time rules are executed. Ideally, for scopes, we'd come up with new APIs that can be polyfilled in the current rules to make transitioning to the new toolkit seamless. The only real caveat is with code path analysis, which will need to go through a breaking change to get where we need to be. (Which I think is acceptable because of how infrequently it's used.)
 
@@ -321,6 +321,15 @@ I want to be careful about what that means, because "no typed linting" is easy t
 - **It is a limitation of this phase, not a design goal.** The control flow analysis was deliberately built to record variable writes and branch conditions, which is what a narrowing pass needs. That was not an accident.
 - **We will investigate it.** The likely shape is the pluggable "types provider" idea from the 2024 discussion, which would let TypeScript supply types to rules that want them without ESLint depending on TypeScript to lint. There are also questions worth answering about how far a purely syntactic narrowing pass gets, and where it stops being useful. Modern TypeScript codebases lean on conditional types and inference-heavy libraries, and a partially type-aware linter that is confidently wrong is worse than one that admits it doesn't know.
 - **Until we have an answer, typescript-eslint remains the recommendation for type-aware linting.** That should be said plainly in the documentation rather than implied.
+
+In the meantime, there is nothing about this proposal that precludes typed linting in the future. To make this clear, it helps to understand how TypeScript does type analysis. There are four passes over the code:
+
+1. **Parsing** - the code is parsed into a tree
+2. **Scope analysis** - the tree is inspected for scope information
+3. **Control flow analysis** - the tree and scope are then analyzed to discover all paths through the code
+4. **Data flow analysis** - the scope and flow information is used to determine the type of different values at different locations in the code
+
+ESLint right now does the first three passes. This proposal also does those three passes, however, the control flow analysis is different specifically so it can more easily support a data flow analysis later. It uses the same type of basic-block flow diagram that TypeScript does so we are all set to add another pass in the future.
 
 ## Documentation
 
