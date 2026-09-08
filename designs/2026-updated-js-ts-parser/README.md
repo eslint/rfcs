@@ -528,6 +528,10 @@ There are two reasons. First, because profiling revealed that it's the creation 
 
 Second, we can pass binary data back and forth between JavaScript and Rust, as well as between the core and workers, with no cost. Passing data structures back and forth requires serialization and deserialization, which also negatively impacts performance. Binary data is about as free as there can be when crossing language or thread/process boundaries.
 
+**Does replacing `undefined` with `null` in TypeScript ASTs break anything?**
+
+I tested all of the non-type-aware rules in typescript-eslint with the new parser and nothing failed. That doesn't guarantee anything but it at least shows the scope of any compatibility concerns to be fairly small. 
+
 ## Related Discussions
 
 - [eslint/eslint#18830: Rethinking TypeScript support in ESLint](https://github.com/eslint/eslint/discussions/18830)
