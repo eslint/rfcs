@@ -60,7 +60,7 @@ Two problems that have nothing to do with TypeScript get fixed by the same work:
 
 | Analysis  | Entry points                       | Produces                                                              |
 | --------- | ---------------------------------- | --------------------------------------------------------------------- |
-| **Parse** | `parse()`, `validate()`, `toAST()` | A binary AST, a binary token stream, and a line-start table            |
+| **Parse** | `parse()`, `validate()`, `toAST()` | One buffer: a binary AST, a line-start table, and (on request) tokens  |
 | **Scope** | `analyze()`, `analyzeTree()`       | A binary scope graph: scopes, symbols, references, definitions         |
 | **Flow**  | `createGraph()`                    | A binary basic-block control flow graph for every execution unit       |
 
@@ -72,11 +72,11 @@ const result = parse(`const answer: number = 42; answer;`);
 // Scope analysis reads the binary buffer directly.
 const scope = analyze(result, { sourceType: "module", dialect: "ts" });
 
-// So does control flow analysis, over both buffers.
+// So does control flow analysis, over the parse and scope buffers together.
 const flow = createGraph(result, scope);
 
 // An ESTree AST is built only if something asks for one.
-const { ast, errors } = toAST(result, { sourceType: "module", dialect: "ts" });
+const ast = toAST(result, { dialect: "ts" });
 ```
 
 The reason the three are one package rather than three is the buffer between them. `parse()` returns an `ArrayBuffer` rather than an object tree, and both `analyze()` and `createGraph()` run their entire analysis against those buffers without ever materializing a node. Splitting them into packages would mean either publishing the binary format as a public contract between packages or giving up the representation entirely.
@@ -87,13 +87,13 @@ Most parsers do one pass and hand back a tree. This one splits that into three:
 
 | Phase    | Entry point                 | Produces                       | Fails how           |
 | -------- | --------------------------- | ------------------------------ | ------------------- |
-| Parse    | `parse(code, options)`      | Binary buffers                 | Throws `ParseError` |
+| Parse    | `parse(code, options)`      | A binary buffer                | Throws `ParseError` |
 | Validate | `validate(result, options)` | An array of problems           | Never throws        |
-| Decode   | `toAST(result, options)`    | ESTree objects   | Never throws        |
+| Decode   | `toAST(result, options)`    | ESTree objects                 | Never throws        |
 
-The dividing line is whether the answer depends on context the text alone doesn't supply. `parse()` accepts the union of everything JavaScript and TypeScript allow, and throws only when the text can't be tokenized or shaped into a tree. Everything that is merely *not allowed here* such as `with` in strict mode, a redeclared binding, `return` outside a function, TypeScript syntax in a `.js` file, JSX in a file that isn't JSX, top-level `await` in a script, all parses cleanly and is reported by `validate()`.
+The dividing line is whether the answer depends on context the text alone doesn't supply. `parse()` accepts the union of everything JavaScript and TypeScript allow, and throws only when the text can't be tokenized or shaped into a tree. Everything that is merely *not allowed here* such as `with` in strict mode, a redeclared binding, `return` outside a function, TypeScript syntax in a `.js` file, top-level `await` in a script, all parses cleanly and is reported by `validate()`.
 
-That's why `dialect`, `jsx`, and `declaration` are questions phase 2 answers rather than phase 1 — with one exception, described next, where the same characters make a different *tree* rather than a differently permitted one. Keeping them out of phase 1 means one parse can be validated several ways (or skipped entirely if, for example, we just want to know if a file exports a particular binding). It also means the most expensive phase, allocating JavaScript objects, is optional. A tool that only needs to inspect part of a file reads the buffer and never pays for the rest.
+That's why whether TypeScript syntax, JSX, or an ambient declaration is *allowed* (`validate()`'s `dialect`, `jsx`, and `declaration` options) is a question phase 2 answers rather than phase 1 — with one exception, described next, where the same characters make a different *tree* rather than a differently permitted one. Keeping them out of phase 1 means one parse can be validated several ways (or skipped entirely if, for example, we just want to know if a file exports a particular binding). It also means the most expensive phase, allocating JavaScript objects, is optional. A tool that only needs to inspect part of a file reads the buffer and never pays for the rest.
 
 ##### Where the union breaks down: `<`
 
@@ -106,16 +106,54 @@ There is a limit to how far phase 1 can defer, and `<` is where it shows up. For
 So `parse()` takes two interpretation options alongside `sourceType`, and both are about `<`:
 
 * **`dialect`** (`"js"` or `"ts"`, default `"ts"`) decides how a `<` *after* an expression reads. `"ts"` reads type arguments when the `>` is followed by something that can only continue a call, and falls back to comparisons otherwise; `"js"` never reads type arguments there, which is what `espree` does. There is no permissive middle setting here because `"ts"` already is one — every program the `"js"` reading accepts, the `"ts"` reading accepts the same way — so naming `"js"` narrows rather than widens.
-* **`jsx`** (a boolean, unset by default) decides how a `<` in *expression position* reads. `true` reads it the way a `.tsx` file does: JSX, with generic arrows only in their unambiguous `<T,>` and `<T extends …>` spellings, and no `<T>expr` assertions. `false` reads it the way a `.ts` file does: an assertion or a generic arrow, never JSX. Left unset, the parser really does accept the union, by trying JSX speculatively and falling back to the TypeScript readings, which is what lets `validate()` remain the one to say whether JSX was *allowed*.
+* **`jsx`** (`true` or `false`, default `false`) decides how a `<` in *expression position* reads. `true` reads it the way a `.tsx` file does: JSX, with generic arrows only in their unambiguous `<T,>` and `<T extends …>` spellings, and no `<T>expr` assertions. `false` reads it the way a `.ts` file does: an assertion or a generic arrow, never JSX, so an element is a syntax error.
 
-The union is the default for `jsx` because it preserves the phase split, but it isn't free: on JSX-heavy files the speculation costs a noticeable share of the parse, and on files that lean on old-style `<T>expr` assertions each abandoned JSX attempt scans ahead before it is undone, which goes quadratic. A caller that knows what kind of file it has should say so.
+Here's how that plays out with `jsx: true`:
 
-Note that these options constrain how the text is read, not what is permitted. Unambiguous TypeScript syntax — a type annotation, an `as` expression, an interface — still parses under `dialect: "js"`, and `validate()` is still the one to report that it wasn't allowed there. And unlike `sourceType`, neither choice is recorded in the buffer: type arguments and JSX elements either are in the tree or are not, so the later phases read the tree rather than deciding again.
+```js
+import { parse, validate, toAST } from "@eslint/jskit";
+
+const code = "const el = <div className={name}>{children}</div>;";
+
+// `<` in expression position opens an element.
+const result = parse(code, { jsx: true });
+toAST(result).body[0].declarations[0].init.type; // "JSXElement"
+
+// validate() still decides whether the JSX that parsed is allowed.
+validate(result, { jsx: true }); // => []
+validate(result);
+// => [{ message: "JSX syntax is not allowed unless the jsx option is enabled.", lineNumber: 1, column: 12 }]
+
+// Generic arrows parse only in their unambiguous spellings...
+parse("const id = <T,>(x: T) => x;", { jsx: true }); // ArrowFunctionExpression
+parse("const id = <T extends unknown>(x: T) => x;", { jsx: true }); // ArrowFunctionExpression
+parse("const id = <T>(x: T) => x;", { jsx: true }); // throws "Unterminated JSX element (1:27)"
+
+// ...and old-style assertions don't exist, though `as` does.
+parse("const n = <number>value;", { jsx: true }); // throws "Unterminated JSX element (1:25)"
+parse("const n = value as number;", { jsx: true }); // TSAsExpression
+```
+
+The same text without `jsx: true` reads the other way around: `<number>value` is a `TSTypeAssertion`, `<T>(x: T) => x` is an arrow function, and the element fails to parse.
+
+Unlike `dialect`, `jsx` has no permissive middle setting, and that's deliberate. A setting that accepted both readings would have to try JSX speculatively at every `<` and fall back to the TypeScript readings, and that isn't free: on JSX-heavy files the speculation costs a noticeable share of the parse, and on files that lean on old-style `<T>expr` assertions each abandoned JSX attempt scans ahead before it is undone, which goes quadratic. Every caller already knows what kind of file it has, so the parser asks rather than guesses.
+
+The cost is that JSX in a file parsed without `jsx: true` is a thrown `ParseError` rather than a problem `validate()` reports. Left alone, that error would describe a broken type assertion (`<div/>` reads as `Expected '>' but found '/'`), so a parse that fails without `jsx: true` is retried once the `.tsx` way on its way to throwing. When the retry succeeds and the tree contains an element, the error names the actual cause, with the same message and position `validate()` gives for the same mistake:
+
+```js
+parse("const el = <div className={name}>{children}</div>;");
+// => throws "JSX syntax is not allowed unless the jsx option is enabled. (1:12)"
+```
+
+The retry only happens on the way to throwing, so nothing that parses pays for it.
+
+Note that `dialect` constrains how the text is read, not what is permitted. Unambiguous TypeScript syntax — a type annotation, an `as` expression, an interface — still parses under `dialect: "js"`, and `validate()` is still the one to report that it wasn't allowed there. `validate()` keeps its own `dialect` and `jsx` options for exactly that reason: `parse()`'s options say how the text reads, and `validate()`'s say whether what parsed is allowed. And unlike `sourceType`, neither `parse()` choice is recorded in the buffer: type arguments and JSX elements either are in the tree or are not, so the later phases read the tree rather than deciding again.
 
 There are no version options. The latest JavaScript, TypeScript, and JSX syntax is accepted, always.
+
 #### Scope analysis understands types
 
-`analyze()` produces the scope graph as a third binary buffer, addressing AST nodes by their offsets in the parse buffer. It reproduces `eslint-scope` for JavaScript and `@typescript-eslint/scope-manager` for TypeScript as one walk, checked against both. Where the two references disagree about ground both cover, `eslint-scope` wins; where only the TypeScript analyzer has an opinion, it wins. Three disagreements survive as options rather than decisions, because both answers are defensible: `jsxPragma`, `jsxFragmentName`, and `globals`.
+`analyze()` produces the scope graph as a third binary buffer, addressing AST nodes by their offsets in the parse buffer. It reproduces `eslint-scope` for JavaScript and `@typescript-eslint/scope-manager` for TypeScript as one walk, checked against both. Where the two references disagree about ground both cover, `eslint-scope` wins; where only the TypeScript analyzer has an opinion, it wins. Three disagreements survive as options rather than decisions, because both answers are defensible: whether JSX references a factory such as `React` (`jsxPragma` and `jsxFragmentName`), whether the global scope is seeded with TypeScript's standard library (`globals`), and whether `export { a }` names a type as well as a value (`dialect`).
 
 There are two entry points over one walk. `analyze()` reads the binary buffers. `analyzeTree()` reads an ordinary ESTree tree from any ESLint-compatible parser, which is the compatibility path and lets scope analysis be replaced without replacing the parser:
 
@@ -130,6 +168,7 @@ const scopes = analyzeTree(tree, { dialect: "js" });
 Three consumers read the resulting buffer: `toScopeManager()` for the escope-compatible object graph that rules use today, `Scopes` for point queries straight off the buffer, and `toScopeTree()` for a serializable debugging view.
 
 The design was driven by a survey of all 293 core rules in `eslint@10.8.1`, 88 of which touch scope. Half of all scope use is one question, "does this identifier still refer to the global `Symbol`/`RegExp`/`console`?" We can get this answer without creating the entire scope tree, which is the direction I'd like to head in the future.
+
 #### Control flow analysis is new work
 
 `createGraph()` builds a basic-block control flow graph for every execution unit in a program: the program itself, each function, each class field initializer, each static block. Blocks record the variable writes they perform, in execution order and tied to the scope analysis; edges record the branch condition that decided them.
@@ -276,11 +315,11 @@ export default [
 Configuration is deliberately minimal, because the file name already says most of what a parser needs to know:
 
 - **Dialect comes from the extension.** `.js`, `.cjs`, `.mjs`, and `.jsx` are parsed as JavaScript, so TypeScript syntax in them is reported rather than quietly accepted. Everything else is parsed as TypeScript. Override with `parserOptions.dialect`.
-- **JSX comes from the extension.** `.jsx` and `.tsx` accept JSX; everything else reports it. Override with `parserOptions.ecmaFeatures.jsx`, which is where `espree` reads it from, so an existing configuration keeps working.
+- **JSX comes from the extension.** `.jsx` and `.tsx` accept JSX; in any other file, JSX fails to parse with an error saying JSX isn't enabled. Override with `parserOptions.ecmaFeatures.jsx`, which is where `espree` reads it from, so an existing configuration keeps working.
 - **Declaration files come from the extension.** `.d.ts`, `.d.mts`, and `.d.cts` are ambient, so a `const` in one needs no initializer. Override with `parserOptions.declaration`.
 - **`sourceType`** comes from `languageOptions.sourceType`, which ESLint already resolves.
 
-Because the extension answers them, the parser resolves `dialect` and `jsx` up front and hands them to `parse()` as well as to `validate()`, so the speculative `<` path above is never taken on a file whose kind is known. The two are passed differently, though, and the difference is the phase split showing through: `dialect` goes to phase 1 both ways, because a permissive middle already exists there and `dialect: "js"` only declines to read type arguments in text that JavaScript reads as comparisons anyway. `jsx` goes to phase 1 only when it is on. Turning it off would make JSX in a `.ts` file a thrown `ParseError`, when it should be a problem `validate()` reports like any other syntax that isn't allowed here — so for a non-JSX file the option is left unset and the parser accepts JSX in order to report it.
+Because the extension answers them, the parser resolves `dialect` and `jsx` up front and hands the same values to both `parse()` and `validate()`: a file is one kind or the other, so it is read that way and checked that way. That means a mistake that changes the tree fails to parse rather than being reported as not allowed. Type arguments written in a `.js` file read as comparisons, which is what `espree` does with the same text, and JSX in a `.ts` file is a `ParseError`, which is what both `espree` and `@typescript-eslint/parser` do with it too, except that this one names the missing option. A wrong tree for a valid program would be the worse outcome.
 
 Because `parseForESLint()` predates language plugins, this phase inherits the "too much parser responsibility" problem I explained earlier. I think that's a fair tradeoff to start getting the performance improvement. That's accepted deliberately: `parseForESLint()` is the only hook that works with ESLint today, and Phase 1 is about getting the toolkit into people's hands, not about fixing the integration point. Phase 2 fixes the integration point.
 
