@@ -202,46 +202,50 @@ I want to be straightforward about the cost here: this is a second implementatio
 
 #### Performance
 
-Numbers below are from the run recorded in [`benchmarks/parse/results.json`](https://github.com/eslint/jsnext/blob/main/packages/jskit/benchmarks/parse/results.json), on ~196 KiB generated modules, Node 24, Linux x64. Absolute figures move a lot with how warm the machine is; the ratios within a table are what to read.
+Numbers below are from a run of [`benchmarks/parse/benchmark.js`](https://github.com/eslint/jsnext/blob/4669882/packages/jskit/benchmarks/parse/benchmark.js) at commit `4669882`, on ~196 KiB generated modules, Node 24, Linux x64. Absolute figures move a lot with how warm the machine is; the ratios within a table are what to read.
 
 Start with the job ESLint actually asks for — a tree plus tokens plus comments, with `range` and `loc` on every one of them — because that's the only tier where a number translates directly into a lint run. Operations per second:
 
 | Parser                                     | JavaScript | TypeScript | JSX      |
 | ------------------------------------------ | ---------- | ---------- | -------- |
-| `eslintParser.parse()`, native             | **35.2**   | **32.0**   | **30.9** |
-| `eslintParser.parse()`, TypeScript         | 22.4       | 22.3       | 21.4     |
-| `meriyah`                                  | 22.0       | —          | 19.3     |
-| `espree`                                   | 10.9       | —          | 9.4      |
-| `@babel/eslint-parser`                     | 4.1        | 3.2        | 3.5      |
-| `@typescript-eslint/parser` + TypeScript 5 | 2.6        | 2.0        | 2.5      |
+| `eslintParser.parse()`, native             | **44.4**   | **37.2**   | **36.1** |
+| `eslintParser.parse()`, TypeScript         | 27.9       | 24.4       | 22.8     |
+| `meriyah`                                  | 20.4       | —          | 19.4     |
+| `espree`                                   | 11.7       | —          | 10.5     |
+| `@babel/eslint-parser`                     | 4.4        | 3.8        | 3.5      |
+| `@typescript-eslint/parser` + TypeScript 5 | 2.8        | 2.2        | 2.7      |
 
-That's roughly **3× `espree`** on JavaScript and JSX, and **12–16× `@typescript-eslint/parser`** across all three.
+That's roughly **3.5× `espree`** on JavaScript and JSX, and **13–17× `@typescript-eslint/parser`** across all three.
 
-The native core's own contribution is larger than that table makes it look, because that tier includes work the native core deliberately doesn't do. On the buffer-producing steps, which is what was rewritten:
+The native core's own contribution is larger than that table makes it look, because that tier includes work the native core deliberately doesn't do. On the buffer-producing steps, which is what was rewritten, with `oxc-parser` alongside because it is the only other contender doing the same kind of job. Operations per second:
 
-| Step                     | TypeScript     | Native            | Speedup            |
-| ------------------------ | -------------- | ----------------- | ------------------ |
-| `parse()`                | 73.7/69.8/77.3 | 194.3/164.2/179.4 | 2.6× / 2.4× / 2.3× |
-| `parse()` + `validate()` | 47.3/48.8/51.6 | 126.3/112.8/131.0 | 2.7× / 2.3× / 2.5× |
+| Parser                                 | JavaScript | TypeScript | JSX       |
+| -------------------------------------- | ---------- | ---------- | --------- |
+| `parse()`, native                      | **205.4**  | **152.4**  | **185.4** |
+| `parse()` + `validate()`, native       | 140.8      | 114.5      | 144.7     |
+| `oxc-parser`                           | 113.2      | 95.7       | 99.5      |
+| `oxc-parser` (raw transfer)            | 109.0      | 118.6      | 114.4     |
+| `parse()`, TypeScript                  | 79.5       | 74.3       | 80.6      |
+| `parse()` + `validate()`, TypeScript   | 47.2       | 49.8       | 55.4      |
 
-Each cell is JavaScript / TypeScript / JSX, in operations per second.
+The native core is **2.1–2.6×** the TypeScript implementation on `parse()` and **2.3–3.0×** on `parse()` + `validate()`. Neither `oxc-parser` row produces tokens, which is part of why neither is in the ESLint tier.
 
-End to end through `eslintParser`, the same binding is worth about **1.5×**, not 2.5×. That gap is the honest shape of the thing: `toAST()` and location building are TypeScript on both paths, they dominate that tier, and no parser avoids them while producing what ESLint expects. The Rust makes the fast half twice as fast; it can't do anything about the other half.
+End to end through `eslintParser`, the same binding is worth about **1.5×**. That gap is the honest shape of the thing: `toAST()` and location building are TypeScript on both paths, they dominate that tier, and no parser avoids them while producing what ESLint expects. The Rust makes the fast half twice as fast; it can't do anything about the other half.
 
-Scope analysis, measured separately by running `benchmarks/scope/benchmark.js` with and without the binding:
+Scope analysis, measured separately by running `benchmarks/scope/benchmark.js` against the Node.js entry point with and without the binding:
 
 | Measurement                 | TypeScript | Native | Compared against                   |
 | --------------------------- | ---------- | ------ | ---------------------------------- |
-| `analyze()`, JavaScript     | 1.2×       | 3.4×   | `eslint-scope`                     |
-| `analyze()`, TypeScript     | 2.7×       | 5.6×   | `@typescript-eslint/scope-manager` |
-| parse + analyze, JavaScript | 3.5×       | 9.6×   | `espree` + `eslint-scope`          |
-| parse + analyze, TypeScript | 18×        | 44×    | the `@typescript-eslint` pair      |
+| `analyze()`, JavaScript     | 1.1×       | 3.0×   | `eslint-scope`                     |
+| `analyze()`, TypeScript     | 3.0×       | 4.8×   | `@typescript-eslint/scope-manager` |
+| parse + analyze, JavaScript | 3.3×       | 8.6×   | `espree` + `eslint-scope`          |
+| parse + analyze, TypeScript | 17×        | 40×    | the `@typescript-eslint` pair      |
 
-`oxc-parser` is the only other contender in the same class, and it's in the benchmark for that reason. `parse()` leads its best row in every suite (194 against 108 on JavaScript, 164 against 102 on TypeScript, 179 against 110 on JSX) but they're close, and they should be: both are Rust parsers that hand back a buffer instead of a tree. The gap between this toolkit and `oxc-parser` is not really about speed, which is why the alternatives section argues about the AST and the analyses instead.
+`oxc-parser` is the only other contender in the same class, and it's in the benchmark for that reason. `parse()` leads its best row in every suite (205 against 113 on JavaScript, 152 against 119 on TypeScript, 185 against 114 on JSX) but they're close, and they should be: both are Rust parsers that hand back a buffer instead of a tree. The gap between this toolkit and `oxc-parser` is not really about speed, which is why the alternatives section argues about the AST and the analyses instead.
 
 Three caveats worth stating, because I'd rather set expectations correctly:
 
-1. **Parsing is a small percentage of the time ESLint spends on a file.** Rules and traversal are the rest, and they cost the same on either tree. In some of my local testing this came out to around 15% but it's highly variable based on the ESLint configuration. There are, however, opportunities to rethink how we implement and execute rules to speed things up in the future.
+1. **Parsing is a small percentage of the time ESLint spends on a file.** Rules and traversal are the rest, and they cost the same on either tree. In some of my local testing this came out to around 5-15% but it's highly variable based on the ESLint configuration. There are, however, opportunities to rethink how we implement and execute rules to speed things up in the future.
 2. **The comparison against `@typescript-eslint/parser` is against its non-type-aware mode**, which is already its fast path. As noted in the 2024 discussion, that mode is single-file and cacheable today.
 3. **These ratios are not stable across machines.** This toolkit allocates far less than the implementations it's compared against, so a throttled machine slows it down proportionally more and *deflates* its ratios. Two runs of the same benchmark on the same laptop can disagree by a third.
 
@@ -531,6 +535,10 @@ Second, we can pass binary data back and forth between JavaScript and Rust, as w
 **Does replacing `undefined` with `null` in TypeScript ASTs break anything?**
 
 I tested all of the non-type-aware rules in typescript-eslint with the new parser and nothing failed. That doesn't guarantee anything but it at least shows the scope of any compatibility concerns to be fairly small. 
+
+**Will there be any changes to the scope analysis?**
+
+The interface for scope analysis remains unchanged with this RFC. The underlying implementation has changed with the intent to provide the same data (plus more) in the same way. This may result in additional scope-related methods being published for rules to use that are more efficient than the existing ones.
 
 ## Related Discussions
 
