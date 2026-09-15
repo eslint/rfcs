@@ -287,6 +287,7 @@ Because `parseForESLint()` predates language plugins, this phase inherits the "t
 Phase 1 allows us to start switching smaller projects (like `@eslint/config-array`) to TypeScript code to really exercise the new parser. We can do this package-by-package, checking our work as we go.
 
 **What Phase 1 does not give us.** Core rules are still core rules. `no-undef` and `no-unused-vars` must be turned off for `**/*.ts`, exactly as typescript-eslint recommends, because `no-undef` reports every name from TypeScript's standard library (which isn't loaded) and `no-unused-vars` reports the parameters of declaration-only signatures (which have nowhere to be used). There are no TypeScript-specific rules and no typed linting.
+
 ### Phase 2: a new language plugin
 
 **Deliverable:** a language plugin (working name `@eslint/jsnext` to differentiate from `@eslint/js`) that packages the toolkit as an ESLint language rather than as a parser.
@@ -314,7 +315,7 @@ A language plugin, rather than a parser, is what lets the rest of the problems g
 
 The deduplication question that [Josh Goldberg raised in the 2024 discussion](https://github.com/eslint/eslint/discussions/18830) is the one to get right here. If the syntax-only extension rules move into the core rules and the type-aware ones don't, we've moved the boundary rather than removed it, from "ESLint syntax vs. TypeScript syntax and types" to "ESLint syntax and TypeScript syntax vs. types." That's a real improvement, and it's also not the end state. The end state requires typed linting, which is future Phase 3 and not in this RFC.
 
-We will also use Phase 2 as a time to evaluate the APIs that we expose to rules related to scopes and control flow. A lot of the patterns we use in ESLint's core rules are very inefficient (i.e., `prefer-const` walking through the scope tree to figure out if something is writable). There are a lot of questions about scope we can answer during the analysis phase and have that data prepared and easily retrievable by the time rules are executed. Ideally, for scopes, we'd come up with new APIs that can be polyfilled in the current rules to make transitioning to the new toolkit seamless. The only real caveat is with code path analysis, which will need to go through a breaking change to get where we need to be. (Which I think is acceptable because of how infrequently it's used.)
+We will also use Phase 2 as a time to evaluate the APIs that we expose to rules related to scopes and control flow. A lot of the patterns we use in ESLint's core rules are very inefficient (i.e., `prefer-const` walking through the scope tree to figure out if something is writable). There are a lot of questions about scope we can answer during the analysis phase and have that data prepared and easily retrievable by the time rules are executed. Ideally, for both scopes and control flow, we'd come up with new APIs that can be polyfilled in the current rules to make transitioning to the new toolkit seamless while allowing rules to work in both `js/js` and `@eslint/jsnext`.
 
 ### Out of scope: typed linting
 
@@ -539,6 +540,35 @@ I tested all of the non-type-aware rules in typescript-eslint with the new parse
 **Will there be any changes to the scope analysis?**
 
 The interface for scope analysis remains unchanged with this RFC. The underlying implementation has changed with the intent to provide the same data (plus more) in the same way. This may result in additional scope-related methods being published for rules to use that are more efficient than the existing ones.
+
+**Will changing code path analysis break the ecosystem?**
+
+Not as part of this RFC. The existing code path analysis API stays exactly as it is in the `js/js` language, and the new control flow API only exists in `@eslint/jsnext`, which is opt-in. The new control flow API removes the need for rules to institute their own segment tracking, so the ideal solution is to create new control flow APIs that work in both `js/js` and `@eslint/jsnext` and start encouraging adoption of the new APIs as soon as we can solidify them.
+
+To understand how much of an impact this would have, I searched GitHub (September 2026) for JavaScript and TypeScript files containing the four most common code path events: `onCodePathStart`, `onCodePathEnd`, `onCodePathSegmentStart`, and `onUnreachableCodePathSegmentStart`. That returned 6,861 unique files, but almost all of them aren't rules anyone wrote:
+
+| What the file was                                                                | Files | Repositories |
+| -------------------------------------------------------------------------------- | ----- | ------------ |
+| Copies of ESLint itself: core rules, the analyzer, and its tests                 | 5,406 | 373          |
+| Copies of `eslint-plugin-react-hooks`                                            | 551   | 388          |
+| Type definitions, such as `@types/eslint`                                        | 419   | 268          |
+| Vendored `node_modules`, datasets, forks, and unrelated APIs with the same names | ~400  | ~100         |
+
+Setting all of those aside leaves **87 original rules in 65 repositories**, and they split into two very different groups:
+
+| How the rule uses code path analysis                                                   | Rules | Repositories |
+| -------------------------------------------------------------------------------------- | ----- | ------------ |
+| Segments and reachability: `onCodePathSegment*`, `currentSegments`, `reachable`, etc.  | 41    | 31           |
+| Only `onCodePathStart` and `onCodePathEnd`, to know when a function begins or ends     | 46    | 35           |
+
+The second group is an easy migration: those rules are tracking function boundaries, which selectors like `:function` and `:function:exit` already provide. The first group is the real migration, and it's small but includes several widely used plugins: `eslint-plugin-react-hooks` (`rules-of-hooks`), `eslint-plugin-vue` (a shared utility), `eslint-plugin-unicorn` (2 rules), SonarJS (7 rules), `eslint-plugin-promise` (2 rules), `eslint-plugin-n`, `eslint-plugin-ember`, and `eslint-plugin-mocha`. These are also the rules most likely to be hand-maintaining segment state today, which is exactly what the new API is meant to replace with a direct reachability query.
+
+A few caveats about these numbers:
+
+* **They are a lower bound.** GitHub's code search doesn't index everything; `facebook/react` and `eslint-community/eslint-plugin-n` didn't show up as sources at all and were confirmed separately. Private code isn't visible either.
+* **Some tools emulate the API.** oxlint's JavaScript plugin support and tsslint's ESLint compatibility layer, to be specific. That's out of our scope of control.
+
+So the answer is that code path analysis is used rarely but not trivially. Before any change reaches a default, the migration needs a guide, and the maintainers of the plugins above should hear about it from us directly.
 
 ## Related Discussions
 
