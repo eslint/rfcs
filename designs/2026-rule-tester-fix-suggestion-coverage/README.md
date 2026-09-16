@@ -1,6 +1,6 @@
 - Repo: eslint/eslint
 - Start Date: 2026-09-16
-- RFC PR:
+- RFC PR: https://github.com/eslint/rfcs/pull/154
 - Authors: morgan-coded
 
 # Require Tests for Declared Fixes and Suggestions
