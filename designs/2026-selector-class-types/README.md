@@ -32,6 +32,7 @@ This creates a few practical issues:
 
 - **Language interface consistency.** RFC #99 established the `Language` interface so ESLint core remains agnostic to specific language syntax. Keeping JS-specific node names hardcoded in the core selector engine conflicts with that abstraction.
 - **Plugin parity.** `matchesSelectorClass()` allows language plugins to define runtime pseudo-class matching, but there is no mechanism for plugins to declare candidate node types for static analysis. Because the `case "class"` branch is hardcoded, `:function` narrows to the JS function node types regardless of the active language, while every other class selector returns `null`, so language plugins can't declare candidate node types to narrow traversal.
+- **Silently dead selectors in other languages.** In a language without `matchesSelectorClass()` (for example `@eslint/json` today), class selectors like `:statement` or `:function` silently match nothing — esquery returns `false` for every class when options provide a `nodeTypeKey` but no `matchClass`. There is no error and no match, so class selectors are unusable in these languages, and language authors currently have to hand-write runtime matching logic to fix that.
 - **Direct TODO in core.** The comment in `esquery.js` explicitly notes that this mapping should be abstracted into the language implementation.
 
 Adding `selectorClassNodeTypes` to the `Language` interface moves this mapping to the language object, where pseudo-class semantics are already defined.
@@ -138,13 +139,29 @@ export const cssLanguage = {
             case "declaration":
                 return node.type === "Declaration";
             default:
-                throw new Error(`Unknown class name: ${className}`);
+                return false;
         }
     },
 };
 ```
 
-### 5. Core `esquery.js` Changes
+### 5. Default implementation in `@eslint/plugin-kit`
+
+Rather than requiring every language plugin to hand-write both the map and a `matchesSelectorClass()` that duplicates it, `@eslint/plugin-kit` can provide a default runtime implementation that mirrors the map. A language that declares `selectorClassNodeTypes` and does not need custom matching logic can omit `matchesSelectorClass()` entirely and get this behavior automatically:
+
+```js
+const nodeTypes = this.selectorClassNodeTypes?.get(className.toLowerCase());
+if (nodeTypes) {
+    return nodeTypes.includes(node.type);
+}
+return false;
+```
+
+This gives map-backed classes (`:function` in the JS language, `:rule` in the CSS example above) working runtime matching for free. Languages that need richer matching — like the JS language's suffix-based classes — keep their own `matchesSelectorClass()` implementation, which takes precedence.
+
+Note: the JS language itself needs its custom implementation to keep `:statement`, `:declaration`, `:pattern`, and `:expression` working, because those classes match by node-type *suffix* rather than an enumerable list. That asymmetry is discussed under Open Questions.
+
+### 6. Core `esquery.js` Changes
 
 In `lib/linter/esquery.js`, `analyzeParsedSelector()` accepts `selectorClassNodeTypes`:
 
@@ -225,7 +242,7 @@ In `lib/linter/esquery.js`, `analyzeParsedSelector()` accepts `selectorClassNode
 
 Keying the cache by the `Map` reference assumes `selectorClassNodeTypes` is immutable after the language is created, the same assumption already made for `visitorKeys`. If a language mutated the map after a selector was cached, the cached analysis would go stale, so languages should treat it as a fixed, read-only property.
 
-### 6. `SourceCodeTraverser` Changes
+### 7. `SourceCodeTraverser` Changes
 
 In `lib/linter/source-code-traverser.js`, pass `selectorClassNodeTypes` through `esqueryOptions`:
 
@@ -276,7 +293,7 @@ No blog announcement is needed. This is an additive, opt-in extension point for 
 2. **JavaScript behavior is unchanged.** The JS language object declares the same three function node types currently in `esquery.js`.
 3. **`parse(source)` without options.** Calling `parse` without a second argument falls back to `DEFAULT_SELECTOR_CACHE` and returns `null` for all class selectors. This is a change from today, where `parse(":function")` returns the three JS function node types from the hardcoded branch. It is internal-only: the traverser always passes the active language's `selectorClassNodeTypes`, so the JS language still resolves `:function` to those node types in practice.
 4. **Existing plugins.** Language plugins without this property continue to function without modification.
-5. **Unknown class names still throw.** Passing a class the language doesn't define, like `:foo`, throws `Error: Unknown class name` from `matchesSelectorClass()`, exactly as it does today. Static analysis only narrows which nodes a selector is dispatched on; it never changes whether a selector matches.
+5. **Unknown class names: asymmetric by language.** On the JS language, an unknown class like `:foo` throws `Error: Unknown class name` from `matchesSelectorClass()`, exactly as it does today. On languages without `matchesSelectorClass()` (e.g. `@eslint/json`), unknown classes already silently match nothing — esquery's `matchClass` returns `false`. This RFC preserves both behaviors unchanged. The plugin-kit default must return `false` (not throw) to avoid introducing a crash into languages that currently silently no-op, and to match core's existing fallback at `source-code-traverser.js` (`matchClass: this.#language.matchesSelectorClass ?? (() => false)`).
 
 ## Alternatives
 
@@ -294,6 +311,8 @@ Call `matchesSelectorClass()` against mock nodes at parse time to infer types. T
 
 ## Open Questions
 
+### 1. Pruning vs any-type fallback for undeclared classes
+
 Should a class selector that isn't declared in `selectorClassNodeTypes` match all nodes, or should it be pruned from traversal entirely?
 
 Today the two code paths disagree, and this RFC preserves that behavior:
@@ -302,6 +321,46 @@ Today the two code paths disagree, and this RFC preserves that behavior:
 - At runtime, `matchesSelectorClass()` decides the actual match. For a truly unknown class (one the language doesn't define), it throws `Error: Unknown class name` as it does today.
 
 So an undeclared-but-known class like `:statement` safely falls back to evaluating on all nodes, while an unknown class like `:foo` still throws. Whether "match all nodes" is the right default for undeclared classes, or whether they should instead be pruned, is the main question I'd like reviewers to weigh in on.
+
+### 2. Should `matchesSelectorClass()` eventually be deprecated in favor of the map?
+
+The JS language's class selectors come in two shapes:
+
+- `:function` matches an enumerable list of node types (`FunctionDeclaration`, `FunctionExpression`, `ArrowFunctionExpression`), so it fits cleanly into the `selectorClassNodeTypes` map.
+- `:statement` matches by two suffix tests joined by a subtype fallthrough — everything ending in `Statement`, plus everything ending in `Declaration`, on the model `Declaration <: Statement`. TypeScript's `TSInterfaceDeclaration` is caught by the second, not the first. Neither a finite node-type list nor a single suffix pattern expresses a two-suffix union over an open dialect set.
+
+I tested the map-only variants empirically against ESLint v10.11.0 (`Linter.verify` against the locally installed source at `D:/ai-brain/eslint`):
+
+| Mode | What happens |
+|---|---|
+| Map powers static analysis only, method removed (core wires `() => false`) | Every class selector silently stops matching, **including `:function`** — esquery still needs `matchClass` for the final match decision, so the traverser's fallback vetoes all candidates. `padding-line-between-statements` loses `:statement` hits (1→0). `no-shadow-restricted-names` loses `:function` hits (1→0). |
+| Map powers static analysis **and** runtime, throwing on unknown | `:function` works, but `:statement`/`:expression` throw `Error: Unknown class name` mid-lint — hard crash of `padding-line-between-statements` and any user config using `:statement` in `no-restricted-syntax`. |
+| Map powers static analysis **and** runtime, returning `false` on unknown | `:function` works, but suffix classes silently die — including on TS dialect nodes (`TSInterfaceDeclaration`) that suffix matching currently catches. |
+
+**Ancestry impossibility.** A separate problem dooms full deprecation: the method signature is `matchesSelectorClass(className, node, ancestry)` — it's a predicate over both the node and its ancestry. The `:expression` class exemplifies this:
+
+```
+node.type="Identifier"  parent = CallExpression  -> :expression = true
+node.type="Identifier"  parent = MetaProperty    -> :expression = false
+node.type="Identifier"  no ancestry              -> :expression = true
+```
+
+Same node type, opposite answers, decided by ancestry[0]. No declarative node-type representation — `Map`, glob, or `selectorClassPatterns` — can encode a parent check. The method isn't just a convenience for enumerable types; its `(node, ancestry)` signature is the only place ancestry-sensitive matching lives.
+
+**Interaction with the plugin-kit default.** One subtlety worth flagging: the deprecation idea only crashes in combination with a throwing plugin-kit default. Today, the hardcoded `:function` branch in `lib/linter/esquery.js`'s `analyzeParsedSelector()` `case "class"` sub-branch prunes static analysis to 3 JS node types before the language matcher is ever called, so a JSON file with `:function` never reaches the matcher — it returns `null` at static analysis and never dispatches. Once that branch is removed (per this RFC), `:function` falls through to the any-type list and gets evaluated on every JSON node. Combine that with a throwing default and you get `Error: Unknown class name: function` mid-lint. See the cross-cutting interaction matrix above.
+
+**Recommendation.** `matchesSelectorClass()` cannot be removed while JS still needs suffix matching and ancestry checks. "Deprecation" should mean "plugins rarely need to write one" (via the plugin-kit default for map-backed classes), not "remove the method." Full removal requires a new data-driven representation for ancestry-sensitive matching — that's future work, not this RFC's scope.
+
+## Cross-Cutting Interaction Matrix
+
+The RFC's core change (removing the hardcoded `:function` branch) and fasttime's plugin-kit default (mirroring the map at runtime) interact in a way that neither change is safe alone against:
+
+| Core state | `@eslint/json` adopts kit default | `@eslint/json` without default |
+|---|---|---|
+| Current core (hardcoded `:function` branch) | OK — `:function` is pruned at static analysis, matcher never called | OK — silent no-match (current behavior) |
+| Post-RFC core (hardcoded branch removed) | **CRASH** — `:function` falls to any-type list, throwing default raises `Unknown class name: function` | OK — `:function` silently matches nothing |
+
+The crash needs both changes to exist. Reproduced on eslint v10.11.0 (<code>D:/ai-brain/eslint</code>) with <code>verify-rfc148-battery.cjs</code>, which patches a copy of the installed core to drop the hardcoded <code>:function</code> branch and then assigns a throwing map-mirror as <code>@eslint/json</code>'s <code>matchesSelectorClass</code>.
 
 ## Help Needed
 
@@ -313,7 +372,7 @@ Measuring the traversal impact will need a dedicated benchmark built around a `:
 
 **Why use a `Map` instead of a plain object (`Record<string, Array<string>>`)?**
 
-A plain object risks inherited-key collisions: a lookup for a class name like `constructor` or `toString` returns an `Object.prototype` member unless you use a null-prototype object or `hasOwn` checks. A `Map` avoids that. It also gives explicit `.get()` / `.has()` semantics and works as a stable object reference for keying the `WeakMap` selector cache. (`visitorKeys` stays a plain object because its keys are fixed AST node type names, which don't have this problem.)
+A plain object risks inherited-key collisions: a lookup for a class name like `constructor` or `toString` returns an `Object.prototype` member unless you use a null-prototype object or `hasOwn` checks. Verified empirically — `constructor`, `toString`, `valueOf`, `__proto__`, `hasOwnProperty` are all truthy on an empty object via property lookup, while `Map.get` returns `undefined` (safe) for all of them. This matters because esquery lowercases the class name, and `constructor` is a legal selector class (`:constructor`). A `Record`-based design would have made `:toString` silently misbehave by returning an inherited function instead of `undefined`. `Map` also gives explicit `.get()` / `.has()` semantics and works as a stable object reference for keying the `WeakMap` selector cache. (`visitorKeys` stays a plain object because its keys are fixed AST node type names, which don't have this problem.)
 
 **Why does JavaScript only declare `:function` and omit `:statement` or `:expression`?**
 
@@ -321,7 +380,11 @@ Statements and expressions each cover dozens of ESTree node types, and dialects 
 
 **What happens if a plugin's `selectorClassNodeTypes` omits a node type that `matchesSelectorClass()` matches?**
 
-The traverser skips dispatching the selector on those node types, which silently drops matches. The rule of thumb is to declare a class in `selectorClassNodeTypes` only when its node types are fixed and exhaustive; when they aren't, omit the entry and fall back to `null`.
+The traverser skips dispatching the selector on those node types, which silently drops matches. The rule of thumb is to declare a class in `selectorClassNodeTypes` only when its node types are fixed and exhaustive; when they aren't, omit the entry and fall back to `null`. Returning an empty array `[]` instead prunes the selector from traversal completely — neither the static analyzer nor the runtime matcher ever invokes it. This is a supported way for a language to deliberately retire a class.
+
+**Does the kit default returning `false` lose the "unknown class throws" safety?**
+
+It defers it. The throwing behavior for truly unknown classes (`:foo`) can be caught once at config time — when rules register selectors against the active language's known classes — rather than per-node during traversal. A typo like `:statment` surfaces up front with a clear message, not as a crash mid-lint. The kit default returning `false` prevents crashes in languages that currently silently no-op (e.g. `@eslint/json`); config-time validation restores the loud-failure guarantee for typos without the crash risk.
 
 **How does this interact with custom parsers (like `@typescript-eslint/parser`) using the JavaScript language?**
 
