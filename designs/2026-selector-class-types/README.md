@@ -147,15 +147,23 @@ export const cssLanguage = {
 
 ### 5. Default implementation in `@eslint/plugin-kit`
 
-Rather than requiring every language plugin to hand-write both the map and a `matchesSelectorClass()` that duplicates it, `@eslint/plugin-kit` can provide a default runtime implementation that mirrors the map. A language that declares `selectorClassNodeTypes` and does not need custom matching logic can omit `matchesSelectorClass()` entirely and get this behavior automatically:
+Rather than requiring every language plugin to hand-write both the map and a `matchesSelectorClass()` that duplicates it, `@eslint/plugin-kit` can provide a default runtime implementation that mirrors the map. A language plugin that defines `selectorClassNodeTypes` via `@eslint/plugin-kit` (or a language helper) and does not need custom matching logic can omit `matchesSelectorClass()` entirely and inherit this default behavior:
 
 ```js
-const nodeTypes = this.selectorClassNodeTypes?.get(className.toLowerCase());
-if (nodeTypes) {
-    return nodeTypes.includes(node.type);
+matchesSelectorClass(className, node) {
+    const nodeTypes = this.selectorClassNodeTypes?.get(className.toLowerCase());
+    if (nodeTypes) {
+        const nodeTypeKey = this.nodeTypeKey ?? "type";
+        return nodeTypes.includes(node[nodeTypeKey]);
+    }
+    return false;
 }
-return false;
 ```
+
+This ensures that:
+- The check respects the language's configured `nodeTypeKey` (defaulting to `"type"`) rather than hardcoding `node.type`.
+- The method is executed with the `Language` instance as `this`, ensuring correct receiver access to `this.selectorClassNodeTypes` and `this.nodeTypeKey`.
+- Any custom `matchesSelectorClass()` explicitly defined on the language takes precedence over the default.
 
 This gives map-backed classes (`:function` in the JS language, `:rule` in the CSS example above) working runtime matching for free. Languages that need richer matching — like the JS language's suffix-based classes — keep their own `matchesSelectorClass()` implementation, which takes precedence.
 
@@ -249,10 +257,22 @@ In `lib/linter/source-code-traverser.js`, pass `selectorClassNodeTypes` through 
 ```diff
  // In SourceCodeTraverser.prototype.traverseSync()
  traverseSync(sourceCode, visitor, { steps } = {}) {
++    const matchClass = this.#language.matchesSelectorClass
++        ? this.#language.matchesSelectorClass.bind(this.#language)
++        : (className, node) => {
++            const nodeTypes = this.#language.selectorClassNodeTypes?.get(className.toLowerCase());
++            if (nodeTypes) {
++                const nodeTypeKey = this.#language.nodeTypeKey ?? "type";
++                return nodeTypes.includes(node[nodeTypeKey]);
++            }
++            return false;
++        };
++
      const esquery = new ESQueryHelper(visitor, {
          visitorKeys: sourceCode.visitorKeys ?? this.#language.visitorKeys,
          fallback: vk.getKeys,
-         matchClass: this.#language.matchesSelectorClass ?? (() => false),
+-        matchClass: this.#language.matchesSelectorClass ?? (() => false),
++        matchClass,
          nodeTypeKey: this.#language.nodeTypeKey,
 +        selectorClassNodeTypes: this.#language.selectorClassNodeTypes,
      });
