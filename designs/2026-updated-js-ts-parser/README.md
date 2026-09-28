@@ -531,7 +531,13 @@ I used AI to create the new toolkit, but I did not "vibe code" it. I started wit
 
 **Why not use oxc, since it's already a fast Rust parser?**
 
-It's the closest existing thing and it's in the benchmark, so this is a fair question. It produces compatible ASTs, and the Oxlint variant of its parser already produces `espree`-compatible tokens and `loc`. Its scope analysis and control flow graph exist in Rust but aren't yet available to JavaScript, and the Oxc team has offered to help close those gaps. The remaining objection is control: it would make a core part of ESLint depend on a project we don't maintain. While collaboration is a net positive, we went through this was Esprima years ago and I don't want to repeat that. For a fast-moving target like JavaScript syntax, it's important for ESLint to own its own parser. That way, we can continue to make changes at the pace that we need without worrying if it will fit into another team's roadmap. See the alternatives.
+It's the closest existing thing and it's in the benchmark, so this is a fair question. It produces compatible ASTs, and the Oxlint variant of its parser already produces `espree`-compatible tokens and `loc`. Its scope analysis and control flow graph exist in Rust but aren't yet available to JavaScript, and the Oxc team has offered to help close those gaps. 
+
+The primary objection is control: it would make a core part of ESLint depend on a project we don't maintain. While collaboration is a net positive, we went through this was Esprima years ago and I don't want to repeat that. For a fast-moving target like JavaScript syntax, it's important for ESLint to own its own parser. That way, we can continue to make changes at the pace that we need without worrying if it will fit into another team's roadmap.
+
+Plus, we'd still want a JavaScript-based fallback for the places where Rust can't be run for one reason or another.
+
+See the alternatives.
 
 **What happens to `espree`?**
 
