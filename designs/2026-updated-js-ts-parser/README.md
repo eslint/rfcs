@@ -407,7 +407,7 @@ Documentation work:
 
 5. **We will fragment TypeScript linting for a while.** During the transition there will be two ways to lint TypeScript with ESLint, with different capabilities, and users will have to understand the difference. This is a real cost and documentation only partly mitigates it.
 
-6. **No typed linting means real rules can't be written.** A meaningful fraction of what people value in typescript-eslint requires types. Anyone who needs those rules gets nothing from Phase 1 or Phase 2 except a faster parse.
+6. **No typed linting means real rules can't be written.** A meaningful fraction of what people value in typescript-eslint requires types. Anyone who needs those rules gets nothing from this proposal.
 
 7. **We are replacing code path analysis with something that has no reference implementation.** Differential testing is what gives me confidence in the parser and the scope analyzer, and control flow analysis doesn't get to have it. Its integration tests and comparisons against TypeScript's own flow graph are the contract, which is a weaker guarantee.
 
