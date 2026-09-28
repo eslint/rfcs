@@ -464,7 +464,7 @@ Phase 2's `0.x` versioning is a deliberate statement that the language plugin's 
 
 2. **What Phase 2 does about the duplicated rules.** Do the TypeScript-aware behaviors go into the existing core rules (with `meta.languages` gating), or do TypeScript-specific variants live in the plugin? The first is better for users and harder to do without breaking someone.
 
-3. **What "supports TypeScript" means as a version policy.** We support ECMAScript features at stage 4. TypeScript has no equivalent gate. Do we track TypeScript releases, betas, or shipped-and-stable syntax only, and what do we say when we're behind?
+3. **What "supports TypeScript" means as a version policy.** We support ECMAScript features at stage 4. TypeScript has no equivalent gate. Do we track TypeScript releases, betas, or shipped-and-stable syntax only, and what do we say when we're behind? TypeScript also supports stage 3 syntax and [decorators](https://github.com/tc39/proposal-decorators) (stage 2.7).
 
 4. **When, if ever, does this become the default?** Phase 2 says "a separate RFC." That's true, and it's also the question everyone will actually ask, so it may be worth stating a rough shape now.
 
