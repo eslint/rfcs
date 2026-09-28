@@ -45,9 +45,9 @@ That risk stopped being hypothetical while this RFC was being written. TypeScrip
 
 I think objections 2, 3, and 4 are answerable, and this RFC answers them with the design below rather than with argument: the maintenance burden is real but bounded, AST compatibility is enforced by differential testing against `@typescript-eslint/parser` on every file we can find rather than asserted, and the existing parsers were evaluated and don't produce the AST or the analyses we need. Objection 1 is correct, we lose type-aware linting, but I don't think that is necessarily a terminal state. Rather, it's something we can build towards on top of this new tooling foundation.
 
-### What we get that isn't about TypeScript
+### Other things we get
 
-Two problems that have nothing to do with TypeScript get fixed by the same work:
+Two problems get fixed by the same work:
 
 * **`eslint-scope` doesn't see TypeScript.** It walks past type annotations, so a type-only import looks unused and a type reference looks undefined. Every rule that consults scope is wrong on TypeScript files today unless something replaces the scope analyzer.
 * **Code path analysis is flawed.** ESLint's code path analysis has never been completely trustworthy, and its API (segments, `currentSegments`, `childCodePaths`) asks rules to hand-maintain state that the analysis should be answering directly. Fifteen core rules use it. It has been effectively frozen for years because changing it safely is very hard.
