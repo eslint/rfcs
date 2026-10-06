@@ -11,7 +11,7 @@ This RFC proposes adding `languageOptions.parser` to `@eslint/markdown` so users
 
 ## Motivation
 
-Markdown parsing can dominate the time spent linting Markdown. In the prototypes described in [eslint/markdown#703](https://github.com/eslint/markdown/issues/703) and [eslint/markdown#706](https://github.com/eslint/markdown/pull/706), parsing took approximately **75 ms** of a **100 ms** run. Replacing it with `@eslint-markdown/parser`, a Rust-based parser built on [`satteri`](https://github.com/bruits/satteri), reduced parsing time to approximately **2 ms** and the total runtime to approximately **27 ms**, making the overall run approximately **3.5 times faster**. Although these results are preliminary, they demonstrate that selecting a faster parser can materially improve linting performance.
+Markdown parsing can dominate the time spent linting Markdown. In the prototypes described in [eslint/markdown#703](https://github.com/eslint/markdown/issues/703) and [eslint/markdown#706](https://github.com/eslint/markdown/pull/706), parsing took approximately **75 ms** of a **100 ms** run. Replacing it with `eslint-markdown-parser`, a Rust-based parser built on [`satteri`](https://github.com/bruits/satteri), reduced parsing time to approximately **2 ms** and the total runtime to approximately **27 ms**, making the overall run approximately **3.5 times faster**. Although these results are preliminary, they demonstrate that selecting a faster parser can materially improve linting performance.
 
 `@eslint/markdown` currently uses `mdast-util-from-markdown` from the mdast ecosystem. [`satteri`](https://github.com/bruits/satteri) is a high-performance Markdown and MDX processor that parses Markdown in Rust and exposes the result to JavaScript as mdast. Its [`markdownToMdast()`](https://satteri.bruits.org/docs/entry-points/#trees-without-compiling) API supports CommonMark and GFM as well as frontmatter and math parsing. Initial experiments indicate that it can support most of the cases already implemented by `@eslint/markdown`, although broader compatibility testing is still required.
 
@@ -110,19 +110,19 @@ The parser call remains synchronous. Returning a promise is not supported.
 
 ### Rust Parser Integration
 
-The proposed `@eslint-markdown/parser` package will use [`satteri`](https://github.com/bruits/satteri) under the hood, which exposes its Rust implementation to JavaScript through Node-API. The intended data flow is:
+[lumir(@lumirlumir)](https://github.com/lumirlumir) will create and maintain community-driven `eslint-markdown-parser` as an independent package. It is not an official ESLint project, and the ESLint team is not responsible for its implementation, distribution, or maintenance. The package will use [`satteri`](https://github.com/bruits/satteri) under the hood, which exposes its Rust implementation to JavaScript through Node-API. The intended data flow is:
 
-1. `@eslint/markdown` passes the Markdown source string and language options to `@eslint-markdown/parser`, which wraps `satteri` behind the `MarkdownParser` contract expected by `@eslint/markdown`.
-2. `@eslint-markdown/parser` passes the Markdown source string to `satteri` through its Node-API binding.
+1. `@eslint/markdown` passes the Markdown source string and language options to `eslint-markdown-parser`, which wraps `satteri` behind the `MarkdownParser` contract expected by `@eslint/markdown`.
+2. `eslint-markdown-parser` passes the Markdown source string to `satteri` through its Node-API binding.
 3. `satteri` parses the source and stores the resulting mdast nodes in a Rust-managed memory pool called an arena.
 4. The Rust arena is encoded into a compact binary buffer and passed to JavaScript.
 5. JavaScript reads the buffer and materializes the mdast nodes without serializing and deserializing the complete tree as JSON.
-6. The materialized [mdast `Root`](https://github.com/syntax-tree/mdast#root) is returned to `@eslint-markdown/parser`.
-7. `@eslint-markdown/parser` returns the compatible mdast `Root` from its `parse()` method to `@eslint/markdown`.
+6. The materialized [mdast `Root`](https://github.com/syntax-tree/mdast#root) is returned to `eslint-markdown-parser`.
+7. `eslint-markdown-parser` returns the compatible mdast `Root` from its `parse()` method to `@eslint/markdown`.
 
 This does not use `execSync()` or spawn a child process. Node.js loads the compiled `.node` addon as a dynamic library, and JavaScript calls its exported function directly. The call therefore remains synchronous and runs on the Node.js main thread, just like the current call to `fromMarkdown()`.
 
-The `@eslint-markdown/parser` package, including its platform-specific native binaries and any future WebAssembly build, is separate from `@eslint/markdown`. Its implementation and distribution are not required in order to add the general parser option.
+The `eslint-markdown-parser` package, including its platform-specific native binaries and any future WebAssembly build, is separate from `@eslint/markdown`. Its implementation and distribution are not required in order to add the general parser option.
 
 ### AST Compatibility
 
@@ -158,7 +158,7 @@ A future Rust-based parser package could be selected as follows:
 
 ```js
 import markdown from "@eslint/markdown";
-import parser from "@eslint-markdown/parser";
+import parser from "eslint-markdown-parser";
 
 export default [
     {
@@ -206,10 +206,10 @@ The implementation in `eslint/markdown` will include:
 2. Extending `MarkdownLanguage#validateLanguageOptions()` with the validation described above.
 3. Representing the built-in parser in `defaultLanguageOptions.parser`, then selecting and invoking the configured or default parser in `MarkdownLanguage#parse()`.
 4. Adding unit tests with a small parser object for invocation, option forwarding, invalid configuration, thrown errors, and both Markdown modes.
-5. Adding `@eslint-markdown/parser` as a development dependency and running integration tests against both the default JavaScript parser and the Rust-based parser. These tests will cover CommonMark, GFM, frontmatter, math, source locations, and the bundled rules.
+5. Adding `eslint-markdown-parser` as a development dependency and running integration tests against both the default JavaScript parser and the Rust-based parser. These tests will cover CommonMark, GFM, frontmatter, math, source locations, and the bundled rules.
 6. Adding type tests for the public parser interfaces and configuration options.
 
-`@eslint-markdown/parser` remains an optional runtime dependency and is developed and released separately. It is included in `@eslint/markdown` only as a development dependency for integration and compatibility testing.
+`eslint-markdown-parser` remains an optional runtime dependency and is developed and released separately. It is included in `@eslint/markdown` only as a development dependency for integration and compatibility testing.
 
 ## Documentation
 
@@ -222,7 +222,7 @@ The `@eslint/markdown` README will document:
 - an example wrapping `mdast-util-from-markdown` with custom extensions.
 - the fact that parser behavior, platform support, and rule compatibility are the parser author's responsibility.
 
-After the parser option is released and an experimental version of `@eslint-markdown/parser` is published, a blog post would be useful to invite users to try the Rust-based parser and provide feedback. The post can explain how to opt in and share the available compatibility and benchmark results, clearly identifying any preliminary findings.
+After the parser option is released and an experimental version of `eslint-markdown-parser` is published, a blog post would be useful to invite users to try the Rust-based parser and provide feedback. The post can explain how to opt in and share the available compatibility and benchmark results, clearly identifying any preliminary findings.
 
 ## Drawbacks
 
@@ -264,15 +264,15 @@ N/A
 
 No. Rust parser performance motivated the proposal, but any synchronous parser that returns compatible mdast can implement the interface.
 
-### Why does `@eslint-markdown/parser` use `satteri` instead of `markdown-rs`?
+### Why does `eslint-markdown-parser` use `satteri` instead of `markdown-rs`?
 
 The initial plan was to use [`markdown-rs`](https://github.com/wooorm/markdown-rs) and transfer its Rust AST to JavaScript by serializing the complete tree as JSON and then calling `JSON.parse()`. Further experimentation showed that this serialization and deserialization added significant overhead.
 
-[`satteri`](https://github.com/bruits/satteri) instead stores the parsed tree in a Rust arena, transfers it through a compact binary buffer, and materializes the mdast nodes in JavaScript using a binary reader. This avoids the full-tree JSON serialization and deserialization used by the earlier `markdown-rs` integration design and was substantially faster in the prototype. For this reason, the implementation of `@eslint-markdown/parser` was changed to use `satteri`.
+[`satteri`](https://github.com/bruits/satteri) instead stores the parsed tree in a Rust arena, transfers it through a compact binary buffer, and materializes the mdast nodes in JavaScript using a binary reader. This avoids the full-tree JSON serialization and deserialization used by the earlier `markdown-rs` integration design and was substantially faster in the prototype. For this reason, the implementation of `eslint-markdown-parser` was changed to use `satteri`.
 
 ### How can the synchronous Markdown parsing API call into Rust?
 
-`@eslint-markdown/parser` loads `satteri` through its Node-API binding and invokes it directly on the Node.js main thread. The call remains synchronous from `MarkdownLanguage#parse()` through the parser wrapper and native binding.
+`eslint-markdown-parser` loads `satteri` through its Node-API binding and invokes it directly on the Node.js main thread. The call remains synchronous from `MarkdownLanguage#parse()` through the parser wrapper and native binding.
 
 ### Does the integration invoke Rust through `execSync()`?
 
@@ -280,7 +280,7 @@ No. It neither spawns a Rust executable nor creates a child process for each par
 
 ### Did `markdown-rs` provide a synchronous Node.js API directly?
 
-No. `markdown-rs` is a Rust crate rather than a ready-made Node.js package, so the earlier design required a Node-API binding layer. The current prototype instead uses `satteri`, which already provides Node-API and WebAssembly bindings, behind the ESLint-compatible `@eslint-markdown/parser` wrapper.
+No. `markdown-rs` is a Rust crate rather than a ready-made Node.js package, so the earlier design required a Node-API binding layer. The current prototype instead uses `satteri`, which already provides Node-API and WebAssembly bindings, behind the ESLint-compatible `eslint-markdown-parser` wrapper.
 
 ### Why add `languageOptions.parser` instead of replacing the default parser?
 
@@ -292,7 +292,7 @@ The two abstractions operate at different boundaries in this proposal. `markdown
 
 ### Why not add a `useNativeRustParser` language option instead?
 
-A dedicated boolean would couple `@eslint/markdown` to the experimental `@eslint-markdown/parser` package. A regular dependency would add the Rust parser and its platform-specific artifacts to every user's dependency tree, even when unused. Making it an optional peer would still require conditional loading, and asynchronous dynamic imports do not fit the current synchronous parsing path. Accepting a parser object instead keeps the dependency explicitly opt-in and supports future mdast-compatible parsers through the same API.
+A dedicated boolean would couple `@eslint/markdown` to the experimental `eslint-markdown-parser` package. A regular dependency would add the Rust parser and its platform-specific artifacts to every user's dependency tree, even when unused. Making it an optional peer would still require conditional loading, and asynchronous dynamic imports do not fit the current synchronous parsing path. Accepting a parser object instead keeps the dependency explicitly opt-in and supports future mdast-compatible parsers through the same API.
 
 ### Can a parser return a non-mdast AST?
 
@@ -314,5 +314,5 @@ No. `meta.languages` describes compatibility with the selected ESLint language, 
 
 - [eslint/markdown#703: Support `languageOptions.parser` to improve parser performance by integrating a Rust parser](https://github.com/eslint/markdown/issues/703)
 - [eslint/markdown#706: Experimental implementation of `languageOptions.parser`](https://github.com/eslint/markdown/pull/706)
-- [lumirlumir/npm-eslint-markdown#638: Rust-based `@eslint-markdown/parser` prototype](https://github.com/lumirlumir/npm-eslint-markdown/pull/638)
+- [lumirlumir/npm-eslint-markdown#638: Rust-based `eslint-markdown-parser` prototype](https://github.com/lumirlumir/npm-eslint-markdown/pull/638)
 - [Original ESLint Discord discussion](https://discord.com/channels/688543509199716507/688770853588172860/1519556220917252146)
