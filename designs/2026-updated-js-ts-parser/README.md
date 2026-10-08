@@ -95,7 +95,7 @@ The point of the parse phase is to make a best-effort attempt to create a tree. 
 
 The validate phase is where we answer the questions, "is this allowed here?" Something like `with` in strict mode, a redeclared binding, `return` outside a function, TypeScript syntax in a `.js` file, top-level `await` in a script, all parses cleanly and are reported by `validate()`. The `sourceType`, `jsx`, and `dialect` options are used here to determine correctness.
 
-Importantly, `validate()` does not throw errors, so the consumer is free to call it anywhere and handle the results appropriately. You could, for example, validate the same tree using different criteria to help understand if the source code can be used in different ways (for example, is it both valid as `module` and `script`).
+Importantly, `validate()` does not throw errors related to the program (only for input validation), so the consumer is free to call it anywhere and handle the results appropriately. You could, for example, validate the same tree using different criteria to help understand if the source code can be used in different ways (for example, is it both valid as `module` and `script`).
 
 The decode phase is entirely optional for consumers although naturally required for ESLint, which is converting the binary format into an AST for traversal. This is frequently the most expensive part of the process and there may be opportunities to work directly with the binary format and defer creation of the AST until needed.
 
