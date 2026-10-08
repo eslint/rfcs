@@ -43,7 +43,7 @@ There was also a disagreement about whether depending on `typescript` is a risk 
 
 That risk stopped being hypothetical while this RFC was being written. TypeScript 7.0 has shipped and doesn't have a JS API to hook into, meaning that `@typescript-eslint/parser` cannot yet use it directly (the recommended arrangement is to keep the TypeScript 6.0 API installed alongside it and point the parser at that). The new toolkit's benchmark carries a row for TypeScript 7 that currently reports itself skipped for exactly this reason. This is not a criticism of typescript-eslint; keeping up with a compiler release of that size is genuinely hard work, and they are doing it. It is a demonstration of the coupling: when the dependency moves, everything downstream of it waits, and neither we nor our users have any way to move first.
 
-I think objections 2, 3, and 4 are answerable, and this RFC answers them with the design below rather than with argument: the maintenance burden is real but bounded, AST compatibility is enforced by differential testing against `@typescript-eslint/parser` on every file we can find rather than asserted, and the existing parsers were evaluated and don't produce the AST or the analyses we need. Objection 1 is correct, we lose type-aware linting, but I don't think that is necessarily a terminal state. Rather, it's something we can build towards on top of this new tooling foundation.
+I think objections 2, 3, and 4 are answerable, and this RFC answers them with the design below rather than with argument: the maintenance burden is real but bounded, AST compatibility is enforced by differential testing against `@typescript-eslint/parser` on every file we can find rather than asserted, and the existing parsers were evaluated and don't give us the analyses or control we want. Objection 1 is correct, we lose type-aware linting, but I don't think that is necessarily a terminal state. Rather, it's something we can build towards on top of this new tooling foundation.
 
 ### The other thing we get
 
@@ -131,8 +131,6 @@ parse("const n = <number>value;", { jsx: true }); // throws "Unterminated JSX el
 parse("const n = value as number;", { jsx: true }); // TSAsExpression
 ```
 
-The same text without `jsx: true` reads the other way around: `<number>value` is a `TSTypeAssertion`, `<T>(x: T) => x` is an arrow function, and the element fails to parse.
-
 Unlike `dialect`, `jsx` has no permissive middle setting, and that's deliberate. A setting that accepted both readings would have to try JSX speculatively at every `<` and fall back to the TypeScript readings, and that isn't free: on JSX-heavy files the speculation costs a noticeable share of the parse, and on files that lean on old-style `<T>expr` assertions each abandoned JSX attempt scans ahead before it is undone, which goes quadratic. Every caller already knows what kind of file it has, so the parser asks rather than guesses.
 
 The cost is that JSX in a file parsed without `jsx: true` is a thrown `ParseError` rather than a problem `validate()` reports. Left alone, that error would describe a broken type assertion (`<div/>` reads as `Expected '>' but found '/'`), so a parse that fails without `jsx: true` is retried once the `.tsx` way on its way to throwing. When the retry succeeds and the tree contains an element, the error names the actual cause, with the same message and position `validate()` gives for the same mistake:
@@ -144,7 +142,7 @@ parse("const el = <div className={name}>{children}</div>;");
 
 The retry only happens on the way to throwing, so nothing that parses pays for it.
 
-Note that `dialect` constrains how the text is read, not what is permitted. Unambiguous TypeScript syntax — a type annotation, an `as` expression, an interface — still parses under `dialect: "js"`, and `validate()` is still the one to report that it wasn't allowed there. `validate()` keeps its own `dialect` and `jsx` options for exactly that reason: `parse()`'s options say how the text reads, and `validate()`'s say whether what parsed is allowed. And unlike `sourceType`, neither `parse()` choice is recorded in the buffer: type arguments and JSX elements either are in the tree or are not, so the later phases read the tree rather than deciding again.
+Unlike `sourceType`, neither `parse()` choice is recorded in the buffer: type arguments and JSX elements either are in the tree or are not, so the later phases read the tree rather than deciding again.
 
 There are no version options. The latest JavaScript, TypeScript, and JSX syntax is accepted, always.
 
@@ -183,7 +181,7 @@ tree   files=… ok=… mismatch=0 threw=0
 
 Zero mismatches is the standard; anything else is a regression. In addition, test262 checks what the parser rejects in JavaScript (no valid program rejected, no invalid one accepted), TypeScript's own conformance suite is run for both dialects, and `espree`'s test suite is run directly.
 
-Every intentional difference is written down in [`docs/deviations.md`](https://github.com/eslint/jsnext/blob/main/docs/deviations.md), and a difference that isn't on that list is a bug. The largest entry: where `@typescript-eslint/parser` omits a property or leaves it `undefined`, this parser sets it to `null`, so a node of a given type has the same shape every time. This is to ensure we always have the same shape for nodes and to better align with how ESTree represents missing details.
+Every intentional difference is written down in [`docs/deviations.md`](https://github.com/eslint/jsnext/blob/main/docs/deviations.md), and a difference that isn't on that list is a bug. The largest entry: where `@typescript-eslint/parser` omits a property or leaves it `undefined`, this parser sets it to `null`, so a node of a given type has the same shape every time. This also aligns better with how ESTree represents missing details.
 
 The known gaps are also written down. The notable one is that TypeScript's parser recovers from syntax errors and produces a tree while this one throws. Matching that recovery is not a goal.
 
@@ -210,9 +208,9 @@ node tools/diff-validate.mjs ../../node_modules   # problem lists, both dialects
 node tools/diff-analyze.mjs  ../../node_modules   # scope buffers
 ```
 
-`mismatch=0` is the standard, and both implementations must also agree on which files they reject. The full corpus — 21,000+ files — passes all three with zero mismatches, as do the JSX/TSX fixtures under every combination of options, which matters because `node_modules` contains no JSX. `diff-validate.mjs` runs against test262 as well, because that's the one corpus full of programs that are *supposed* to produce problems.
+Both implementations must also agree on which files they reject. The full corpus — 21,000+ files — passes all three with zero mismatches, as do the JSX/TSX fixtures under every combination of options, which matters because `node_modules` contains no JSX. `diff-validate.mjs` runs against test262 as well, because that's the one corpus full of programs that are *supposed* to produce problems.
 
-**The distribution story.** The binaries ship the way esbuild's do: one npm package per platform — linux x64 and arm64 (gnu), macOS x64 and arm64, and Windows x64 — each carrying a single binary and declaring the `os`, `cpu`, and (on Linux) `libc` it is for, so npm installs only the one that matches the machine and nobody downloads binaries for platforms they don't have. `@eslint/jskit-native` itself is just the loader: it lists the platform packages as `optionalDependencies`, requires the one matching the machine (or a locally built binary, in a checkout of the repository), and exports `null` when neither loads — so requiring it never throws, and `@eslint/jskit` falls back to the TypeScript implementation. Each binary is built on a runner of its own platform — nothing is cross-compiled — and the parity tests run against that binary on that machine before it's uploaded; a binary that was never exercised on its own platform doesn't get published. Publishing runs bottom-up with every version number in the group linked and pinned exactly — the platform packages first, then `@eslint/jskit-native` (whose publish step stamps the exact pins into its `optionalDependencies`, which the checked-in manifest deliberately omits because a pin can only point at a published version), then `@eslint/jskit` — because the binary formats are one contract with two implementations and a mismatched pair is not a thing that should be installable. A platform with no binary falls back, and works.
+**The distribution story.** The binaries ship the way esbuild's do: one npm package per platform — linux x64 and arm64 (gnu), macOS x64 and arm64, and Windows x64 — each carrying a single binary and declaring the `os`, `cpu`, and (on Linux) `libc` it is for, so npm installs only the one that matches the machine and nobody downloads binaries for platforms they don't have. `@eslint/jskit-native` itself is just the loader: it lists the platform packages as `optionalDependencies`, requires the one matching the machine (or a locally built binary, in a checkout of the repository), and exports `null` when neither loads — so requiring it never throws. Each binary is built on a runner of its own platform — nothing is cross-compiled — and the parity tests run against that binary on that machine before it's uploaded; a binary that was never exercised on its own platform doesn't get published. Publishing runs bottom-up with every version number in the group linked and pinned exactly — the platform packages first, then `@eslint/jskit-native` (whose publish step stamps the exact pins into its `optionalDependencies`, which the checked-in manifest deliberately omits because a pin can only point at a published version), then `@eslint/jskit` — because the binary formats are one contract with two implementations and a mismatched pair is not a thing that should be installable.
 
 I want to be straightforward about the cost here: this is a second implementation of the same code in a second language, and that is a real maintenance burden. See the drawbacks.
 
@@ -257,7 +255,7 @@ Scope analysis, measured separately by running `benchmarks/scope/benchmark.js` a
 | parse + analyze, JavaScript | 3.3×       | 8.6×   | `espree` + `eslint-scope`          |
 | parse + analyze, TypeScript | 17×        | 40×    | the `@typescript-eslint` pair      |
 
-`oxc-parser` is the only other contender in the same class, and it's in the benchmark for that reason. `parse()` leads its best row in every suite (205 against 113 on JavaScript, 152 against 119 on TypeScript, 185 against 114 on JSX) but they're close, and they should be: both are Rust parsers that hand back a buffer instead of a tree. The gap between this toolkit and `oxc-parser` is not really about speed, which is why the alternatives section argues about the analyses and dependency control instead.
+`parse()` leads `oxc-parser`'s best row in every suite, but they're close, and they should be: both are Rust parsers that hand back a buffer instead of a tree. The gap between this toolkit and `oxc-parser` is not really about speed, which is why the alternatives section argues about the analyses and dependency control instead.
 
 Three caveats worth stating, because I'd rather set expectations correctly:
 
@@ -269,7 +267,7 @@ To be clear: the goal isn't to beat `tsc`, it's to get consistent performance wi
 
 ### Shipping the parser
 
-**Deliverable:** publish `@eslint/jskit` with `eslintParser` as a supported, opt-in parser, alongside `@eslint/jskit-native` as its optional native core. Nothing in ESLint core changes.
+**Deliverable:** publish `@eslint/jskit` with `eslintParser` as a supported, opt-in parser, alongside `@eslint/jskit-native` as its optional native core.
 
 ```js
 // eslint.config.js
@@ -296,9 +294,9 @@ Configuration is deliberately minimal, because the file name already says most o
 - **Declaration files come from the extension.** `.d.ts`, `.d.mts`, and `.d.cts` are ambient, so a `const` in one needs no initializer. Override with `parserOptions.declaration`.
 - **`sourceType`** comes from `languageOptions.sourceType`, which ESLint already resolves.
 
-Because the extension answers them, the parser resolves `dialect` and `jsx` up front and hands the same values to both `parse()` and `validate()`: a file is one kind or the other, so it is read that way and checked that way. That means a mistake that changes the tree fails to parse rather than being reported as not allowed. Type arguments written in a `.js` file read as comparisons, which is what `espree` does with the same text, and JSX in a `.ts` file is a `ParseError`, which is what both `espree` and `@typescript-eslint/parser` do with it too, except that this one names the missing option. A wrong tree for a valid program would be the worse outcome.
+Because the extension answers them, the parser resolves `dialect` and `jsx` up front and hands the same values to both `parse()` and `validate()`: a file is one kind or the other, so it is read that way and checked that way. That means a mistake that changes the tree is handled by `parse()` rather than being reported as not allowed, which is what `espree` and `@typescript-eslint/parser` do with the same text. A wrong tree for a valid program would be the worse outcome.
 
-Because `parseForESLint()` predates language plugins, `eslintParser` inherits the "too much parser responsibility" problem I explained earlier. I think that's a fair tradeoff to start getting the performance improvement. That's accepted deliberately: `parseForESLint()` is the only hook that works with ESLint today, and this RFC is about getting the toolkit into people's hands, not about fixing the integration point.
+Because `parseForESLint()` predates language plugins, `eslintParser` inherits the "too much parser responsibility" problem I explained earlier. That's accepted deliberately: `parseForESLint()` is the only hook that works with ESLint today, and this RFC is about getting the toolkit and its performance improvement into people's hands, not about fixing the integration point.
 
 Shipping the parser allows us to start switching smaller projects (like `@eslint/config-array`) to TypeScript code to really exercise the new parser. We can do this package-by-package, checking our work as we go.
 
@@ -306,15 +304,13 @@ Shipping the parser allows us to start switching smaller projects (like `@eslint
 
 ### Out of scope: typed linting
 
-This proposal does not include type-aware linting, and the parser it proposes cannot do type-aware linting in the way typescript-eslint does. TypeScript's type APIs require nodes from a `ts.SourceFile` that TypeScript itself produced, so any type-aware rule built on this parser would need a mapping layer, at which point most of the work `@typescript-eslint/parser` does today has to be done anyway.
+This proposal does not include type-aware linting, and the parser it proposes cannot do type-aware linting in the way typescript-eslint does. As the first objection in the motivation says, TypeScript's type APIs only accept its own nodes, so any type-aware rule built on this parser would need a mapping layer, at which point most of the work `@typescript-eslint/parser` does today has to be done anyway.
 
 I want to be careful about what that means, because "no typed linting" is easy to read as "no typed linting, ever":
 
 - **It is a limitation of this proposal, not a design goal.** The toolkit is a foundation that later work can build on.
 - **We will investigate it.** The likely shape is the pluggable "types provider" idea from the 2024 discussion, which would let TypeScript supply types to rules that want them without ESLint depending on TypeScript to lint. There are also questions worth answering about how far a purely syntactic narrowing pass gets, and where it stops being useful. Modern TypeScript codebases lean on conditional types and inference-heavy libraries, and a partially type-aware linter that is confidently wrong is worse than one that admits it doesn't know.
 - **Until we have an answer, typescript-eslint remains the recommendation for type-aware linting.** That should be said plainly in the documentation rather than implied.
-
-In the meantime, there is nothing about this proposal that precludes typed linting in the future.
 
 ## Documentation
 
@@ -338,13 +334,13 @@ Documentation work:
 
 ## Drawbacks
 
-1. **We are taking on a parser.** TypeScript ships a release every three months and each one may add syntax. This is planned work forever, and as I said in the original discussion, it is not my favorite thing to do. The counter-argument is the one I gave then: planned work is a completely different thing from unplanned work, and we've already lived through the unplanned version once with `esprima`. And with the benefits of AI, the cost to keep up with things is a lot smaller than it was at the time of the discussion.
+1. **We are taking on a parser.** Keeping up with TypeScript's releases is planned work forever, and as I said in the original discussion, it is not my favorite thing to do. The counter-argument is the one I gave then: planned work is a completely different thing from unplanned work, and we've already lived through the unplanned version once with `esprima`. And with the benefits of AI, the cost to keep up with things is a lot smaller than it was at the time of the discussion.
 
-2. **Two implementations of the same AST can drift.** There is no ESTree-equivalent specification body for the TypeScript AST; there is typescript-eslint's `ast-spec`, and it is a de facto standard maintained by one project. Oxc also targets it and [proposes AST changes through typescript-eslint](https://github.com/typescript-eslint/typescript-eslint/issues/12810), which is a start. Differential conformance catches drift after the fact, and does so on every file in `node_modules`, but it doesn't prevent it. The healthier version of this is a shared specification, which requires cooperation we don't currently have. In the meantime, we'll let typescript-eslint lead and we'll follow.
+2. **Two implementations of the same AST can drift.** typescript-eslint's `ast-spec` is a de facto standard maintained by one project. Oxc also targets it and [proposes AST changes through typescript-eslint](https://github.com/typescript-eslint/typescript-eslint/issues/12810), which is a start. Differential conformance catches drift after the fact, but it doesn't prevent it. The healthier version of this is a shared specification, which requires cooperation we don't currently have. In the meantime, we'll let typescript-eslint lead and we'll follow.
 
 3. **The same analyses exist twice, in two languages.** Every change to `parse()`, `validate()`, or `analyze()` has to be made in TypeScript and again in Rust, or the binding falls behind and the differential runs fail. That is about 23,000 lines of Rust standing beside their TypeScript originals, and it asks a maintainer to be comfortable in both languages. The mitigation is that the mirroring is mechanical and that the parity harness fails loudly rather than quietly, but the burden is real and it is permanent.
 
-4. **We are shipping a native binary.** Prebuilt binaries mean a platform matrix, a build-and-publish pipeline that has to work on five runners, and a class of installation failure ESLint has never had to think about. The design tries to make every one of those failures soft (the native package is optional, an unbuilt platform falls back, a missing binary falls back, and nothing but speed depends on it) but "soft failure" still means some users silently get the slow path and won't know it. It also means the toolkit's supply chain now includes a Rust dependency tree, small as it is.
+4. **We are shipping a native binary.** Prebuilt binaries mean a platform matrix, a build-and-publish pipeline that has to work on five runners, and a class of installation failure ESLint has never had to think about. The design tries to make every one of those failures soft, but "soft failure" still means some users silently get the slow path and won't know it. It also means the toolkit's supply chain now includes a Rust dependency tree, small as it is.
 
 5. **We will fragment TypeScript linting for a while.** Once this ships there will be two parsers for linting TypeScript with ESLint, with different capabilities, and users will have to understand the difference. This is a real cost and documentation only partly mitigates it.
 
@@ -352,7 +348,7 @@ Documentation work:
 
 7. **This will be read as a hostile act.** It isn't, and I'd rather say so directly than pretend the perception won't exist. The overlap with typescript-eslint's work is real, the answer to "is the goal to replace it" is yes, and the maintainers deserve to hear that from us rather than infer it.
 
-8. **Error recovery.** TypeScript's parser continues after a syntax error and produces a tree; this one throws. That's the right trade for a linter today, but it forecloses editor-oriented use cases that a recovering parser enables.
+8. **No error recovery.** Throwing on the first syntax error is the right trade for a linter today, but it forecloses editor-oriented use cases that a recovering parser enables.
 
 ## Backwards Compatibility Analysis
 
@@ -360,12 +356,12 @@ Nothing in this RFC changes ESLint's default behavior.
 
 * **`@eslint/jskit` is a new package.** `espree` and `eslint-scope` remain the defaults. Using `eslintParser` is opt-in through `languageOptions.parser`, exactly like any third-party parser today, and it can be adopted or dropped per config object.
 * **`@typescript-eslint/parser` keeps working.** It is a parser like any other, and nothing here changes the `parseForESLint()` contract.
-* **The native core changes nothing observable.** It is an optional dependency of `@eslint/jskit`, not of ESLint, and it produces byte-identical buffers and identical diagnostics. A user on a platform we don't build for, or behind an install that skips optional dependencies, gets the same results more slowly.
+* **The native core changes nothing observable.** It is an optional dependency of `@eslint/jskit`, not of ESLint, and the results are the same with or without it.
 
 Within the opt-in path, compatibility is the design constraint, not an afterthought:
 
-* The AST matches `espree` for JavaScript and `@typescript-eslint/parser` for TypeScript, enforced by differential testing, with every intentional difference written down.
-* The scope graph matches `eslint-scope` and `@typescript-eslint/scope-manager`, enforced the same way, and `toScopeManager()` is complete enough for `@eslint-community/eslint-utils` — `ReferenceTracker`, `findVariable`, `getStaticValue` — to work unmodified.
+* The AST and the scope graph match the implementations they replace, enforced by the conformance testing described above.
+* `toScopeManager()` is complete enough for `@eslint-community/eslint-utils` — `ReferenceTracker`, `findVariable`, `getStaticValue` — to work unmodified.
 * `VISITOR_KEYS` matches `@typescript-eslint/visitor-keys` entry for entry, and its JavaScript entries are a superset of `eslint-visitor-keys`.
 
 Behavior differences a user will actually notice when switching:
@@ -382,15 +378,15 @@ Behavior differences a user will actually notice when switching:
 
 3. **Use an existing alternative parser (swc, oxc, Babel, hermes-parser).** All of these parse TypeScript and several were considered. Most produce their own AST, so the compatibility work with `espree` and `@typescript-eslint/parser` is the same either way (oxc is the exception, see below). None supply the scope analysis to JavaScript, which is a large part of the value here. Adopting one solves the smallest part of the problem. And each is a large dependency we don't control, which is the objection in the motivation restated.
 
-    `oxc-parser` deserves being singled out, because it is the closest thing to what this RFC proposes: a fast Rust parser behind Node-API bindings, with a raw-transfer mode that hands back a lazy view over a shared buffer rather than materializing nodes — the same idea as `parse()` returning a buffer. It is in our benchmark and it is genuinely fast. Unlike the others, it targets the same ASTs we do: Acorn's ESTree for JavaScript and typescript-eslint's TS-ESTree for TypeScript. Its conformance tests check for an exact match across Test262, `acorn-jsx`, and TypeScript's test cases, and it works from typescript-eslint's `ast-spec`. The parser variant Oxlint uses for JS plugins also closes the small gaps between Acorn and `espree`. The published `oxc-parser` package has a few gaps for ESLint's purposes. It reports syntax errors as an array rather than throwing, which a thin wrapper fixes. It emits no token list and no `loc`, although the Oxlint variant produces both, and its tokens match `espree` and `@typescript-eslint/parser`. It also stops at parsing for JavaScript consumers: Oxc has scope analysis (`oxc_semantic`) in Rust, but it isn't exposed to JavaScript yet, and Oxlint's own JS plugins currently use `@typescript-eslint/scope-manager`. The Oxc team plans to expose it and [has offered to collaborate](https://github.com/eslint/rfcs/pull/153#discussion_r3879973356) on whatever an ESLint integration would need, so these gaps are not fundamental. What remains is the dependency-control objection.
+    `oxc-parser` deserves being singled out, because it is the closest thing to what this RFC proposes: a fast Rust parser behind Node-API bindings, with a raw-transfer mode that hands back a lazy view over a shared buffer rather than materializing nodes — the same idea as `parse()` returning a buffer. Unlike the others, it targets the same ASTs we do: Acorn's ESTree for JavaScript and typescript-eslint's TS-ESTree for TypeScript. Its conformance tests check for an exact match across Test262, `acorn-jsx`, and TypeScript's test cases, and it works from typescript-eslint's `ast-spec`. The parser variant Oxlint uses for JS plugins also closes the small gaps between Acorn and `espree`. The published `oxc-parser` package has a few gaps for ESLint's purposes. It reports syntax errors as an array rather than throwing, which a thin wrapper fixes. It emits no token list and no `loc`, although the Oxlint variant produces both, and its tokens match `espree` and `@typescript-eslint/parser`. It also stops at parsing for JavaScript consumers: Oxc has scope analysis (`oxc_semantic`) in Rust, but it isn't exposed to JavaScript yet, and Oxlint's own JS plugins currently use `@typescript-eslint/scope-manager`. The Oxc team plans to expose it and [has offered to collaborate](https://github.com/eslint/rfcs/pull/153#discussion_r3879973356) on whatever an ESLint integration would need, so these gaps are not fundamental. What remains is the dependency-control objection.
 
 4. **Build the parser as an Acorn plugin**, which is what I suggested in 2024. It's a smaller lift and keeps a shared base with `espree`. It also constrains the AST and the internal representation to what Acorn's architecture allows, which rules out the binary format the scope analysis is built on and that format is where the performance and most of the design leverage come from.
 
-5. **Ship the parser as part of a new language plugin instead of on its own.** Fewer packages, less confusion, one announcement. It also means the parser meets real code for the first time at the same moment the rules and the language integration do, and no feedback arrives until everything is finished. Shipping the parser by itself lets us get it wrong early and cheaply, and lets us dogfood on our own TypeScript.
+5. **Ship the parser as part of a new language plugin instead of on its own.** Fewer packages, less confusion, one announcement. It also means the parser meets real code for the first time at the same moment the rules and the language integration do, and no feedback arrives until everything is finished. Shipping the parser by itself lets us get it wrong early and cheaply.
 
 6. **Add cross-file caching and parser lifecycle hooks to the core instead.** [Josh Goldberg pointed out](https://github.com/eslint/rfcs/pull/153#discussion_r3877450923) that typescript-eslint has been asking for this since 2020 ([eslint/eslint#13525](https://github.com/eslint/eslint/issues/13525), [eslint/eslint#14139](https://github.com/eslint/eslint/issues/14139), [RFC 102](https://github.com/eslint/rfcs/pull/102), [eslint/rewrite#352](https://github.com/eslint/rewrite/issues/352), and the summary in [typescript-eslint/typescript-eslint#11677](https://github.com/typescript-eslint/typescript-eslint/issues/11677)): let a parser know when a lint run starts and ends, which files are in it, and when files change, and let the cache account for dependencies between files. With those, typescript-eslint could keep a TypeScript program alive across files and invalidate it correctly, which has a positive effect on runtime performance. 
 
-    It is also a different problem from the one this RFC is solving. Hooks and cross-file caching make typed linting through typescript-eslint faster; they don't change that ESLint can't parse TypeScript on its own, that linting TypeScript requires installing and configuring a separate parser and plugin, that integrators have to embed and version `typescript`, or that parsing, scope analysis, and type-service setup are a black box to the core. Parser-level hooks would push more responsibility into `parseForESLint()`, not less. And cross-file state is a linter concern, not a parser concern: it touches the cache, the CLI, the Node.js API, editor integrations, and multithreaded linting, and it has to work for any language plugin, not only JavaScript. That deserves its own RFC, designed alongside typed linting, rather than being folded into this one. Nothing in this proposal precludes that work, and nothing about that work is a reason not to do this one; the two are complementary rather than competing.
+    It is also a different problem from the one this RFC is solving. Hooks and cross-file caching make typed linting through typescript-eslint faster; they don't address the separate plugin, the `typescript` dependency, or the parser's black-box responsibilities described in the motivation. Parser-level hooks would push more responsibility into `parseForESLint()`, not less. And cross-file state is a linter concern, not a parser concern: it touches the cache, the CLI, the Node.js API, editor integrations, and multithreaded linting, and it has to work for any language plugin, not only JavaScript. That deserves its own RFC, designed alongside typed linting, rather than being folded into this one. The two are complementary rather than competing.
 
 ## Open Questions
 
