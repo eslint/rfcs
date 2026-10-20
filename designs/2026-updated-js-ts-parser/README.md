@@ -396,7 +396,7 @@ Behavior differences a user will actually notice when switching:
 
 3. **Error recovery.** Is a recovering parse mode worth building for editor integrations, or is throwing on the first error the permanent answer?
 
-4. **Which platforms do we commit to, and what do we say about the rest?** The release builds linux x64/arm64 (gnu), macOS x64/arm64, and Windows x64. Missing from that list, at least: linux musl (Alpine, which a lot of CI runs on), Windows arm64, and FreeBSD. Falling back to the TypeScript implementation makes those work rather than fail, which is the right default, but a user on Alpine getting the slow path without being told is not great either. Do we add targets, surface the fallback somehow, or both?
+4. **Which platforms do we commit to, and what do we say about the rest?** The prototype builds linux x64/arm64 (gnu), macOS x64/arm64, and Windows x64. Missing from that list, at least: linux musl (Alpine, which a lot of CI runs on), Windows arm64, and FreeBSD. It seems like we need to support Alpine out of the box along with the others. Falling back to the TypeScript implementation makes the rest work rather than fail, which is the right default. Do we add targets, surface the fallback somehow, or both? (See also [Node.js tiers](https://github.com/nodejs/node/blob/main/BUILDING.md#strategy).)
 
 5. **Is a native dependency acceptable in ESLint's core at all?** This RFC doesn't ask that question — `@eslint/jskit` is opt-in and the native package is optional inside it. Whatever RFC eventually proposes making this the default does, and it's worth knowing now whether the answer is going to be no.
 
@@ -505,6 +505,10 @@ I tested all of the non-type-aware rules in typescript-eslint with the new parse
 **Will there be any changes to the scope analysis?**
 
 The interface for scope analysis remains unchanged with this RFC. The underlying implementation has changed with the intent to provide the same data (plus more) in the same way. This may result in additional scope-related methods being published for rules to use that are more efficient than the existing ones.
+
+**Will we publish the Rust crate?**
+
+At least initially, no. Maintaining a public Rust crate is another task for maintainers to take on, and doing so adds very little value as we get started on this project. We can definitely consider it in the future when we feel more comfortable with the Rust toolchain.
 
 ## Related Discussions
 
