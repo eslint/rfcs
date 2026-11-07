@@ -7,7 +7,7 @@
 
 ## Summary
 
-This RFC proposes adding `languageOptions.parser` to `@eslint/markdown` so users can replace the built-in [`mdast-util-from-markdown`](https://github.com/syntax-tree/mdast-util-from-markdown) parser with another synchronous parser. The immediate motivation is to integrate an optional Rust-based parser, but the API is not Rust-specific and can be used by other Markdown parsers. The built-in JavaScript parser remains the default, so existing configurations and browser usage are unchanged.
+This RFC proposes adding `languageOptions.parser` to `@eslint/markdown` so users can replace the built-in [`mdast-util-from-markdown`](https://github.com/syntax-tree/mdast-util-from-markdown) parser with another synchronous parser, along with `languageOptions.parserOptions` for parser-specific configuration. The immediate motivation is to integrate an optional Rust-based parser, but the API is not Rust-specific and can be used by other Markdown parsers. The built-in JavaScript parser remains the default, so existing configurations and browser usage are unchanged.
 
 ## Motivation
 
@@ -26,7 +26,7 @@ A parser option solves this by keeping the current portable parser as the defaul
 This proposal has the following goals:
 
 1. Allow a configuration to select a custom parser for `markdown/commonmark` or `markdown/gfm`.
-2. Preserve the existing behavior when no custom parser is configured.
+2. Preserve the existing behavior when neither new language option is configured.
 3. Define a small parser contract that can be implemented by JavaScript, native Node.js addons, or WebAssembly packages.
 4. Allow parsers that preserve the mdast contract expected by `MarkdownSourceCode` and existing `@eslint/markdown` rules.
 
@@ -40,17 +40,20 @@ This proposal does not:
 
 ### New Language Options
 
-`MarkdownLanguageOptions` will gain one property:
+`MarkdownLanguageOptions` will gain two properties:
 
 ```ts
 export interface MarkdownLanguageOptions extends LanguageOptions {
     frontmatter?: false | "yaml" | "toml" | "json";
     math?: boolean;
     parser?: MarkdownParser;
+    parserOptions?: Record<string, unknown>;
 }
 ```
 
-`parser` is an object with a synchronous `parse()` method. Parser-specific options can be added directly to `languageOptions` like `LanguageOptions`, `MarkdownLanguageOptions` permits additional properties, and those properties are forwarded to the parser.
+`parser` is an object with a synchronous `parse()` method. `parserOptions` contains parser-specific options and defaults to `{}`. Like `LanguageOptions`, `MarkdownLanguageOptions` permits additional properties, which are also forwarded to the parser. Options in `parserOptions` take precedence over matching language options for parsing, except for the reserved properties described below.
+
+This precedence matches ESLint's existing JavaScript behavior documented in [Specify Parser Options](https://eslint.org/docs/latest/use/configure/language-options#specify-parser-options).
 
 The parser contract is:
 
@@ -69,6 +72,7 @@ export type MarkdownParser = ObjectMetaProperties & {
 		options: MarkdownLanguageOptions & {
 			mode: MarkdownParserMode;
 			parser?: never;
+			parserOptions?: never;
 		},
 	): Root;
 };
@@ -89,6 +93,11 @@ This RFC proposes only `parse()` for the initial implementation. Whether Markdow
 ```js
 const {
     parser = this.defaultLanguageOptions.parser,
+    parserOptions: {
+        parser: unusedParser,
+        parserOptions: unusedParserOptions,
+        ...restParserOptions
+    } = {},
     ...restLanguageOptions
 } = context?.languageOptions ?? {};
 
@@ -96,15 +105,16 @@ const {
 
 const root = parser.parse(text, {
     ...restLanguageOptions,
+    ...restParserOptions,
     mode: this.#mode,
 });
 ```
 
 ESLint merges `defaultLanguageOptions` before parsing, so `frontmatter` and `math` have their effective default value of `false`. `mode` comes from the configured language: `markdown/commonmark` supplies `"commonmark"`, and `markdown/gfm` supplies `"gfm"`.
 
-The `parser` property itself is omitted from the options passed to `parse()`, and the language's `mode` is always applied after the other language options. All other standard and parser-specific language options are forwarded unchanged.
+The `parser` and `parserOptions` properties are omitted from the options passed to `parse()`, including any properties with those names inside `parserOptions`. The remaining `parserOptions` properties are merged over the other language options, so they can override values such as `frontmatter` and `math` for parsing. The language's `mode` is always applied last and cannot be overridden by either option object.
 
-The default parser is an object stored in `defaultLanguageOptions.parser`. Its `parse()` method removes `mode` from the forwarded language options and calls `mdast-util-from-markdown` with the existing micromark and mdast extensions. This keeps the built-in parser's behavior unchanged while using the same parser invocation path as a custom parser.
+The default parser is an object stored in `defaultLanguageOptions.parser`. Its `parse()` method removes `mode` from the merged options and calls `mdast-util-from-markdown` with the existing micromark and mdast extensions. This keeps the built-in parser's behavior unchanged when `parserOptions` is not configured while using the same parser invocation path as a custom parser.
 
 The parser call remains synchronous. Returning a promise is not supported.
 
@@ -149,6 +159,7 @@ The existing error behavior remains in place. If a custom parser throws an error
 `MarkdownLanguage#validateLanguageOptions()` will add the following checks:
 
 - `parser`, when present, must be a non-null object with a callable `parse` property.
+- `parserOptions`, when present, must be a non-null, non-array object.
 
 The existing validation for `frontmatter` and `math` remains unchanged.
 
@@ -171,7 +182,9 @@ export default [
             frontmatter: "yaml",
             math: true,
             parser,
-            parserSpecificOption: true, // Parser-specific option
+            parserOptions: {
+                parserSpecificOption: true, // Parser-specific option
+            },
         },
     },
 ];
@@ -202,10 +215,10 @@ const parser = {
 
 The implementation in `eslint/markdown` will include:
 
-1. Exporting `MarkdownParserMode`, the deprecated `ParserMode` alias, and `MarkdownParser`, and adding `parser` to `MarkdownLanguageOptions` in `src/types.ts`.
+1. Exporting `MarkdownParserMode`, the deprecated `ParserMode` alias, and `MarkdownParser`, and adding `parser` and `parserOptions` to `MarkdownLanguageOptions` in `src/types.ts`.
 2. Extending `MarkdownLanguage#validateLanguageOptions()` with the validation described above.
-3. Representing the built-in parser in `defaultLanguageOptions.parser`, then selecting and invoking the configured or default parser in `MarkdownLanguage#parse()`.
-4. Adding unit tests with a small parser object for invocation, option forwarding, invalid configuration, thrown errors, and both Markdown modes.
+3. Representing the built-in parser in `defaultLanguageOptions.parser` and setting `defaultLanguageOptions.parserOptions` to `{}`, then selecting and invoking the configured or default parser with the merged options in `MarkdownLanguage#parse()`.
+4. Adding unit tests with a small parser object for invocation, option forwarding and precedence, reserved property exclusion, invalid configuration, thrown errors, and both Markdown modes.
 5. Adding `eslint-markdown-parser` as a development dependency and running integration tests against both the default JavaScript parser and the Rust-based parser. These tests will cover CommonMark, GFM, frontmatter, math, source locations, and the bundled rules.
 6. Adding type tests for the public parser interfaces and configuration options.
 
@@ -215,7 +228,7 @@ The implementation in `eslint/markdown` will include:
 
 The `@eslint/markdown` README will document:
 
-- the `parser` language option and how additional language options are forwarded to it.
+- the `parser` and `parserOptions` language options, including option forwarding, precedence, and reserved properties.
 - the required synchronous `parse(text, options)` contract.
 - the mdast and positional-information requirements.
 - an example using an external parser package.
@@ -230,9 +243,9 @@ Custom parsers may handle Markdown edge cases differently, resulting in differen
 
 ## Backwards Compatibility Analysis
 
-This proposal is additive. Configurations that do not specify `languageOptions.parser` continue to use `mdast-util-from-markdown` with the same GFM, frontmatter, and math extensions as today. The default dependency graph and browser behavior do not change.
+This proposal is additive. Configurations that do not specify `languageOptions.parser` or `languageOptions.parserOptions` continue to use `mdast-util-from-markdown` with the same GFM, frontmatter, and math extensions as today. The default dependency graph and browser behavior do not change.
 
-Only configurations using the new option are affected by the new validation and custom parser behavior. A custom parser that returns an incompatible tree may produce a parse error or rule failures, but no existing configuration can encounter that behavior before opting into the feature.
+Only configurations using the new options are affected by the new validation and parser behavior. A custom parser that returns an incompatible tree may produce a parse error or rule failures, but no existing configuration can encounter that behavior before opting into the feature.
 
 ## Alternatives
 
