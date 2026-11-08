@@ -55,6 +55,8 @@ export interface MarkdownLanguageOptions extends LanguageOptions {
 
 This precedence matches ESLint's existing JavaScript behavior documented in [Specify Parser Options](https://eslint.org/docs/latest/use/configure/language-options#specify-parser-options).
 
+As in JavaScript, `parserOptions` and other forwarded language options follow ESLint core's serialization constraints. Callbacks can break `--print-config` and `--cache`. This proposal adds no custom serialization.
+
 The parser contract is:
 
 ```ts
