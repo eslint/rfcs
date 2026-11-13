@@ -210,7 +210,7 @@ node tools/diff-analyze.mjs  ../../node_modules   # scope buffers
 
 Both implementations must also agree on which files they reject. The full corpus — 21,000+ files — passes all three with zero mismatches, as do the JSX/TSX fixtures under every combination of options, which matters because `node_modules` contains no JSX. `diff-validate.mjs` runs against test262 as well, because that's the one corpus full of programs that are *supposed* to produce problems.
 
-**The distribution story.** The binaries ship the way esbuild's do: one npm package per platform — linux x64 and arm64 (gnu), macOS x64 and arm64, and Windows x64 — each carrying a single binary and declaring the `os`, `cpu`, and (on Linux) `libc` it is for, so npm installs only the one that matches the machine and nobody downloads binaries for platforms they don't have. `@eslint/jskit-native` itself is just the loader: it lists the platform packages as `optionalDependencies`, requires the one matching the machine (or a locally built binary, in a checkout of the repository), and exports `null` when neither loads — so requiring it never throws. Each binary is built on a runner of its own platform — nothing is cross-compiled — and the parity tests run against that binary on that machine before it's uploaded; a binary that was never exercised on its own platform doesn't get published. Publishing runs bottom-up with every version number in the group linked and pinned exactly — the platform packages first, then `@eslint/jskit-native` (whose publish step stamps the exact pins into its `optionalDependencies`, which the checked-in manifest deliberately omits because a pin can only point at a published version), then `@eslint/jskit` — because the binary formats are one contract with two implementations and a mismatched pair is not a thing that should be installable.
+**The distribution story.** The binaries ship the way esbuild's do: one npm package per platform — starting with Node.js' Tier 1 platforms and eventually expanding to Tier 2 ([reference](https://github.com/nodejs/node/blob/main/BUILDING.md#strategy)) — each carrying a single binary and declaring the `os`, `cpu`, and (on Linux) `libc` it is for, so npm installs only the one that matches the machine and nobody downloads binaries for platforms they don't have. `@eslint/jskit-native` itself is just the loader: it lists the platform packages as `optionalDependencies`, requires the one matching the machine (or a locally built binary, in a checkout of the repository), and exports `null` when neither loads — so requiring it never throws. Each binary is built on a runner of its own platform — nothing is cross-compiled — and the parity tests run against that binary on that machine before it's uploaded; a binary that was never exercised on its own platform doesn't get published. Publishing runs bottom-up with every version number in the group linked and pinned exactly — the platform packages first, then `@eslint/jskit-native` (whose publish step stamps the exact pins into its `optionalDependencies`, which the checked-in manifest deliberately omits because a pin can only point at a published version), then `@eslint/jskit` — because the binary formats are one contract with two implementations and a mismatched pair is not a thing that should be installable.
 
 I want to be straightforward about the cost here: this is a second implementation of the same code in a second language, and that is a real maintenance burden. See the drawbacks.
 
@@ -392,14 +392,6 @@ Behavior differences a user will actually notice when switching:
 
 1. **What "supports TypeScript" means as a version policy.** We support ECMAScript features at stage 4. TypeScript has no equivalent gate. Do we track TypeScript releases, betas, or shipped-and-stable syntax only, and what do we say when we're behind? TypeScript also supports stage 3 syntax and [decorators](https://github.com/tc39/proposal-decorators) (stage 2.7).
 
-2. **How do we work with typescript-eslint from here?** The 2024 discussion ended without a shared plan. A shared AST specification is the obvious place to cooperate. Whether that's wanted after this RFC is a question I can't answer alone.
-
-3. **Error recovery.** Is a recovering parse mode worth building for editor integrations, or is throwing on the first error the permanent answer?
-
-4. **Which platforms do we commit to, and what do we say about the rest?** The prototype builds linux x64/arm64 (gnu), macOS x64/arm64, and Windows x64. Missing from that list, at least: linux musl (Alpine, which a lot of CI runs on), Windows arm64, and FreeBSD. It seems like we need to support Alpine out of the box along with the others. Falling back to the TypeScript implementation makes the rest work rather than fail, which is the right default. Do we add targets, surface the fallback somehow, or both? (See also [Node.js tiers](https://github.com/nodejs/node/blob/main/BUILDING.md#strategy).)
-
-5. **Is a native dependency acceptable in ESLint's core at all?** This RFC doesn't ask that question — `@eslint/jskit` is opt-in and the native package is optional inside it. Whatever RFC eventually proposes making this the default does, and it's worth knowing now whether the answer is going to be no.
-
 ## Help Needed
 
 I've built the parser and the scope analyzer, and I can ship the parser without help.
@@ -411,6 +403,10 @@ Where the team's help is needed:
 * **Rust.** The native core needs more than one person who can maintain it, for the same reason. Today it is one implementation with one author, which is the least comfortable part of this proposal for me.
 
 ## Frequently Asked Questions
+
+**Is a native dependency acceptable in ESLint's core at all?**
+
+Yes, so long as it's optional, as is the case here.
 
 **Is the goal to replace typescript-eslint?**
 
