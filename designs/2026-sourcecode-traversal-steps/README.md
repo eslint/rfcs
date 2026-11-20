@@ -59,8 +59,15 @@ When measured locally, this approach saved 9-10% of run time vs. the current app
 The return type for `SourceCode#traverse()` then changes to the following (using existing `SourceCodeBase` interface):
 
 ```ts
-interface SourceCodeBase {
-    traverse(): Iterable<TraversalStep> | TraverseSteps;
+interface SourceCodeBase<
+	Options extends SourceCodeBaseTypeOptions = {
+		LangOptions: LanguageOptions;
+		RootNode: unknown;
+		SyntaxElementWithLoc: unknown;
+		ConfigNode: unknown;
+	},
+> {
+    traverse(): Iterable<TraversalStep> | TraverseSteps<SyntaxElementWithLoc>;
 }
 ```
 
