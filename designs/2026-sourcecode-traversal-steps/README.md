@@ -1,6 +1,6 @@
 - Repo: eslint/eslint
 - Start Date: 2026-11-19
-- RFC PR:
+- RFC PR: https://github.com/eslint/rfcs/pull/156
 - Authors: Nicholas C. Zakas
 
 # Reduce allocations in `SourceCode#traverse()`
@@ -8,7 +8,7 @@
 ## Summary
 
 This RFC proposes changing `SourceCode#traverse()` to return a compact
-`TraversalSteps` value backed by two parallel arrays in addition to its current `Iterable<TraversalStep>`, which the intent of deprecating `Iterable<TraversalStep>`. A `TraverseStepsBuilder` in `@eslint/plugin-kit` will provide
+`TraversalSteps` value backed by two parallel arrays in addition to its current `Iterable<TraversalStep>`, with the intent of deprecating `Iterable<TraversalStep>`. A `TraverseStepsBuilder` in `@eslint/plugin-kit` will provide
 an API for creating this representation. The traversal consumer will process
 the arrays with an indexed loop, reducing allocations and iterator overhead.
 This is a breaking API change and is intended for a major release.
