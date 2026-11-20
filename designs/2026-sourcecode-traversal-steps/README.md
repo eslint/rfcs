@@ -11,7 +11,7 @@ This RFC proposes changing `SourceCode#traverse()` to return a compact
 `TraversalSteps` value backed by two parallel arrays in addition to its current `Iterable<TraversalStep>`, with the intent of deprecating `Iterable<TraversalStep>`. A `TraverseStepsBuilder` in `@eslint/plugin-kit` will provide
 an API for creating this representation. The traversal consumer will process
 the arrays with an indexed loop, reducing allocations and iterator overhead.
-This is a breaking API change and is intended for a major release.
+
 
 ## Motivation
 
@@ -35,8 +35,8 @@ to use a conventional indexed loop.
 `targets` and `details` arrays:
 
 ```ts
-interface TraverseSteps {
-    targets: Array<unknown>;
+interface TraverseSteps<Node> {
+    targets: Array<Node|string>;
     details: Array<number | Array<unknown> | undefined>;
 }
 ```
@@ -55,6 +55,14 @@ must always have the same length, and entries at a given index must describe
 the same step.
 
 When measured locally, this approach saved 9-10% of run time vs. the current approach.
+
+The return type for `SourceCode#traverse()` then changes to the following (using existing `SourceCodeBase` interface):
+
+```ts
+interface SourceCodeBase {
+    traverse(): Iterable<TraversalStep> | TraverseSteps;
+}
+```
 
 ### Builder
 
@@ -97,8 +105,8 @@ itself being iterable.
 
 ### Parent arguments
 
-Several language plugins (`@eslint/markdown`, `@eslint/css`, `@eslint/shell`, `@eslint/json`) actually pass a parent node as the second argument to each rule listener (`(node, parent)`. This use
-case is not supported in this RFC. No rule in these plugins use that second argument; they instead use `sourceCode.getParent(node)`, so making a change does not affect functionality. This will technically be a breaking change for the more mature language plugins but it should be a relatively painless one.
+Several language plugins (`@eslint/markdown`, `@eslint/css`, `@eslint/shell`, `@eslint/json`) actually pass a parent node as the second argument to each rule listener (`(node, parent)`). This use
+case is not supported in this RFC. No rule in these plugins use that second argument; they instead use `sourceCode.getParent(node)`, so making a change does not affect functionality. This will technically be a breaking change for the more mature language plugins but it should be a relatively painless one. Custom rules for these plugins may be relying on the second argument, but a quick analysis of a few plugins showed that `sourceCode.getParent()` is the way people are writing rules.
 
 ### API rollout
 
@@ -132,7 +140,7 @@ release.
 
 This proposal is backwards compatible for ESLint itself. It will continue working with all existing language plugins even if they don't make this change.
 
-This proposal is also backwards compatible for language plugins that use `TraverseStepsBuilder` to create the new return value.
+This proposal is also backwards compatible for language plugins that use `TraverseStepsBuilder` to create the new return value, provided that no existing custom rules are using the second argument of a visit step to access a parent node. This is easily addressed by using the already-prevalent `SourceCode#getParent()` method.
 
 ## Alternatives
 
@@ -148,9 +156,7 @@ This proposal is also backwards compatible for language plugins that use `Traver
 
 ## Open Questions
 
-- What benchmark should be used to quantify the allocation and runtime
-  improvement before implementation is considered complete?
-- Do we want to provide a fallback iterable (`Symbol.iterator` method) in the object returned from `TraversalStepsBuilder`? It could return the same `TraversalStep` format as we do now and that would prevent breakage in other consumers and older ESLint versions, although all of the performance gains would be completely lost.
+None.
 
 ## Help Needed
 
