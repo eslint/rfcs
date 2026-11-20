@@ -67,7 +67,7 @@ interface SourceCodeBase<
 		ConfigNode: unknown;
 	},
 > {
-    traverse(): Iterable<TraversalStep> | TraverseSteps<SyntaxElementWithLoc>;
+    traverse(): Iterable<TraversalStep> | TraverseSteps<Option["SyntaxElementWithLoc"]>;
 }
 ```
 
