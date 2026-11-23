@@ -32,7 +32,7 @@ When submitting a new RFC, follow these guidelines:
 
 ## AI Disclosure Requirement
 
-ESLint's [AI Usage Policy](docs/src/contribute/ai-policy.md) requires that AI-assisted contributions be disclosed. Whenever you (an AI) create content on GitHub for this project, you **must** include a disclosure, using the name of the model actually producing the content (for example, `Claude Opus 5`):
+ESLint's [AI Usage Policy](https://eslint.org/docs/latest/contribute/ai-policy) requires that AI-assisted contributions be disclosed. Whenever you (an AI) create content on GitHub for this project, you **must** include a disclosure, using the name of the model actually producing the content (for example, `Claude Opus 5`):
 
 - **Issues** — add a bold sentence to the top of body:
 
