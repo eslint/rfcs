@@ -135,7 +135,7 @@ release.
 
 ## Drawbacks
 
-- Changing the return value breaks direct callers that expect an iterable.
+- ESLint needs to inspect the value returned from `SourceCode#traverse()` to know whether it can use the new approach or not.
 - Language implementations and tests must be updated, including those that
   currently pass parent nodes as visit arguments.
 - The parallel arrays are less self-describing than individual step objects and
@@ -160,6 +160,10 @@ This proposal is also backwards compatible for language plugins that use `Traver
 3. **Use a single flat array.** This could encode targets and details together,
    but would require consumers to decode a less explicit layout. Two parallel
    arrays make the step data and its alignment easier to inspect.
+4. **Define a new method on `SourceCode`.** We could define a completely new
+   method (maybe `Source#walk()`?) to encapsulate the new approach and then
+   deprecate `SourceCode#traverse()`. This would make it easier for ESLint to
+   identify which approach to use.
 
 ## Open Questions
 
