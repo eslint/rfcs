@@ -19,6 +19,17 @@ Pull request titles and commit messages must follow the Conventional Commits for
 
 Follow `.github/PULL_REQUEST_TEMPLATE.md`: include a concise summary, preferably pasted from the proposal, and add relevant discussion links under **Related Issues** when applicable. The Related Issues section is optional.
 
+### RFC Writing Guidelines
+
+When submitting a new RFC, follow these guidelines:
+
+- Follow the template in `templates/design.md`. Ensure each section is filled out.
+- Use everyday words and avoid jargon. When a technical term is necessary (for example, "code path analysis" or "scope manager"), add a short phrase explaining what it does the first time it appears.
+- Assume the reader does not have deep knowledge of the work to be performed. Your explanation must not only explain the design but also teach it to the reader.
+- When explaining a problem, give concrete examples; when explaining a solution, tie it back to the specific problems they solve.
+- Prefer short paragraphs to nested bullet lists. Use bullets only for things that really are a list, such as several independent behavior changes.
+- When explaining the detailed design, refer to specific files, classes, functions, etc.
+
 ## AI Disclosure Requirement
 
 ESLint's [AI Usage Policy](docs/src/contribute/ai-policy.md) requires that AI-assisted contributions be disclosed. Whenever you (an AI) create content on GitHub for this project, you **must** include a disclosure, using the name of the model actually producing the content (for example, `Claude Opus 5`):
